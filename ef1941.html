@@ -1,0 +1,228 @@
+<html>
+    <head>
+        <style>
+body {
+    background-color: #999;
+}
+#screen {
+    width: 320px;
+    height: 192px;
+    background-color: blue;
+    transform-origin: top left;
+    transform:  scale(4);
+}
+.section {
+    width: 100%;
+    overflow: hidden;
+}
+.rule {
+    height: 2px;
+}
+#date-window {
+    height:  16px;
+}
+#date-window .row {
+    transform-origin: top left;
+    transform:  scale(2);
+}
+#map-window {
+    height: 144px;
+}
+#info-window {
+    height:  16px;
+}
+#err-window {
+    height: 8px;
+}
+#map {
+    /* 48 x 41  8px sq cells*/
+    width: 384px;
+    height: 328px;
+    transform-origin: top left;
+    transform: scale(1);
+}
+.row {
+    white-space: nowrap;
+    background-color: #333;
+}
+.chr {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    /* via base64 fontmap.png */
+    -webkit-mask-image: url(data:image/png;base64,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);
+    -webkit-mask-size: 128px 128px;
+    image-rendering: pixelated;
+    color: #999; /* debugging */
+    background-color:  white;
+}
+        </style>
+    </head>
+    <body>
+        <script src="https://unpkg.com/d3@7.6.1/dist/d3.min.js"></script>
+
+
+        <div id="screen">
+            <div id="date-window" class="section"></div>
+            <div class="date-rule rule section"></div>
+            <div id="map-window" class="section">
+                <div id="map"></div>
+            </div>
+            <div class="info-rule rule section"></div>
+            <div id="info-window" class="section"></div>
+            <div class="err-rule rule section"></div>
+            <div id="err-window" class="section"></div>
+            <div class="err-rule rule section"></div>
+            </div>
+        </div>
+
+
+        <script>
+const
+    // Antic NTSC palette via https://en.wikipedia.org/wiki/List_of_video_game_console_palettes#NTSC
+    // 128 colors indexed via high 7 bits, e.g. 0x00 and 0x01 refer to the first entry
+    colormap = ["#000000",  "#404040",  "#6c6c6c",  "#909090",  "#b0b0b0",  "#c8c8c8",  "#dcdcdc",  "#ececec",  "#444400",  "#646410",  "#848424",  "#a0a034",  "#b8b840",  "#d0d050",  "#e8e85c",  "#fcfc68",  "#702800",  "#844414",  "#985c28",  "#ac783c",  "#bc8c4c",  "#cca05c",  "#dcb468",  "#ecc878",  "#841800",  "#983418",  "#ac5030",  "#c06848",  "#d0805c",  "#e09470",  "#eca880",  "#fcbc94",  "#880000",  "#9c2020",  "#b03c3c",  "#c05858",  "#d07070",  "#e08888",  "#eca0a0",  "#fcb4b4",  "#78005c",  "#8c2074",  "#a03c88",  "#b0589c",  "#c070b0",  "#d084c0",  "#dc9cd0",  "#ecb0e0",  "#480078",  "#602090",  "#783ca4",  "#8c58b8",  "#a070cc",  "#b484dc",  "#c49cec",  "#d4b0fc",  "#140084",  "#302098",  "#4c3cac",  "#6858c0",  "#7c70d0",  "#9488e0",  "#a8a0ec",  "#bcb4fc",  "#000088",  "#1c209c",  "#3840b0",  "#505cc0",  "#6874d0",  "#7c8ce0",  "#90a4ec",  "#a4b8fc",  "#00187c",  "#1c3890",  "#3854a8",  "#5070bc",  "#6888cc",  "#7c9cdc",  "#90b4ec",  "#a4c8fc",  "#002c5c",  "#1c4c78",  "#386890",  "#5084ac",  "#689cc0",  "#7cb4d4",  "#90cce8",  "#a4e0fc",  "#003c2c",  "#1c5c48",  "#387c64",  "#509c80",  "#68b494",  "#7cd0ac",  "#90e4c0",  "#a4fcd4",  "#003c00",  "#205c20",  "#407c40",  "#5c9c5c",  "#74b474",  "#8cd08c",  "#a4e4a4",  "#b8fcb8",  "#143800",  "#345c1c",  "#507c38",  "#6c9850",  "#84b468",  "#9ccc7c",  "#b4e490",  "#c8fca4",  "#2c3000",  "#4c501c",  "#687034",  "#848c4c",  "#9ca864",  "#b4c078",  "#ccd488",  "#e0ec9c",  "#442800",  "#644818",  "#846830",  "#a08444",  "#b89c58",  "#d0b46c",  "#e8cc7c",  "#fce08c"],
+    fontmap = (
+' @*!%^&?????????????????????????????????????????????????????????' +
+'???????0123??????????????????????????????????????????????????xo#' +
+'???????????,.;:|/+-=_[]{}()<>abcdefghijklmnpqrstuvwyzABCDEFGH??~' +
+'?????????????????????????????????????????????????????????????XO?'
+    ),
+    mapdata = `
+################################################
+#~~~m        z~~n                              #
+#~~~tw   ABDCByGu                              #
+#~~~~tDCE~~vu0a<                               #
+#~~~~~vqrsGHh;_.        ai >dfj                #
+#~~~~~p   Fw}:[@^       _+e)  -ci    >h        #
+#~~~~~n   zn=.]*&       {      >l1 ae(+di      #
+#~~~~~tw   u[,{!@              [+dc<   2-j     #
+#~~~~~~m      }%!             a)         [     #
+#~~vq~~n1     _ *       *     ]          /fck  #
+#~~n yrHcdi             @     {            >(  #
+#~~m      |h     a<   2   3  >(            [   #
+#~~p       /ej  >)     !&    }             =   #
+#~~tw        +fg(   *{%@*bgec<             ]   #
+#~~~n              >f( !%_                >)   #
+#~~vHdceh   *&^  ag)0 @& =  }             {3   #
+#~vu    +f @%!@ b<          {             _    #
+#ru        *&3 .],          |fk          b<    #
+#        @!^   :/i;      0    ]2         }     #
+#       *&    ;,:-k           +i         ]     #
+#j2     ^%  ,.:;. }            [         [     #
+#-i     !@  ;cgi:,_       ]    /eh       {     #
+# |k   !%& ,.:;+dj{       +j     -j      _     #
+#  [   *^,:;,.,:.-l        {      |gcedj }     #
+# >)     .,;:.   ,_       3_           =0|cdfi #
+#({       :      0[        /i          [     /j#
+#@&               |>e       -><a)>d    _      -#
+#*^!%               +<b           +ab }]       #
+#  @^&!  >e   >c      /)d          (f<{        #
+#    %!@^ +c   -ab      -ac       }{           #
+#     *%&  |<>)d |)e      |b     (]            #
+#      @!^     /b  +d     1=   uiH2            #
+#       *&%     -e  /c    (] vjnws             #
+#        ^@& d   |c  -b   [ tp~yr              #
+#        @*%!/e   +d2 =  }{ h~~lz              #
+#        ^!&*@|c   -FiGjkHBq~~~ws 3})a>c       #
+#  %^@^*!&@%^&*+b  un~~~wrCDDEgA(a<]   _       #
+#  ^!&%@%* !%@& -Fkp~~~~lz  un~mGjkz           #
+#               vq~~~~~~~mAtp~~~~~~miA^%*!&@&*@#
+#               h~~~~~~~~~lq~~~~~~~~~ljkA@*!%!!#
+################################################
+`.split(/\n/).slice(1,-1);
+
+
+
+function hexcolor(v) {
+    if (typeof v === 'string') v = parseInt(v, 16);
+    return colormap[Math.floor(v/2)];
+}
+
+function atascii(c) {
+    let x = c.charCodeAt(0) % 128;
+    return (x >= 32 && x < 96) ? x - 32 : (x < 32 ? x + 48: x);
+}
+
+/*
+function zoomed({ transform }) {
+    map.style(
+        'transform',
+        "translate(" + Math.round(transform.x) + "px," + Math.round(transform.y) + "px) scale(" + transform.k + ")"
+    );
+}
+//    zoom = d3.zoom().on('zoom', zoomed);
+// map.call(zoom);
+*/
+
+var map = d3.select('#map')
+d3.select('#date-window')
+    .append('div')
+    .attr('class', 'row')
+    .selectAll('div.chr')
+    .data('Eastern Front, 1941 ')
+  .enter()
+    .append('div')
+    .attr('class', 'chr')
+    .style(
+        "-webkit-mask-position",
+        function(d) {
+            let pg = 0, chr = atascii(d);
+            return (-(chr%16)*8) + 'px ' + (-Math.floor(chr/16)*8) + 'px'
+        }
+    );
+
+map
+    .selectAll('div.row')
+    .data(mapdata)
+  .enter()
+    .append('div')
+    .attr('class', (d, i) => 'row ' + (i <= 24 ? 'north': 'south'))
+    .selectAll('div.chr')
+    .data(d => d)
+  .enter()
+    .append('div')
+    .datum(d => fontmap.indexOf(d))
+    .attr('class', d => 'chr fgcolor-' + Math.floor(d/64))
+    .style(
+        "-webkit-mask-position",
+        function(d) {
+            let pg = d3.select(this.parentNode).classed('north') ? 2 : 3
+                chr = (d % 64) + pg * 64;
+            return (-(chr%16)*8) + 'px ' + (-Math.floor(chr/16)*8) + 'px'
+        }
+    )
+    //.text(d => d);
+
+
+/*
+Colors PDF p67
+
+Section         BK      0       1       2       3
+date window     B0      6A      OC      94      46
+map top         1A      TRCOLR
+map north       EARTH
+map south               28
+unit info                       22
+                        8A
+                                00      3A
+err message             D4
+*/
+
+// tree color by month EFT18D.ASM
+// TRTAB    0,$12,$12,$12,$D2,$D8,$D6,$C4,$D4,$C2,$12,$12,$12
+
+map.selectAll('.row').style('background-color', hexcolor('02'));
+map.selectAll('.fgcolor-0').style('background-color', hexcolor('D6'));
+map.selectAll('.fgcolor-1').style('background-color', hexcolor('OC'));
+map.selectAll('.fgcolor-2').style('background-color', hexcolor('94'));
+map.selectAll('.fgcolor-3').style('background-color', hexcolor('46'));
+
+d3.select('#date-window').style('background-color', hexcolor('B0'));
+d3.select('#info-window').style('background-color', hexcolor('B0'));
+d3.select('#err-window').style('background-color', hexcolor('8A'));
+d3.selectAll('.date-rule').style('background-color', hexcolor('1A'));
+d3.selectAll('.err-rule').style('background-color', hexcolor('D4'));
+        </script>
+    </body>
+</html>
