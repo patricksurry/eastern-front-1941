@@ -94,10 +94,24 @@ print(memmap[:16].hex())
 open('memmap.dat', 'wb').write(memmap)
 
 
+"""
+maltakreuze: 0x5ff7
+font table: 0x6000
+display list: 0x6400
+arrow table: 0x6431
+"""
+
 offset = 0x6000 - baseoff
 fonts = memmap[offset:offset+1024]
 
-fonts = open('atascii.dat', 'rb').read() + fonts
+offset = 0x5ff7 - baseoff
+specials = memmap[offset:offset+8]
+offset = 0x6431 - baseoff
+specials += memmap[offset:offset+32]
+specials += bytes([0] * (16-5)*8)
+
+fonts = open('atascii.dat', 'rb').read() + fonts + specials
+
 
 open('fontmap.dat', 'wb').write(fonts)
 
