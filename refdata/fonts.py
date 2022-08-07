@@ -2,6 +2,7 @@ from base64 import b64encode
 import numpy as np
 from PIL import Image
 import sys
+from typing import List
 
 
 colors = open('colormap.src').read().splitlines()[1:]
@@ -211,32 +212,35 @@ assert '?' not in asciimap
 
 print(asciimap)
 
-"""
-0x2264 => 0x5400
-0x229e => 0x5437
 
-3a  vs 37  + 3bytes
+num_units = 159
+offset = 0x5400 - baseoff
+oob = {}
+words: List[str] = []
+# CORPSX,Y is map position
+# M/CSTRNG is muster and current strength [skip CSTRNG initialized later]
+# SWAP is icon chr
+# ARRIVE is arrival turn
+# CORPT is unit type (lo and hi nibble index into word lists)
+# CORPNO is unit designation information only
+for k in ['CORPSX', 'CORPSY', 'MSTRNG', num_units, 'SWAP', 'ARRIVE', 0x110, 'CORPT', 'CORPNO']:
+    if isinstance(k, int):
+        if k % 8 == 0:
+            words = [
+                memmap[i:i+8].decode('utf-8').strip()
+                for i in range(offset, offset+k, 8)
+            ]
+        offset += k
+        continue
+    oob[k] = list(map(int, memmap[offset:offset+num_units]))
+    offset += num_units
 
-3 byte checksum @ 0x228d, 0x230d  (128 byte spacing)
-
-
-0x0190 to 0x4b10  18816  = 147 x 128
-
-0x4a10
-
-16896
-
-
-0xe90 => 0x4000?
-
-0x1516 => 0x4700  (18176)
-
-
-18170 => x42c x 125  (1068 x 125 = 133500 - 18170 = 115330)
-
-04 2c  (x2c * 125 => 5500 => 0x157c)
-04 97
-
-(108 x 125) = 13500 + 0x700 (1792) + 1092 = 16384
-
-"""
+units = list(zip(*oob.values()))
+with open('oob.dat', 'w') as f:
+    f.write("// ['CORPSX', 'CORPSY', 'MSTRNG', 'SWAP', 'ARRIVE', 'CORPT', 'CORPNO']\n[\n")
+    for u in units:
+        f.write(f"    {list(u)},\n")
+    f.write("]\n")
+print(f"Wrote {len(units)} units to oob.dat, ending @ {hex(offset + baseoff)}")
+print("Distinct CORPT flags: ", sorted(set(f'{v:02x}' for v in oob['CORPT'])))
+print(words)
