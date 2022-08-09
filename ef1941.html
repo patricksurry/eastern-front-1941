@@ -90,57 +90,83 @@ const
     // Antic NTSC palette via https://en.wikipedia.org/wiki/List_of_video_game_console_palettes#NTSC
     // 128 colors indexed via high 7 bits, e.g. 0x00 and 0x01 refer to the first entry
     colormap = ["#000000",  "#404040",  "#6c6c6c",  "#909090",  "#b0b0b0",  "#c8c8c8",  "#dcdcdc",  "#ececec",  "#444400",  "#646410",  "#848424",  "#a0a034",  "#b8b840",  "#d0d050",  "#e8e85c",  "#fcfc68",  "#702800",  "#844414",  "#985c28",  "#ac783c",  "#bc8c4c",  "#cca05c",  "#dcb468",  "#ecc878",  "#841800",  "#983418",  "#ac5030",  "#c06848",  "#d0805c",  "#e09470",  "#eca880",  "#fcbc94",  "#880000",  "#9c2020",  "#b03c3c",  "#c05858",  "#d07070",  "#e08888",  "#eca0a0",  "#fcb4b4",  "#78005c",  "#8c2074",  "#a03c88",  "#b0589c",  "#c070b0",  "#d084c0",  "#dc9cd0",  "#ecb0e0",  "#480078",  "#602090",  "#783ca4",  "#8c58b8",  "#a070cc",  "#b484dc",  "#c49cec",  "#d4b0fc",  "#140084",  "#302098",  "#4c3cac",  "#6858c0",  "#7c70d0",  "#9488e0",  "#a8a0ec",  "#bcb4fc",  "#000088",  "#1c209c",  "#3840b0",  "#505cc0",  "#6874d0",  "#7c8ce0",  "#90a4ec",  "#a4b8fc",  "#00187c",  "#1c3890",  "#3854a8",  "#5070bc",  "#6888cc",  "#7c9cdc",  "#90b4ec",  "#a4c8fc",  "#002c5c",  "#1c4c78",  "#386890",  "#5084ac",  "#689cc0",  "#7cb4d4",  "#90cce8",  "#a4e0fc",  "#003c2c",  "#1c5c48",  "#387c64",  "#509c80",  "#68b494",  "#7cd0ac",  "#90e4c0",  "#a4fcd4",  "#003c00",  "#205c20",  "#407c40",  "#5c9c5c",  "#74b474",  "#8cd08c",  "#a4e4a4",  "#b8fcb8",  "#143800",  "#345c1c",  "#507c38",  "#6c9850",  "#84b468",  "#9ccc7c",  "#b4e490",  "#c8fca4",  "#2c3000",  "#4c501c",  "#687034",  "#848c4c",  "#9ca864",  "#b4c078",  "#ccd488",  "#e0ec9c",  "#442800",  "#644818",  "#846830",  "#a08444",  "#b89c58",  "#d0b46c",  "#e8cc7c",  "#fce08c"],
-    fontmap = (
-' @*!%^&?????????????????????????????????????????????????????????' +
-'???????0123??????????????????????????????????????????????????xo#' +
-'???????????,.;:|/+-=_[]{}()<>abcdefghijklmnpqrstuvwyzABCDEFGH??~' +
-'?????????????????????????????????????????????????????????????XO?'
-    ),
+    terraintypes = [
+        { color: '02' },          // clear
+        { color: '28', altcolor: 'D6'},   // mountain & forest
+        { color: '0C', altcolor: '46'},   // city
+        { color: '0C'},           // frozen swamp
+        { color: '0C'},           // frozen river
+        { color: '94'},           // swamp
+        { color: '94'},           // river
+        { color: '94'},           // coastline
+        { color: '94'},           // estuary
+        { color: '94', altcolor: '0C'}    // border & sea
+    ],
+    mapencoding = [
+        // north and south parts of map are encoded from 6-bit hex to ascii
+        // with blocks of chrs corresponding to terrain types delimited by |
+        ' |123456|@*0$|||,.;:|abcdefghijklmnopqrstuvwxyz|ABCDEFGHIJKLMNOPQR|{}??|~#',
+        ' |123456|@*0$|||,.;:|abcdefghijklmnopqrst|ABCDEFGHIJKLMNOPQRSTUVW|{}<??|~#'
+    ].map((enc, i) => {
+        // turn into a lookup of encoded char => [north/south, offset, terraintype]
+        let lookup = {}, ch=0;
+        enc.split('|').forEach((s, t) =>
+            s.split('').forEach(c => {
+                let alt = ((t == 1 && i == 0) || ch == 0x40) ? 0x10 : 0;
+                if (ch==0x40) ch--;
+                lookup[c] = [0x80 + i * 0x40 + ch++, t + alt];
+            })
+        );
+        return lookup;
+    }),
     // Map with border is 48 x 41, coords 0-45 x 0-38 from bottom right excl boder
+    // The first 25 rows (incl border) are mapped with northern charset
     mapdata = `
 ################################################
-#~~~m        z~~n                              #
-#~~~tw   ABDCByGu                              #
-#~~~~tDCE~~vu0a<                               #
-#~~~~~vqrsGHh;_.        ai >dfj                #
-#~~~~~p   Fw}:[@^       _+e)  -ci    >h        #
-#~~~~~n   zn=.]*&       {      >l1 ae(+di      #
-#~~~~~tw   u[,{!@              [+dc<   2-j     #
-#~~~~~~m      }%!             a)         [     #
-#~~vq~~n1     _ *       *     ]          /fck  #
-#~~n yrHcdi             @     {            >(  #
-#~~m      |h     a<   2   3  >(            [   #
-#~~p       /ej  >)     !&    }             =   #
-#~~tw        +fg(   *{%@*bgec<             ]   #
-#~~~n              >f( !%_                >)   #
-#~~vHdceh   *&^  ag)0 @& =  }             {3   #
-#~vu    +f @%!@ b<          {             _    #
-#ru        *&3 .],          |fk          b<    #
-#        @!^   :/i;      0    ]2         }     #
-#       *&    ;,:-k           +i         ]     #
-#j2     ^%  ,.:;. }            [         [     #
-#-i     !@  ;cgi:,_       ]    /eh       {     #
-# |k   !%& ,.:;+dj{       +j     -j      _     #
-#  [   *^,:;,.,:.-l        {      |gcedj }     #
-# >)     .,;:.   ,_       3_           =0|cdfi #
-#({       :      0[        /i          [     /j#
-#@&               |>e       -><a)>d    _      -#
-#*^!%               +<b           +ab }]       #
-#  @^&!  >e   >c      /)d          (f<{        #
-#    %!@^ +c   -ab      -ac       }{           #
-#     *%&  |<>)d |)e      |b     (]            #
-#      @!^     /b  +d     1=   uiH2            #
-#       *&%     -e  /c    (] vjnws             #
-#        ^@& d   |c  -b   [ tp~yr              #
-#        @*%!/e   +d2 =  }{ h~~lz              #
-#        ^!&*@|c   -FiGjkHBq~~~ws 3})a>c       #
-#  %^@^*!&@%^&*+b  un~~~wrCDDEgA(a<]   _       #
-#  ^!&%@%* !%@& -Fkp~~~~lz  un~mGjkz           #
-#               vq~~~~~~~mAtp~~~~~~miA^%*!&@&*@#
-#               h~~~~~~~~~lq~~~~~~~~~ljkA@*!%!!#
+#~~~A        L~~B                              #
+#~~~GJ   MNPONK{H                              #
+#~~~~GPOQ~~IH@om                               #
+#~~~~~IDEF{}v;f.        ow nrtx                #
+#~~~~~C   RJj:g15       fcsl  dqw    nv        #
+#~~~~~B   LBe.h26       i      nz* oskcrw      #
+#~~~~~GJ   Hg,i31              gcrqm   0dx     #
+#~~~~~~A      j43             ol         g     #
+#~~ID~~B*     f 2       2     h          btqy  #
+#~~B KE}qrw             1     i            nk  #
+#~~A      av     om   0   $  nk            g   #
+#~~C       bsx  nl     36    j             e   #
+#~~GJ        ctuk   2i412pusqm             h   #
+#~~~B              ntk 34f                nl   #
+#~~I}rqsv   265  oul@ 16 e  j             i$   #
+#~IH    ct 1431 pm          i             f    #
+#EH        26$ .h,          aty          pm    #
+#        135   :bw;      @    h0         j     #
+#       26    ;,:dy           cw         h     #
+#x0     54  ,.:;. j            g         g     #
+#dw     31  ;quw:,f       h    bsv       i     #
+# ay   346 ,.:;crxi       cx     dx      f     #
+#  g   25,:;,.,:.dz        i      auqsrx j     #
+# nl     .,;:.   ,f       $f           e@aqrtw #
+#ki       :      @g        bC          g     bD#
+#16               ans       dnmolnr    f      d#
+#2534               cmp           cop jh       #
+#  1563  ns   nq      blr          ktmi        #
+#    4315 cq   dop      doq       ji           #
+#     246  amnlr als      ap     kh            #
+#      135     bp  cr     *e   NC<0            #
+#       264     ds  bq    kh ODHPL             #
+#        516 r   aq  dp   g MI~QK              #
+#        1243bs   cr0 e  ji B~~FR              #
+#        53621aq   d{C}DE<TJ~~~PL $jlonq       #
+#  451523614562cp  NH~~~PKUVVWASkomh   f       #
+#  5364142 3416 d{EI~~~~FR  NH~G}DER           #
+#               OJ~~~~~~~GSMI~~~~~~GCS542361621#
+#               B~~~~~~~~~FJ~~~~~~~~~FDES123433#
 ################################################
 `
-        .split(/\n/).slice(1,-1),
+        .split(/\n/).slice(1,-1).map((row, i) =>
+            row.split('').map(c => mapencoding[i <= 24 ? 0: 1][c])
+        ),
     oob = [
         // [CORPSX, CORPSY, MSTRNG, SWAP, ARRIVE, CORPT, CORPNO
         // German
@@ -306,7 +332,7 @@ const
         [19, 2, 98, 253, 4, 4, 6],
     ].map((vs, i) => {
         let u = {
-            PLAYER: i < 54 ? 0: 1,
+            PLAYER: (vs[3] & 0x80) ? 1 : 0,  // german=0, russian=1; equiv i >= 55
             X: vs[0], Y: vs[1],
             MSTRNG: vs[2], CSTRNG: vs[2],
             ICON: vs[3],
@@ -345,8 +371,7 @@ const
 
     <script type="text/javascript">
 function hexcolor(v) {
-    if (typeof v === 'string') v = parseInt(v, 16);
-    return colormap[Math.floor(v/2)];
+    return colormap[Math.floor(parseInt(v, 16)/2)];
 }
 
 function atasciichrclr(c) {
@@ -382,7 +407,7 @@ function putchrs(win, data, chrclr, idfn, rowcol) {
         .data(d => d)
       .join('div')
         .datum(chrclr)
-        .attr('class', ([_, clr]) => 'chr fgclr-' + clr)
+        .attr('class', ([_, clr]) => 'chr fg-' + clr)
         .style("-webkit-mask-position", ([chr, _]) => `${-(chr%16)*8}px ${-Math.floor(chr/16)*8}px`)
         ;
 }
@@ -392,14 +417,7 @@ putchrs('#date-window', ['June 22, 1941'])
 putchrs('#info-window', ['EASTERN FRONT 1941', 'COPYRIGHT 1981 CHRIS CRAWFORD'])
 putchrs('#err-window', ['PLEASE ENTER YOUR ORDERS NOW'])
 
-function mapchrclr(d) {
-    const c = fontmap.indexOf(d),
-        clr = c >> 6,
-        chr = (c & 0x3f) + 0x40 * (this.parentNode.dataset.rowIndex <= 24 ? 2: 3);
-    return [chr, clr];
-}
-putchrs('#terrain', mapdata, mapchrclr);
-
+putchrs('#terrain', mapdata, ([c, t]) => [c, 'terr' + t]);
 
 putchrs(
     '#unit-overlay',
@@ -409,6 +427,19 @@ putchrs(
     u => [u.Y, u.X]
 );
 
+var map = d3.select('#map')
+
+map.selectAll('.row').style('background-color', hexcolor('02'));
+map.selectAll('.fgclr-0').style('background-color', hexcolor('D6'));
+map.selectAll('.row:nth-child(n+25) .fgclr-0').style('background-color', hexcolor('28'));
+map.selectAll('.fgclr-1').style('background-color', hexcolor('0C'));
+map.selectAll('.fgclr-2').style('background-color', hexcolor('94'));
+map.selectAll('.fgclr-3').style('background-color', hexcolor('46'));
+
+terraintypes.forEach((t, i) => {
+    map.selectAll('.fg-terr' + i).style('background-color', hexcolor(t.color));
+    if (t.altcolor) map.selectAll('.fg-terr' + (16 + i)).style('background-color', hexcolor(t.altcolor));
+})
 
 //TODO - debug colors
 let colors = ['B0', '6A', '0C', '94', '46', '1A', '28', '22', '8A', '00', '3A', 'D4'];
@@ -442,14 +473,6 @@ err message     D4
 
 d3.selectAll('#unit-overlay .row').classed('blink', true);
 
-var map = d3.select('#map')
-
-map.selectAll('.row').style('background-color', hexcolor('02'));
-map.selectAll('.fgclr-0').style('background-color', hexcolor('D6'));
-map.selectAll('.row:nth-child(n+25) .fgclr-0').style('background-color', hexcolor('28'));
-map.selectAll('.fgclr-1').style('background-color', hexcolor('0C'));
-map.selectAll('.fgclr-2').style('background-color', hexcolor('94'));
-map.selectAll('.fgclr-3').style('background-color', hexcolor('46'));
 
 // TODO map south should have fgclr-0 => 28
 

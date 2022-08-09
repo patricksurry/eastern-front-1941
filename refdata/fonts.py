@@ -192,37 +192,40 @@ print(sorted(counts.keys()))
 # Create our own base-64ish encoding for the map, since only 67 distinct
 # values can appear.
 
-#         0         1         2         3         4         5         6
-#         0123456789012345678901234567890123456789012345678901234567890123
-map64 = r' @*!%^&0123,.;:|/+-=_[]{}()<>abcdefghijklmnpqrstuvwyzABCDEFGHxo#'
+map64 = [
+    # 0           1             2         3         4         5           6
+    # 0 123456 7890   1234 56789012345678901234567890 123456789012345678 9012 3
+    ' |123456|@*0$|||,.;:|abcdefghijklmnopqrstuvwxyz|ABCDEFGHIJKLMNOPQR|{}??|~#',
+    ' |123456|@*0$|||,.;:|abcdefghijklmnopqrst|ABCDEFGHIJKLMNOPQRSTUVW|{}<??|~#'
+]
 
-assert len(map64) == 64 and len(set(map64)) == 64
+assert all(len(set(s)) == 63 + 2 for s in map64)
 
-encoding = {
-    i + (0 if i < 7 else (64 if i < 11 else (128 if i < 61 else 64))): c
-    for (i, c) in enumerate(map64)
+# EFT18M.ASM: 8160 TERRTY
+{
+    "clear": 0,
+    "mountain": 1,  # forest
+    "city": 2,
+    "frozen swamp": 3,
+    "frozen river": 4,
+    "swamp": 5,
+    "river": 6,
+    "coastline": 7,
+    "estuary": 8,
+    "border": 9  # and impassable
 }
-encoding[253] = 'X'
-encoding[254] = 'O'
-encoding[191] = '~'
-
-assert len(encoding) == len(set(encoding.values()))
-
-assert set(counts.keys()) - set(encoding.keys()) == set()
-
-map256 = ''.join(encoding.get(i, '?') for i in range(256))
-map256nl = '\n'.join(
-    map256[page:page+64]
-    for page in range(0, 256, 64)
-)
-print(map256nl)
 
 asciimap = '\n'.join(
-    ''.join(map256[mapdata[row*cols + col]] for col in range(cols))
+    ''.join(
+        map64[row > row_mid].replace('|', '')[-1 if c == 127 else c & 0x3f]
+        for col in range(cols)
+        for c in [mapdata[row*cols + col]]
+    )
     for row in range(rows)
 )
 
 assert '?' not in asciimap
+assert '|' not in asciimap
 
 print(asciimap)
 
