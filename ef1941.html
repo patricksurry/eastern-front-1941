@@ -1,15 +1,13 @@
 <html>
     <head>
         <style>
-body {
-    background-color: #999;
-}
 #screen {
     width: 320px;
     height: 192px;
     background-color: blue;
-    transform-origin: top left;
+    transform-origin: top center;
     transform:  scale(4);
+    margin: 0 auto;
 }
 .section {
     width: 100%;
@@ -41,7 +39,7 @@ body {
     width: 384px;
     height: 328px;
     transform-origin: top left;
-    transform: scale(1);
+/*    transform: scale(2); */
 }
 #unit-overlay {
     position: absolute;
@@ -112,9 +110,9 @@ const
         let lookup = {}, ch=0;
         enc.split('|').forEach((s, t) =>
             s.split('').forEach(c => {
-                let alt = ((t == 1 && i == 0) || ch == 0x40) ? 0x10 : 0;
+                let alt = ((t == 1 && i == 0) || ch == 0x40) ? 1 : 0;
                 if (ch==0x40) ch--;
-                lookup[c] = [0x80 + i * 0x40 + ch++, t + alt];
+                lookup[c] = [0x80 + i * 0x40 + ch++, t, alt];
             })
         );
         return lookup;
@@ -374,6 +372,10 @@ function hexcolor(v) {
     return colormap[Math.floor(parseInt(v, 16)/2)];
 }
 
+function setcolor(selector, c) {
+    d3.selectAll(selector).style('background-color', hexcolor(c));
+}
+
 function atasciichrclr(c) {
     let x = c.charCodeAt(0) % 128,
         chr = (x >= 32 && x < 96) ? x - 32 : (x < 32 ? x + 48: x),
@@ -417,29 +419,29 @@ putchrs('#date-window', ['June 22, 1941'])
 putchrs('#info-window', ['EASTERN FRONT 1941', 'COPYRIGHT 1981 CHRIS CRAWFORD'])
 putchrs('#err-window', ['PLEASE ENTER YOUR ORDERS NOW'])
 
-putchrs('#terrain', mapdata, ([c, t]) => [c, 'terr' + t]);
+putchrs('#terrain', mapdata, ([c, t, alt]) => [c, 'terrain-' + (alt ? 'alt-': '') + t]);
 
 putchrs(
     '#unit-overlay',
     oob.filter(u => u.ARRIVE == 0),
-    u => [u.ICON & 0x3f | 0x80, u.ICON >> 6],
+    u => [u.ICON & 0x3f | 0x80, (u.ICON & 0x80) ? 'russian' : 'german'],
     u => u.LABEL,
     u => [u.Y, u.X]
 );
 
-var map = d3.select('#map')
+setcolor('#map .row', '02');
 
-map.selectAll('.row').style('background-color', hexcolor('02'));
-map.selectAll('.fgclr-0').style('background-color', hexcolor('D6'));
-map.selectAll('.row:nth-child(n+25) .fgclr-0').style('background-color', hexcolor('28'));
-map.selectAll('.fgclr-1').style('background-color', hexcolor('0C'));
-map.selectAll('.fgclr-2').style('background-color', hexcolor('94'));
-map.selectAll('.fgclr-3').style('background-color', hexcolor('46'));
+setcolor('.fg-russian', '46')
+setcolor('.fg-german', '0C')
+
+d3.selectAll('#unit-overlay .row').classed('blink', true);
+
 
 terraintypes.forEach((t, i) => {
-    map.selectAll('.fg-terr' + i).style('background-color', hexcolor(t.color));
-    if (t.altcolor) map.selectAll('.fg-terr' + (16 + i)).style('background-color', hexcolor(t.altcolor));
+    setcolor('.fg-terrain-' + i, t.color);
+    if (t.altcolor) setcolor('.fg-terrain-alt-' + i, t.altcolor);
 })
+
 
 //TODO - debug colors
 let colors = ['B0', '6A', '0C', '94', '46', '1A', '28', '22', '8A', '00', '3A', 'D4'];
@@ -471,24 +473,16 @@ err message     D4
 
 // in some character modes COL2 is the background instead of COLBK
 
-d3.selectAll('#unit-overlay .row').classed('blink', true);
-
-
-// TODO map south should have fgclr-0 => 28
-
-d3.selectAll('#date-window .row').style('background-color', hexcolor('B0'));
-d3.selectAll('#date-window .fgclr-0').style('background-color', hexcolor('6A'));
-d3.selectAll('.date-rule').style('background-color', hexcolor('1A'));
-
-d3.selectAll('.info-rule').style('background-color', hexcolor('02'));  // same as map
-d3.selectAll('#info-window .row').style('background-color', hexcolor('22'));
-d3.selectAll('#info-window .fgclr-0').style('background-color', hexcolor('28'));
-d3.selectAll('#info-window .fgclr-2').style('background-color', hexcolor('28'));
-
-d3.selectAll('.err-rule').style('background-color', hexcolor('8A'));
-d3.selectAll('#err-window .row').style('background-color', hexcolor('3A'));
-d3.selectAll('#err-window .fgclr-1').style('background-color', hexcolor('00'));
-d3.selectAll('#err-window .fgclr-2').style('background-color', hexcolor('3A'));
+setcolor('body', 'D4')
+setcolor('#date-window .row', 'B0');
+setcolor('#date-window .fg-0','6A');
+setcolor('.date-rule', '1A');
+setcolor('.info-rule', '02');  // same as map
+setcolor('#info-window .row', '22');
+setcolor('#info-window .fg-0', '28');
+setcolor('.err-rule', '8A');
+setcolor('#err-window .row', '3A');
+setcolor('#err-window .fg-0', '3A');
 
         </script>
     </body>
