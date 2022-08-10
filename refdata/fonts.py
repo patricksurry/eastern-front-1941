@@ -158,7 +158,7 @@ rgba = np.zeros(bitmap.shape + (4,), dtype='uint8')
 rgba[:, :, :] = bitmap[:, :, np.newaxis]*255
 im = Image.fromarray(rgba)
 #im = Image.fromarray(bitmap*255)
-im.save('fontmap.png')
+im.save('fontmap.png')  # base64 => url(data:image/png;base64,iVBORw...)
 # im.show()
 # sys.exit()
 
