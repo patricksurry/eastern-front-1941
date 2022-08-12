@@ -38,14 +38,21 @@
     transform-origin: top left;
     transform: scale(1);
 }
-#unit-overlay, #kreuze-overlay {
+#unit-overlay, #kreuze-overlay, #label-overlay {
     position: absolute;
     bottom: 8px;
     right: 8px;
 }
-#unit-overlay {z-index: 2}  /* create stacking context for masks */
-#kreuze-overlay {z-index: 1}
-
+.label {
+    position: absolute;
+    font-family: verdana;
+    color: #ccc;  /*TODO now dynamic */
+    font-size: 2pt;
+    display: flex;
+    justify-content: center;
+    width: 0;
+    white-space: nowrap;
+}
 @keyframes pulse {
   0% {-webkit-transform: scale(1.0); }
   100% {-webkit-transform: scale(1.2); }

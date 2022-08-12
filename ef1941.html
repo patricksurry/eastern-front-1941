@@ -12,8 +12,9 @@
         <div id="map-window" class="section">
             <div id="map">
                 <div id="terrain"></div>
-                <div id="kreuze-overlay"></div>
+                <div id="label-overlay"></div>
                 <div id="unit-overlay"></div>
+                <div id="kreuze-overlay"></div>
             </div>
         </div>
         <div class="info-rule rule section"></div>
@@ -36,23 +37,6 @@ function setclr(sel, c) {
 function atascii(c) {
     let x = c.charCodeAt(0) % 128;
     return (x >= 32 && x < 96) ? x - 32 : (x < 32 ? x + 48: x);
-}
-
-function zc(k) {
-    // https://en.wikipedia.org/wiki/Z-order_curve
-    const z16 = [
-        0b00000000, 0b00000001, 0b00000100, 0b00000101,
-        0b00010000, 0b00010001, 0b00010100, 0b00010101,
-        0b01000000, 0b01000001, 0b00000100, 0b00000101,
-        0b01010000, 0b01010001, 0b01010100, 0b01010101,
-    ];
-    let v = z16[k & 0xf];
-    if (k > 16) v += zc(k>>4)<<8;
-    return v;
-}
-
-function zcurve(i, j) {
-    return (zc(i) << 1) | zc(j);
 }
 
 function putchrs(win, data, fg, bg, chrfn, idfn, rowcol) {
@@ -91,66 +75,214 @@ function putchrs(win, data, fg, bg, chrfn, idfn, rowcol) {
         });
 }
 
-setclr('body', 'D4')
+var turninfo = {
+    turn: 0,
+    icelat: 39,
+}
+
+function nextturn() {
+    turninfo.turn++;
+
+    let dt = new Date('1941/06/15');
+    dt.setDate(dt.getDate() + 7*turninfo.turn);
+
+    let label = dt.toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' });
+        minfo = monthdata[dt.getMonth()],  // note 0-indexed
+        earth = {'snow': '0A', 'mud': '02', 'clear': '10'}[minfo.weather],
+        trees = minfo.trees;
+
+    putchrs('#date-window', [label], '6A', 'B0')
+    //TODO use setclr ?
+    d3.selectAll('#terrain .chr').filter(d => d.terrain == 1 && d.alt == 1)
+        .style('background-color', hexcolor(trees));
+    //TODO hexcolor?
+    d3.selectAll('#label-overlay .label').style('color', minfo.weather == 'snow' ? '#333': '#ccc');
+    setclr('#terrain .row', earth);
+
+    if (minfo.rivers) {
+        // => thaw swamp/rivers
+        // ICELAT -= [7,14] incl]; clamp 1-39 incl
+        // small bug? freeze chrs $0B - $29 (exclusive, seems like it could freeze Kerch straight?)
+
+        let oldlat = turninfo.icelat,
+            change = Math.floor(Math.random()*8) + 7,
+            dir = minfo.rivers == 'freeze' ? -1 : +1;
+        turninfo.icelat = Math.max(1, Math.min(39, turninfo.icelat + dir * change));
+        //TODO update terrain type and color between oldlat/icelat
+
+        d3.selectAll('#terrain .chr').filter(d => d.y >= turninfo.icelat && (d.terrain == 5 || d.terrain == 6))
+            .style('background-color', hexcolor('0C'));
+
+    }
+
+    console.log(JSON.stringify(turninfo));
+}
+
+setclr('body', 'D4');
 setclr('.date-rule', '1A');
 setclr('.info-rule', '02');  // same as map
 setclr('.err-rule', '8A');
 
-putchrs('#date-window', ['June 22, 1941'], '6A', 'B0')
 putchrs('#info-window', ['EASTERN FRONT 1941', 'COPYRIGHT 1981 CHRIS CRAWFORD'], '28', '22')
 putchrs('#err-window', ['PLEASE ENTER YOUR ORDERS NOW'], '22', '3A')
 
 putchrs(
     '#terrain',
     mapdata,
-    ([c, t, alt]) => {
-        let ter = terraintypes[t];
-        return alt ? ter.altcolor : ter.color
+    d => {
+        let ter = terraintypes[d.terrain];
+        return d.alt ? ter.altcolor : ter.color
     },
     '02',
-    ([c, t, alt]) => c
-);
+    d => d.icon
+).attr('title', JSON.stringify);
 
-var kreuze = {X: 30, Y: 18};
+d3.select('#label-overlay')
+    .selectAll('div.label')
+    .data(cities)
+  .join('div')
+    .classed('label', true)
+    .text(d => d.label)
+    .style('right', d => `${d.x * 8 + 4}px`)
+    .style('bottom', d => `${d.y * 8 + 10}px`)
+    ;
 
-putchrs('#kreuze-overlay', [kreuze], '1A', '02', _ => 256, _ => 0, d => [d.Y, d.X]);
+nextturn();
 
-d3.select('#kreuze-overlay .chr').node().scrollIntoView({block: "center", inline: "center"});
+var target = {x: 0, y: 0};
+
+function showtarget(x, y) {
+    target.x = x;
+    target.y = y;
+    d3.select('#kreuze-overlay').style('visibility', 'visible');
+    putchrs('#kreuze-overlay', [target], '1A', '02', _ => 256, _ => 0, d => [d.y, d.x]);
+    centertarget();
+}
+
+function centertarget() {
+    d3.select('#kreuze-overlay .chr').node().scrollIntoView({block: "center", inline: "center"});
+}
+
+function hidetarget() {
+    d3.select('#kreuze-overlay').style('visibility', 'hidden');
+    d3.select('.blink').classed('blink', false);
+}
+
 // d3.select('#map .row:nth-child(19) .chr:nth-child(26)').style('background-color', 'yellow').node().scrollIntoView({block: "center", inline: "center"});
 
+function selectunit(u) {
+    console.log(current);
+    hidetarget();
+    showtarget(u.x, u.y);
+    d3.selectAll('#unit-overlay .chr')
+        .filter(d => d.id == u.id)
+        .each(function() {
+            d3.select(this.parentNode).classed('blink', true);
+        });
+}
+
 function unitclick(ev, u) {
-    this.scrollIntoView({block: "center", inline: "center"});
-    putchrs('#info-window', [u.LABEL, ' '], '28', '22')
-    if (u.PLAYER == 0) {
-        d3.select('.blink').classed('blink', false);
-        current = german.findIndex(d => d.ID == u.ID);
-        console.log(current);
-        putchrs('#kreuze-overlay', [kreuze], '1A', '02', _ => 256, _ => 0, d => [u.Y, u.X]);
-        d3.select(this.parentNode).classed('blink', true);
+    putchrs('#info-window', [u.label, ' '], '28', '22')
+    console.log(JSON.stringify(u))
+    if (u.player == 0) {
+        current = german.findIndex(d => d.id == u.id);
+        selectunit(u);
+    } else {
+        hidetarget();
     }
 }
 
-var active = oob.filter(u => u.ARRIVE == 0),
-    german = active.filter(u => u.PLAYER == 0)
-        .sort((a, b) => zcurve(a.X, a.Y) - zcurve(b.X, b.Y)),
+function niceorder(units) {
+    return units.sort((a, b) => ((a.y - b.y) << 8) + (a.x - b.x));
+}
+
+var active = oob.filter(u => u.arrive == 0),
+    german = niceorder(active.filter(u => u.player == 0)),
     current = null;
 
 putchrs(
     '#unit-overlay',
     active,
-    u => u.ICON & 0x80 ? '46' : '0C',
+    u => u.player ? '46' : '0C',
     '02',
-    u => u.ICON & 0x3f | 0x80,
-    u => u.LABEL,
-    u => [u.Y, u.X]
+    u => u.icon,
+    u => u.id,
+    u => [u.y, u.x]
 ).on('click', unitclick);
 
 
+/* debug blocked sides */
+/*
+putchrs(
+    '#label-overlay',
+    blocked[0].map(d => [d.y+0.5, d.x]).concat(blocked[1].map(d => [d.y, d.x+0.5])),
+    '6A', '02',
+    d => Math.floor(d[0]) != d[0] ? 82 : 124,
+    (d, i) => i,
+    d => d
+);
+*/
+
+function stepdir(x, y, dir) {
+    let {x: dx, y: dy} = directions[dir],
+        x2 = x + dx,
+        y2 = y + dy,
+        legal = (
+            mapdata[39 - y2][46 - x2].terrain < 9
+            && !(
+                ((dir & 0x1) == 0)  // north/south
+                ? blocked[0].find(d => d.x == x && d.y == (dir == 0 ? y : y2))
+                : blocked[1].find(d => d.x == (dir == 3 ? x : x2) && d.y == y)
+            ));
+    return legal ? [x2, y2]: [x, y];
+}
+
+var zoom = 1;
+document.addEventListener('keydown', function (e) {
+    console.log(e.key);
+    switch (e.key) {
+        case 'z':
+            zoom = zoom == 1 ? 2: 1;
+            d3.select('#map').style('transform', `scale(${zoom})`);
+            centertarget();
+            break;
+        case 'n':
+            current = current === null ? 0 : ((current + 1) % german.length);
+            selectunit(german[current]);
+            break;
+        case 'p':
+            current = (current + german.length - 1) % german.length;
+            selectunit(german[current]);
+            break;
+
+
+        case 'Enter':
+            nextturn();
+            break;
+        case 'ArrowUp':
+            showtarget(...stepdir(target.x, target.y, 0));
+            break;
+        case 'ArrowRight':
+            showtarget(...stepdir(target.x, target.y, 1));
+            break;
+        case 'ArrowDown':
+            showtarget(...stepdir(target.x, target.y, 2));
+            break;
+        case 'ArrowLeft':
+            showtarget(...stepdir(target.x, target.y, 3));
+            break;
+        default:
+            console.log(`Ignoring ${e.key}`)
+            return;
+    }
+    e.preventDefault();
+});
 
 
 //TODO - debug colors
-/*
-let colors = ['B0', '6A', '0C', '94', '46', '1A', '28', '22', '8A', '00', '3A', 'D4'];
+// let colors = ['B0', '6A', '0C', '94', '46', '1A', '28', '22', '8A', '00', '3A', 'D4'];
+let colors = ['58','DC','2F','00','6A','0C','94','46','B0'];  // COLTAB
+
 d3.select('#screen')
     .append('div')
     .selectAll('span')
@@ -159,9 +291,13 @@ d3.select('#screen')
     .style('background-color', hexcolor)
     .style('color', '#666')
     .text(d => d);
-*/
+
 /*
 Colors PDF p67
+
+M.ASM
+8620 COLTAB .BYTE $58,$DC,$2F,0,$6A,$C,$94,$46,$B0
+
 
 Section         BK      0       1       2       3
 vert blank      B0      6A      OC      94      46
@@ -174,22 +310,8 @@ err hrule                       00      3A
 err message     D4
 */
 
-// tree color by month EFT18D.ASM
-// TRTAB    0,$12,$12,$12,$D2,$D8,$D6,$C4,$D4,$C2,$12,$12,$12
-
 // in some character modes COL2 is the background instead of COLBK
 
-
-var zoom = 1;
-document.addEventListener('keydown', function (e) {
-    console.log(e.key);
-    if (e.key == 'z') {
-        zoom = zoom == 1 ? 2: 1;
-        d3.select('#map').style('transform', `scale(${zoom})`);
-    }
-//    e.preventDefault();
-    //  ArrowRight Left Up Down, Enter, ' '
-});
 
     </script>
 </body>

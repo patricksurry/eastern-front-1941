@@ -164,7 +164,7 @@ im.save('fontmap.png')  # base64 => url(data:image/png;base64,iVBORw...)
 
 # map @ 0x64ff - 0x6d60 = 2145   46 x 40 = 1840
 rows, cols = 41, 48
-row_mid = 24
+row_mid = 25
 offset = 0x6500 - baseoff
 mapdata = memmap[offset:offset+rows*cols]
 sep = '\n' + ('-'*(cols*9+1)) + '\n'

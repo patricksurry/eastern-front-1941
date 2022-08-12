@@ -2,17 +2,167 @@ const
     // Antic NTSC palette via https://en.wikipedia.org/wiki/List_of_video_game_console_palettes#NTSC
     // 128 colors indexed via high 7 bits, e.g. 0x00 and 0x01 refer to the first entry
     colormap = ["#000000",  "#404040",  "#6c6c6c",  "#909090",  "#b0b0b0",  "#c8c8c8",  "#dcdcdc",  "#ececec",  "#444400",  "#646410",  "#848424",  "#a0a034",  "#b8b840",  "#d0d050",  "#e8e85c",  "#fcfc68",  "#702800",  "#844414",  "#985c28",  "#ac783c",  "#bc8c4c",  "#cca05c",  "#dcb468",  "#ecc878",  "#841800",  "#983418",  "#ac5030",  "#c06848",  "#d0805c",  "#e09470",  "#eca880",  "#fcbc94",  "#880000",  "#9c2020",  "#b03c3c",  "#c05858",  "#d07070",  "#e08888",  "#eca0a0",  "#fcb4b4",  "#78005c",  "#8c2074",  "#a03c88",  "#b0589c",  "#c070b0",  "#d084c0",  "#dc9cd0",  "#ecb0e0",  "#480078",  "#602090",  "#783ca4",  "#8c58b8",  "#a070cc",  "#b484dc",  "#c49cec",  "#d4b0fc",  "#140084",  "#302098",  "#4c3cac",  "#6858c0",  "#7c70d0",  "#9488e0",  "#a8a0ec",  "#bcb4fc",  "#000088",  "#1c209c",  "#3840b0",  "#505cc0",  "#6874d0",  "#7c8ce0",  "#90a4ec",  "#a4b8fc",  "#00187c",  "#1c3890",  "#3854a8",  "#5070bc",  "#6888cc",  "#7c9cdc",  "#90b4ec",  "#a4c8fc",  "#002c5c",  "#1c4c78",  "#386890",  "#5084ac",  "#689cc0",  "#7cb4d4",  "#90cce8",  "#a4e0fc",  "#003c2c",  "#1c5c48",  "#387c64",  "#509c80",  "#68b494",  "#7cd0ac",  "#90e4c0",  "#a4fcd4",  "#003c00",  "#205c20",  "#407c40",  "#5c9c5c",  "#74b474",  "#8cd08c",  "#a4e4a4",  "#b8fcb8",  "#143800",  "#345c1c",  "#507c38",  "#6c9850",  "#84b468",  "#9ccc7c",  "#b4e490",  "#c8fca4",  "#2c3000",  "#4c501c",  "#687034",  "#848c4c",  "#9ca864",  "#b4c078",  "#ccd488",  "#e0ec9c",  "#442800",  "#644818",  "#846830",  "#a08444",  "#b89c58",  "#d0b46c",  "#e8cc7c",  "#fce08c"],
+    // mimic logic from STKTAB looking for zeroed pins
+    // see https://forums.atariage.com/topic/275027-joystick-value-logic/:
+    directions = [
+        {x: 0,  y: 1},   // up    1110 => 0 - north
+        {x: -1, y: 0},   // right 0111 => 1 - east
+        {x: 0,  y: -1},  // down  1101 => 2 - south
+        {x: 1,  y: 0},   // left  1011 => 3 - west
+    ],
+    // D.ASM:5500 BHX1 .BYTE ... / BHY1 / BHX2 / BHY2
+    // there are 11 impassable square-sides
+    // the original game stores 22 sets of (x1,y1),(x2,y2) coordinates
+    // to enumerate the to/from coordinates in both senses
+    // but we can reduce from 88 to 22 bytes by storing a list of
+    // squares you can't move north from (or south to), and likewise west from (or east to)
+    blocked = [
+        // can't move north from here (or south into here)
+        [
+            {x: 40, y: 35},
+            {x: 39, y: 35},
+            {x: 38, y: 35},
+            {x: 35, y: 36},
+            {x: 34, y: 36},
+            {x: 22, y: 3},
+            {x: 15, y: 6},
+            {x: 14, y: 7},
+            {x: 19, y: 3}
+        ],
+        // can't move west from here (or east into here)
+        [
+            {x: 35, y: 33},
+            {x: 14, y: 7},
+        ]
+    ],
+    // D.ASM:2690 TRTAB
+    // M.ASM:2690 season calcs
+    monthdata = [
+        {label: "January",   trees: '12', weather: "snow"},
+        {label: "February",  trees: '12', weather: "snow"},
+        {label: "March",     trees: '12', weather: "snow", rivers: "thaw"},
+        {label: "April",     trees: 'D2', weather: "mud"},
+        {label: "May",       trees: 'D8', weather: "clear"},
+        {label: "June",      trees: 'D6', weather: "clear"},
+        {label: "July",      trees: 'C4', weather: "clear"},
+        {label: "August",    trees: 'D4', weather: "clear"},
+        {label: "September", trees: 'C2', weather: "clear"},
+        {label: "October",   trees: '12', weather: "mud"},
+        {label: "November",  trees: '12', weather: "snow", rivers: "freeze"},
+        {label: "December",  trees: '12', weather: "snow"},
+    ],
+/*
+
+
+
+SEASN1 - x40 unfrozen, x80 frozen
+SEASN2 - ff fall or 00 spring - to move ICELAT north or south
+SEASN3 - ff fall or 01 in spring
+EARTH - color of earth by season
+
+month 1 (jan)
+    SEASN1 = x80
+    SEASN2 = xff
+    SEASN3 = xff
+month 3 (mar):
+    => thaw swamp/rivers
+    ICELAT -= [7,14] incl]; clamp 1-39 incl
+    small bug? freeze chrs $0B - $29 (exclusive, seems like it could freeze Kerch straight?)
+month 4 (apr):
+    EARTH = 2
+    SEASN1 = x40
+    SEASN2 = 0
+    SEASN3 = 1
+month 5 (may):
+    EARTH = 0x10
+month 10 (oct):
+    EARTH = 2
+month 11 (nov):
+    EARTH = x0A
+    => freeze swamp/rivers
+
+
+M.ASM:8600 PSXVAL .BYTE $E0,0,0,$33,$78,$D6,$10,$27,$40,0,1,15,6,41,0,1
+
+0520 XPOSL *=*+5 Horizontal position of screen window [$E0,0,0,$33,$78]
+0530 TRCOLR *=*+1 [$D6]
+0540 EARTH *=*+1 [$10]
+0550 ICELAT *=*+1 [$27]
+0560 SEASN1 *=*+1 [$40]
+0570 SEASN2 *=*+1 [0]
+0580 SEASN3 *=*+1 [1]
+0590 DAY *=*+1  [15]  15/6/41 => 22/6/41 on first init
+0600 MONTH *=*+1 [6]
+0610 YEAR *=*+1 [41]
+0620 BUTFLG *=*+1 [0]
+0630 BUTMSK *=*+1 [1]
+
+
+
+D.ASM:
+
+// tree color by month EFT18D.ASM
+// 2690 TRTAB    0,$12,$12,$12,$D2,$D8,$D6,$C4,$D4,$C2,$12,$12,$12
+
+
+// index into TRNTAB as function of month
+5430 SSNCOD .BYTE 40,40,40,20,0,0,0,0,0,20,40,40
+
+inf * 10, armor * 10; x summer/mud/snow = 60
+number of subturns (of 32 total) to enter
+5440 TRNTAB .BYTE 6,12,8,0,0,18,14,8,20,128
+5450  .BYTE 4,8,6,0,0,18,13,6,16,128
+5460  .BYTE 24,30,24,0,0,30,30,26,28,128
+5470  .BYTE 30,30,30,0,0,30,30,30,30,128
+5480  .BYTE 10,16,10,12,12,24,28,12,24,128
+5490  .BYTE 6,10,8,8,8,24,28,8,20,128
+
+blocked paths - 11 pairs of X1,Y1 <=> X2,Y2 in both senses
+5500 BHX1 .BYTE 40,39,38,36,35,34,22,15,15,14
+5510  .BYTE 40,39,38,35,35,34,22,15,14,14,19,19
+5520 BHY1 .BYTE 35,35,35,33,36,36,4,7,7,8
+5530  .BYTE 36,36,36,33,37,37,3,6,7,7,4,3
+5540 BHX2 .BYTE 40,39,38,35,35,34,22,15,14,14
+5550  .BYTE 40,39,38,36,35,34,22,15,15,14,19,19
+5560 BHY2 .BYTE 36,36,36,33,37,37,3,6,7,7
+5570  .BYTE 35,35,35,33,36,36,4,7,7,8,3,4
+*/
+    cities = [
+// M.ASM:8630 MPTS / MOSCX / MOSCY - special city victory points
+// oddly Sevastpol is assigned points but is not coded as a city in the map?
+        {owner: 1, x: 33, y: 36, label: 'Leningrad', points: 10},
+        {owner: 1, x: 13, y: 33, label: 'Gorky'},
+        {owner: 1, x: 7,  y: 32, label: 'Kazan'},
+        {owner: 1, x: 38, y: 30, label: 'Riga'},
+        {owner: 1, x: 24, y: 28, label: 'Rzhev'},
+        {owner: 1, x: 20, y: 28, label: 'Moscow', points: 20},
+        {owner: 1, x: 26, y: 24, label: 'Smolensk'},
+        {owner: 1, x: 3,  y: 24, label: 'Kubyshev'},
+        {owner: 1, x: 33, y: 22, label: 'Minsk'},
+        {owner: 1, x: 21, y: 21, label: 'Orel'},
+        {owner: 1, x: 15, y: 21, label: 'Voronezh'},
+        {owner: 0, x: 44, y: 19, label: 'Warsaw'},
+        {owner: 1, x: 20, y: 15, label: 'Kharkov'},
+        {owner: 1, x: 6,  y: 15, label: 'Stalingrad', points: 20},
+        {owner: 1, x: 29, y: 14, label: 'Kiev'},
+        {owner: 1, x: 20, y:  8, label: 'Dnepropetrovsk'},
+        {owner: 1, x: 12, y:  8, label: 'Rostov'},
+        {owner: 1, x: 26, y:  5, label: 'Odessa'},
+        {owner: 1, x: 12, y:  4, label: 'Krasnodar'},
+        // replace the first F => @ in the bottom row of the map for Sevastopol variant
+        //        {owner: 1, x: 20, y:  0, label: 'Sevastopol', points: 20},
+    ],
     terraintypes = [
-        { color: '02' },          // clear
-        { color: '28', altcolor: 'D6'},   // mountain & forest
-        { color: '0C', altcolor: '46'},   // city
-        { color: '0C'},           // frozen swamp
-        { color: '0C'},           // frozen river
-        { color: '94'},           // swamp
-        { color: '94'},           // river
-        { color: '94'},           // coastline
-        { color: '94'},           // estuary
-        { color: '94', altcolor: '0C'}    // border & sea
+        {color: '02' },          // 0 - clear
+        {color: '28', altcolor: 'D6'},   // 1 - mountain & forest
+        {color: '0C', altcolor: '46'},   // 2 - city
+        {color: '0C'},           // 3 - frozen swamp
+        {color: '0C'},           // 4 - frozen river
+        {color: '94'},           // 5 - swamp
+        {color: '94'},           // 6 - river
+        {color: '94'},           // 7 - coastline
+        {color: '94'},           // 8 - estuary
+        {color: '94', altcolor: '0C'}    // 9 - border & sea
     ],
     mapencoding = [
         // north and south parts of map are encoded from 6-bit hex to ascii
@@ -20,13 +170,13 @@ const
         ' |123456|@*0$|||,.;:|abcdefghijklmnopqrstuvwxyz|ABCDEFGHIJKLMNOPQR|{}??|~#',
         ' |123456|@*0$|||,.;:|abcdefghijklmnopqrst|ABCDEFGHIJKLMNOPQRSTUVW|{}<??|~#'
     ].map((enc, i) => {
-        // turn into a lookup of encoded char => [north/south, offset, terraintype]
+        // turn into a lookup of encoded char => [icon, terraintype, alt-flag]
         let lookup = {}, ch=0;
         enc.split('|').forEach((s, t) =>
             s.split('').forEach(c => {
                 let alt = ((t == 1 && i == 0) || ch == 0x40) ? 1 : 0;
                 if (ch==0x40) ch--;
-                lookup[c] = [0x80 + i * 0x40 + ch++, t, alt];
+                lookup[c] = {icon: 0x80 + i * 0x40 + ch++, terrain: t, alt: alt};
             })
         );
         return lookup;
@@ -59,7 +209,7 @@ const
 # ay   346 ,.:;crxi       cx     dx      f     #
 #  g   25,:;,.,:.dz        i      auqsrx j     #
 # nl     .,;:.   ,f       $f           e@aqrtw #
-#ki       :      @g        bC          g     bD#
+#ki       :      @g        bw          g     bx#
 #16               ans       dnmolnr    f      d#
 #2534               cmp           cop jh       #
 #  1563  ns   nq      blr          ktmi        #
@@ -77,7 +227,17 @@ const
 ################################################
 `
         .split(/\n/).slice(1,-1).map((row, i) =>
-            row.split('').map(c => mapencoding[i <= 24 ? 0: 1][c])
+            row.split('').map((c, j) => {
+                let o = Object.assign(
+                    {x: 46 - j, y: 39 - i},
+                    mapencoding[i <= 25 ? 0: 1][c]
+                );
+                if (o.terrain == 2) {
+                    let city = cities.find(d => d.x == o.x && d.y == o.y);
+                    if (city) o.alt = city.owner;
+                }
+                return o;
+            })
         ),
     oob = [
         // [CORPSX, CORPSY, MSTRNG, SWAP, ARRIVE, CORPT, CORPNO
@@ -243,23 +403,20 @@ const
         [20, 3, 102, 253, 4, 4, 5],
         [19, 2, 98, 253, 4, 4, 6],
     ].map((vs, i) => {
+        const types = ['', 'SS', 'FINNISH', 'RUMANIAN', 'ITALIAN', 'HUNGARAN', 'MOUNTAIN', 'GUARDS'],
+            variants = ['INFANTRY', 'TANK', 'CAVALRY', 'PANZER', 'MILITIA', 'SHOCK', 'PARATRP', 'PZRGRNDR'];
         let u = {
-            ID: i,
-            PLAYER: (vs[3] & 0x80) ? 1 : 0,  // german=0, russian=1; equiv i >= 55
-            X: vs[0], Y: vs[1],
-            MSTRNG: vs[2], CSTRNG: vs[2],
-            ICON: vs[3],
-            ARRIVE: vs[4],
-            TYP: vs[5],
-            UNITNO: vs[6],
+            id: i,
+            player: (vs[3] & 0x80) ? 1 : 0,  // german=0, russian=1; equiv i >= 55
+            x: vs[0], y: vs[1],
+            mstrng: vs[2], cstrng: vs[2],
+            icon: vs[3] & 0x3f | 0x80,  // drop the color and address custom char pages
+            arrive: vs[4],
+            flags: vs[5],
+            type: types[vs[5] >> 4],          // FINNISH can't attack
+            variant: variants[vs[5] & 0x0f],  // MILITIA can't move
+            unitno: vs[6],
         }
-        u.LABEL = [
-            u.UNITNO,
-            ['', 'SS', 'FINNISH', 'RUMANIAN', 'ITALIAN', 'HUNGARAN', 'MOUNTAIN', 'GUARDS']
-            [u.TYP >> 4],
-            ['INFANTRY', 'TANK', 'CAVALRY', 'PANZER', 'MILITIA', 'SHOCK', 'PARATRP', 'PZRGRNDR']
-            [u.TYP & 0x0f],
-            ['CORPS', 'ARMY'][u.PLAYER]
-        ].filter(Boolean).join(' ').trim();
+        u.label = [u.unitno, u.variant, u.type, ['CORPS', 'ARMY'][u.player]].filter(Boolean).join(' ').trim();
         return u;
     });
