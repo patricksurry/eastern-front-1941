@@ -1,3 +1,7 @@
+function enumFor(vs, key) {
+    return Object.fromEntries(vs.map((v, i) => [v[key || 'key'], i]));
+}
+
 const
     // Antic NTSC palette via https://en.wikipedia.org/wiki/List_of_video_game_console_palettes#NTSC
     // 128 colors indexed via high 7 bits, e.g. 0x00 and 0x01 refer to the first entry
@@ -5,11 +9,12 @@ const
     // mimic logic from STKTAB looking for zeroed pins
     // see https://forums.atariage.com/topic/275027-joystick-value-logic/:
     directions = [
-        {x: 0,  y: 1},   // up    1110 => 0 - north
-        {x: -1, y: 0},   // right 0111 => 1 - east
-        {x: 0,  y: -1},  // down  1101 => 2 - south
-        {x: 1,  y: 0},   // left  1011 => 3 - west
+        {x: 0,  y: 1,  key: 'north'},   // up    1110 => 0 - north
+        {x: -1, y: 0,  key: 'east'},   // right 0111 => 1 - east
+        {x: 0,  y: -1, key: 'south'},  // down  1101 => 2 - south
+        {x: 1,  y: 0,  key: 'west'},   // left  1011 => 3 - west
     ],
+    Direction = enumFor(directions),
     // D.ASM:5500 BHX1 .BYTE ... / BHY1 / BHX2 / BHY2
     // there are 11 impassable square-sides
     // the original game stores 22 sets of (x1,y1),(x2,y2) coordinates
@@ -37,20 +42,27 @@ const
     ],
     // D.ASM:2690 TRTAB
     // M.ASM:2690 season calcs
-    monthdata = [
-        {label: "January",   trees: '12', weather: "snow"},
-        {label: "February",  trees: '12', weather: "snow"},
-        {label: "March",     trees: '12', weather: "snow", rivers: "thaw"},
-        {label: "April",     trees: 'D2', weather: "mud"},
-        {label: "May",       trees: 'D8', weather: "clear"},
-        {label: "June",      trees: 'D6', weather: "clear"},
-        {label: "July",      trees: 'C4', weather: "clear"},
-        {label: "August",    trees: 'D4', weather: "clear"},
-        {label: "September", trees: 'C2', weather: "clear"},
-        {label: "October",   trees: '12', weather: "mud"},
-        {label: "November",  trees: '12', weather: "snow", rivers: "freeze"},
-        {label: "December",  trees: '12', weather: "snow"},
+    weatherdata = [
+        {key: 'summer', earth: '10'},
+        {key: 'mud',    earth: '02'},
+        {key: 'snow',   earth: '0A'},
     ],
+    Weather = enumFor(weatherdata),
+    monthdata = [
+        {label: "January",   trees: '12', weather: Weather.snow},
+        {label: "February",  trees: '12', weather: Weather.snow},
+        {label: "March",     trees: '12', weather: Weather.snow, rivers: "thaw"},
+        {label: "April",     trees: 'D2', weather: Weather.mud},
+        {label: "May",       trees: 'D8', weather: Weather.summer},
+        {label: "June",      trees: 'D6', weather: Weather.summer},
+        {label: "July",      trees: 'C4', weather: Weather.summer},
+        {label: "August",    trees: 'D4', weather: Weather.summer},
+        {label: "September", trees: 'C2', weather: Weather.summer},
+        {label: "October",   trees: '12', weather: Weather.mud},
+        {label: "November",  trees: '12', weather: Weather.snow, rivers: "freeze"},
+        {label: "December",  trees: '12', weather: Weather.snow},
+    ],
+    Month = enumFor(monthdata, 'label'),
 /*
 
 
@@ -153,17 +165,18 @@ blocked paths - 11 pairs of X1,Y1 <=> X2,Y2 in both senses
         //        {owner: 1, x: 20, y:  0, label: 'Sevastopol', points: 20},
     ],
     terraintypes = [
-        {color: '02' },          // 0 - clear
-        {color: '28', altcolor: 'D6'},   // 1 - mountain & forest
-        {color: '0C', altcolor: '46'},   // 2 - city
-        {color: '0C'},           // 3 - frozen swamp
-        {color: '0C'},           // 4 - frozen river
-        {color: '94'},           // 5 - swamp
-        {color: '94'},           // 6 - river
-        {color: '94'},           // 7 - coastline
-        {color: '94'},           // 8 - estuary
-        {color: '94', altcolor: '0C'}    // 9 - border & sea
+        {key: 'clear', color: '02' },          // 0 - clear
+        {key: 'mountain_forest', color: '28', altcolor: 'D6'},   // 1 - mountain & forest
+        {key: 'city', color: '0C', altcolor: '46'},   // 2 - city
+        {key: 'frozen_swamp', color: '0C'},           // 3 - frozen swamp
+        {key: 'frozen_river', color: '0C'},           // 4 - frozen river
+        {key: 'swamp', color: '94'},           // 5 - swamp
+        {key: 'river', color: '94'},           // 6 - river
+        {key: 'coastline', color: '94'},           // 7 - coastline
+        {key: 'estuary', color: '94'},           // 8 - estuary
+        {key: 'impassable', color: '94', altcolor: '0C'}    // 9 - border & sea
     ],
+    Terrain = enumFor(terraintypes)
     mapencoding = [
         // north and south parts of map are encoded from 6-bit hex to ascii
         // with blocks of chrs corresponding to terrain types delimited by |
@@ -415,6 +428,7 @@ blocked paths - 11 pairs of X1,Y1 <=> X2,Y2 in both senses
             flags: vs[5],
             type: types[vs[5] >> 4],          // FINNISH can't attack
             variant: variants[vs[5] & 0x0f],  // MILITIA can't move
+            armor: (vs[3] & 0x1) == 0,        // inf is clr | 0x3d, armor is clr | 0x3e
             unitno: vs[6],
         }
         u.label = [u.unitno, u.variant, u.type, ['CORPS', 'ARMY'][u.player]].filter(Boolean).join(' ').trim();

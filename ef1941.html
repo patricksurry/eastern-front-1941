@@ -1,5 +1,7 @@
 <html>
 <head>
+    <title>Chris Crawford's Eastern Front 1941</title>
+    <link rel="icon" href="/static/AtariFuji.png">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -88,16 +90,16 @@ function nextturn() {
 
     let label = dt.toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' });
         minfo = monthdata[dt.getMonth()],  // note 0-indexed
-        earth = {'snow': '0A', 'mud': '02', 'clear': '10'}[minfo.weather],
+        earth = weatherdata[minfo.weather].earth,
         trees = minfo.trees;
 
     putchrs('#date-window', [label], '6A', 'B0')
     //TODO use setclr ?
-    d3.selectAll('#terrain .chr').filter(d => d.terrain == 1 && d.alt == 1)
+    d3.selectAll('#terrain .chr').filter(d => d.terrain == Terrain.mountain_forest && d.alt == 1)
         .style('background-color', hexcolor(trees));
     //TODO hexcolor?
-    d3.selectAll('#label-overlay .label').style('color', minfo.weather == 'snow' ? '#333': '#ccc');
-    setclr('#terrain .row', earth);
+    d3.selectAll('#label-overlay .label').style('color', minfo.weather == Weather.snow ? '#333': '#ccc');
+    setclr('#terrain .row, #unit-overlay .row', earth);
 
     if (minfo.rivers) {
         // => thaw swamp/rivers
@@ -108,11 +110,12 @@ function nextturn() {
             change = Math.floor(Math.random()*8) + 7,
             dir = minfo.rivers == 'freeze' ? -1 : +1;
         turninfo.icelat = Math.max(1, Math.min(39, turninfo.icelat + dir * change));
+
         //TODO update terrain type and color between oldlat/icelat
-
-        d3.selectAll('#terrain .chr').filter(d => d.y >= turninfo.icelat && (d.terrain == 5 || d.terrain == 6))
+        // unfreeze as well as freeze...
+        d3.selectAll('#terrain .chr')
+            .filter(d => d.y >= turninfo.icelat && (d.terrain == Terrain.river || d.terrain == Terrain.swamp))
             .style('background-color', hexcolor('0C'));
-
     }
 
     console.log(JSON.stringify(turninfo));
@@ -228,11 +231,11 @@ function stepdir(x, y, dir) {
         x2 = x + dx,
         y2 = y + dy,
         legal = (
-            mapdata[39 - y2][46 - x2].terrain < 9
+            mapdata[39 - y2][46 - x2].terrain != Terrain.impassable
             && !(
-                ((dir & 0x1) == 0)  // north/south
-                ? blocked[0].find(d => d.x == x && d.y == (dir == 0 ? y : y2))
-                : blocked[1].find(d => d.x == (dir == 3 ? x : x2) && d.y == y)
+                (dir == Direction.north || dir == Direction.south)
+                ? blocked[0].find(d => d.x == x && d.y == (dir == Direction.north ? y : y2))
+                : blocked[1].find(d => d.x == (dir == Direction.west ? x : x2) && d.y == y)
             ));
     return legal ? [x2, y2]: [x, y];
 }
@@ -246,6 +249,7 @@ document.addEventListener('keydown', function (e) {
             d3.select('#map').style('transform', `scale(${zoom})`);
             centertarget();
             break;
+        //TODO 'x' toggle extras like labels
         case 'n':
             current = current === null ? 0 : ((current + 1) % german.length);
             selectunit(german[current]);
@@ -260,16 +264,16 @@ document.addEventListener('keydown', function (e) {
             nextturn();
             break;
         case 'ArrowUp':
-            showtarget(...stepdir(target.x, target.y, 0));
+            showtarget(...stepdir(target.x, target.y, Direction.north));
             break;
         case 'ArrowRight':
-            showtarget(...stepdir(target.x, target.y, 1));
+            showtarget(...stepdir(target.x, target.y, Direction.east));
             break;
         case 'ArrowDown':
-            showtarget(...stepdir(target.x, target.y, 2));
+            showtarget(...stepdir(target.x, target.y, Direction.south));
             break;
         case 'ArrowLeft':
-            showtarget(...stepdir(target.x, target.y, 3));
+            showtarget(...stepdir(target.x, target.y, Direction.west));
             break;
         default:
             console.log(`Ignoring ${e.key}`)
