@@ -13,10 +13,11 @@
 .rule {
     height: 2px;
 }
+#date-window, #map-window, #info-window, #err-window {
+    position: relative;
+}
 #date-window {
     height:  16px;
-}
-#date-window .row {
     transform-origin: top left;
     transform:  scale(2);
 }
@@ -30,18 +31,18 @@
 #err-window {
     height: 8px;
 }
-#map {
+#map, #overlay {
     /* 48 x 41  8px sq cells*/
     width: 384px;
     height: 328px;
-    position: relative;
     transform-origin: top left;
     transform: scale(1);
 }
-#unit-overlay, #kreuze-overlay, #label-overlay {
+#overlay {
     position: absolute;
-    bottom: 8px;
-    right: 8px;
+    top: 0px;
+    left: 0px;
+    pointer-events: none;
 }
 .label {
     position: absolute;
@@ -52,6 +53,7 @@
     justify-content: center;
     width: 0;
     white-space: nowrap;
+    z-index: 1;
 }
 @keyframes pulse {
   0% {-webkit-transform: scale(1.0); }
@@ -68,20 +70,20 @@
 .blink {
     animation: blink 0.6s ease-in infinite;
 }
-.row {
-    white-space: nowrap;
-    background-color: #333;
-}
-.row-abs {
-    position: absolute;
-}
 .chr {
-    display: inline-block;
+    width: 8px;
+    height: 8px;
+    position: absolute;
+    z-index: 0;
+}
+.chr div {
     width: 8px;
     height: 8px;
     -webkit-mask-image: url(/static/fontmap.png);
     -webkit-mask-size: 128px 136px;
     image-rendering: pixelated;
     color: #999; /* debugging */
-    background-color:  white;
+}
+.chr-unit {
+    z-index: 2;
 }

@@ -6,13 +6,13 @@ const
     // Antic NTSC palette via https://en.wikipedia.org/wiki/List_of_video_game_console_palettes#NTSC
     // 128 colors indexed via high 7 bits, e.g. 0x00 and 0x01 refer to the first entry
     colormap = ["#000000",  "#404040",  "#6c6c6c",  "#909090",  "#b0b0b0",  "#c8c8c8",  "#dcdcdc",  "#ececec",  "#444400",  "#646410",  "#848424",  "#a0a034",  "#b8b840",  "#d0d050",  "#e8e85c",  "#fcfc68",  "#702800",  "#844414",  "#985c28",  "#ac783c",  "#bc8c4c",  "#cca05c",  "#dcb468",  "#ecc878",  "#841800",  "#983418",  "#ac5030",  "#c06848",  "#d0805c",  "#e09470",  "#eca880",  "#fcbc94",  "#880000",  "#9c2020",  "#b03c3c",  "#c05858",  "#d07070",  "#e08888",  "#eca0a0",  "#fcb4b4",  "#78005c",  "#8c2074",  "#a03c88",  "#b0589c",  "#c070b0",  "#d084c0",  "#dc9cd0",  "#ecb0e0",  "#480078",  "#602090",  "#783ca4",  "#8c58b8",  "#a070cc",  "#b484dc",  "#c49cec",  "#d4b0fc",  "#140084",  "#302098",  "#4c3cac",  "#6858c0",  "#7c70d0",  "#9488e0",  "#a8a0ec",  "#bcb4fc",  "#000088",  "#1c209c",  "#3840b0",  "#505cc0",  "#6874d0",  "#7c8ce0",  "#90a4ec",  "#a4b8fc",  "#00187c",  "#1c3890",  "#3854a8",  "#5070bc",  "#6888cc",  "#7c9cdc",  "#90b4ec",  "#a4c8fc",  "#002c5c",  "#1c4c78",  "#386890",  "#5084ac",  "#689cc0",  "#7cb4d4",  "#90cce8",  "#a4e0fc",  "#003c2c",  "#1c5c48",  "#387c64",  "#509c80",  "#68b494",  "#7cd0ac",  "#90e4c0",  "#a4fcd4",  "#003c00",  "#205c20",  "#407c40",  "#5c9c5c",  "#74b474",  "#8cd08c",  "#a4e4a4",  "#b8fcb8",  "#143800",  "#345c1c",  "#507c38",  "#6c9850",  "#84b468",  "#9ccc7c",  "#b4e490",  "#c8fca4",  "#2c3000",  "#4c501c",  "#687034",  "#848c4c",  "#9ca864",  "#b4c078",  "#ccd488",  "#e0ec9c",  "#442800",  "#644818",  "#846830",  "#a08444",  "#b89c58",  "#d0b46c",  "#e8cc7c",  "#fce08c"],
-    // mimic logic from STKTAB looking for zeroed pins
+    // mimic logic from STKTABlon looking for zeroed pins
     // see https://forums.atariage.com/topic/275027-joystick-value-logic/:
     directions = [
-        {x: 0,  y: 1,  key: 'north'},   // up    1110 => 0 - north
-        {x: -1, y: 0,  key: 'east'},   // right 0111 => 1 - east
-        {x: 0,  y: -1, key: 'south'},  // down  1101 => 2 - south
-        {x: 1,  y: 0,  key: 'west'},   // left  1011 => 3 - west
+        {lon: 0,  lat: 1,  key: 'north', icon: 257},   // up    1110 => 0 - north
+        {lon: -1, lat: 0,  key: 'east', icon: 258},   // right 0111 => 1 - east
+        {lon: 0,  lat: -1, key: 'south', icon: 259},  // down  1101 => 2 - south
+        {lon: 1,  lat: 0,  key: 'west', icon: 260},   // left  1011 => 3 - west
     ],
     Direction = enumFor(directions),
     // D.ASM:5500 BHX1 .BYTE ... / BHY1 / BHX2 / BHY2
@@ -24,20 +24,20 @@ const
     blocked = [
         // can't move north from here (or south into here)
         [
-            {x: 40, y: 35},
-            {x: 39, y: 35},
-            {x: 38, y: 35},
-            {x: 35, y: 36},
-            {x: 34, y: 36},
-            {x: 22, y: 3},
-            {x: 15, y: 6},
-            {x: 14, y: 7},
-            {x: 19, y: 3}
+            {lon: 40, lat: 35},
+            {lon: 39, lat: 35},
+            {lon: 38, lat: 35},
+            {lon: 35, lat: 36},
+            {lon: 34, lat: 36},
+            {lon: 22, lat: 3},
+            {lon: 15, lat: 6},
+            {lon: 14, lat: 7},
+            {lon: 19, lat: 3}
         ],
-        // can't move west from here (or east into here)
+        // can't move lonwest from here (or east into here)
         [
-            {x: 35, y: 33},
-            {x: 14, y: 7},
+            {lon: 35, lat: 33},
+            {lon: 14, lat: 7},
         ]
     ],
     // D.ASM:2690 TRTAB
@@ -48,6 +48,7 @@ const
         {key: 'snow',   earth: '0A'},
     ],
     Weather = enumFor(weatherdata),
+    // combines D.asm:2690 TRTAB and 5430 SSNCOD
     monthdata = [
         {label: "January",   trees: '12', weather: Weather.snow},
         {label: "February",  trees: '12', weather: Weather.snow},
@@ -64,8 +65,6 @@ const
     ],
     Month = enumFor(monthdata, 'label'),
 /*
-
-
 
 SEASN1 - x40 unfrozen, x80 frozen
 SEASN2 - ff fall or 00 spring - to move ICELAT north or south
@@ -110,93 +109,94 @@ M.ASM:8600 PSXVAL .BYTE $E0,0,0,$33,$78,$D6,$10,$27,$40,0,1,15,6,41,0,1
 0630 BUTMSK *=*+1 [1]
 
 
-
-D.ASM:
-
-// tree color by month EFT18D.ASM
-// 2690 TRTAB    0,$12,$12,$12,$D2,$D8,$D6,$C4,$D4,$C2,$12,$12,$12
-
-
-// index into TRNTAB as function of month
-5430 SSNCOD .BYTE 40,40,40,20,0,0,0,0,0,20,40,40
-
-inf * 10, armor * 10; x summer/mud/snow = 60
-number of subturns (of 32 total) to enter
-5440 TRNTAB .BYTE 6,12,8,0,0,18,14,8,20,128
-5450  .BYTE 4,8,6,0,0,18,13,6,16,128
-5460  .BYTE 24,30,24,0,0,30,30,26,28,128
-5470  .BYTE 30,30,30,0,0,30,30,30,30,128
-5480  .BYTE 10,16,10,12,12,24,28,12,24,128
-5490  .BYTE 6,10,8,8,8,24,28,8,20,128
-
-blocked paths - 11 pairs of X1,Y1 <=> X2,Y2 in both senses
-5500 BHX1 .BYTE 40,39,38,36,35,34,22,15,15,14
-5510  .BYTE 40,39,38,35,35,34,22,15,14,14,19,19
-5520 BHY1 .BYTE 35,35,35,33,36,36,4,7,7,8
-5530  .BYTE 36,36,36,33,37,37,3,6,7,7,4,3
-5540 BHX2 .BYTE 40,39,38,35,35,34,22,15,14,14
-5550  .BYTE 40,39,38,36,35,34,22,15,15,14,19,19
-5560 BHY2 .BYTE 36,36,36,33,37,37,3,6,7,7
-5570  .BYTE 35,35,35,33,36,36,4,7,7,8,3,4
 */
+    players = [
+        {key: 'german', unit: 'CORPS', color: '0C'},
+        {key: 'russian', unit: 'ARMY', color: '46'},
+    ]
+    Player = enumFor(players),
     cities = [
 // M.ASM:8630 MPTS / MOSCX / MOSCY - special city victory points
 // oddly Sevastpol is assigned points but is not coded as a city in the map?
-        {owner: 1, x: 33, y: 36, label: 'Leningrad', points: 10},
-        {owner: 1, x: 13, y: 33, label: 'Gorky'},
-        {owner: 1, x: 7,  y: 32, label: 'Kazan'},
-        {owner: 1, x: 38, y: 30, label: 'Riga'},
-        {owner: 1, x: 24, y: 28, label: 'Rzhev'},
-        {owner: 1, x: 20, y: 28, label: 'Moscow', points: 20},
-        {owner: 1, x: 26, y: 24, label: 'Smolensk'},
-        {owner: 1, x: 3,  y: 24, label: 'Kubyshev'},
-        {owner: 1, x: 33, y: 22, label: 'Minsk'},
-        {owner: 1, x: 21, y: 21, label: 'Orel'},
-        {owner: 1, x: 15, y: 21, label: 'Voronezh'},
-        {owner: 0, x: 44, y: 19, label: 'Warsaw'},
-        {owner: 1, x: 20, y: 15, label: 'Kharkov'},
-        {owner: 1, x: 6,  y: 15, label: 'Stalingrad', points: 20},
-        {owner: 1, x: 29, y: 14, label: 'Kiev'},
-        {owner: 1, x: 20, y:  8, label: 'Dnepropetrovsk'},
-        {owner: 1, x: 12, y:  8, label: 'Rostov'},
-        {owner: 1, x: 26, y:  5, label: 'Odessa'},
-        {owner: 1, x: 12, y:  4, label: 'Krasnodar'},
-        // replace the first F => @ in the bottom row of the map for Sevastopol variant
-        //        {owner: 1, x: 20, y:  0, label: 'Sevastopol', points: 20},
+        {owner: Player.russian, lon: 33, lat: 36, label: 'Leningrad', points: 10},
+        {owner: Player.russian, lon: 13, lat: 33, label: 'Gorky'},
+        {owner: Player.russian, lon: 7,  lat: 32, label: 'Kazan'},
+        {owner: Player.russian, lon: 38, lat: 30, label: 'Riga'},
+        {owner: Player.russian, lon: 24, lat: 28, label: 'Rzhev'},
+        {owner: Player.russian, lon: 20, lat: 28, label: 'Moscow', points: 20},
+        {owner: Player.russian, lon: 26, lat: 24, label: 'Smolensk'},
+        {owner: Player.russian, lon: 3,  lat: 24, label: 'Kubyshev'},
+        {owner: Player.russian, lon: 33, lat: 22, label: 'Minsk'},
+        {owner: Player.russian, lon: 21, lat: 21, label: 'Orel'},
+        {owner: Player.russian, lon: 15, lat: 21, label: 'Voronezh'},
+        {owner: Player.german,  lon: 44, lat: 19, label: 'Warsaw'},
+        {owner: Player.russian, lon: 20, lat: 15, label: 'Kharkov'},
+        {owner: Player.russian, lon: 6,  lat: 15, label: 'Stalingrad', points: 20},
+        {owner: Player.russian, lon: 29, lat: 14, label: 'Kiev'},
+        {owner: Player.russian, lon: 20, lat:  8, label: 'Dnepropetrovsk'},
+        {owner: Player.russian, lon: 12, lat:  8, label: 'Rostov'},
+        {owner: Player.russian, lon: 26, lat:  5, label: 'Odessa'},
+        {owner: Player.russian, lon: 12, lat:  4, label: 'Krasnodar'},
+        //TODO replace the first F => @ in the bottom row of the map for Sevastopol variant
+        //        {owner: 1, lon: 20, lat:  0, label: 'Sevastopol', points: 20},
     ],
+    // terrain types M.ASM: 8160 TERRTY
+    // movement costs (of 32/turn) come from D.ASM:5430 SSNCOD / 5440 TRNTAB
+    // index by terrain, then armor(0/1) and finally Season enum
+    // 128 is impassable, 0 indicates error (frozen terrain outside winter)
     terraintypes = [
-        {key: 'clear', color: '02' },          // 0 - clear
-        {key: 'mountain_forest', color: '28', altcolor: 'D6'},   // 1 - mountain & forest
-        {key: 'city', color: '0C', altcolor: '46'},   // 2 - city
-        {key: 'frozen_swamp', color: '0C'},           // 3 - frozen swamp
-        {key: 'frozen_river', color: '0C'},           // 4 - frozen river
-        {key: 'swamp', color: '94'},           // 5 - swamp
-        {key: 'river', color: '94'},           // 6 - river
-        {key: 'coastline', color: '94'},           // 7 - coastline
-        {key: 'estuary', color: '94'},           // 8 - estuary
-        {key: 'impassable', color: '94', altcolor: '0C'}    // 9 - border & sea
+        {key: 'clear',           move: [[ 6, 24, 10], [ 4, 30,  6]], color: '02' },
+        {key: 'mountain_forest', move: [[12, 30, 16], [ 8, 30, 10]], color: '28', altcolor: 'D6'},  // mtn + forest
+        {key: 'city',            move: [[ 8, 24, 10], [ 6, 30,  8]], color: '0C', altcolor: '46'},
+        {key: 'frozen_swamp',    move: [[ 0,  0, 12], [ 0,  0,  8]], color: '0C'},
+        {key: 'frozen_river',    move: [[ 0,  0, 12], [ 0,  0,  8]], color: '0C'},
+        {key: 'swamp',           move: [[18, 30, 24], [18, 30, 24]], color: '94'},
+        {key: 'river',           move: [[14, 30, 28], [13, 30, 28]], color: '94'},
+        {key: 'coastline',       move: [[ 8, 26, 12], [ 6, 30,  8]], color: '94'},
+        {key: 'estuary',         move: [[20, 28, 24], [16, 30, 20]], color: '94'},
+        {key: 'impassable', move: [[128, 128, 128], [128, 128, 128]], color: '94', altcolor: '0C'} // sea + border
     ],
-    Terrain = enumFor(terraintypes)
+    Terrain = enumFor(terraintypes),
+    /*
+    The game map is represented as binary data using one byte per square at offset 0x6500
+    the original encoding uses the high two bits to select the foreground color
+    and the low six bits to choose a character from a set of 64 custom characters.
+    in fact the top and bottom halves of the map use slightly different character sets and color scheme.
+
+    Since not all bit patterns are used (the high two bits are nearly redundant),
+    we can store exactly the same raw binary data using a custom base64(ish) encoding
+    (for north and south) and then represent the map with a human-readable string.
+    */
     mapencoding = [
         // north and south parts of map are encoded from 6-bit hex to ascii
-        // with blocks of chrs corresponding to terrain types delimited by |
+        // with pipe-delimited blocks of chrs for consecutive terrain types
         ' |123456|@*0$|||,.;:|abcdefghijklmnopqrstuvwxyz|ABCDEFGHIJKLMNOPQR|{}??|~#',
         ' |123456|@*0$|||,.;:|abcdefghijklmnopqrst|ABCDEFGHIJKLMNOPQRSTUVW|{}<??|~#'
     ].map((enc, i) => {
-        // turn into a lookup of encoded char => [icon, terraintype, alt-flag]
+        // convert the encoding table into a lookup of char => [icon, terraintype, alt-flag]
         let lookup = {}, ch=0;
         enc.split('|').forEach((s, t) =>
             s.split('').forEach(c => {
                 let alt = ((t == 1 && i == 0) || ch == 0x40) ? 1 : 0;
                 if (ch==0x40) ch--;
-                lookup[c] = {icon: 0x80 + i * 0x40 + ch++, terrain: t, alt: alt};
+                lookup[c] = {
+                    icon: 0x80 + i * 0x40 + ch++,
+                    terrain: t,
+                    alt: alt
+                };
             })
         );
         return lookup;
     }),
-    // Map with border is 48 x 41, coords 0-45 x 0-38 from bottom right excl boder
-    // The first 25 rows (incl border) are mapped with northern charset
-    mapdata = `
+    /*
+    The full map is 48 x 41, including the impassable border.
+    However most game logic use  a lat/lon coord system
+    with (0,0) in the bottom right corner *excluding* the border.
+    Thus the internal map has longitudes 0-45 and latitudes 0-38.
+    Ihe first 25 rows (incl border) are mapped with a northern charset
+    which mainly uses forest rather than the mountains of the southern charset
+    */
+    mapascii = `
 ################################################
 #~~~A        L~~B                              #
 #~~~GJ   MNPONK{H                              #
@@ -238,20 +238,29 @@ blocked paths - 11 pairs of X1,Y1 <=> X2,Y2 in both senses
 #               OJ~~~~~~~GSMI~~~~~~GCS542361621#
 #               B~~~~~~~~~FJ~~~~~~~~~FDES123433#
 ################################################
-`
-        .split(/\n/).slice(1,-1).map((row, i) =>
-            row.split('').map((c, j) => {
-                let o = Object.assign(
-                    {x: 46 - j, y: 39 - i},
-                    mapencoding[i <= 25 ? 0: 1][c]
-                );
-                if (o.terrain == 2) {
-                    let city = cities.find(d => d.x == o.x && d.y == o.y);
-                    if (city) o.alt = city.owner;
+`.split(/\n/).slice(1,-1),
+    maxlon = mapascii[0].length-2,
+    maxlat = mapascii.length-2,
+    // decode the map into a 2-d array of rows x cols of  {lon: , lat:, icon:, terrain:, alt:}
+    mapdata = mapascii.map(
+            (row, i) =>
+            row.split('').map(
+                (c, j) => {
+                    let o = Object.assign(
+                        {lon: maxlon - j, lat: maxlat - i, unitid: null},
+                        mapencoding[i <= 25 ? 0: 1][c]
+                    );
+                    if (o.terrain == Terrain.city) {
+                        let city = cities.find(d => d.lon == o.lon && d.lat == o.lat);
+                        if (city) o.alt = city.owner;
+                    }
+                    return o;
                 }
-                return o;
-            })
+            )
         ),
+    // order-of-battle table with 159 units comes from D.ASM:0x5400
+    // in the original game each column is stored separately,
+    // we've transposed into a list of rows which we map to unit objects
     oob = [
         // [CORPSX, CORPSY, MSTRNG, SWAP, ARRIVE, CORPT, CORPNO
         // German
@@ -420,8 +429,9 @@ blocked paths - 11 pairs of X1,Y1 <=> X2,Y2 in both senses
             variants = ['INFANTRY', 'TANK', 'CAVALRY', 'PANZER', 'MILITIA', 'SHOCK', 'PARATRP', 'PZRGRNDR'];
         let u = {
             id: i,
-            player: (vs[3] & 0x80) ? 1 : 0,  // german=0, russian=1; equiv i >= 55
-            x: vs[0], y: vs[1],
+            player: (vs[3] & 0x80) ? Player.russian : Player.german,  // german=0, russian=1; equiv i >= 55
+            lon: vs[0],
+            lat: vs[1],
             mstrng: vs[2], cstrng: vs[2],
             icon: vs[3] & 0x3f | 0x80,  // drop the color and address custom char pages
             arrive: vs[4],
@@ -430,7 +440,8 @@ blocked paths - 11 pairs of X1,Y1 <=> X2,Y2 in both senses
             variant: variants[vs[5] & 0x0f],  // MILITIA can't move
             armor: (vs[3] & 0x1) == 0,        // inf is clr | 0x3d, armor is clr | 0x3e
             unitno: vs[6],
+            orders: []      // WHORDRS, HMORDS
         }
-        u.label = [u.unitno, u.variant, u.type, ['CORPS', 'ARMY'][u.player]].filter(Boolean).join(' ').trim();
+        u.label = [u.unitno, u.variant, u.type, players[u.player].unit].filter(Boolean).join(' ').trim();
         return u;
     });

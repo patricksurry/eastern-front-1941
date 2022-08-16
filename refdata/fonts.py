@@ -261,3 +261,19 @@ with open('oob.dat', 'w') as f:
 print(f"Wrote {len(units)} units to oob.dat, ending @ {hex(offset + baseoff)}")
 print("Distinct CORPT flags: ", sorted(set(f'{v:02x}' for v in oob['CORPT'])))
 print(words)
+
+# terrain movement chart; indexed as month + 10*armor[0/1] + 20*season[0/1/2]
+offset = 0x6ccd - baseoff
+trntab = memmap[offset:offset+60]
+print(list(map(int, trntab)))
+
+table = [
+    [
+        [int(trntab[month + armor*10 + season*20]) for season in range(3)]
+        for armor in range(2)
+    ]
+    for month in range(10)
+]
+print('terrain effects for [summer, mud, winter] x [infantry, armor] per terrain type')
+for row in table:
+    print(row)
