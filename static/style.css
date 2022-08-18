@@ -18,8 +18,14 @@
 }
 #date-window {
     height:  16px;
+}
+.container {
     transform-origin: top left;
-    transform:  scale(2);
+    width: 100%;
+    height: 100%;
+}
+.doubled {
+    transform: scale(2);
 }
 #map-window {
     height: 144px;
@@ -35,11 +41,10 @@
     /* 48 x 41  8px sq cells*/
     width: 384px;
     height: 328px;
-    transform-origin: top left;
-    transform: scale(1);
 }
 #overlay {
     position: absolute;
+    z-index: 3;
     top: 0px;
     left: 0px;
     pointer-events: none;
@@ -70,13 +75,13 @@
 .blink {
     animation: blink 0.6s ease-in infinite;
 }
-.chr {
+.chr-bg {
     width: 8px;
     height: 8px;
     position: absolute;
     z-index: 0;
 }
-.chr div {
+.chr-fg {
     width: 8px;
     height: 8px;
     -webkit-mask-image: url(/static/fontmap.png);

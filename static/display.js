@@ -29,6 +29,7 @@ function putlines(win, lines, fg, bg, chrfn) {
         w.attr('data-bg-color', _ => bg);
         w.style('background-color', hexcolor(bg));
     }
+    w.selectAll('div.chr-bg').remove();  //TODO don't deal with enter/update yet
 
     let
         fgfn = typeof fg == 'function' ? fg : (_ => fg),
@@ -40,16 +41,17 @@ function putlines(win, lines, fg, bg, chrfn) {
                 )
             ),
         chrs = w
-            .selectAll('div.chr')
+            .selectAll('div.chr-bg')
             .data(data)
           .join('div')
-            .classed('chr', true)
+            .classed('chr-bg', true)
             .style('top', ([i, j, d]) => `${i*8}px`)
             .style('left', ([i, j, d]) => `${j*8}px`)
             .style('background-color', bg ? hexcolor(bg) : null)
             .datum(([i, j, d]) => d);
         chrs
             .append('div')
+            .classed('chr-fg', true)
             .style('background-color', d => hexcolor(fgfn(d)))
             .style("-webkit-mask-position", d => maskpos(chrfn(d)));
 

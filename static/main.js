@@ -1,4 +1,4 @@
-var turninfo = {
+var gameState = {
     turn: 0,
     icelat: 39,     // via M.ASM:8600 PSXVAL initial value is 0x27
 }
@@ -38,8 +38,47 @@ function mapicon(d) {
     return d.unitid == null ? d.icon: oob[d.unitid].icon;
 }
 
-function showpath(u) {
-    let pts = unitpath(u),
+function showUnitInfo(u) {
+    putlines('#info-window', [u.label, `COMBAT: ${u.cstrng}  MUSTER: ${u.mstrng}`]);
+}
+
+function focusUnitById(id) {
+    unfocusUnit();
+    let idx = activeunits[Player.german].findIndex(d => d.id == id);
+    if (idx >= 0) selidx = idx;
+    showFocusedUnit();
+}
+
+function focusUnitRelative(offset) {
+    unfocusUnit();
+    let n = activeunits[Player.german].length;
+    if (selidx === null) selidx = offset > 0 ? -1: 0;
+    selidx = (selidx + n + offset) % n;
+    showFocusedUnit();
+}
+
+function getFocusedUnit() {
+    return selidx === null ? null: activeunits[Player.german][selidx]
+}
+
+function unfocusUnit() {
+    hideUnitPath();
+    d3.selectAll('.blink').classed('blink', false);
+}
+
+function showFocusedUnit() {
+    let u = getFocusedUnit()
+    if (!u) return;
+
+    showUnitInfo(u);
+    showUnitPath(u);
+    d3.selectAll('.chr-fg')
+        .filter(d => d.unitid == u.id)
+        .classed('blink', true);
+}
+
+function showUnitPath(u) {
+    let pts = getUnitPath(u),
         pt = pts.pop();
     kreuze
         .style('top', `${(maxlat - pt.lat)*8}px`)
@@ -47,19 +86,20 @@ function showpath(u) {
         .style('visibility', 'visible')
         .node().scrollIntoView({block: "center", inline: "center"});
 
-    arrows.interrupt().style('visibility', 'hidden');
+    arrows.style('visibility', 'hidden').interrupt();
     if (!pts.length) return;
 
     let i = 0;
-    function animate() {
+    function animateUnitPath() {
         let p = pts[i], dir = u.orders[i], step = directions[dir], interrupted = false;
         arrows.filter((_, j) => j == dir)
             .style('top', `${(maxlat - p.lat)*8}px`)
             .style('left', `${(maxlon - p.lon)*8}px`)
-            .style('visibility', 'visible')
         .transition()
+            .delay(i ? 0: 250)
             .duration(500)
             .ease(d3.easeLinear)
+            .style('visibility', 'visible')
             .style('top', `${(maxlat - p.lat - step.lat)*8}px`)
             .style('left', `${(maxlon - p.lon - step.lon)*8}px`)
         .transition()
@@ -68,51 +108,20 @@ function showpath(u) {
         .on("interrupt", () => { interrupted = true; })
         .on("end", () => {
             i = (i+1) % u.orders.length;
-            if (!interrupted) animate();
+            if (!interrupted) animateUnitPath();
         });
     }
 
-    animate();
+    animateUnitPath();
 }
 
-function hidetarget() {
+function hideUnitPath() {
     kreuze.style('visibility', 'hidden');
+    arrows.style('visibility', 'hidden').interrupt();
     d3.select('.blink').classed('blink', false);
 }
 
-// d3.select('#map .row:nth-child(19) .chr:nth-child(26)').style('background-color', 'yellow').node().scrollIntoView({block: "center", inline: "center"});
-
-function selectbyid(id) {
-    hideselectedunit();
-    let idx = activeunits[Player.german].findIndex(d => d.id == id);
-    if (idx >= 0) selidx = idx;
-    showselectedunit();
-}
-function selectrelative(offset) {
-    hideselectedunit();
-    let n = activeunits[Player.german].length;
-    if (selidx === null) selidx = offset > 0 ? -1: 0;
-    selidx = (selidx + n + offset) % n;
-    showselectedunit();
-}
-function selectedunit() {
-    return selidx === null ? null: activeunits[Player.german][selidx]
-}
-function hideselectedunit() {
-    hidetarget();
-    d3.selectAll('.blink').classed('blink', false);
-}
-function showselectedunit() {
-    let u = selectedunit()
-    if (!u) return;
-
-    showpath(u);
-    d3.selectAll('.chr')
-        .filter(d => d.unitid == u.id)
-        .classed('blink', true);
-}
-
-function unitpath(u) {
+function getUnitPath(u) {
     let pt = {lon: u.lon, lat: u.lat},
         pts = [pt];
     u.orders.forEach(dir => {
@@ -123,34 +132,32 @@ function unitpath(u) {
     return pts;
 }
 
-
-function addorder(dir) {
-    let u = selectedunit();
+function addOrder(dir) {
+    let u = getFocusedUnit();
     if (!u) return;
 
-    let pts = unitpath(u),
+    let pts = getUnitPath(u),
         pt = stepdir(pts.pop(), dir);
     if (pt) {
         u.orders.push(dir);
-        showpath(u);
+        showUnitPath(u);
     }
 }
 
-function resetorders() {
-    let u = selectedunit();
+function resetOrders() {
+    let u = getFocusedUnit();
     if (!u) return;
     u.orders = [];
-    showselectedunit();
+    showFocusedUnit();
 }
 
 function mapclick(ev, m) {
     if (m.unitid === null) return;
 
     const u = oob[m.unitid];
-    putlines('#info-window', [u.label, `COMBAT: ${u.cstrng}  MUSTER: ${u.mstrng}`]);
-    if (u.player == Player.german) {
-        selectbyid(u.id);
-    }
+
+    if (u.player == Player.german) focusUnitById(u.id);
+    else showUnitInfo(u);
 }
 
 function keyhandler(e) {
@@ -159,51 +166,59 @@ function keyhandler(e) {
     switch (e.key) {
 
         case 'ArrowUp':
-            addorder(Direction.north);
+            addOrder(Direction.north);
             break;
         case 'ArrowRight':
-            addorder(Direction.east);
+            addOrder(Direction.east);
             break;
         case 'ArrowDown':
-            addorder(Direction.south);
+            addOrder(Direction.south);
             break;
         case 'ArrowLeft':
-            addorder(Direction.west);
+            addOrder(Direction.west);
             break;
 
         case 'Enter':
-            hideselectedunit();
+            unfocusUnit();
             break;
 
         case 'n':
-            selectrelative(1);
+            focusUnitRelative(1);
             break;
         case 'p':
-            selectrelative(-1);
+            focusUnitRelative(-1);
             break;
 
         case ' ':
         case 'Escape':
-            resetorders();
+            resetOrders();
             break;
 
         case 'End':  // Fn + Rt on a mac
-            nextturn();
+            nextTurn();
             break;
 
-
-//TODO handicap - increase muster strength of all your units by 50% but halve score
-// modifes the VBI to change color of text window
-
-        case 'z':
-            zoom = zoom == 1 ? 2: 1;
-            d3.select('#map').style('transform', `scale(${zoom})`);
-            //TODO fix me centertarget();
-            break;
         //TODO 'x' toggle extras like labels
 
+        //TODO handicap - increase muster strength of all your units by 50% but halve score
+        // modifes the VBI to change color of text window
+
+        case 'z':
+            var elt;
+            if (getFocusedUnit()) {
+                elt = kreuze.node();
+            } else {
+                let x = 320/2,
+                    y = 144/2 + d3.select('#map-window').node().offsetTop - window.scrollY;
+                elt = document.elementFromPoint(x*4, y*4);
+                console.log(x, y, d3.select(elt).datum())
+            }
+            zoom = zoom == 1 ? 2: 1;
+            d3.select('#map-window .container').classed('doubled', zoom == 2);
+            elt.scrollIntoView({block: "center", inline: "center"})
+            break;
+
         default:
-            // console.log(`Ignoring ${e.key}`)
             return;
     }
     e.preventDefault();
@@ -211,13 +226,13 @@ function keyhandler(e) {
 
 
 
-function sortunits(units) {
+function sortUnits(units) {
     return units.sort((a, b) => ((b.lat - a.lat) << 8) + (b.lon - a.lon));
 }
 
 
 function start() {
-    activeunits = players.map((_, i) => sortunits(oob.filter(u => u.player == i && u.arrive == 0)));
+    activeunits = players.map((_, i) => sortUnits(oob.filter(u => u.player == i && u.arrive == 0)));
 
     activeunits.forEach(us => us.forEach(u => {mapdata[maxlat-u.lat][maxlon-u.lon].unitid = u.id}));
 
@@ -229,7 +244,6 @@ function start() {
     putlines('#info-window', ['EASTERN FRONT 1941', 'COPYRIGHT 1981 CHRIS CRAWFORD'], '28', '22')
     putlines('#err-window', ['PLEASE ENTER YOUR ORDERS NOW'], '22', '3A')
 
-
     d3.select('#map')
         .selectAll('div.label')
         .data(cities)
@@ -239,7 +253,6 @@ function start() {
         .style('left', d => `${(maxlon - d.lon) * 8 + 4}px`)
         .style('top', d => `${(maxlat - d.lat) * 8 - 4}px`)
         ;
-
 
     let chrs = putlines('#overlay', [[256], directions.map(d => d.icon)], '1A', null, d => d)
         .style('visibility', 'hidden');
@@ -259,60 +272,68 @@ function start() {
 
     document.addEventListener('keydown', keyhandler);
 
-    nextturn();
+    nextTurn();
 }
 
 
-function nextturn() {
+function nextTurn() {
 
     //TODO unselect if selected
     selidx = null;
 
-    turninfo.turn++;
+    gameState.turn++;
 
     //TODO enter new units
 
     let dt = new Date('1941/06/15');
-    dt.setDate(dt.getDate() + 7*turninfo.turn);
+    dt.setDate(dt.getDate() + 7*gameState.turn);
 
     let label = dt.toLocaleDateString("en-US", {year: 'numeric', month: 'long', day: 'numeric'});
-        minfo = monthdata[dt.getMonth()],  // note 0-indexed
-        earth = weatherdata[minfo.weather].earth,
-        trees = minfo.trees;
+        minfo = monthdata[dt.getMonth()];  // note JS getMonth is 0-indexed
 
-    putlines('#date-window', [label], '6A', 'B0')
-    //TODO use setclr ?
-    d3.selectAll('#terrain .chr').filter(d => d.terrain == Terrain.mountain_forest && d.alt == 1)
-        .style('background-color', hexcolor(trees));
+    putlines('#date-window .container', [label], '6A', 'B0')
+
+    console.log('month info', minfo);
+
     //TODO hexcolor?
-    d3.selectAll('#label-overlay .label').style('color', minfo.weather == Weather.snow ? '#333': '#ccc');
-    //TODO should unit background change or not?
-    setclr('#terrain .row, #unit-overlay .row', earth);
+    d3.selectAll('#map .label')
+        .style('color', minfo.weather == Weather.snow ? '#333': '#ccc');
 
     if (minfo.rivers) {
         // => thaw swamp/rivers
         // ICELAT -= [7,14] incl]; clamp 1-39 incl
         // small bug? freeze chrs $0B - $29 (exclusive, seems like it could freeze Kerch straight?)
 
-        let oldlat = turninfo.icelat,
-            change = Math.floor(Math.random()*8) + 7,
-            dir = minfo.rivers == 'freeze' ? -1 : +1;
-        turninfo.icelat = Math.max(1, Math.min(39, turninfo.icelat + dir * change));
+        let oldlat = gameState.icelat,
+            change = Math.floor(Math.random()*8) + 7;
 
-        //TODO update terrain type and color between oldlat/icelat
-        // unfreeze as well as freeze...
-        d3.selectAll('#terrain .chr')
-            .filter(d => d.lat >= turninfo.icelat && (d.terrain == Terrain.river || d.terrain == Terrain.swamp))
-            .style('background-color', hexcolor('0C'));
+        if (minfo.rivers == 'freeze') {
+            gameState.icelat = Math.max(1, oldlat - change);
+            for (i=gameState.icelat; i<oldlat; i++)
+                mapdata[maxlat-i].forEach(d => {
+                    if (d.terrain == Terrain.swamp) d.terrain = Terrain.frozen_swamp;
+                    if (d.terrain == Terrain.river) d.terrain = Terrain.frozen_river;
+                });
+        } else {
+            gameState.icelat = Math.min(39, oldlat + change);
+            for (i=oldlat; i<gameState.icelat; i++)
+                mapdata[maxlat-i].forEach(d => {
+                    if (d.terrain == Terrain.frozen_swamp) d.terrain = Terrain.swamp;
+                    if (d.terrain == Terrain.frozen_river) d.terrain = Terrain.river;
+                });
+        }
     }
 
-    putlines('#map', mapdata, mapfg, '02', mapicon)
+    // update the tree color in place
+    terraintypes[Terrain.mountain_forest].altcolor = minfo.trees;
+
+    putlines('#map', mapdata, mapfg, weatherdata[minfo.weather].earth, mapicon)
         .attr('title', JSON.stringify)
         .on('click', mapclick)
         .filter(d => d.unitid !== null)
         .classed('chr-unit', true)
 
-    console.log(JSON.stringify(turninfo));
+    console.log(JSON.stringify(gameState));
     console.log('Current score', score())
 }
 
