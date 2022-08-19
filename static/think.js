@@ -9,6 +9,6 @@ function score() {
             .reduce((s, x) => s + x, 0),
         score = Math.max(eastwest, 0) + bonus;
 
-    if (handicap) score >>= 1;
+    if (gameState.handicap) score >>= 1;
     return score;
 }

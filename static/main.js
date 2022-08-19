@@ -1,29 +1,36 @@
 var gameState = {
-    turn: 0,
+    turn: -1,       // 0-index turn counter
     icelat: 39,     // via M.ASM:8600 PSXVAL initial value is 0x27
+    handicap: 0,    // whether the game is handicapped
+    zoom: 1,        // display zoom level (1 or 2)
 }
 
-var zoom = 1
-    handicap = 0,
-    activeunits = null,  // a list of active units for each player
-    selidx = null,  // current selected german unit
+var activeunits = null,  // a list of active units for each player
+    fcsidx = null,  // current selected german unit
     kreuze = null,  // d3 selection with the chr displaying the maltakreuze
     arrows = null;  // d3 selection of the four arrow chrs
 
 
-function stepdir(pt, dir) {
+function randint(n) {
+    return Math.floor(Math.random()*n);
+}
+
+function addDir(pt, dir) {
+    let d = directions[dir];
+    return {lon: pt.lon + d.dlon, lat: pt.lat + d.dlat}
+}
+
+function maybeStepDir(pt, dir) {
     let {lon: lon, lat: lat} = pt,
-        {lon: dlon, lat: dlat} = directions[dir],
-        lon2 = lon + dlon,
-        lat2 = lat + dlat,
+        p2 = addDir(pt, dir),
         legal = (
-            mapdata[maxlat - lat2][maxlon - lon2].terrain != Terrain.impassable
+            mapboard.at(p2).terrain != Terrain.impassable
             && !(
                 (dir == Direction.north || dir == Direction.south)
-                ? blocked[0].find(d => d.lon == lon && d.lat == (dir == Direction.north ? lat : lat2))
-                : blocked[1].find(d => d.lon == (dir == Direction.west ? lon : lon2) && d.lat == lat)
+                ? blocked[0].find(d => d.lon == lon && d.lat == (dir == Direction.north ? lat : p2.lat))
+                : blocked[1].find(d => d.lon == (dir == Direction.west ? lon : p2.lon) && d.lat == lat)
             ));
-    return legal ? {lon: lon2, lat: lat2}: null;
+    return legal ? p2: null;
 }
 
 function mapfg(d) {
@@ -38,6 +45,19 @@ function mapicon(d) {
     return d.unitid == null ? d.icon: oob[d.unitid].icon;
 }
 
+function mapinfo(ev, m) {
+    let clauses = [
+        `lon ${m.lon}, lat ${m.lat}`,
+        `${terraintypes[m.terrain].key}` + (m.alt ? "-alt": ""),
+        `ZoC: German ${zoneOfControl(Player.german, m)}, Russian ${zoneOfControl(Player.russian, m)}`,
+    ]
+    if (m.unitid) {
+        let u = oob[m.unitid];
+        clauses.push(`${u.label} (${u.cstrng}/${u.mstrng})`);
+    }
+    d3.select(this).attr('title', clauses.join('\n'));
+}
+
 function showUnitInfo(u) {
     putlines('#info-window', [u.label, `COMBAT: ${u.cstrng}  MUSTER: ${u.mstrng}`]);
 }
@@ -45,20 +65,20 @@ function showUnitInfo(u) {
 function focusUnitById(id) {
     unfocusUnit();
     let idx = activeunits[Player.german].findIndex(d => d.id == id);
-    if (idx >= 0) selidx = idx;
+    if (idx >= 0) fcsidx = idx;
     showFocusedUnit();
 }
 
 function focusUnitRelative(offset) {
     unfocusUnit();
     let n = activeunits[Player.german].length;
-    if (selidx === null) selidx = offset > 0 ? -1: 0;
-    selidx = (selidx + n + offset) % n;
+    if (fcsidx === null) fcsidx = offset > 0 ? -1: 0;
+    fcsidx = (fcsidx + n + offset) % n;
     showFocusedUnit();
 }
 
 function getFocusedUnit() {
-    return selidx === null ? null: activeunits[Player.german][selidx]
+    return fcsidx === null ? null: activeunits[Player.german][fcsidx]
 }
 
 function unfocusUnit() {
@@ -81,8 +101,8 @@ function showUnitPath(u) {
     let pts = getUnitPath(u),
         pt = pts.pop();
     kreuze
-        .style('top', `${(maxlat - pt.lat)*8}px`)
-        .style('left', `${(maxlon - pt.lon)*8}px`)
+        .style('top', `${mapboard.row(pt)*8}px`)
+        .style('left', `${mapboard.col(pt)*8}px`)
         .style('visibility', 'visible')
         .node().scrollIntoView({block: "center", inline: "center"});
 
@@ -91,17 +111,20 @@ function showUnitPath(u) {
 
     let i = 0;
     function animateUnitPath() {
-        let p = pts[i], dir = u.orders[i], step = directions[dir], interrupted = false;
+        let p = pts[i],
+            dir = u.orders[i],
+            p2 = addDir(p, dir),
+            interrupted = false;
         arrows.filter((_, j) => j == dir)
-            .style('top', `${(maxlat - p.lat)*8}px`)
-            .style('left', `${(maxlon - p.lon)*8}px`)
+            .style('top', `${mapboard.row(p)*8}px`)
+            .style('left', `${mapboard.col(p)*8}px`)
         .transition()
             .delay(i ? 0: 250)
             .duration(500)
             .ease(d3.easeLinear)
             .style('visibility', 'visible')
-            .style('top', `${(maxlat - p.lat - step.lat)*8}px`)
-            .style('left', `${(maxlon - p.lon - step.lon)*8}px`)
+            .style('top', `${mapboard.row(p2)*8}px`)
+            .style('left', `${mapboard.col(p2)*8}px`)
         .transition()
             .duration(0)
             .style('visibility', 'hidden')
@@ -125,7 +148,7 @@ function getUnitPath(u) {
     let pt = {lon: u.lon, lat: u.lat},
         pts = [pt];
     u.orders.forEach(dir => {
-        let p = stepdir(pt, dir);
+        let p = maybeStepDir(pt, dir);
         if (!p) return;
         pts.push(pt = p)
     });
@@ -137,7 +160,7 @@ function addOrder(dir) {
     if (!u) return;
 
     let pts = getUnitPath(u),
-        pt = stepdir(pts.pop(), dir);
+        pt = maybeStepDir(pts.pop(), dir);
     if (pt) {
         u.orders.push(dir);
         showUnitPath(u);
@@ -160,11 +183,24 @@ function mapclick(ev, m) {
     else showUnitInfo(u);
 }
 
-function keyhandler(e) {
-    console.log(e.key);
-    let n = activeunits[Player.german].length;
-    switch (e.key) {
+function toggleZoom() {
+    var elt;
+    // remember either the focused unit's target, or elt currently near center of screen
+    if (getFocusedUnit()) {
+        elt = kreuze.node();
+    } else {
+        let x = 320/2,
+            y = 144/2 + d3.select('#map-window').node().offsetTop - window.scrollY;
+        elt = document.elementFromPoint(x*4, y*4);
+    }
+    // toggle zoom level, apply it, and re-center target eleemnt
+    gameState.zoom = gameState.zoom == 2 ? 1: 2;
+    d3.select('#map-window .container').classed('doubled', gameState.zoom == 2);
+    elt.scrollIntoView({block: "center", inline: "center"})
+}
 
+function keyhandler(e) {
+    switch (e.key) {
         case 'ArrowUp':
             addOrder(Direction.north);
             break;
@@ -204,38 +240,18 @@ function keyhandler(e) {
         // modifes the VBI to change color of text window
 
         case 'z':
-            var elt;
-            if (getFocusedUnit()) {
-                elt = kreuze.node();
-            } else {
-                let x = 320/2,
-                    y = 144/2 + d3.select('#map-window').node().offsetTop - window.scrollY;
-                elt = document.elementFromPoint(x*4, y*4);
-                console.log(x, y, d3.select(elt).datum())
-            }
-            zoom = zoom == 1 ? 2: 1;
-            d3.select('#map-window .container').classed('doubled', zoom == 2);
-            elt.scrollIntoView({block: "center", inline: "center"})
+            toggleZoom();
             break;
 
         default:
+            // allow event to propagate
             return;
     }
-    e.preventDefault();
+    e.preventDefault();     //  eat handled events
 };
 
 
-
-function sortUnits(units) {
-    return units.sort((a, b) => ((b.lat - a.lat) << 8) + (b.lon - a.lon));
-}
-
-
 function start() {
-    activeunits = players.map((_, i) => sortUnits(oob.filter(u => u.player == i && u.arrive == 0)));
-
-    activeunits.forEach(us => us.forEach(u => {mapdata[maxlat-u.lat][maxlon-u.lon].unitid = u.id}));
-
     setclr('body', 'D4');
     setclr('.date-rule', '1A');
     setclr('.info-rule', '02');  // same as map
@@ -250,8 +266,8 @@ function start() {
       .join('div')
         .classed('label', true)
         .text(d => d.label)
-        .style('left', d => `${(maxlon - d.lon) * 8 + 4}px`)
-        .style('top', d => `${(maxlat - d.lat) * 8 - 4}px`)
+        .style('left', d => `${mapboard.col(d) * 8 + 4}px`)
+        .style('top', d => `${mapboard.row(d) * 8 - 4}px`)
         ;
 
     let chrs = putlines('#overlay', [[256], directions.map(d => d.icon)], '1A', null, d => d)
@@ -276,14 +292,91 @@ function start() {
 }
 
 
-function nextTurn() {
+function nextMoveCost(u) {
+    if (u.orders.length == 0) return 255;
+    let pt = maybeStepDir(u, u.orders[0]),
+        t = terraintypes[mapboard.at(pt).terrain];
+    return t.move[u.armor][gameState.weather];
+}
 
-    //TODO unselect if selected
-    selidx = null;
+
+function maybeMove(u) {
+    let pt = maybeStepDir(u, u.orders[0]),
+        m = mapboard.at(pt),
+        m0 = mapboard.at(u);
+
+    if (m.unitid !== null) {
+        if (oob[m.unitid].player == u.player) {
+            u.tick += 2;
+            return;
+        } else {
+            //TODO combat
+        }
+    }
+    m0.unitid = null;
+    m.unitid = u.id;
+    u.lat = pt.lat;
+    u.lon = pt.lon;
+    u.orders.shift();
+    u.tick += nextMoveCost(u);
+}
+
+
+function zoneOfControl(player, pt) {
+    // evaluate player's zoc in square at pt
+    let m = mapboard.at(pt),
+        zoc = 0;
+    // same player in target square exerts 4, enemy negates zoc
+    if (m.unitid) {
+        if (oob[m.unitid].player != player) return zoc;
+        zoc += 4;
+    }
+    spiral1.forEach((d, i) => {
+        pt = addDir(pt, d);
+        if (!mapboard.valid(pt)) return;
+        m = mapboard.at(pt);
+        // even steps in the spiral exert 2, odd steps exert 1
+        if (m.unitid && oob[m.unitid].player == player) zoc += (i % 2) ? 1: 2;
+    })
+    return zoc;
+}
+
+
+function nextTurn() {
+    // process movement from prior turn
+
+    // M.asm:4950 movement execution
+    oob.forEach(u => { u.tick = nextMoveCost(u) });
+
+    for (tick=0; tick<32; tick++) {
+        // original code processes movement in reverse-oob order
+        oob.filter(u => u.tick == tick).reverse().forEach(maybeMove);
+        //TODO update map after each tick with delay
+    }
 
     gameState.turn++;
 
-    //TODO enter new units
+    fcsidx = null;
+    unfocusUnit();
+
+    //TODO logistics
+
+    //TODO zoc
+
+    activeunits = players.map(
+        (_, i) => {
+            let us = oob.filter(u => u.player == i);
+            // M.ASM:3720  delay reinforcements scheduled for an occuplied square
+            us.filter(u => u.arrive == gameState.turn && mapboard.at(u).unitid != null)
+                .forEach(u => {u.arrive++});
+            return us.filter(u => u.arrive <= gameState.turn)
+                // M.ASM:5070  recover combat strength
+                .map(u => {if (u.mstrng - u.cstrng >= 2) u.cstring += 1 + randint(2); return u;})
+                .sort((a, b) => ((b.lat - a.lat) << 8) + (b.lon - a.lon));
+        }
+    );
+
+    activeunits.forEach(us => us.forEach(u => {mapboard.at(u).unitid = u.id}));
 
     let dt = new Date('1941/06/15');
     dt.setDate(dt.getDate() + 7*gameState.turn);
@@ -291,9 +384,9 @@ function nextTurn() {
     let label = dt.toLocaleDateString("en-US", {year: 'numeric', month: 'long', day: 'numeric'});
         minfo = monthdata[dt.getMonth()];  // note JS getMonth is 0-indexed
 
-    putlines('#date-window .container', [label], '6A', 'B0')
+    gameState.weather = minfo.weather;
 
-    console.log('month info', minfo);
+    putlines('#date-window .container', [label], '6A', 'B0')
 
     //TODO hexcolor?
     d3.selectAll('#map .label')
@@ -305,19 +398,19 @@ function nextTurn() {
         // small bug? freeze chrs $0B - $29 (exclusive, seems like it could freeze Kerch straight?)
 
         let oldlat = gameState.icelat,
-            change = Math.floor(Math.random()*8) + 7;
+            change = randint(8) + 7;
 
         if (minfo.rivers == 'freeze') {
             gameState.icelat = Math.max(1, oldlat - change);
             for (i=gameState.icelat; i<oldlat; i++)
-                mapdata[maxlat-i].forEach(d => {
+                mapboard[mapboard.row({lat: i})].forEach(d => {
                     if (d.terrain == Terrain.swamp) d.terrain = Terrain.frozen_swamp;
                     if (d.terrain == Terrain.river) d.terrain = Terrain.frozen_river;
                 });
         } else {
             gameState.icelat = Math.min(39, oldlat + change);
             for (i=oldlat; i<gameState.icelat; i++)
-                mapdata[maxlat-i].forEach(d => {
+                mapboard[mapboard.row({lat: i})].forEach(d => {
                     if (d.terrain == Terrain.frozen_swamp) d.terrain = Terrain.swamp;
                     if (d.terrain == Terrain.frozen_river) d.terrain = Terrain.river;
                 });
@@ -327,13 +420,13 @@ function nextTurn() {
     // update the tree color in place
     terraintypes[Terrain.mountain_forest].altcolor = minfo.trees;
 
-    putlines('#map', mapdata, mapfg, weatherdata[minfo.weather].earth, mapicon)
-        .attr('title', JSON.stringify)
+    putlines('#map', mapboard, mapfg, weatherdata[minfo.weather].earth, mapicon)
         .on('click', mapclick)
+        .on('mouseover', mapinfo)
         .filter(d => d.unitid !== null)
         .classed('chr-unit', true)
 
     console.log(JSON.stringify(gameState));
-    console.log('Current score', score())
+    console.log('Current score', score());  // TODO info window?
 }
 

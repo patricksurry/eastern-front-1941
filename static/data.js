@@ -9,12 +9,16 @@ const
     // mimic logic from STKTABlon looking for zeroed pins
     // see https://forums.atariage.com/topic/275027-joystick-value-logic/:
     directions = [
-        {lon: 0,  lat: 1,  key: 'north', icon: 257},   // up    1110 => 0 - north
-        {lon: -1, lat: 0,  key: 'east', icon: 258},   // right 0111 => 1 - east
-        {lon: 0,  lat: -1, key: 'south', icon: 259},  // down  1101 => 2 - south
-        {lon: 1,  lat: 0,  key: 'west', icon: 260},   // left  1011 => 3 - west
+        {dlon: 0,  dlat: 1,  key: 'north', icon: 257},   // up    1110 => 0 - north
+        {dlon: -1, dlat: 0,  key: 'east', icon: 258},   // right 0111 => 1 - east
+        {dlon: 0,  dlat: -1, key: 'south', icon: 259},  // down  1101 => 2 - south
+        {dlon: 1,  dlat: 0,  key: 'west', icon: 260},   // left  1011 => 3 - west
     ],
     Direction = enumFor(directions),
+    spiral1 = [
+        Direction.north, Direction.east, Direction.south, Direction.south,
+        Direction.west, Direction.west, Direction.north, Direction.north
+    ],
     // D.ASM:5500 BHX1 .BYTE ... / BHY1 / BHX2 / BHY2
     // there are 11 impassable square-sides
     // the original game stores 22 sets of (x1,y1),(x2,y2) coordinates
@@ -142,7 +146,7 @@ M.ASM:8600 PSXVAL .BYTE $E0,0,0,$33,$78,$D6,$10,$27,$40,0,1,15,6,41,0,1
     ],
     // terrain types M.ASM: 8160 TERRTY
     // movement costs (of 32/turn) come from D.ASM:5430 SSNCOD / 5440 TRNTAB
-    // index by terrain, then armor(0/1) and finally Season enum
+    // index by terrain, then armor(0/1) and finally Weather enum
     // 128 is impassable, 0 indicates error (frozen terrain outside winter)
     terraintypes = [
         {key: 'clear',           move: [[ 6, 24, 10], [ 4, 30,  6]], color: '02' },
@@ -239,15 +243,13 @@ M.ASM:8600 PSXVAL .BYTE $E0,0,0,$33,$78,$D6,$10,$27,$40,0,1,15,6,41,0,1
 #               B~~~~~~~~~FJ~~~~~~~~~FDES123433#
 ################################################
 `.split(/\n/).slice(1,-1),
-    maxlon = mapascii[0].length-2,
-    maxlat = mapascii.length-2,
     // decode the map into a 2-d array of rows x cols of  {lon: , lat:, icon:, terrain:, alt:}
-    mapdata = mapascii.map(
+    mapboard = mapascii.map(
             (row, i) =>
             row.split('').map(
                 (c, j) => {
                     let o = Object.assign(
-                        {lon: maxlon - j, lat: maxlat - i, unitid: null},
+                        {unitid: null},
                         mapencoding[i <= 25 ? 0: 1][c]
                     );
                     if (o.terrain == Terrain.city) {
@@ -438,10 +440,20 @@ M.ASM:8600 PSXVAL .BYTE $E0,0,0,$33,$78,$D6,$10,$27,$40,0,1,15,6,41,0,1
             flags: vs[5],
             type: types[vs[5] >> 4],          // FINNISH can't attack
             variant: variants[vs[5] & 0x0f],  // MILITIA can't move
-            armor: (vs[3] & 0x1) == 0,        // inf is clr | 0x3d, armor is clr | 0x3e
+            armor: (vs[3] & 0x1) == 0 ? 1 : 0,        // inf is clr | 0x3d, armor is clr | 0x3e
             unitno: vs[6],
             orders: []      // WHORDRS, HMORDS
         }
         u.label = [u.unitno, u.variant, u.type, players[u.player].unit].filter(Boolean).join(' ').trim();
         return u;
     });
+
+
+mapboard.maxlon = mapboard[0].length-2;
+mapboard.maxlat = mapboard.length-2;
+mapboard.point = (r, c) => {return {lon: mapboard.maxlon-c, lat: mapboard.maxlat-r}};
+mapboard.row = pt => mapboard.maxlat - pt.lat;
+mapboard.col = pt => mapboard.maxlon - pt.lon;
+mapboard.at = pt => mapboard[mapboard.row(pt)][mapboard.col(pt)];
+mapboard.valid = pt => pt.lat >= 0 && pt.lat < mapboard.maxlat && pt.lon >= 0 && pt.lon < mapboard.maxlon;
+mapboard.forEach((row, i) => row.forEach((d, j) => Object.assign(d, mapboard.point(i, j))));
