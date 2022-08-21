@@ -17,6 +17,7 @@ with open('colormap.dat', 'w') as out:
     for k, v in sorted(cmap.items()):
         out.write(f'clr{k}: {v}\n')
 
+# open the disk image
 disk = open('APX20050.ATR', 'rb').read()
 
 
@@ -91,7 +92,7 @@ baseoff = 0x4700
 memmap = data[6:]
 print(data[:6])
 print(memmap[:16].hex())
-open('memmap.dat', 'wb').write(memmap)
+open('apxdump.dat', 'wb').write(memmap)
 
 
 """

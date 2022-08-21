@@ -115,8 +115,18 @@ M.ASM:8600 PSXVAL .BYTE $E0,0,0,$33,$78,$D6,$10,$27,$40,0,1,15,6,41,0,1
 
 */
     players = [
-        {key: 'german', unit: 'CORPS', color: '0C'},
-        {key: 'russian', unit: 'ARMY', color: '46'},
+        {
+            key: 'german',  unit: 'CORPS', color: '0C',
+            supply: {
+                home: Direction.west, sea: 1, replacements: 0, maxfail: [24, 0, 16], freeze: 1,
+            }
+        },
+        {
+            key: 'russian', unit: 'ARMY',  color: '46',
+            supply: {
+                home: Direction.east, sea: 0, replacements: 2, maxfail: [24, 24, 24], freeze: 0,
+            }
+        },
     ]
     Player = enumFor(players),
     cities = [
@@ -145,20 +155,52 @@ M.ASM:8600 PSXVAL .BYTE $E0,0,0,$33,$78,$D6,$10,$27,$40,0,1,15,6,41,0,1
         //        {owner: 1, lon: 20, lat:  0, label: 'Sevastopol', points: 20},
     ],
     // terrain types M.ASM: 8160 TERRTY
+    // OFFNC I.ASM:9080 1,1,1,1,1,1,2,2,1,0
+    // DEFNC I.ASM:9080 2,3,3,2,2,2,1,1,2,0
     // movement costs (of 32/turn) come from D.ASM:5430 SSNCOD / 5440 TRNTAB
     // index by terrain, then armor(0/1) and finally Weather enum
-    // 128 is impassable, 0 indicates error (frozen terrain outside winter)
+    // value of 128 means impassable, 0 means error (frozen terrain outside winter)
     terraintypes = [
-        {key: 'clear',           move: [[ 6, 24, 10], [ 4, 30,  6]], color: '02' },
-        {key: 'mountain_forest', move: [[12, 30, 16], [ 8, 30, 10]], color: '28', altcolor: 'D6'},  // mtn + forest
-        {key: 'city',            move: [[ 8, 24, 10], [ 6, 30,  8]], color: '0C', altcolor: '46'},
-        {key: 'frozen_swamp',    move: [[ 0,  0, 12], [ 0,  0,  8]], color: '0C'},
-        {key: 'frozen_river',    move: [[ 0,  0, 12], [ 0,  0,  8]], color: '0C'},
-        {key: 'swamp',           move: [[18, 30, 24], [18, 30, 24]], color: '94'},
-        {key: 'river',           move: [[14, 30, 28], [13, 30, 28]], color: '94'},
-        {key: 'coastline',       move: [[ 8, 26, 12], [ 6, 30,  8]], color: '94'},
-        {key: 'estuary',         move: [[20, 28, 24], [16, 30, 20]], color: '94'},
-        {key: 'impassable', move: [[128, 128, 128], [128, 128, 128]], color: '94', altcolor: '0C'} // sea + border
+        {
+            key: 'clear', color: '02',
+            offence: 0, defence: 0, move: [[ 6, 24, 10], [ 4, 30,  6]]
+        },
+        {
+            key: 'mountain_forest', color: '28', altcolor: 'D6',   // mtn + forest
+            offence: 0, defence: 1, move: [[12, 30, 16], [ 8, 30, 10]]
+        },
+        {
+            key: 'city', color: '0C', altcolor: '46',  // german + russian control
+            offence: 0, defence: 1, move: [[ 8, 24, 10], [ 6, 30,  8]]
+        },
+        {
+            key: 'frozen_swamp', color: '0C',
+            offence: 0, defence: 0, move: [[ 0,  0, 12], [ 0,  0,  8]]
+        },
+        {
+            key: 'frozen_river', color: '0C',
+            offence: 0, defence: 0, move: [[ 0,  0, 12], [ 0,  0,  8]]
+        },
+        {
+            key: 'swamp', color: '94',
+            offence: 0, defence: 0, move: [[18, 30, 24], [18, 30, 24]]
+        },
+        {
+            key: 'river', color: '94',
+            offence: -1, defence: -1, move: [[14, 30, 28], [13, 30, 28]]
+        },
+        {
+            key: 'coastline', color: '94',
+            offence: -1, defence: -1, move: [[ 8, 26, 12], [ 6, 30,  8]]
+        },
+        {
+            key: 'estuary', color: '94',
+            offence: 0, defence: 0, move: [[20, 28, 24], [16, 30, 20]],
+        },
+        {
+            key: 'impassable', color: '94', altcolor: '0C',  // sea + border
+            offence: 0, defence: 0, move: [[128, 128, 128], [128, 128, 128]]
+        }
     ],
     Terrain = enumFor(terraintypes),
     /*
@@ -247,17 +289,7 @@ M.ASM:8600 PSXVAL .BYTE $E0,0,0,$33,$78,$D6,$10,$27,$40,0,1,15,6,41,0,1
     mapboard = mapascii.map(
             (row, i) =>
             row.split('').map(
-                (c, j) => {
-                    let o = Object.assign(
-                        {unitid: null},
-                        mapencoding[i <= 25 ? 0: 1][c]
-                    );
-                    if (o.terrain == Terrain.city) {
-                        let city = cities.find(d => d.lon == o.lon && d.lat == o.lat);
-                        if (city) o.alt = city.owner;
-                    }
-                    return o;
-                }
+                (c, j) => Object.assign({unitid: null}, mapencoding[i <= 25 ? 0: 1][c])
             )
         ),
     // order-of-battle table with 159 units comes from D.ASM:0x5400
@@ -438,16 +470,20 @@ M.ASM:8600 PSXVAL .BYTE $E0,0,0,$33,$78,$D6,$10,$27,$40,0,1,15,6,41,0,1
             icon: vs[3] & 0x3f | 0x80,  // drop the color and address custom char pages
             arrive: vs[4],
             flags: vs[5],
-            type: types[vs[5] >> 4],          // FINNISH can't attack
-            variant: variants[vs[5] & 0x0f],  // MILITIA can't move
+            type: types[vs[5] >> 4],
+            variant: variants[vs[5] & 0x0f],
             armor: (vs[3] & 0x1) == 0 ? 1 : 0,        // inf is clr | 0x3d, armor is clr | 0x3e
             unitno: vs[6],
             orders: []      // WHORDRS, HMORDS
         }
+        u.attack = u.type == 'FINNISH' ? 0: 1;  // FINNISH can't attack
+        u.static = u.variant == 'MILITIA' ? 1: 0;  // MILITIA can't move
         u.label = [u.unitno, u.variant, u.type, players[u.player].unit].filter(Boolean).join(' ').trim();
         return u;
     });
 
+
+Player.other = p => 1-p;
 
 mapboard.maxlon = mapboard[0].length-2;
 mapboard.maxlat = mapboard.length-2;
@@ -456,4 +492,16 @@ mapboard.row = pt => mapboard.maxlat - pt.lat;
 mapboard.col = pt => mapboard.maxlon - pt.lon;
 mapboard.at = pt => mapboard[mapboard.row(pt)][mapboard.col(pt)];
 mapboard.valid = pt => pt.lat >= 0 && pt.lat < mapboard.maxlat && pt.lon >= 0 && pt.lon < mapboard.maxlon;
-mapboard.forEach((row, i) => row.forEach((d, j) => Object.assign(d, mapboard.point(i, j))));
+mapboard.forEach(
+    (row, i) => row.forEach(
+        (d, j) => {
+            Object.assign(d, mapboard.point(i, j))
+            if (d.terrain == Terrain.city) {
+                let city = cities.find(c => c.lon == d.lon && c.lat == d.lat);
+                if (city) d.alt = city.owner;
+            }
+        }
+    )
+);
+
+const randint = n => Math.floor(Math.random()*n);

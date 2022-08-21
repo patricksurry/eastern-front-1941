@@ -1,0 +1,11 @@
+{
+    "startaddress": "4700",
+    "entrypoints": [
+        {"addr": "4700", "mode": "code", "label": "think"},
+        {"addr": "5400", "mode": "data", "label": "units"},
+        {"addr": "6000", "mode": "data", "label": "fonts"},
+        {"addr": "6500", "mode": "data", "label": "map"},
+        {"addr": "6e00", "mode": "code", "label": "init"},
+        {"addr": "7400", "mode": "code", "label": "vbi"}
+    ]
+}

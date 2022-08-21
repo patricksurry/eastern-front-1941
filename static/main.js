@@ -1,8 +1,26 @@
+/*
+TODO
+- switch to rand256 instead of randint
+- game end check after scoring turn 40 M.ASM:4780 with 'GAME OVER' message
+- static units can't move
+- attack != units can't attack
+- showNewOrder: flash on illegal move
+- flash style for combat
+- keyhandler:  'x' toggle extras like labels
+    - something to toggle handicap - increase muster strength of all your units by 50% but halve score, self-modifies VBI to change color of text window
+- update map after each tick with delay
+- swith maplabel colors to atari hexcolors
+- score in info window instead of console
+
+- implement AI
+*/
+
 var gameState = {
     turn: -1,       // 0-index turn counter
     icelat: 39,     // via M.ASM:8600 PSXVAL initial value is 0x27
     handicap: 0,    // whether the game is handicapped
     zoom: 1,        // display zoom level (1 or 2)
+    weather: null,
 }
 
 var activeunits = null,  // a list of active units for each player
@@ -10,28 +28,6 @@ var activeunits = null,  // a list of active units for each player
     kreuze = null,  // d3 selection with the chr displaying the maltakreuze
     arrows = null;  // d3 selection of the four arrow chrs
 
-
-function randint(n) {
-    return Math.floor(Math.random()*n);
-}
-
-function addDir(pt, dir) {
-    let d = directions[dir];
-    return {lon: pt.lon + d.dlon, lat: pt.lat + d.dlat}
-}
-
-function maybeStepDir(pt, dir) {
-    let {lon: lon, lat: lat} = pt,
-        p2 = addDir(pt, dir),
-        legal = (
-            mapboard.at(p2).terrain != Terrain.impassable
-            && !(
-                (dir == Direction.north || dir == Direction.south)
-                ? blocked[0].find(d => d.lon == lon && d.lat == (dir == Direction.north ? lat : p2.lat))
-                : blocked[1].find(d => d.lon == (dir == Direction.west ? lon : p2.lon) && d.lat == lat)
-            ));
-    return legal ? p2: null;
-}
 
 function mapfg(d) {
     if (d.unitid !== null) {
@@ -54,6 +50,7 @@ function mapinfo(ev, m) {
     if (m.unitid) {
         let u = oob[m.unitid];
         clauses.push(`${u.label} (${u.cstrng}/${u.mstrng})`);
+        clauses.push(`Supply: ${traceSupply(u, gameState.weather)}`);
     }
     d3.select(this).attr('title', clauses.join('\n'));
 }
@@ -144,33 +141,14 @@ function hideUnitPath() {
     d3.select('.blink').classed('blink', false);
 }
 
-function getUnitPath(u) {
-    let pt = {lon: u.lon, lat: u.lat},
-        pts = [pt];
-    u.orders.forEach(dir => {
-        let p = maybeStepDir(pt, dir);
-        if (!p) return;
-        pts.push(pt = p)
-    });
-    return pts;
-}
-
-function addOrder(dir) {
+function showNewOrder(dir) {
     let u = getFocusedUnit();
     if (!u) return;
-
-    let pts = getUnitPath(u),
-        pt = maybeStepDir(pts.pop(), dir);
-    if (pt) {
-        u.orders.push(dir);
-        showUnitPath(u);
+    if (dir == null) {
+        resetOrders(u);
+    } else {
+        let dest = addOrder(u, dir);
     }
-}
-
-function resetOrders() {
-    let u = getFocusedUnit();
-    if (!u) return;
-    u.orders = [];
     showFocusedUnit();
 }
 
@@ -202,16 +180,16 @@ function toggleZoom() {
 function keyhandler(e) {
     switch (e.key) {
         case 'ArrowUp':
-            addOrder(Direction.north);
+            showNewOrder(Direction.north);
             break;
         case 'ArrowRight':
-            addOrder(Direction.east);
+            showNewOrder(Direction.east);
             break;
         case 'ArrowDown':
-            addOrder(Direction.south);
+            showNewOrder(Direction.south);
             break;
         case 'ArrowLeft':
-            addOrder(Direction.west);
+            showNewOrder(Direction.west);
             break;
 
         case 'Enter':
@@ -227,17 +205,12 @@ function keyhandler(e) {
 
         case ' ':
         case 'Escape':
-            resetOrders();
+            showNewOrder(null);
             break;
 
         case 'End':  // Fn + Rt on a mac
             nextTurn();
             break;
-
-        //TODO 'x' toggle extras like labels
-
-        //TODO handicap - increase muster strength of all your units by 50% but halve score
-        // modifes the VBI to change color of text window
 
         case 'z':
             toggleZoom();
@@ -292,56 +265,6 @@ function start() {
 }
 
 
-function nextMoveCost(u) {
-    if (u.orders.length == 0) return 255;
-    let pt = maybeStepDir(u, u.orders[0]),
-        t = terraintypes[mapboard.at(pt).terrain];
-    return t.move[u.armor][gameState.weather];
-}
-
-
-function maybeMove(u) {
-    let pt = maybeStepDir(u, u.orders[0]),
-        m = mapboard.at(pt),
-        m0 = mapboard.at(u);
-
-    if (m.unitid !== null) {
-        if (oob[m.unitid].player == u.player) {
-            u.tick += 2;
-            return;
-        } else {
-            //TODO combat
-        }
-    }
-    m0.unitid = null;
-    m.unitid = u.id;
-    u.lat = pt.lat;
-    u.lon = pt.lon;
-    u.orders.shift();
-    u.tick += nextMoveCost(u);
-}
-
-
-function zoneOfControl(player, pt) {
-    // evaluate player's zoc in square at pt
-    let m = mapboard.at(pt),
-        zoc = 0;
-    // same player in target square exerts 4, enemy negates zoc
-    if (m.unitid) {
-        if (oob[m.unitid].player != player) return zoc;
-        zoc += 4;
-    }
-    spiral1.forEach((d, i) => {
-        pt = addDir(pt, d);
-        if (!mapboard.valid(pt)) return;
-        m = mapboard.at(pt);
-        // even steps in the spiral exert 2, odd steps exert 1
-        if (m.unitid && oob[m.unitid].player == player) zoc += (i % 2) ? 1: 2;
-    })
-    return zoc;
-}
-
-
 function nextTurn() {
     // process movement from prior turn
 
@@ -351,17 +274,12 @@ function nextTurn() {
     for (tick=0; tick<32; tick++) {
         // original code processes movement in reverse-oob order
         oob.filter(u => u.tick == tick).reverse().forEach(maybeMove);
-        //TODO update map after each tick with delay
     }
 
     gameState.turn++;
 
     fcsidx = null;
     unfocusUnit();
-
-    //TODO logistics
-
-    //TODO zoc
 
     activeunits = players.map(
         (_, i) => {
@@ -388,7 +306,6 @@ function nextTurn() {
 
     putlines('#date-window .container', [label], '6A', 'B0')
 
-    //TODO hexcolor?
     d3.selectAll('#map .label')
         .style('color', minfo.weather == Weather.snow ? '#333': '#ccc');
 
@@ -427,6 +344,6 @@ function nextTurn() {
         .classed('chr-unit', true)
 
     console.log(JSON.stringify(gameState));
-    console.log('Current score', score());  // TODO info window?
+    console.log('Current score', score());
 }
 

@@ -1,0 +1,9 @@
+{
+    "startaddress": "8000",
+    "entrypoints": [
+        {"addr": "8000", "mode": "data"},
+        {"addr": "9000", "mode": "data", "label": "fonts"},
+        {"addr": "b91f", "mode": "code", "label": "init"},
+        {"addr": "b920", "mode": "code", "label": "start"}
+    ]
+}

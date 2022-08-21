@@ -388,7 +388,7 @@
 3880  STA TXTWDW+36
 3890 A51 JSR SWITCH
 3900  JMP X33
-3910 SORRY LDA TURN
+3910 SORRY LDA TURN      -- if taret occupied, delay a turn
 3920  CLC
 3930  ADC #$01
 3940  STA ARRIVE,X
@@ -475,7 +475,7 @@
 4750  LDA #$00
 4760  STA TXTWDW,Y
 4770  LDA TURN
-4780  CMP #$28
+4780  CMP #$28      -- game ends after scoring on turn 40
 4790  BNE Z00
 4800  LDA #$01 end of game
 4810  JSR TXTMSG
@@ -509,7 +509,7 @@
 5090  SBC CSTRNG,X
 5100  CMP #$02
 5110  BCC Y30
-5120  INC CSTRNG,X
+5120  INC CSTRNG,X  -- if CSTRNG <= MSTRNG - 2, recover 1 + coin-flip
 5130  CMP RANDOM
 5140  BCC Y30
 5150  INC CSTRNG,X
@@ -571,7 +571,7 @@
 5710  JSR CHKZOC
 5720  LDA ZOC
 5730  CMP #$02
-5740  BCS TRJAM
+5740  BCS TRJAM      -- delay +2 ticks if trying to move between ZOC
 5750 Z94 JSR SWITCH
 5760  LDX CORPS
 5770  LDA LAT
@@ -811,7 +811,7 @@
 8110 Y02 RTS
 8120 ;
 8130 ;this subroutine determines the type of terrain
-8140 ;in a square
+8140 ;in a square -- returns with terrain index in Y and TRNTYP
 8150 ;
 8160 TERRTY LDY #$00
 8170  LDA TRNCOD

@@ -160,20 +160,21 @@
 1600 ;
 1610 ;
 1620  JSR TERRTY terrain in defender's square
-1630  LDX DEFNC,Y defensive bonus factor
-1640  LDA CSTRNG,Y defender's strength
-1650  LSR A
-1660 Y15 DEX adjust for terrain
+1630  LDX DEFNC,Y defensive bonus factor   -- index DEFNC by territory - see I.ASM:9080
+-- missing LDY DEFNDR ?
+1640  LDA CSTRNG,Y defender's strength -- ?? shouldn't this be LDA CSTRNG,<unitno> ??
+1650  LSR A     -- divide by 2
+1660 Y15 DEX adjust for terrain  -- 1 => half, 2 => no effect, 3 => double
 1670  BEQ Y16
-1680  ROL A
+1680  ROL A   -- mul by 2
 1690  BCC Y15
-1700  LDA #$FF
+1700  LDA #$FF  -- max of 255
 1710 ;
 1720 ;now adjust for defender's motion
 1730 ;
-1740 Y16 LDX HMORDS,Y
+1740 Y16 LDX HMORDS,Y -- again Y seems set wrong
 1750  BEQ DOBATL
-1760  LSR A
+1760  LSR A   -- half strength if moving
 1770 ;
 1780 ;evaluate defender's strike
 1790 ;
@@ -198,13 +199,13 @@
 1980  STA LAT
 1990  JSR TERR
 2000  JSR TERRTY
-2010  LDA OFFNC,Y
+2010  LDA OFFNC,Y  -- see I.ASM: 011660
 2020  TAY
 2030  LDX ARMY
 2040  LDA CSTRNG,X
 2050  DEY
 2060  BEQ Y19
-2070  LSR A river attack penalty
+2070  LSR A river attack penalty  -- river or coastline halves attack, not swamp/estuary?
 2080 Y19 CMP RANDOM
 2090  BCC A20
 2100  LDX DEFNDR attacker strikes defender
@@ -274,7 +275,7 @@
 2740  LDA #$FF
 2750  STA VICTRY
 2760 ENDCOM LDX ARMY
-2770  INC EXEC,X
+2770  INC EXEC,X  -- tick for next round of battle
 2780  RTS
 2790 ;
 2800 ;Subroutines for combat
@@ -342,27 +343,27 @@
 3420 ;
 3430 ;supply evaluation routine
 3440 ;
-3450  LDA ARRIVE,X
+3450  LDA ARRIVE,X  -- skip units that haven't arrived yet
 3460  CMP TURN
 3470  BEQ Z86
 3480  BCC Z86
 3490  RTS
-3500 Z86 LDA #$18
-3510  CPX #$37  -- German?
+3500 Z86 LDA #$18  -- max 24 failures in trace?
+3510  CPX #$37  -- Russian skips seasonal effect
 3520  BCS A13
 3530  LDA #$18
 3540  LDY EARTH
-3550  CPY #$02 mud?
+3550  CPY #$02 mud? -- no supply
 3560  BEQ A12
 3570  CPY #$0A snow?
 3580  BNE A13
 3590  LDA CORPSX,X this discourages gung-ho corps
 3600  ASL A double distance
 3610  ASL A
-3620  ADC #$4A
+3620  ADC #$4A  -- 4*lon + 74 (max 45*4+74 = 254)
 3630  CMP RANDOM
 3640  BCC A12
-3650  LDA #$10 harder to get supplies in winter
+3650  LDA #$10 harder to get supplies in winter  -- max 16 failures?
 3660 A13 STA ACCLO
 3670  LDY #$01 Russians go east
 3680  CPX #$37
@@ -387,48 +388,48 @@
 3870  CLC
 3880  ADC YINC,Y
 3890  STA LAT
-3900  JSR CHKZOC
-3910  CPX #$37
+3900  JSR CHKZOC  -- try moving step towards home
+3910  CPX #$37  -- germans allowed supply by sea
 3920  BCC A80
 3930  JSR TERRB
 3940  LDA TRNCOD
-3950  CMP #$BF
+3950  CMP #$BF  -- solid (sea)
 3960  BEQ A77
 3970 A80 LDA ZOC
 3980  CMP #$02
 3990  BCC Z81
-4000  INC RFR
+4000  INC RFR       -- why inc twice for zoc, once for sea?
 4010 A77 INC RFR
 4020  LDA RFR
-4030  CMP ACCLO
+4030  CMP ACCLO  -- max failures
 4040  BCC Z84
-4050 A12 LSR CSTRNG,X
-4060  BNE A50
+4050 A12 LSR CSTRNG,X  -- half combat strength
+4060  BNE A50       -- dead?
 4070  JMP DEAD
 4080 A50 RTS
 4090 Z84 LDA RANDOM
 4100  AND #$02
-4110  TAY
+4110  TAY       -- Y = 0 or 2 (north or south)
 4120  JMP LOOP90
-4130 Z81 LDY HOMEDR
+4130 Z81 LDY HOMEDR -- successful step
 4140  LDA LONG
 4150  CPY #$01
 4160  BNE Z85
-4170  CMP #$FF
+4170  CMP #$FF   -- russian hit board edge at lat=-1 ?
 4180  BNE LOOP91
 4190  INC MSTRNG,X Russian replacements
 4200  INC MSTRNG,X
 4210  RTS
-4220 Z85 CMP #$2E
+4220 Z85 CMP #$2E  -- german hit board edge at lat=46 ?
 4230  BNE LOOP91
 4240  RTS
 4250 ;
-4260 ;routine to check for zone of control
+4260 ;routine to check for zone of control -- unit idx in X
 4270 ;
 4280 CHKZOC LDA #$00
 4290  STA ZOC
 4300  LDA #$40
-4310  CPX #$37
+4310  CPX #$37  -- german or russian?
 4320  BCS A70
 4330  LDA #$C0
 4340 A70 STA TEMPR
@@ -516,7 +517,7 @@
 5160  LDA #$FF
 5170  STA EXEC,X
 5180  LDA #$00
-5190  STA HMORDS,X
+5190  STA HMORDS,X  -- reset orders if break
 5200 A30 RTS
 5210 ;
 5220  .END
