@@ -2,741 +2,741 @@
 
 * = $4700
 
-think       ldx #$01                        ; 4700 a201
-            sta $c5                         ; 4702 85c5
-            sta $0691                       ; 4704 8d9106
-            sta $0690                       ; 4707 8d9006
+THINK       ldx #$01                        ; 4700 a201
+            sta TEMPR                       ; 4702 85c5
+            sta TOTRS                       ; 4704 8d9106
+            sta TOTGS                       ; 4707 8d9006
             ldy #$9e                        ; 470a a09e
-_think1     lda s_AL,y                      ; 470c b91b57
-            cmp $c9                         ; 470f c5c9
-            bcs _think2                     ; 4711 b00d
-            lda $c5                         ; 4713 a5c5
+_THINK_1    lda ARRIVE,y                    ; 470c b91b57
+            cmp TURN                        ; 470f c5c9
+            bcs _THINK_2                    ; 4711 b00d
+            lda TEMPR                       ; 4713 a5c5
             clc                             ; 4715 18
-            adc s_AJ,y                      ; 4716 79dd55
-            sta $c5                         ; 4719 85c5
-            bcc _think2                     ; 471b 9003
-            inc $0690,x                     ; 471d fe9006
-_think2     dey                             ; 4720 88
+            adc CSTRNG,y                    ; 4716 79dd55
+            sta TEMPR                       ; 4719 85c5
+            bcc _THINK_2                    ; 471b 9003
+            inc TOTGS,x                     ; 471d fe9006
+_THINK_2    dey                             ; 4720 88
             cpy #$37                        ; 4721 c037
-            bcs _think1                     ; 4723 b0e7
+            bcs _THINK_1                    ; 4723 b0e7
             ldx #$00                        ; 4725 a200
             cpy #$00                        ; 4727 c000
-            bne _think1                     ; 4729 d0e1
-            lda $0691                       ; 472b ad9106
-            sta $c5                         ; 472e 85c5
-            lda $0690                       ; 4730 ad9006
+            bne _THINK_1                    ; 4729 d0e1
+            lda TOTRS                       ; 472b ad9106
+            sta TEMPR                       ; 472e 85c5
+            lda TOTGS                       ; 4730 ad9006
             ldx #$04                        ; 4733 a204
-_think3     asl                             ; 4735 0a
-            bcc _think5                     ; 4736 9008
+_THINK_3    asl                             ; 4735 0a
+            bcc _THINK_5                    ; 4736 9008
             ror                             ; 4738 6a
-_think4     lsr $c5                         ; 4739 46c5
+_THINK_4    lsr TEMPR                       ; 4739 46c5
             dex                             ; 473b ca
-            bne _think4                     ; 473c d0fb
-            beq _think6                     ; 473e f003
-_think5     dex                             ; 4740 ca
-            bne _think3                     ; 4741 d0f2
-_think6     ldy #$ff                        ; 4743 a0ff
-            ldx $c5                         ; 4745 a6c5
-            beq _think8                     ; 4747 f006
+            bne _THINK_4                    ; 473c d0fb
+            beq _THINK_6                    ; 473e f003
+_THINK_5    dex                             ; 4740 ca
+            bne _THINK_3                    ; 4741 d0f2
+_THINK_6    ldy #$ff                        ; 4743 a0ff
+            ldx TEMPR                       ; 4745 a6c5
+            beq _THINK_8                    ; 4747 f006
             sec                             ; 4749 38
-_think7     iny                             ; 474a c8
-            sbc $c5                         ; 474b e5c5
-            bcs _think7                     ; 474d b0fb
-_think8     sty $0692                       ; 474f 8c9206
+_THINK_7    iny                             ; 474a c8
+            sbc TEMPR                       ; 474b e5c5
+            bcs _THINK_7                    ; 474d b0fb
+_THINK_8    sty OFR                         ; 474f 8c9206
             ldx #$9e                        ; 4752 a29e
-_think9     stx $c2                         ; 4754 86c2
-            lda s_AL,x                      ; 4756 bd1b57
-            cmp $c9                         ; 4759 c5c9
-            bcs _think10                    ; 475b b00f
-            jsr s_K                         ; 475d 20234c
-            lda units,x                     ; 4760 bd0054
-            sta s_DG,x                      ; 4763 9d5a7a
-            lda s_AH,x                      ; 4766 bd9f54
-            sta s_AG,x                      ; 4769 9d6153
-_think10    dex                             ; 476c ca
+_THINK_9    stx ARMY                        ; 4754 86c2
+            lda ARRIVE,x                    ; 4756 bd1b57
+            cmp TURN                        ; 4759 c5c9
+            bcs _THINK_10                   ; 475b b00f
+            jsr CALIFR                      ; 475d 20234c
+            lda CORPSX,x                    ; 4760 bd0054
+            sta OBJX-55,x                   ; 4763 9d5a7a
+            lda CORPSY,x                    ; 4766 bd9f54
+            sta OBJY-55,x                   ; 4769 9d6153
+_THINK_10   dex                             ; 476c ca
             cpx #$37                        ; 476d e037
-            bcs _think9                     ; 476f b0e3
-s_A         ldx #$9e                        ; 4771 a29e
-s_B         stx $c2                         ; 4773 86c2
-            lda s_AL,x                      ; 4775 bd1b57
-            cmp $c9                         ; 4778 c5c9
-            bcc _B2                         ; 477a 9003
-_B1         jmp s_F                         ; 477c 4c114b
-_B2         lda s_AO,x                      ; 477f bdca58
+            bcs _THINK_9                    ; 476f b0e3
+MLOOP       ldx #$9e                        ; 4771 a29e
+__A__       stx ARMY                        ; 4773 86c2
+            lda ARRIVE,x                    ; 4775 bd1b57
+            cmp TURN                        ; 4778 c5c9
+            bcc _A_2                        ; 477a 9003
+_A_1        jmp TOGSCN                      ; 477c 4c114b
+_A_2        lda CORPT,x                     ; 477f bdca58
             cmp #$04                        ; 4782 c904
-            beq _B1                         ; 4784 f0f6
-            lda $0692                       ; 4786 ad9206
+            beq _A_1                        ; 4784 f0f6
+            lda OFR                         ; 4786 ad9206
             lsr                             ; 4789 4a
-            cmp $0661,x                     ; 478a dd6106
-            bne _B5                         ; 478d d056
-            sta $0631                       ; 478f 8d3106
+            cmp IFR-51,x                    ; 478a dd6106
+            bne _A_5                        ; 478d d056
+            sta BSTVAL                      ; 478f 8d3106    best value, was BVAL
             ldy #$9e                        ; 4792 a09e
-_B3         lda s_AL,y                      ; 4794 b91b57
-            cmp $c9                         ; 4797 c5c9
-            bcs _B4                         ; 4799 b033
-            lda units,y                     ; 479b b90054
+_A_3        lda ARRIVE,y                    ; 4794 b91b57
+            cmp TURN                        ; 4797 c5c9
+            bcs _A_4                        ; 4799 b033
+            lda CORPSX,y                    ; 479b b90054
             sec                             ; 479e 38
-            sbc units,x                     ; 479f fd0054
-            jsr s_O                         ; 47a2 20304d
-            sta $c5                         ; 47a5 85c5
-            lda s_AH,y                      ; 47a7 b99f54
+            sbc CORPSX,x                    ; 479f fd0054
+            jsr INVERT                      ; 47a2 20304d
+            sta TEMPR                       ; 47a5 85c5
+            lda CORPSY,y                    ; 47a7 b99f54
             sec                             ; 47aa 38
-            sbc s_AH,x                      ; 47ab fd9f54
-            jsr s_O                         ; 47ae 20304d
+            sbc CORPSY,x                    ; 47ab fd9f54
+            jsr INVERT                      ; 47ae 20304d
             clc                             ; 47b1 18
-            adc $c5                         ; 47b2 65c5
+            adc TEMPR                       ; 47b2 65c5
             lsr                             ; 47b4 4a
             lsr                             ; 47b5 4a
             lsr                             ; 47b6 4a
-            bcs _B4                         ; 47b7 b015
-            sta $c5                         ; 47b9 85c5
-            lda $0661,y                     ; 47bb b96106
+            bcs _A_4                        ; 47b7 b015
+            sta TEMPR                       ; 47b9 85c5
+            lda IFR-51,y                    ; 47bb b96106
             sec                             ; 47be 38
-            sbc $c5                         ; 47bf e5c5
-            bcc _B4                         ; 47c1 900b
-            cmp $0631                       ; 47c3 cd3106
-            bcc _B4                         ; 47c6 9006
-            sta $0631                       ; 47c8 8d3106
-            sty $0632                       ; 47cb 8c3206
-_B4         dey                             ; 47ce 88
+            sbc TEMPR                       ; 47bf e5c5
+            bcc _A_4                        ; 47c1 900b
+            cmp BSTVAL                      ; 47c3 cd3106    best value, was BVAL
+            bcc _A_4                        ; 47c6 9006
+            sta BSTVAL                      ; 47c8 8d3106    best value, was BVAL
+            sty BSTIDX                      ; 47cb 8c3206    best index, was BONE
+_A_4        dey                             ; 47ce 88
             cpy #$37                        ; 47cf c037
-            bcs _B3                         ; 47d1 b0c1
-            ldy $0632                       ; 47d3 ac3206
-            lda units,y                     ; 47d6 b90054
-            sta s_DG,x                      ; 47d9 9d5a7a
-            lda s_AH,y                      ; 47dc b99f54
-            sta s_AG,x                      ; 47df 9d6153
-            jmp s_F                         ; 47e2 4c114b
-_B5         lda #$ff                        ; 47e5 a9ff
-            sta $0633                       ; 47e7 8d3306
-            sta $0632                       ; 47ea 8d3206
+            bcs _A_3                        ; 47d1 b0c1
+            ldy BSTIDX                      ; 47d3 ac3206    best index, was BONE
+            lda CORPSX,y                    ; 47d6 b90054
+            sta OBJX-55,x                   ; 47d9 9d5a7a
+            lda CORPSY,y                    ; 47dc b99f54
+            sta OBJY-55,x                   ; 47df 9d6153
+            jmp TOGSCN                      ; 47e2 4c114b
+_A_5        lda #$ff                        ; 47e5 a9ff
+            sta DIR                         ; 47e7 8d3306
+            sta BSTIDX                      ; 47ea 8d3206    best index, was BONE
             lda #$00                        ; 47ed a900
-            sta $0631                       ; 47ef 8d3106
-            lda s_Q,x                       ; 47f2 bd694d
+            sta BSTVAL                      ; 47ef 8d3106    best value, was BVAL
+            lda IFRE-55,x                   ; 47f2 bd694d
             cmp #$10                        ; 47f5 c910
-            bcs _B6                         ; 47f7 b009
-            lda s_AI,x                      ; 47f9 bd3e55
+            bcs _A_6                        ; 47f7 b009
+            lda MSTRNG,x                    ; 47f9 bd3e55
             lsr                             ; 47fc 4a
-            cmp s_AJ,x                      ; 47fd dddd55
-            bcc _B8                         ; 4800 9010
-_B6         lda units,x                     ; 4802 bd0054
+            cmp CSTRNG,x                    ; 47fd dddd55
+            bcc DRLOOP                      ; 4800 9010
+_A_6        lda CORPSX,x                    ; 4802 bd0054
             sec                             ; 4805 38
             sbc #$05                        ; 4806 e905
-            bcs _B7                         ; 4808 b002
+            bcs _A_7                        ; 4808 b002
             lda #$00                        ; 480a a900
-_B7         sta s_DG,x                      ; 480c 9d5a7a
-            jmp s_F                         ; 480f 4c114b
-_B8         lda s_DG,x                      ; 4812 bd5a7a
-            ldy $0633                       ; 4815 ac3306
-            bmi _B9                         ; 4818 3004
+_A_7        sta OBJX-55,x                   ; 480c 9d5a7a
+            jmp TOGSCN                      ; 480f 4c114b
+DRLOOP      lda OBJX-55,x                   ; 4812 bd5a7a
+            ldy DIR                         ; 4815 ac3306
+            bmi _DRLOOP_1                   ; 4818 3004
             clc                             ; 481a 18
-            adc s_DO,y                      ; 481b 79f27b
-_B9         sta $0634                       ; 481e 8d3406
-            lda s_AG,x                      ; 4821 bd6153
-            ldy $0633                       ; 4824 ac3306
-            bmi _B10                        ; 4827 3004
+            adc YINC,y                      ; 481b 79f27b
+_DRLOOP_1   sta TARGX                       ; 481e 8d3406    square under consideration
+            lda OBJY-55,x                   ; 4821 bd6153
+            ldy DIR                         ; 4824 ac3306
+            bmi _DRLOOP_2                   ; 4827 3004
             clc                             ; 4829 18
-            adc s_DN,y                      ; 482a 79f17b
-_B10        sta $0635                       ; 482d 8d3506
+            adc XINC,y                      ; 482a 79f17b
+_DRLOOP_2   sta TARGY                       ; 482d 8d3506
             lda #$00                        ; 4830 a900
-            sta $ce                         ; 4832 85ce
-            lda $0633                       ; 4834 ad3306
-            bmi _B11                        ; 4837 3010
-            sta s_AW,x                      ; 4839 9d145e
-            jsr _CI1                        ; 483c 20de72
-            ldy $c2                         ; 483f a4c2
-            lda s_BU,y                      ; 4841 b9616d
-            bpl _B11                        ; 4844 1003
-            jmp s_E                         ; 4846 4cd64a
-_B11        lda #$00                        ; 4849 a900
-            sta $0639                       ; 484b 8d3906
-            lda $0634                       ; 484e ad3406
-            sta $0636                       ; 4851 8d3606
-            lda $0635                       ; 4854 ad3506
-            sta $0637                       ; 4857 8d3706
+            sta SQVAL                       ; 4832 85ce
+            lda DIR                         ; 4834 ad3306
+            bmi _DRLOOP_3                   ; 4837 3010
+            sta WHORDS,x                    ; 4839 9d145e
+            jsr __U__                       ; 483c 20de72
+            ldy ARMY                        ; 483f a4c2
+            lda EXEC,y                      ; 4841 b9616d
+            bpl _DRLOOP_3                   ; 4844 1003
+            jmp EVALSQ                      ; 4846 4cd64a
+_DRLOOP_3   lda #$00                        ; 4849 a900
+            sta LINCOD                      ; 484b 8d3906    code value of line config
+            lda TARGX                       ; 484e ad3406    square under consideration
+            sta SQX                         ; 4851 8d3606    adjacent square
+            lda TARGY                       ; 4854 ad3506
+            sta SQY                         ; 4857 8d3706
             ldy #$17                        ; 485a a017
-_B12        sty $0638                       ; 485c 8c3806
-            lda s_CZ,y                      ; 485f b99c79
+_DRLOOP_4   sty JCNT                        ; 485c 8c3806    counter for adj squares
+            lda JSTP,y                      ; 485f b99c79
             tay                             ; 4862 a8
-            lda $0636                       ; 4863 ad3606
+            lda SQX                         ; 4863 ad3606    adjacent square
             clc                             ; 4866 18
-            adc s_DO,y                      ; 4867 79f27b
-            sta $0636                       ; 486a 8d3606
-            lda $0637                       ; 486d ad3706
+            adc YINC,y                      ; 4867 79f27b
+            sta SQX                         ; 486a 8d3606    adjacent square
+            lda SQY                         ; 486d ad3706
             clc                             ; 4870 18
-            adc s_DN,y                      ; 4871 79f17b
-            sta $0637                       ; 4874 8d3706
+            adc XINC,y                      ; 4871 79f17b
+            sta SQY                         ; 4874 8d3706
             ldx #$9e                        ; 4877 a29e
-_B13        lda s_AL,x                      ; 4879 bd1b57
-            cmp $c9                         ; 487c c5c9
-            beq _B14                        ; 487e f002
-            bcs _B15                        ; 4880 b019
-_B14        lda s_DG,x                      ; 4882 bd5a7a
-            cmp $0636                       ; 4885 cd3606
-            bne _B15                        ; 4888 d011
-            lda s_AG,x                      ; 488a bd6153
-            cmp $0637                       ; 488d cd3706
-            bne _B15                        ; 4890 d009
-            cpx $c2                         ; 4892 e4c2
-            beq _B16                        ; 4894 f00a
-            lda s_AI,x                      ; 4896 bd3e55
-            bne _B17                        ; 4899 d007
-_B15        dex                             ; 489b ca
+_DRLOOP_5   lda ARRIVE,x                    ; 4879 bd1b57
+            cmp TURN                        ; 487c c5c9
+            beq _DRLOOP_6                   ; 487e f002
+            bcs _DRLOOP_7                   ; 4880 b019
+_DRLOOP_6   lda OBJX-55,x                   ; 4882 bd5a7a
+            cmp SQX                         ; 4885 cd3606    adjacent square
+            bne _DRLOOP_7                   ; 4888 d011
+            lda OBJY-55,x                   ; 488a bd6153
+            cmp SQY                         ; 488d cd3706
+            bne _DRLOOP_7                   ; 4890 d009
+            cpx ARMY                        ; 4892 e4c2
+            beq _DRLOOP_8                   ; 4894 f00a
+            lda MSTRNG,x                    ; 4896 bd3e55
+            bne _DRLOOP_9                   ; 4899 d007
+_DRLOOP_7   dex                             ; 489b ca
             cpx #$37                        ; 489c e037
-            bcs _B13                        ; 489e b0d9
-_B16        lda #$00                        ; 48a0 a900
-_B17        ldy $0638                       ; 48a2 ac3806
-            ldx s_DM,x                      ; 48a5 bed97b
-            sta $0663,x                     ; 48a8 9d6306
+            bcs _DRLOOP_5                   ; 489e b0d9
+_DRLOOP_8   lda #$00                        ; 48a0 a900
+_DRLOOP_9   ldy JCNT                        ; 48a2 ac3806    counter for adj squares
+            ldx NDX,x                       ; 48a5 bed97b
+            sta LINARR,x                    ; 48a8 9d6306
             dey                             ; 48ab 88
-            bpl _B12                        ; 48ac 10ae
-            ldx $c2                         ; 48ae a6c2
-            lda s_AI,x                      ; 48b0 bd3e55
-            sta $066f                       ; 48b3 8d6f06
+            bpl _DRLOOP_4                   ; 48ac 10ae
+            ldx ARMY                        ; 48ae a6c2
+            lda MSTRNG,x                    ; 48b0 bd3e55
+            sta LINARR+12                   ; 48b3 8d6f06
             lda #$00                        ; 48b6 a900
-            sta $c7                         ; 48b8 85c7
-            sta $c8                         ; 48ba 85c8
-            sta $0648                       ; 48bc 8d4806
-s_C         ldx #$00                        ; 48bf a200
-            stx $0649                       ; 48c1 8e4906
-_C1         ldy #$00                        ; 48c4 a000
-_C2         lda $0663,x                     ; 48c6 bd6306
-            bne _C3                         ; 48c9 d006
+            sta ACCLO                       ; 48b8 85c7
+            sta ACCHI                       ; 48ba 85c8
+            sta SECDIR                      ; 48bc 8d4806    secondary direction
+__B__       ldx #$00                        ; 48bf a200
+            stx POTATO                      ; 48c1 8e4906    stupid temp
+_B_1        ldy #$00                        ; 48c4 a000
+_B_2        lda LINARR,x                    ; 48c6 bd6306
+            bne _B_3                        ; 48c9 d006
             inx                             ; 48cb e8
             iny                             ; 48cc c8
             cpy #$05                        ; 48cd c005
-            bne _C2                         ; 48cf d0f5
-_C3         ldx $0649                       ; 48d1 ae4906
+            bne _B_2                        ; 48cf d0f5
+_B_3        ldx POTATO                      ; 48d1 ae4906    stupid temp
             tya                             ; 48d4 98
-            sta $0684,x                     ; 48d5 9d8406
+            sta LV,x                        ; 48d5 9d8406
             inx                             ; 48d8 e8
-            stx $0649                       ; 48d9 8e4906
+            stx POTATO                      ; 48d9 8e4906    stupid temp
             cpx #$01                        ; 48dc e001
-            bne _C4                         ; 48de d004
+            bne _B_4                        ; 48de d004
             ldx #$05                        ; 48e0 a205
-            bne _C1                         ; 48e2 d0e0
-_C4         cpx #$02                        ; 48e4 e002
-            bne _C5                         ; 48e6 d004
+            bne _B_1                        ; 48e2 d0e0
+_B_4        cpx #$02                        ; 48e4 e002
+            bne _B_5                        ; 48e6 d004
             ldx #$0a                        ; 48e8 a20a
-            bne _C1                         ; 48ea d0d8
-_C5         cpx #$03                        ; 48ec e003
-            bne _C6                         ; 48ee d004
+            bne _B_1                        ; 48ea d0d8
+_B_5        cpx #$03                        ; 48ec e003
+            bne _B_6                        ; 48ee d004
             ldx #$0f                        ; 48f0 a20f
-            bne _C1                         ; 48f2 d0d0
-_C6         cpx #$04                        ; 48f4 e004
-            bne _C7                         ; 48f6 d004
+            bne _B_1                        ; 48f2 d0d0
+_B_6        cpx #$04                        ; 48f4 e004
+            bne _B_7                        ; 48f6 d004
             ldx #$14                        ; 48f8 a214
-            bne _C1                         ; 48fa d0c8
-_C7         lda #$00                        ; 48fc a900
+            bne _B_1                        ; 48fa d0c8
+_B_7        lda #$00                        ; 48fc a900
             ldy #$04                        ; 48fe a004
-_C8         ldx $0684,x                     ; 4900 be8406
+_B_8        ldx LV,x                        ; 4900 be8406
             cpx #$05                        ; 4903 e005
-            beq _C9                         ; 4905 f003
+            beq _B_9                        ; 4905 f003
             clc                             ; 4907 18
             adc #$28                        ; 4908 6928
-_C9         dey                             ; 490a 88
-            bpl _C8                         ; 490b 10f3
-            ldy $066d                       ; 490d ac6d06
-            bne _C10                        ; 4910 d012
-            ldy $066e                       ; 4912 ac6e06
-            bne _C10                        ; 4915 d00d
-            ldy $0670                       ; 4917 ac7006
-            bne _C10                        ; 491a d008
-            ldy $0671                       ; 491c ac7106
-            bne _C10                        ; 491f d003
+_B_9        dey                             ; 490a 88
+            bpl _B_8                        ; 490b 10f3
+            ldy LINARR+10                   ; 490d ac6d06
+            bne _B_10                       ; 4910 d012
+            ldy LINARR+11                   ; 4912 ac6e06
+            bne _B_10                       ; 4915 d00d
+            ldy LINARR+13                   ; 4917 ac7006
+            bne _B_10                       ; 491a d008
+            ldy LINARR+14                   ; 491c ac7106
+            bne _B_10                       ; 491f d003
             clc                             ; 4921 18
             adc #$30                        ; 4922 6930
-_C10        sta $0689                       ; 4924 8d8906
+_B_10       sta LPTS                        ; 4924 8d8906
             ldx #$00                        ; 4927 a200
-_C11        lda $0684,x                     ; 4929 bd8406
+_B_11       lda LV,x                        ; 4929 bd8406
             cmp #$04                        ; 492c c904
-            bcs _C13                        ; 492e b01f
-            sta $c5                         ; 4930 85c5
-            stx $c6                         ; 4932 86c6
+            bcs _B_13                       ; 492e b01f
+            sta TEMPR                       ; 4930 85c5
+            stx TEMPZ                       ; 4932 86c6
             txa                             ; 4934 8a
             asl                             ; 4935 0a
             asl                             ; 4936 0a
-            adc $c6                         ; 4937 65c6
-            adc $c5                         ; 4939 65c5
+            adc TEMPZ                       ; 4937 65c6
+            adc TEMPR                       ; 4939 65c5
             tay                             ; 493b a8
             iny                             ; 493c c8
-            lda $0663,y                     ; 493d b96306
-            beq _C13                        ; 4940 f00d
-            lda $0689                       ; 4942 ad8906
+            lda LINARR,y                    ; 493d b96306
+            beq _B_13                       ; 4940 f00d
+            lda LPTS                        ; 4942 ad8906
             sec                             ; 4945 38
             sbc #$20                        ; 4946 e920
-            bcs _C12                        ; 4948 b002
+            bcs _B_12                       ; 4948 b002
             lda #$00                        ; 494a a900
-_C12        sta $0689                       ; 494c 8d8906
-_C13        inx                             ; 494f e8
+_B_12       sta LPTS                        ; 494c 8d8906
+_B_13       inx                             ; 494f e8
             cpx #$05                        ; 4950 e005
-            bne _C11                        ; 4952 d0d5
+            bne _B_11                       ; 4952 d0d5
             ldy #$00                        ; 4954 a000
-_C14        sty $068b                       ; 4956 8c8b06
+_B_14       sty OCOLUM                      ; 4956 8c8b06
             ldx #$00                        ; 4959 a200
-_C15        stx $068a                       ; 495b 8e8a06
-            cpx $068b                       ; 495e ec8b06
-            beq _C18                        ; 4961 f021
-            lda $0684,x                     ; 4963 bd8406
+_B_15       stx COLUM                       ; 495b 8e8a06
+            cpx OCOLUM                      ; 495e ec8b06
+            beq _B_18                       ; 4961 f021
+            lda LV,x                        ; 4963 bd8406
             sec                             ; 4966 38
-            sbc $0684,y                     ; 4967 f98406
-            beq _C18                        ; 496a f018
-            bmi _C18                        ; 496c 3016
+            sbc LV,y                        ; 4967 f98406
+            beq _B_18                       ; 496a f018
+            bmi _B_18                       ; 496c 3016
             tax                             ; 496e aa
             lda #$01                        ; 496f a901
-_C16        asl                             ; 4971 0a
+_B_16       asl                             ; 4971 0a
             dex                             ; 4972 ca
-            bne _C16                        ; 4973 d0fc
-            sta $c5                         ; 4975 85c5
-            lda $0689                       ; 4977 ad8906
+            bne _B_16                       ; 4973 d0fc
+            sta TEMPR                       ; 4975 85c5
+            lda LPTS                        ; 4977 ad8906
             sec                             ; 497a 38
-            sbc $c5                         ; 497b e5c5
-            bcs _C17                        ; 497d b002
+            sbc TEMPR                       ; 497b e5c5
+            bcs _B_17                       ; 497d b002
             lda #$00                        ; 497f a900
-_C17        sta $0689                       ; 4981 8d8906
-_C18        ldx $068a                       ; 4984 ae8a06
+_B_17       sta LPTS                        ; 4981 8d8906
+_B_18       ldx COLUM                       ; 4984 ae8a06
             inx                             ; 4987 e8
             cpx #$05                        ; 4988 e005
-            bne _C15                        ; 498a d0cf
+            bne _B_15                       ; 498a d0cf
             iny                             ; 498c c8
             cpy #$05                        ; 498d c005
-            bne _C14                        ; 498f d0c5
-            ldx $c2                         ; 4991 a6c2
-            ldy $0648                       ; 4993 ac4806
-            bne _C19                        ; 4996 d006
-            lda s_N,x                       ; 4998 bd014d
-            jmp s_D                         ; 499b 4cb549
-_C19        cpy #$01                        ; 499e c001
-            bne _C20                        ; 49a0 d006
-            lda s_Q,x                       ; 49a2 bd694d
-            jmp s_D                         ; 49a5 4cb549
-_C20        cpy #$02                        ; 49a8 c002
-            bne _C21                        ; 49aa d006
-            lda s_R,x                       ; 49ac bdd14d
-            jmp s_D                         ; 49af 4cb549
-_C21        lda s_S,x                       ; 49b2 bd394e
-s_D         sta $c5                         ; 49b5 85c5
-            ldx $0689                       ; 49b7 ae8906
-            beq _D3                         ; 49ba f013
-            lda $c7                         ; 49bc a5c7
+            bne _B_14                       ; 498f d0c5
+            ldx ARMY                        ; 4991 a6c2
+            ldy SECDIR                      ; 4993 ac4806    secondary direction
+            bne _B_19                       ; 4996 d006
+            lda __K__,x                     ; 4998 bd014d
+            jmp __C__                       ; 499b 4cb549
+_B_19       cpy #$01                        ; 499e c001
+            bne _B_20                       ; 49a0 d006
+            lda IFRE-55,x                   ; 49a2 bd694d
+            jmp __C__                       ; 49a5 4cb549
+_B_20       cpy #$02                        ; 49a8 c002
+            bne _B_21                       ; 49aa d006
+            lda IFRS-55,x                   ; 49ac bdd14d
+            jmp __C__                       ; 49af 4cb549
+_B_21       lda IFRW-55,x                   ; 49b2 bd394e
+__C__       sta TEMPR                       ; 49b5 85c5
+            ldx LPTS                        ; 49b7 ae8906
+            beq _C_3                        ; 49ba f013
+            lda ACCLO                       ; 49bc a5c7
             clc                             ; 49be 18
-_D1         adc $c5                         ; 49bf 65c5
-            bcc _D2                         ; 49c1 9009
-            inc $c8                         ; 49c3 e6c8
+_C_1        adc TEMPR                       ; 49bf 65c5
+            bcc _C_2                        ; 49c1 9009
+            inc ACCHI                       ; 49c3 e6c8
             clc                             ; 49c5 18
-            bne _D2                         ; 49c6 d004
+            bne _C_2                        ; 49c6 d004
             lda #$ff                        ; 49c8 a9ff
-            sta $c8                         ; 49ca 85c8
-_D2         dex                             ; 49cc ca
-            bne _D1                         ; 49cd d0f0
-_D3         iny                             ; 49cf c8
+            sta ACCHI                       ; 49ca 85c8
+_C_2        dex                             ; 49cc ca
+            bne _C_1                        ; 49cd d0f0
+_C_3        iny                             ; 49cf c8
             cpy #$04                        ; 49d0 c004
-            beq _D6                         ; 49d2 f01f
-            sty $0648                       ; 49d4 8c4806
+            beq _C_6                        ; 49d2 f01f
+            sty SECDIR                      ; 49d4 8c4806    secondary direction
             ldx #$18                        ; 49d7 a218
-_D4         lda $0663,x                     ; 49d9 bd6306
-            sta $064a,x                     ; 49dc 9d4a06
+_C_4        lda LINARR,x                    ; 49d9 bd6306
+            sta BAKARR,x                    ; 49dc 9d4a06
             dex                             ; 49df ca
-            bpl _D4                         ; 49e0 10f7
+            bpl _C_4                        ; 49e0 10f7
             ldx #$18                        ; 49e2 a218
-_D5         ldy s_DJ,x                      ; 49e4 bc787a
-            lda $064a,x                     ; 49e7 bd4a06
-            sta $0663,y                     ; 49ea 996306
+_C_5        ldy ROTARR,x                    ; 49e4 bc787a
+            lda BAKARR,x                    ; 49e7 bd4a06
+            sta LINARR,y                    ; 49ea 996306
             dex                             ; 49ed ca
-            bpl _D5                         ; 49ee 10f4
-            jmp s_C                         ; 49f0 4cbf48
-_D6         lda $c8                         ; 49f3 a5c8
-            sta $ce                         ; 49f5 85ce
+            bpl _C_5                        ; 49ee 10f4
+            jmp __B__                       ; 49f0 4cbf48
+_C_6        lda ACCHI                       ; 49f3 a5c8
+            sta SQVAL                       ; 49f5 85ce
             ldy #$36                        ; 49f7 a036
             lda #$ff                        ; 49f9 a9ff
-            sta $063a                       ; 49fb 8d3a06
-_D7         lda s_AL,y                      ; 49fe b91b57
-            cmp $c9                         ; 4a01 c5c9
-            beq _D8                         ; 4a03 f002
-            bcs _D9                         ; 4a05 b021
-_D8         lda units,y                     ; 4a07 b90054
+            sta NBVAL                       ; 49fb 8d3a06    another best value
+_C_7        lda ARRIVE,y                    ; 49fe b91b57
+            cmp TURN                        ; 4a01 c5c9
+            beq _C_8                        ; 4a03 f002
+            bcs _C_9                        ; 4a05 b021
+_C_8        lda CORPSX,y                    ; 4a07 b90054
             sec                             ; 4a0a 38
-            sbc $0634                       ; 4a0b ed3406
-            jsr s_O                         ; 4a0e 20304d
-            sta $c5                         ; 4a11 85c5
-            lda s_AH,y                      ; 4a13 b99f54
+            sbc TARGX                       ; 4a0b ed3406    square under consideration
+            jsr INVERT                      ; 4a0e 20304d
+            sta TEMPR                       ; 4a11 85c5
+            lda CORPSY,y                    ; 4a13 b99f54
             sec                             ; 4a16 38
-            sbc $0635                       ; 4a17 ed3506
-            jsr s_O                         ; 4a1a 20304d
+            sbc TARGY                       ; 4a17 ed3506
+            jsr INVERT                      ; 4a1a 20304d
             clc                             ; 4a1d 18
-            adc $c5                         ; 4a1e 65c5
-            cmp $063a                       ; 4a20 cd3a06
-            bcs _D9                         ; 4a23 b003
-            sta $063a                       ; 4a25 8d3a06
-_D9         dey                             ; 4a28 88
-            bpl _D7                         ; 4a29 10d3
-            ldx $c2                         ; 4a2b a6c2
-            lda $0661,x                     ; 4a2d bd6106
-            sta $c5                         ; 4a30 85c5
+            adc TEMPR                       ; 4a1e 65c5
+            cmp NBVAL                       ; 4a20 cd3a06    another best value
+            bcs _C_9                        ; 4a23 b003
+            sta NBVAL                       ; 4a25 8d3a06    another best value
+_C_9        dey                             ; 4a28 88
+            bpl _C_7                        ; 4a29 10d3
+            ldx ARMY                        ; 4a2b a6c2
+            lda IFR-51,x                    ; 4a2d bd6106
+            sta TEMPR                       ; 4a30 85c5
             lda #$0f                        ; 4a32 a90f
             sec                             ; 4a34 38
-            sbc $c5                         ; 4a35 e5c5
-            bcc _D10                        ; 4a37 900c
+            sbc TEMPR                       ; 4a35 e5c5
+            bcc _C_10                       ; 4a37 900c
             asl                             ; 4a39 0a
-            sta $c5                         ; 4a3a 85c5
+            sta TEMPR                       ; 4a3a 85c5
             lda #$09                        ; 4a3c a909
             sec                             ; 4a3e 38
-            sbc $063a                       ; 4a3f ed3a06
-            sta $063a                       ; 4a42 8d3a06
-_D10        ldy $063a                       ; 4a45 ac3a06
-            bne _D11                        ; 4a48 d005
-            sty $ce                         ; 4a4a 84ce
-            jmp s_E                         ; 4a4c 4cd64a
-_D11        ldy $cd                         ; 4a4f a4cd
-            lda s_DB,y                      ; 4a51 b9b479
+            sbc NBVAL                       ; 4a3f ed3a06    another best value
+            sta NBVAL                       ; 4a42 8d3a06    another best value
+_C_10       ldy NBVAL                       ; 4a45 ac3a06    another best value
+            bne _C_11                       ; 4a48 d005
+            sty SQVAL                       ; 4a4a 84ce
+            jmp EVALSQ                      ; 4a4c 4cd64a
+_C_11       ldy TRNTYP                      ; 4a4f a4cd
+            lda DEFNC,y                     ; 4a51 b9b479
             clc                             ; 4a54 18
-            adc $063a                       ; 4a55 6d3a06
+            adc NBVAL                       ; 4a55 6d3a06    another best value
             tay                             ; 4a58 a8
             lda #$00                        ; 4a59 a900
             clc                             ; 4a5b 18
-_D12        adc $c5                         ; 4a5c 65c5
-            bcc _D13                        ; 4a5e 9004
+_C_12       adc TEMPR                       ; 4a5c 65c5
+            bcc _C_13                       ; 4a5e 9004
             lda #$ff                        ; 4a60 a9ff
-            bmi _D14                        ; 4a62 3003
-_D13        dey                             ; 4a64 88
-            bne _D12                        ; 4a65 d0f5
-_D14        clc                             ; 4a67 18
-            adc $ce                         ; 4a68 65ce
-            bcc _D15                        ; 4a6a 9002
+            bmi _C_14                       ; 4a62 3003
+_C_13       dey                             ; 4a64 88
+            bne _C_12                       ; 4a65 d0f5
+_C_14       clc                             ; 4a67 18
+            adc SQVAL                       ; 4a68 65ce
+            bcc _C_15                       ; 4a6a 9002
             lda #$ff                        ; 4a6c a9ff
-_D15        sta $ce                         ; 4a6e 85ce
+_C_15       sta SQVAL                       ; 4a6e 85ce
             ldy #$9e                        ; 4a70 a09e
-_D16        lda s_DG,y                      ; 4a72 b95a7a
-            cmp $0634                       ; 4a75 cd3406
-            bne _D18                        ; 4a78 d01e
-            lda s_AG,y                      ; 4a7a b96153
-            cmp $0635                       ; 4a7d cd3506
-            bne _D18                        ; 4a80 d016
-            cpy $c2                         ; 4a82 c4c2
-            beq _D18                        ; 4a84 f012
-            lda s_AL,y                      ; 4a86 b91b57
-            cmp $c9                         ; 4a89 c5c9
-            beq _D17                        ; 4a8b f002
-            bcs _D18                        ; 4a8d b009
-_D17        lda $ce                         ; 4a8f a5ce
+_C_16       lda OBJX-55,y                   ; 4a72 b95a7a
+            cmp TARGX                       ; 4a75 cd3406    square under consideration
+            bne _C_18                       ; 4a78 d01e
+            lda OBJY-55,y                   ; 4a7a b96153
+            cmp TARGY                       ; 4a7d cd3506
+            bne _C_18                       ; 4a80 d016
+            cpy ARMY                        ; 4a82 c4c2
+            beq _C_18                       ; 4a84 f012
+            lda ARRIVE,y                    ; 4a86 b91b57
+            cmp TURN                        ; 4a89 c5c9
+            beq _C_17                       ; 4a8b f002
+            bcs _C_18                       ; 4a8d b009
+_C_17       lda SQVAL                       ; 4a8f a5ce
             sbc #$20                        ; 4a91 e920
-            sta $ce                         ; 4a93 85ce
-            jmp s_E                         ; 4a95 4cd64a
-_D18        dey                             ; 4a98 88
+            sta SQVAL                       ; 4a93 85ce
+            jmp EVALSQ                      ; 4a95 4cd64a
+_C_18       dey                             ; 4a98 88
             cpy #$37                        ; 4a99 c037
-            bcs _D16                        ; 4a9b b0d5
-            lda units,x                     ; 4a9d bd0054
+            bcs _C_16                       ; 4a9b b0d5
+            lda CORPSX,x                    ; 4a9d bd0054
             sec                             ; 4aa0 38
-            sbc $0634                       ; 4aa1 ed3406
-            jsr s_O                         ; 4aa4 20304d
-            sta $c5                         ; 4aa7 85c5
-            lda s_AH,x                      ; 4aa9 bd9f54
+            sbc TARGX                       ; 4aa1 ed3406    square under consideration
+            jsr INVERT                      ; 4aa4 20304d
+            sta TEMPR                       ; 4aa7 85c5
+            lda CORPSY,x                    ; 4aa9 bd9f54
             sec                             ; 4aac 38
-            sbc $0635                       ; 4aad ed3506
-            jsr s_O                         ; 4ab0 20304d
+            sbc TARGY                       ; 4aad ed3506
+            jsr INVERT                      ; 4ab0 20304d
             clc                             ; 4ab3 18
-            adc $c5                         ; 4ab4 65c5
+            adc TEMPR                       ; 4ab4 65c5
             cmp #$07                        ; 4ab6 c907
-            bcc _D19                        ; 4ab8 9006
+            bcc _C_19                       ; 4ab8 9006
             lda #$00                        ; 4aba a900
-            sta $ce                         ; 4abc 85ce
-            beq s_E                         ; 4abe f016
-_D19        tax                             ; 4ac0 aa
+            sta SQVAL                       ; 4abc 85ce
+            beq EVALSQ                      ; 4abe f016
+_C_19       tax                             ; 4ac0 aa
             lda #$01                        ; 4ac1 a901
-_D20        asl                             ; 4ac3 0a
+_C_20       asl                             ; 4ac3 0a
             dex                             ; 4ac4 ca
-            bpl _D20                        ; 4ac5 10fc
-            sta $c5                         ; 4ac7 85c5
-            lda $ce                         ; 4ac9 a5ce
+            bpl _C_20                       ; 4ac5 10fc
+            sta TEMPR                       ; 4ac7 85c5
+            lda SQVAL                       ; 4ac9 a5ce
             sec                             ; 4acb 38
-            sbc $c5                         ; 4acc e5c5
-            sta $ce                         ; 4ace 85ce
-            bcs s_E                         ; 4ad0 b004
+            sbc TEMPR                       ; 4acc e5c5
+            sta SQVAL                       ; 4ace 85ce
+            bcs EVALSQ                      ; 4ad0 b004
             lda #$00                        ; 4ad2 a900
-            sta $ce                         ; 4ad4 85ce
-s_E         ldy $0633                       ; 4ad6 ac3306
-            ldx $c2                         ; 4ad9 a6c2
-            lda $ce                         ; 4adb a5ce
-            cmp $0631                       ; 4add cd3106
-            bcc _E1                         ; 4ae0 9006
-            sta $0631                       ; 4ae2 8d3106
-            sty $0632                       ; 4ae5 8c3206
-_E1         iny                             ; 4ae8 c8
+            sta SQVAL                       ; 4ad4 85ce
+EVALSQ      ldy DIR                         ; 4ad6 ac3306
+            ldx ARMY                        ; 4ad9 a6c2
+            lda SQVAL                       ; 4adb a5ce
+            cmp BSTVAL                      ; 4add cd3106    best value, was BVAL
+            bcc _EVALSQ_1                   ; 4ae0 9006
+            sta BSTVAL                      ; 4ae2 8d3106    best value, was BVAL
+            sty BSTIDX                      ; 4ae5 8c3206    best index, was BONE
+_EVALSQ_1   iny                             ; 4ae8 c8
             cpy #$04                        ; 4ae9 c004
-            beq _E2                         ; 4aeb f006
-            sty $0633                       ; 4aed 8c3306
-            jmp _B8                         ; 4af0 4c1248
-_E2         lda s_DG,x                      ; 4af3 bd5a7a
-            ldy $0632                       ; 4af6 ac3206
-            bmi _E3                         ; 4af9 3004
+            beq _EVALSQ_2                   ; 4aeb f006
+            sty DIR                         ; 4aed 8c3306
+            jmp DRLOOP                      ; 4af0 4c1248
+_EVALSQ_2   lda OBJX-55,x                   ; 4af3 bd5a7a
+            ldy BSTIDX                      ; 4af6 ac3206    best index, was BONE
+            bmi _EVALSQ_3                   ; 4af9 3004
             clc                             ; 4afb 18
-            adc s_DO,y                      ; 4afc 79f27b
-_E3         sta s_DG,x                      ; 4aff 9d5a7a
-            lda s_AG,x                      ; 4b02 bd6153
-            ldy $0632                       ; 4b05 ac3206
-            bmi _E4                         ; 4b08 3004
+            adc YINC,y                      ; 4afc 79f27b
+_EVALSQ_3   sta OBJX-55,x                   ; 4aff 9d5a7a
+            lda OBJY-55,x                   ; 4b02 bd6153
+            ldy BSTIDX                      ; 4b05 ac3206    best index, was BONE
+            bmi _EVALSQ_4                   ; 4b08 3004
             clc                             ; 4b0a 18
-            adc s_DN,y                      ; 4b0b 79f17b
-_E4         sta s_AG,x                      ; 4b0e 9d6153
-s_F         lda $d010                       ; 4b11 ad10d0
-            beq _F1                         ; 4b14 f00c
+            adc XINC,y                      ; 4b0b 79f17b
+_EVALSQ_4   sta OBJY-55,x                   ; 4b0e 9d6153
+TOGSCN      lda GRAFP3                      ; 4b11 ad10d0    Graphics shape for player 3
+            beq _TOGSCN_1                   ; 4b14 f00c
             lda #$08                        ; 4b16 a908
-            sta $d01f                       ; 4b18 8d1fd0
-            lda $d01f                       ; 4b1b ad1fd0
+            sta CONSOL                      ; 4b18 8d1fd0    Check for three yellow console button press (not RESET)
+            lda CONSOL                      ; 4b1b ad1fd0    Check for three yellow console button press (not RESET)
             and #$01                        ; 4b1e 2901
-            beq _F3                         ; 4b20 f00b
-_F1         dex                             ; 4b22 ca
+            beq WRAPUP                      ; 4b20 f00b
+_TOGSCN_1   dex                             ; 4b22 ca
             cpx #$37                        ; 4b23 e037
-            bcc _F2                         ; 4b25 9003
-            jmp s_B                         ; 4b27 4c7347
-_F2         jmp s_A                         ; 4b2a 4c7147
-_F3         ldx #$9e                        ; 4b2d a29e
-s_G         stx $c2                         ; 4b2f 86c2
-            lda s_AL,x                      ; 4b31 bd1b57
-            cmp $c9                         ; 4b34 c5c9
-            bcc _G1                         ; 4b36 9003
-            jmp s_J                         ; 4b38 4c1a4c
-_G1         lda s_DG,x                      ; 4b3b bd5a7a
+            bcc _TOGSCN_2                   ; 4b25 9003
+            jmp __A__                       ; 4b27 4c7347
+_TOGSCN_2   jmp MLOOP                       ; 4b2a 4c7147
+WRAPUP      ldx #$9e                        ; 4b2d a29e
+__D__       stx ARMY                        ; 4b2f 86c2
+            lda ARRIVE,x                    ; 4b31 bd1b57
+            cmp TURN                        ; 4b34 c5c9
+            bcc _D_1                        ; 4b36 9003
+            jmp __G__                       ; 4b38 4c1a4c
+_D_1        lda OBJX-55,x                   ; 4b3b bd5a7a
             ldy #$03                        ; 4b3e a003
             sec                             ; 4b40 38
-            sbc units,x                     ; 4b41 fd0054
-            bpl _G2                         ; 4b44 1005
+            sbc CORPSX,x                    ; 4b41 fd0054
+            bpl _D_2                        ; 4b44 1005
             ldy #$01                        ; 4b46 a001
-            jsr s_P                         ; 4b48 20324d
-_G2         sty $063d                       ; 4b4b 8c3d06
-            sta $0641                       ; 4b4e 8d4106
+            jsr __L__                       ; 4b48 20324d
+_D_2        sty HDIR                        ; 4b4b 8c3d06    horiz dir
+            sta HRNGE                       ; 4b4e 8d4106    horiz range
             ldy #$00                        ; 4b51 a000
-            lda s_AG,x                      ; 4b53 bd6153
+            lda OBJY-55,x                   ; 4b53 bd6153
             sec                             ; 4b56 38
-            sbc s_AH,x                      ; 4b57 fd9f54
-            bpl _G3                         ; 4b5a 1005
+            sbc CORPSY,x                    ; 4b57 fd9f54
+            bpl _D_3                        ; 4b5a 1005
             ldy #$02                        ; 4b5c a002
-            jsr s_P                         ; 4b5e 20324d
-_G3         sty $063e                       ; 4b61 8c3e06
-            sta $0642                       ; 4b64 8d4206
-            cmp $0641                       ; 4b67 cd4106
-            bcc _G4                         ; 4b6a 9015
-            sta $0643                       ; 4b6c 8d4306
-            lda $0641                       ; 4b6f ad4106
-            sta $0644                       ; 4b72 8d4406
-            lda $063d                       ; 4b75 ad3d06
-            sta $0640                       ; 4b78 8d4006
-            sty $063f                       ; 4b7b 8c3f06
-            jmp s_H                         ; 4b7e 4c934b
-_G4         sta $0644                       ; 4b81 8d4406
-            sty $0640                       ; 4b84 8c4006
-            lda $0641                       ; 4b87 ad4106
-            sta $0643                       ; 4b8a 8d4306
-            ldy $063d                       ; 4b8d ac3d06
-            sty $063f                       ; 4b90 8c3f06
-s_H         lda #$00                        ; 4b93 a900
-            sta $0647                       ; 4b95 8d4706
-            sta $063b                       ; 4b98 8d3b06
-            sta $063c                       ; 4b9b 8d3c06
-            lda $0643                       ; 4b9e ad4306
+            jsr __L__                       ; 4b5e 20324d
+_D_3        sty VDIR                        ; 4b61 8c3e06    vert dir
+            sta VRNGE                       ; 4b64 8d4206    vert range
+            cmp HRNGE                       ; 4b67 cd4106    horiz range
+            bcc _D_4                        ; 4b6a 9015
+            sta LRNGE                       ; 4b6c 8d4306    larger range
+            lda HRNGE                       ; 4b6f ad4106    horiz range
+            sta SRNGE                       ; 4b72 8d4406    smaller range
+            lda HDIR                        ; 4b75 ad3d06    horiz dir
+            sta SDIR                        ; 4b78 8d4006    smaller dir
+            sty LDIR                        ; 4b7b 8c3f06    larger dir
+            jmp __E__                       ; 4b7e 4c934b
+_D_4        sta SRNGE                       ; 4b81 8d4406    smaller range
+            sty SDIR                        ; 4b84 8c4006    smaller dir
+            lda HRNGE                       ; 4b87 ad4106    horiz range
+            sta LRNGE                       ; 4b8a 8d4306    larger range
+            ldy HDIR                        ; 4b8d ac3d06    horiz dir
+            sty LDIR                        ; 4b90 8c3f06    larger dir
+__E__       lda #$00                        ; 4b93 a900
+            sta RCNT                        ; 4b95 8d4706    counter for Russian orders
+            sta RORD1                       ; 4b98 8d3b06    Russian orders
+            sta RORD2                       ; 4b9b 8d3c06
+            lda LRNGE                       ; 4b9e ad4306    larger range
             clc                             ; 4ba1 18
-            adc $0644                       ; 4ba2 6d4406
-            sta $0646                       ; 4ba5 8d4606
-            beq _I2                         ; 4ba8 f05c
-            lda $0643                       ; 4baa ad4306
+            adc SRNGE                       ; 4ba2 6d4406    smaller range
+            sta RANGE                       ; 4ba5 8d4606
+            beq _F_2                        ; 4ba8 f05c
+            lda LRNGE                       ; 4baa ad4306    larger range
             lsr                             ; 4bad 4a
-            sta $0645                       ; 4bae 8d4506
-_H1         lda $0645                       ; 4bb1 ad4506
+            sta CHRIS                       ; 4bae 8d4506    midway counter
+_E_1        lda CHRIS                       ; 4bb1 ad4506    midway counter
             clc                             ; 4bb4 18
-            adc $0644                       ; 4bb5 6d4406
-            sta $0645                       ; 4bb8 8d4506
+            adc SRNGE                       ; 4bb5 6d4406    smaller range
+            sta CHRIS                       ; 4bb8 8d4506    midway counter
             sec                             ; 4bbb 38
-            sbc $0646                       ; 4bbc ed4606
-            bcs _H2                         ; 4bbf b005
-            lda $063f                       ; 4bc1 ad3f06
-            bcc _H3                         ; 4bc4 9006
-_H2         sta $0645                       ; 4bc6 8d4506
-            lda $0640                       ; 4bc9 ad4006
-_H3         sta $0633                       ; 4bcc 8d3306
-            lda $0647                       ; 4bcf ad4706
+            sbc RANGE                       ; 4bbc ed4606
+            bcs _E_2                        ; 4bbf b005
+            lda LDIR                        ; 4bc1 ad3f06    larger dir
+            bcc _E_3                        ; 4bc4 9006
+_E_2        sta CHRIS                       ; 4bc6 8d4506    midway counter
+            lda SDIR                        ; 4bc9 ad4006    smaller dir
+_E_3        sta DIR                         ; 4bcc 8d3306
+            lda RCNT                        ; 4bcf ad4706    counter for Russian orders
             and #$03                        ; 4bd2 2903
             tay                             ; 4bd4 a8
-            sta $c5                         ; 4bd5 85c5
-            lda $0647                       ; 4bd7 ad4706
+            sta TEMPR                       ; 4bd5 85c5
+            lda RCNT                        ; 4bd7 ad4706    counter for Russian orders
             lsr                             ; 4bda 4a
             lsr                             ; 4bdb 4a
             tax                             ; 4bdc aa
-            lda $0633                       ; 4bdd ad3306
-s_I         dey                             ; 4be0 88
-            bmi _I1                         ; 4be1 3005
+            lda DIR                         ; 4bdd ad3306
+__F__       dey                             ; 4be0 88
+            bmi _F_1                        ; 4be1 3005
             asl                             ; 4be3 0a
             asl                             ; 4be4 0a
-            jmp s_I                         ; 4be5 4ce04b
-_I1         ldy $c5                         ; 4be8 a4c5
-            eor $063b,x                     ; 4bea 5d3b06
-            and s_BC,y                      ; 4bed 39de5f
-            eor $063b,x                     ; 4bf0 5d3b06
-            sta $063b,x                     ; 4bf3 9d3b06
-            ldx $0647                       ; 4bf6 ae4706
+            jmp __F__                       ; 4be5 4ce04b
+_F_1        ldy TEMPR                       ; 4be8 a4c5
+            eor RORD1,x                     ; 4bea 5d3b06    Russian orders
+            and MASKO,y                     ; 4bed 39de5f
+            eor RORD1,x                     ; 4bf0 5d3b06    Russian orders
+            sta RORD1,x                     ; 4bf3 9d3b06    Russian orders
+            ldx RCNT                        ; 4bf6 ae4706    counter for Russian orders
             inx                             ; 4bf9 e8
-            stx $0647                       ; 4bfa 8e4706
+            stx RCNT                        ; 4bfa 8e4706    counter for Russian orders
             cpx #$08                        ; 4bfd e008
-            bcs _I2                         ; 4bff b005
-            cpx $0646                       ; 4c01 ec4606
-            bcc _H1                         ; 4c04 90ab
-_I2         ldx $c2                         ; 4c06 a6c2
-            lda $063b                       ; 4c08 ad3b06
-            sta s_AW,x                      ; 4c0b 9d145e
-            lda $063c                       ; 4c0e ad3c06
-            sta s_AX,x                      ; 4c11 9db35e
-            lda $0647                       ; 4c14 ad4706
-            sta s_AV,x                      ; 4c17 9d755d
-s_J         dex                             ; 4c1a ca
+            bcs _F_2                        ; 4bff b005
+            cpx RANGE                       ; 4c01 ec4606
+            bcc _E_1                        ; 4c04 90ab
+_F_2        ldx ARMY                        ; 4c06 a6c2
+            lda RORD1                       ; 4c08 ad3b06    Russian orders
+            sta WHORDS,x                    ; 4c0b 9d145e
+            lda RORD2                       ; 4c0e ad3c06
+            sta WHORDH,x                    ; 4c11 9db35e
+            lda RCNT                        ; 4c14 ad4706    counter for Russian orders
+            sta HMORDS,x                    ; 4c17 9d755d
+__G__       dex                             ; 4c1a ca
             cpx #$37                        ; 4c1b e037
-            bcc _J1                         ; 4c1d 9003
-            jmp s_G                         ; 4c1f 4c2f4b
-_J1         rts                             ; 4c22 60
-s_K         ldy #$00                        ; 4c23 a000
-            sty $067c                       ; 4c25 8c7c06
-            sty $067d                       ; 4c28 8c7d06
-            sty $067e                       ; 4c2b 8c7e06
-            sty $067f                       ; 4c2e 8c7f06
-            sty $068c                       ; 4c31 8c8c06
+            bcc _G_1                        ; 4c1d 9003
+            jmp __D__                       ; 4c1f 4c2f4b
+_G_1        rts                             ; 4c22 60
+CALIFR      ldy #$00                        ; 4c23 a000
+            sty IFR0                        ; 4c25 8c7c06
+            sty IFR1                        ; 4c28 8c7d06
+            sty IFR2                        ; 4c2b 8c7e06
+            sty IFR3                        ; 4c2e 8c7f06
+            sty IFRHI                       ; 4c31 8c8c06
             iny                             ; 4c34 c8
-            sty $cc                         ; 4c35 84cc
-            lda units,x                     ; 4c37 bd0054
-            sta $0680                       ; 4c3a 8d8006
-            lda s_AH,x                      ; 4c3d bd9f54
-            sta $0681                       ; 4c40 8d8106
+            sty RFR                         ; 4c35 84cc
+            lda CORPSX,x                    ; 4c37 bd0054
+            sta XLOC                        ; 4c3a 8d8006
+            lda CORPSY,x                    ; 4c3d bd9f54
+            sta YLOC                        ; 4c40 8d8106
             ldy #$9e                        ; 4c43 a09e
-s_L         lda s_AL,y                      ; 4c45 b91b57
-            cmp $c9                         ; 4c48 c5c9
-            bcs _L1                         ; 4c4a b021
-            lda s_AH,y                      ; 4c4c b99f54
+__H__       lda ARRIVE,y                    ; 4c45 b91b57
+            cmp TURN                        ; 4c48 c5c9
+            bcs _H_1                        ; 4c4a b021
+            lda CORPSY,y                    ; 4c4c b99f54
             sec                             ; 4c4f 38
-            sbc $0681                       ; 4c50 ed8106
-            sta $0683                       ; 4c53 8d8306
-            jsr s_O                         ; 4c56 20304d
-            sta $c5                         ; 4c59 85c5
-            lda units,y                     ; 4c5b b90054
+            sbc YLOC                        ; 4c50 ed8106
+            sta TEMPY                       ; 4c53 8d8306
+            jsr INVERT                      ; 4c56 20304d
+            sta TEMPR                       ; 4c59 85c5
+            lda CORPSX,y                    ; 4c5b b90054
             sec                             ; 4c5e 38
-            sbc $0680                       ; 4c5f ed8006
-            sta $0682                       ; 4c62 8d8206
-            jsr s_O                         ; 4c65 20304d
+            sbc XLOC                        ; 4c5f ed8006
+            sta TEMPX                       ; 4c62 8d8206
+            jsr INVERT                      ; 4c65 20304d
             clc                             ; 4c68 18
-            adc $c5                         ; 4c69 65c5
+            adc TEMPR                       ; 4c69 65c5
             cmp #$09                        ; 4c6b c909
-_L1         bcs _L9                         ; 4c6d b067
+_H_1        bcs __I__                       ; 4c6d b067
             lsr                             ; 4c6f 4a
-            sta $c5                         ; 4c70 85c5
-            lda $0682                       ; 4c72 ad8206
-            bpl _L2                         ; 4c75 1010
-            lda $0683                       ; 4c77 ad8306
-            bpl _L4                         ; 4c7a 1029
+            sta TEMPR                       ; 4c70 85c5
+            lda TEMPX                       ; 4c72 ad8206
+            bpl _H_2                        ; 4c75 1010
+            lda TEMPY                       ; 4c77 ad8306
+            bpl _H_4                        ; 4c7a 1029
             ldx #$02                        ; 4c7c a202
-            cmp $0682                       ; 4c7e cd8206
-            bcs _L5                         ; 4c81 b031
+            cmp TEMPX                       ; 4c7e cd8206
+            bcs _H_5                        ; 4c81 b031
             ldx #$01                        ; 4c83 a201
-            bcc _L5                         ; 4c85 902d
-_L2         lda $0683                       ; 4c87 ad8306
-            bpl _L3                         ; 4c8a 100e
-            jsr s_P                         ; 4c8c 20324d
+            bcc _H_5                        ; 4c85 902d
+_H_2        lda TEMPY                       ; 4c87 ad8306
+            bpl _H_3                        ; 4c8a 100e
+            jsr __L__                       ; 4c8c 20324d
             ldx #$02                        ; 4c8f a202
-            cmp $0682                       ; 4c91 cd8206
-            bcs _L5                         ; 4c94 b01e
+            cmp TEMPX                       ; 4c91 cd8206
+            bcs _H_5                        ; 4c94 b01e
             ldx #$03                        ; 4c96 a203
-            bcc _L5                         ; 4c98 901a
-_L3         ldx #$00                        ; 4c9a a200
-            cmp $0682                       ; 4c9c cd8206
-            bcs _L5                         ; 4c9f b013
+            bcc _H_5                        ; 4c98 901a
+_H_3        ldx #$00                        ; 4c9a a200
+            cmp TEMPX                       ; 4c9c cd8206
+            bcs _H_5                        ; 4c9f b013
             ldx #$03                        ; 4ca1 a203
-            bcc _L5                         ; 4ca3 900f
-_L4         lda $0682                       ; 4ca5 ad8206
-            jsr s_P                         ; 4ca8 20324d
+            bcc _H_5                        ; 4ca3 900f
+_H_4        lda TEMPX                       ; 4ca5 ad8206
+            jsr __L__                       ; 4ca8 20324d
             ldx #$01                        ; 4cab a201
-            cmp $0683                       ; 4cad cd8306
-            bcs _L5                         ; 4cb0 b002
+            cmp TEMPY                       ; 4cad cd8306
+            bcs _H_5                        ; 4cb0 b002
             ldx #$00                        ; 4cb2 a200
-_L5         lda s_AJ,y                      ; 4cb4 b9dd55
+_H_5        lda CSTRNG,y                    ; 4cb4 b9dd55
             lsr                             ; 4cb7 4a
             lsr                             ; 4cb8 4a
             lsr                             ; 4cb9 4a
             lsr                             ; 4cba 4a
             cpy #$37                        ; 4cbb c037
-            bcc _L7                         ; 4cbd 900c
+            bcc _H_7                        ; 4cbd 900c
             clc                             ; 4cbf 18
-            adc $cc                         ; 4cc0 65cc
-            bcc _L6                         ; 4cc2 9002
+            adc RFR                         ; 4cc0 65cc
+            bcc _H_6                        ; 4cc2 9002
             lda #$ff                        ; 4cc4 a9ff
-_L6         sta $cc                         ; 4cc6 85cc
-            jmp _L9                         ; 4cc8 4cd64c
-_L7         clc                             ; 4ccb 18
-            adc $067c,x                     ; 4ccc 7d7c06
-            bcc _L8                         ; 4ccf 9002
+_H_6        sta RFR                         ; 4cc6 85cc
+            jmp __I__                       ; 4cc8 4cd64c
+_H_7        clc                             ; 4ccb 18
+            adc IFR0,x                      ; 4ccc 7d7c06
+            bcc _H_8                        ; 4ccf 9002
             lda #$ff                        ; 4cd1 a9ff
-_L8         sta $067c,x                     ; 4cd3 9d7c06
-_L9         dey                             ; 4cd6 88
-            beq _L10                        ; 4cd7 f003
-            jmp s_L                         ; 4cd9 4c454c
-_L10        ldx #$03                        ; 4cdc a203
+_H_8        sta IFR0,x                      ; 4cd3 9d7c06
+__I__       dey                             ; 4cd6 88
+            beq _I_1                        ; 4cd7 f003
+            jmp __H__                       ; 4cd9 4c454c
+_I_1        ldx #$03                        ; 4cdc a203
             lda #$00                        ; 4cde a900
-_L11        clc                             ; 4ce0 18
-            adc $067c,x                     ; 4ce1 7d7c06
-            bcc _L12                        ; 4ce4 9002
+_I_2        clc                             ; 4ce0 18
+            adc IFR0,x                      ; 4ce1 7d7c06
+            bcc _I_3                        ; 4ce4 9002
             lda #$ff                        ; 4ce6 a9ff
-_L12        dex                             ; 4ce8 ca
-            bpl _L11                        ; 4ce9 10f5
+_I_3        dex                             ; 4ce8 ca
+            bpl _I_2                        ; 4ce9 10f5
             asl                             ; 4ceb 0a
-            rol $068c                       ; 4cec 2e8c06
+            rol IFRHI                       ; 4cec 2e8c06
             asl                             ; 4cef 0a
-            rol $068c                       ; 4cf0 2e8c06
+            rol IFRHI                       ; 4cf0 2e8c06
             asl                             ; 4cf3 0a
-            rol $068c                       ; 4cf4 2e8c06
+            rol IFRHI                       ; 4cf4 2e8c06
             asl                             ; 4cf7 0a
-            rol $068c                       ; 4cf8 2e8c06
+            rol IFRHI                       ; 4cf8 2e8c06
             ldx #$00                        ; 4cfb a200
             sec                             ; 4cfd 38
-s_M         sbc $cc                         ; 4cfe e5cc
-            bcs _N1                         ; 4d00 b006
-            dec $068c                       ; 4d02 ce8c06
+__J__       sbc RFR                         ; 4cfe e5cc
+            bcs _K_1                        ; 4d00 b006
+            dec IFRHI                       ; 4d02 ce8c06
             sec                             ; 4d05 38
-            bmi _N2                         ; 4d06 3004
-_N1         inx                             ; 4d08 e8
-            jmp s_M                         ; 4d09 4cfe4c
-_N2         txa                             ; 4d0c 8a
-            ldx $c2                         ; 4d0d a6c2
+            bmi _K_2                        ; 4d06 3004
+_K_1        inx                             ; 4d08 e8
+            jmp __J__                       ; 4d09 4cfe4c
+_K_2        txa                             ; 4d0c 8a
+            ldx ARMY                        ; 4d0d a6c2
             clc                             ; 4d0f 18
-            adc $0692                       ; 4d10 6d9206
+            adc OFR                         ; 4d10 6d9206
             ror                             ; 4d13 6a
-            sta $0661,x                     ; 4d14 9d6106
-            lda $067c                       ; 4d17 ad7c06
-            sta s_N,x                       ; 4d1a 9d014d
-            lda $067d                       ; 4d1d ad7d06
-            sta s_Q,x                       ; 4d20 9d694d
-            lda $067e                       ; 4d23 ad7e06
-            sta s_R,x                       ; 4d26 9dd14d
-            lda $067f                       ; 4d29 ad7f06
-            sta s_S,x                       ; 4d2c 9d394e
+            sta IFR-51,x                    ; 4d14 9d6106
+            lda IFR0                        ; 4d17 ad7c06
+            sta __K__,x                     ; 4d1a 9d014d
+            lda IFR1                        ; 4d1d ad7d06
+            sta IFRE-55,x                   ; 4d20 9d694d
+            lda IFR2                        ; 4d23 ad7e06
+            sta IFRS-55,x                   ; 4d26 9dd14d
+            lda IFR3                        ; 4d29 ad7f06
+            sta IFRW-55,x                   ; 4d2c 9d394e
             rts                             ; 4d2f 60
-s_O         bpl _P1                         ; 4d30 1005
-s_P         eor #$ff                        ; 4d32 49ff
+INVERT      bpl _L_1                        ; 4d30 1005
+__L__       eor #$ff                        ; 4d32 49ff
             clc                             ; 4d34 18
             adc #$01                        ; 4d35 6901
-_P1         rts                             ; 4d37 60
+_L_1        rts                             ; 4d37 60
             !byte $01,$60,$4e,$60,$10,$05,$49,$ff,$18,$69,$01,$60,$06,$9d,$6e,$4d   ; 4d38 .`N`..I..i.`..nM
             !byte $ad,$7e,$06,$9d,$b9,$00,$ad,$7f,$06,$9d,$11,$01,$60,$10,$05,$49   ; 4d48 .~..........`..I
             !byte $ff,$18,$69,$01,$60,$7e,$06,$9d,$da,$4d,$ad,$7f,$06,$9d,$32,$4e   ; 4d58 ..i.`~...M....2N
             !byte $60                                                               ; 4d68 `
-s_Q         !byte $10,$05,$49,$ff,$18,$69,$01,$60,$69,$01,$60,$9d,$b3,$5e,$ad,$4d   ; 4d69 ..I..i.`i.`..^.M
+IFRE-55     !byte $10,$05,$49,$ff,$18,$69,$01,$60,$69,$01,$60,$9d,$b3,$5e,$ad,$4d   ; 4d69 ..I..i.`i.`..^.M
             !byte $06,$9d,$75,$5d,$ca,$e0,$47,$90,$03,$4c,$8d,$4c,$60,$a9,$00,$8d   ; 4d79 ..u]..G..L.L`...
             !byte $82,$06,$8d,$83,$06,$8d,$84,$06,$8d,$85,$06,$8d,$92,$06,$8d,$93   ; 4d89 ................
             !byte $06,$bd,$00,$54,$8d,$86,$06,$bd,$9f,$54,$8d,$87,$06,$a0,$9e,$b9   ; 4d99 ...T.....T......
             !byte $1b,$57,$cd,$23,$06,$90,$03,$4c,$4b,$4e,$b9,$9f,$54,$38,$ed,$87   ; 4da9 .W.#...LKN..T8..
             !byte $06,$8d,$89,$06,$10,$05,$49,$ff,$18,$69,$01,$85,$c5,$b9,$00,$54   ; 4db9 ......I..i.....T
             !byte $38,$ed,$86,$06,$8d,$88,$06,$10                                   ; 4dc9 8.......
-s_R         !byte $05,$49,$ff,$18,$69,$01,$18,$65,$c5,$c9,$09,$b0,$6d,$4a,$85,$c5   ; 4dd1 .I..i..e....mJ..
+IFRS-55     !byte $05,$49,$ff,$18,$69,$01,$18,$65,$c5,$c9,$09,$b0,$6d,$4a,$85,$c5   ; 4dd1 .I..i..e....mJ..
             !byte $ad,$88,$06,$10,$10,$ad,$89,$06,$10,$2b,$a2,$02,$cd,$88,$06,$b0   ; 4de1 .........+......
             !byte $35,$a2,$01,$90,$31,$ad,$89,$06,$10,$10,$49,$ff,$18,$69,$01,$a2   ; 4df1 5...1.....I..i..
             !byte $02,$cd,$88,$06,$b0,$20,$a2,$03,$90,$1c,$a2,$00,$cd,$88,$06,$b0   ; 4e01 ..... ..........
             !byte $15,$a2,$03,$90,$11,$ad,$88,$06,$49,$ff,$18,$69,$01,$a2,$01,$cd   ; 4e11 ........I..i....
             !byte $89,$06,$b0,$02,$a2,$00,$b9,$dd,$55,$4a,$4a,$4a,$4a,$c0,$47,$90   ; 4e21 ........UJJJJ.G.
             !byte $0e,$18,$6d,$92,$06,$90,$02,$a9                                   ; 4e31 ..m.....
-s_S         !byte $ff,$8d,$92,$06,$4c,$4b,$4e,$18,$7d,$82,$06,$90,$02,$a9,$ff,$9d   ; 4e39 ....LKN.}.......
+IFRW-55     !byte $ff,$8d,$92,$06,$4c,$4b,$4e,$18,$7d,$82,$06,$90,$02,$a9,$ff,$9d   ; 4e39 ....LKN.}.......
             !byte $82,$06,$88,$f0,$03,$4c,$a8,$4d,$a2,$03,$a9,$00,$18,$7d,$82,$06   ; 4e49 .....L.M.....}..
             !byte $90,$02,$a9,$ff,$ca,$10,$f5,$0a,$2e,$93,$06,$0a,$2e,$93,$06,$0a   ; 4e59 ................
             !byte $2e,$93,$06,$0a,$2e,$93,$06,$a2,$00,$38,$ed,$92,$06,$b0,$06,$ce   ; 4e69 .........8......
@@ -746,376 +746,376 @@ s_S         !byte $ff,$8d,$92,$06,$4c,$4b,$4e,$18,$7d,$82,$06,$90,$02,$a9,$ff,$9
             !byte $6d,$99,$06,$6a,$9d,$e0,$3d,$ad,$82,$06,$9d,$82,$4e,$ad,$83,$06   ; 4ea9 m..j..=.....N...
             !byte $9d,$da,$4e,$ad,$84,$06,$9d,$32,$4f,$ad,$85,$06,$9d,$8a,$4f,$60   ; 4eb9 ..N....2O.....O`
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00       ; 4ec9 ...............
-s_T         lda #$00                        ; 4ed8 a900
-            sta $0697                       ; 4eda 8d9706
-            ldx $c2                         ; 4edd a6c2
+COMBAT      lda #$00                        ; 4ed8 a900
+            sta VICTRY                      ; 4eda 8d9706
+            ldx ARMY                        ; 4edd a6c2
             cpx #$2a                        ; 4edf e02a
-            beq _T1                         ; 4ee1 f004
+            beq _COMBAT_1                   ; 4ee1 f004
             cpx #$2b                        ; 4ee3 e02b
-            bne _T2                         ; 4ee5 d001
-_T1         rts                             ; 4ee7 60
-_T2         ldy $c3                         ; 4ee8 a4c3
-            sty $c4                         ; 4eea 84c4
-            ldx $c4                         ; 4eec a6c4
-            lda s_AK,x                      ; 4eee bd7c56
+            bne _COMBAT_2                   ; 4ee5 d001
+_COMBAT_1   rts                             ; 4ee7 60
+_COMBAT_2   ldy UNITNO                      ; 4ee8 a4c3
+            sty DEFNDR                      ; 4eea 84c4
+            ldx DEFNDR                      ; 4eec a6c4
+            lda SWAP,x                      ; 4eee bd7c56
             pha                             ; 4ef1 48
             lda #$ff                        ; 4ef2 a9ff
             cpx #$37                        ; 4ef4 e037
-            bcs _T3                         ; 4ef6 b002
+            bcs _COMBAT_3                   ; 4ef6 b002
             lda #$7f                        ; 4ef8 a97f
-_T3         sta s_AK,x                      ; 4efa 9d7c56
-            stx $b4                         ; 4efd 86b4
-            lda units,x                     ; 4eff bd0054
-            sta $be                         ; 4f02 85be
-            lda s_AH,x                      ; 4f04 bd9f54
-            sta $bf                         ; 4f07 85bf
-            jsr s_DD                        ; 4f09 20ef79
+_COMBAT_3   sta SWAP,x                      ; 4efa 9d7c56
+            stx CORPS                       ; 4efd 86b4    Number of unit under window
+            lda CORPSX,x                    ; 4eff bd0054
+            sta CNUNKX                      ; 4f02 85be    Cursor coords (pixel frame)
+            lda CORPSY,x                    ; 4f04 bd9f54
+            sta CHUNKY                      ; 4f07 85bf
+            jsr SWITCH                      ; 4f09 20ef79
             ldy #$08                        ; 4f0c a008
             ldx #$8f                        ; 4f0e a28f
-_T4         stx $d201                       ; 4f10 8e01d2
-            sty $d200                       ; 4f13 8c00d2
-            jsr s_CD                        ; 4f16 200072
+_COMBAT_4   stx AUDC1/POT1                  ; 4f10 8e01d2    Audio channel one control
+            sty AUDF1/POT0                  ; 4f13 8c00d2    Audio channel one frequency
+            jsr STALL                       ; 4f16 200072
             tya                             ; 4f19 98
             clc                             ; 4f1a 18
             adc #$08                        ; 4f1b 6908
             tay                             ; 4f1d a8
             dex                             ; 4f1e ca
             cpx #$7f                        ; 4f1f e07f
-            bne _T4                         ; 4f21 d0ed
-            jsr s_DD                        ; 4f23 20ef79
-            ldx $c4                         ; 4f26 a6c4
+            bne _COMBAT_4                   ; 4f21 d0ed
+            jsr SWITCH                      ; 4f23 20ef79
+            ldx DEFNDR                      ; 4f26 a6c4
             pla                             ; 4f28 68
-            sta s_AK,x                      ; 4f29 9d7c56
-            jsr s_CJ                        ; 4f2c 206973
-            ldx s_DB,x                      ; 4f2f beb479
-            lda s_AJ,y                      ; 4f32 b9dd55
+            sta SWAP,x                      ; 4f29 9d7c56
+            jsr TERRTY                      ; 4f2c 206973
+            ldx DEFNC,x                     ; 4f2f beb479
+            lda CSTRNG,y                    ; 4f32 b9dd55
             lsr                             ; 4f35 4a
-_T5         dex                             ; 4f36 ca
-            beq _T6                         ; 4f37 f005
+_COMBAT_5   dex                             ; 4f36 ca
+            beq _COMBAT_6                   ; 4f37 f005
             rol                             ; 4f39 2a
-            bcc _T5                         ; 4f3a 90fa
+            bcc _COMBAT_5                   ; 4f3a 90fa
             lda #$ff                        ; 4f3c a9ff
-_T6         ldx s_AV,x                      ; 4f3e be755d
-            beq _T7                         ; 4f41 f001
+_COMBAT_6   ldx HMORDS,x                    ; 4f3e be755d
+            beq _COMBAT_7                   ; 4f41 f001
             lsr                             ; 4f43 4a
-_T7         cmp $d20a                       ; 4f44 cd0ad2
-            bcc _T10                        ; 4f47 9017
-            ldx $c2                         ; 4f49 a6c2
-            dec s_AI,x                      ; 4f4b de3e55
-            lda s_AJ,x                      ; 4f4e bddd55
+_COMBAT_7   cmp SKREST/RANDOM               ; 4f44 cd0ad2    Reset serial port status register / Random byte
+            bcc _COMBAT_10                  ; 4f47 9017
+            ldx ARMY                        ; 4f49 a6c2
+            dec MSTRNG,x                    ; 4f4b de3e55
+            lda CSTRNG,x                    ; 4f4e bddd55
             sbc #$05                        ; 4f51 e905
-            sta s_AJ,x                      ; 4f53 9ddd55
-            beq _T8                         ; 4f56 f002
-            bcs _T9                         ; 4f58 b003
-_T8         jmp s_Z                         ; 4f5a 4cab51
-_T9         jsr s_AA                        ; 4f5d 20ce51
-_T10        ldx $c2                         ; 4f60 a6c2
-            lda units,x                     ; 4f62 bd0054
-            sta $cb                         ; 4f65 85cb
-            lda s_AH,x                      ; 4f67 bd9f54
-            sta $ca                         ; 4f6a 85ca
-            jsr s_CF                        ; 4f6c 204072
-            jsr s_CJ                        ; 4f6f 206973
-            lda s_DP,y                      ; 4f72 b9f67b
+            sta CSTRNG,x                    ; 4f53 9ddd55
+            beq _COMBAT_8                   ; 4f56 f002
+            bcs _COMBAT_9                   ; 4f58 b003
+_COMBAT_8   jmp DEAD                        ; 4f5a 4cab51
+_COMBAT_9   jsr BRKCHK                      ; 4f5d 20ce51
+_COMBAT_10  ldx ARMY                        ; 4f60 a6c2
+            lda CORPSX,x                    ; 4f62 bd0054
+            sta LON                         ; 4f65 85cb
+            lda CORPSY,x                    ; 4f67 bd9f54
+            sta LAT                         ; 4f6a 85ca
+            jsr TERR                        ; 4f6c 204072
+            jsr TERRTY                      ; 4f6f 206973
+            lda OFFNC,y                     ; 4f72 b9f67b
             tay                             ; 4f75 a8
-            ldx $c2                         ; 4f76 a6c2
-            lda s_AJ,x                      ; 4f78 bddd55
+            ldx ARMY                        ; 4f76 a6c2
+            lda CSTRNG,x                    ; 4f78 bddd55
             dey                             ; 4f7b 88
-            beq _T11                        ; 4f7c f001
+            beq _COMBAT_11                  ; 4f7c f001
             lsr                             ; 4f7e 4a
-_T11        cmp $d20a                       ; 4f7f cd0ad2
-            bcc _T13                        ; 4f82 9014
-            ldx $c4                         ; 4f84 a6c4
-            dec s_AI,x                      ; 4f86 de3e55
-            lda s_AJ,x                      ; 4f89 bddd55
+_COMBAT_11  cmp SKREST/RANDOM               ; 4f7f cd0ad2    Reset serial port status register / Random byte
+            bcc _COMBAT_13                  ; 4f82 9014
+            ldx DEFNDR                      ; 4f84 a6c4
+            dec MSTRNG,x                    ; 4f86 de3e55
+            lda CSTRNG,x                    ; 4f89 bddd55
             sbc #$05                        ; 4f8c e905
-            sta s_AJ,x                      ; 4f8e 9ddd55
-            beq _T12                        ; 4f91 f002
-            bcs _T14                        ; 4f93 b006
-_T12        jsr s_Z                         ; 4f95 20ab51
-_T13        jmp s_U                         ; 4f98 4c1c50
-_T14        jsr s_AA                        ; 4f9b 20ce51
-            bcc _T13                        ; 4f9e 90f8
-            ldy $c2                         ; 4fa0 a4c2
-            lda s_AW,y                      ; 4fa2 b9145e
+            sta CSTRNG,x                    ; 4f8e 9ddd55
+            beq _COMBAT_12                  ; 4f91 f002
+            bcs _COMBAT_14                  ; 4f93 b006
+_COMBAT_12  jsr DEAD                        ; 4f95 20ab51
+_COMBAT_13  jmp ENDCOM                      ; 4f98 4c1c50
+_COMBAT_14  jsr BRKCHK                      ; 4f9b 20ce51
+            bcc _COMBAT_13                  ; 4f9e 90f8
+            ldy ARMY                        ; 4fa0 a4c2
+            lda WHORDS,y                    ; 4fa2 b9145e
             and #$03                        ; 4fa5 2903
             tay                             ; 4fa7 a8
-            jsr s_V                         ; 4fa8 202250
-            bcc _T18                        ; 4fab 9054
-            beq _T17                        ; 4fad f030
+            jsr RETRET                      ; 4fa8 202250
+            bcc _COMBAT_18                  ; 4fab 9054
+            beq _COMBAT_17                  ; 4fad f030
             ldy #$01                        ; 4faf a001
             cpx #$37                        ; 4fb1 e037
-            bcs _T15                        ; 4fb3 b002
+            bcs _COMBAT_15                  ; 4fb3 b002
             ldy #$03                        ; 4fb5 a003
-_T15        jsr s_V                         ; 4fb7 202250
-            bcc _T18                        ; 4fba 9045
-            beq _T17                        ; 4fbc f021
+_COMBAT_15  jsr RETRET                      ; 4fb7 202250
+            bcc _COMBAT_18                  ; 4fba 9045
+            beq _COMBAT_17                  ; 4fbc f021
             ldy #$02                        ; 4fbe a002
-            jsr s_V                         ; 4fc0 202250
-            bcc _T18                        ; 4fc3 903c
-            beq _T17                        ; 4fc5 f018
+            jsr RETRET                      ; 4fc0 202250
+            bcc _COMBAT_18                  ; 4fc3 903c
+            beq _COMBAT_17                  ; 4fc5 f018
             ldy #$00                        ; 4fc7 a000
-            jsr s_V                         ; 4fc9 202250
-            bcc _T18                        ; 4fcc 9033
-            beq _T17                        ; 4fce f00f
+            jsr RETRET                      ; 4fc9 202250
+            bcc _COMBAT_18                  ; 4fcc 9033
+            beq _COMBAT_17                  ; 4fce f00f
             ldy #$03                        ; 4fd0 a003
             cpx #$37                        ; 4fd2 e037
-            bcs _T16                        ; 4fd4 b002
+            bcs _COMBAT_16                  ; 4fd4 b002
             ldy #$01                        ; 4fd6 a001
-_T16        jsr s_V                         ; 4fd8 202250
-            bcc _T18                        ; 4fdb 9024
-            bne s_U                         ; 4fdd d03d
-_T17        stx $b4                         ; 4fdf 86b4
-            lda units,x                     ; 4fe1 bd0054
-            sta $be                         ; 4fe4 85be
-            lda s_AH,x                      ; 4fe6 bd9f54
-            sta $bf                         ; 4fe9 85bf
-            jsr s_DD                        ; 4feb 20ef79
-            ldx $b4                         ; 4fee a6b4
-            lda $ca                         ; 4ff0 a5ca
-            sta s_AH,x                      ; 4ff2 9d9f54
-            sta $bf                         ; 4ff5 85bf
-            lda $cb                         ; 4ff7 a5cb
-            sta units,x                     ; 4ff9 9d0054
-            sta $be                         ; 4ffc 85be
-            jsr s_DD                        ; 4ffe 20ef79
-_T18        ldx $c2                         ; 5001 a6c2
-            stx $b4                         ; 5003 86b4
-            lda units,x                     ; 5005 bd0054
-            sta $be                         ; 5008 85be
-            lda s_AH,x                      ; 500a bd9f54
-            sta $bf                         ; 500d 85bf
-            lda $c7                         ; 500f a5c7
-            sta $cb                         ; 5011 85cb
-            lda $c8                         ; 5013 a5c8
-            sta $ca                         ; 5015 85ca
+_COMBAT_16  jsr RETRET                      ; 4fd8 202250
+            bcc _COMBAT_18                  ; 4fdb 9024
+            bne ENDCOM                      ; 4fdd d03d
+_COMBAT_17  stx CORPS                       ; 4fdf 86b4    Number of unit under window
+            lda CORPSX,x                    ; 4fe1 bd0054
+            sta CNUNKX                      ; 4fe4 85be    Cursor coords (pixel frame)
+            lda CORPSY,x                    ; 4fe6 bd9f54
+            sta CHUNKY                      ; 4fe9 85bf
+            jsr SWITCH                      ; 4feb 20ef79
+            ldx CORPS                       ; 4fee a6b4    Number of unit under window
+            lda LAT                         ; 4ff0 a5ca
+            sta CORPSY,x                    ; 4ff2 9d9f54
+            sta CHUNKY                      ; 4ff5 85bf
+            lda LON                         ; 4ff7 a5cb
+            sta CORPSX,x                    ; 4ff9 9d0054
+            sta CNUNKX                      ; 4ffc 85be    Cursor coords (pixel frame)
+            jsr SWITCH                      ; 4ffe 20ef79
+_COMBAT_18  ldx ARMY                        ; 5001 a6c2
+            stx CORPS                       ; 5003 86b4    Number of unit under window
+            lda CORPSX,x                    ; 5005 bd0054
+            sta CNUNKX                      ; 5008 85be    Cursor coords (pixel frame)
+            lda CORPSY,x                    ; 500a bd9f54
+            sta CHUNKY                      ; 500d 85bf
+            lda ACCLO                       ; 500f a5c7
+            sta LON                         ; 5011 85cb
+            lda ACCHI                       ; 5013 a5c8
+            sta LAT                         ; 5015 85ca
             lda #$ff                        ; 5017 a9ff
-            sta $0697                       ; 5019 8d9706
-s_U         ldx $c2                         ; 501c a6c2
-            inc s_BU,x                      ; 501e fe616d
+            sta VICTRY                      ; 5019 8d9706
+ENDCOM      ldx ARMY                        ; 501c a6c2
+            inc EXEC,x                      ; 501e fe616d
             rts                             ; 5021 60
-s_V         lda units,x                     ; 5022 bd0054
+RETRET      lda CORPSX,x                    ; 5022 bd0054
             clc                             ; 5025 18
-            adc s_DO,y                      ; 5026 79f27b
-            sta $cb                         ; 5029 85cb
-            lda s_AH,x                      ; 502b bd9f54
+            adc YINC,y                      ; 5026 79f27b
+            sta LON                         ; 5029 85cb
+            lda CORPSY,x                    ; 502b bd9f54
             clc                             ; 502e 18
-            adc s_DN,y                      ; 502f 79f17b
-            sta $ca                         ; 5032 85ca
-            jsr s_CF                        ; 5034 204072
-            jsr s_CJ                        ; 5037 206973
-            ldx $c4                         ; 503a a6c4
-            lda $c3                         ; 503c a5c3
-            bne _V4                         ; 503e d03d
-            lda $cd                         ; 5040 a5cd
+            adc XINC,y                      ; 502f 79f17b
+            sta LAT                         ; 5032 85ca
+            jsr TERR                        ; 5034 204072
+            jsr TERRTY                      ; 5037 206973
+            ldx DEFNDR                      ; 503a a6c4
+            lda UNITNO                      ; 503c a5c3
+            bne _RETRET_4                   ; 503e d03d
+            lda TRNTYP                      ; 5040 a5cd
             cmp #$07                        ; 5042 c907
-            bcc _V3                         ; 5044 9027
+            bcc _RETRET_3                   ; 5044 9027
             cmp #$09                        ; 5046 c909
-            beq _V4                         ; 5048 f033
+            beq _RETRET_4                   ; 5048 f033
             ldy #$15                        ; 504a a015
-_V1         lda $ca                         ; 504c a5ca
-            cmp s_BR,y                      ; 504e d91f6d
-            bne _V2                         ; 5051 d017
-            lda $cb                         ; 5053 a5cb
-            cmp s_BQ,y                      ; 5055 d9096d
-            bne _V2                         ; 5058 d010
-            lda units,x                     ; 505a bd0054
-            cmp s_BS,y                      ; 505d d9356d
-            bne _V2                         ; 5060 d008
-            lda s_AH,x                      ; 5062 bd9f54
-            cmp s_BT,y                      ; 5065 d94b6d
-            beq _V4                         ; 5068 f013
-_V2         dey                             ; 506a 88
-            bpl _V1                         ; 506b 10df
-_V3         jsr s_Y                         ; 506d 204051
-            ldx $c4                         ; 5070 a6c4
-            lda $0694                       ; 5072 ad9406
+_RETRET_1   lda LAT                         ; 504c a5ca
+            cmp BHY1,y                      ; 504e d91f6d
+            bne _RETRET_2                   ; 5051 d017
+            lda LON                         ; 5053 a5cb
+            cmp BHX1,y                      ; 5055 d9096d
+            bne _RETRET_2                   ; 5058 d010
+            lda CORPSX,x                    ; 505a bd0054
+            cmp BHX2,y                      ; 505d d9356d
+            bne _RETRET_2                   ; 5060 d008
+            lda CORPSY,x                    ; 5062 bd9f54
+            cmp BHY2,y                      ; 5065 d94b6d
+            beq _RETRET_4                   ; 5068 f013
+_RETRET_2   dey                             ; 506a 88
+            bpl _RETRET_1                   ; 506b 10df
+_RETRET_3   jsr CHKZOC                      ; 506d 204051
+            ldx DEFNDR                      ; 5070 a6c4
+            lda ZOC                         ; 5072 ad9406
             cmp #$02                        ; 5075 c902
-            bcs _V4                         ; 5077 b004
+            bcs _RETRET_4                   ; 5077 b004
             lda #$00                        ; 5079 a900
             sec                             ; 507b 38
             rts                             ; 507c 60
-_V4         lda s_AJ,x                      ; 507d bddd55
+_RETRET_4   lda CSTRNG,x                    ; 507d bddd55
             sec                             ; 5080 38
             sbc #$05                        ; 5081 e905
-            sta s_AJ,x                      ; 5083 9ddd55
-            beq _V5                         ; 5086 f002
-            bcs _V6                         ; 5088 b004
-_V5         jsr s_Z                         ; 508a 20ab51
+            sta CSTRNG,x                    ; 5083 9ddd55
+            beq _RETRET_5                   ; 5086 f002
+            bcs _RETRET_6                   ; 5088 b004
+_RETRET_5   jsr DEAD                        ; 508a 20ab51
             clc                             ; 508d 18
-_V6         lda #$ff                        ; 508e a9ff
+_RETRET_6   lda #$ff                        ; 508e a9ff
             rts                             ; 5090 60
-s_W         lda s_AL,x                      ; 5091 bd1b57
-            cmp $c9                         ; 5094 c5c9
-            beq _W1                         ; 5096 f003
-            bcc _W1                         ; 5098 9001
+SUPPLY      lda ARRIVE,x                    ; 5091 bd1b57
+            cmp TURN                        ; 5094 c5c9
+            beq _SUPPLY_1                   ; 5096 f003
+            bcc _SUPPLY_1                   ; 5098 9001
             rts                             ; 509a 60
-_W1         lda #$18                        ; 509b a918
+_SUPPLY_1   lda #$18                        ; 509b a918
             cpx #$37                        ; 509d e037
-            bcs _W2                         ; 509f b01b
+            bcs _SUPPLY_2                   ; 509f b01b
             lda #$18                        ; 50a1 a918
-            ldy $0606                       ; 50a3 ac0606
+            ldy EARTH                       ; 50a3 ac0606
             cpy #$02                        ; 50a6 c002
-            beq _X3                         ; 50a8 f06b
+            beq _M_3                        ; 50a8 f06b
             cpy #$0a                        ; 50aa c00a
-            bne _W2                         ; 50ac d00e
-            lda units,x                     ; 50ae bd0054
+            bne _SUPPLY_2                   ; 50ac d00e
+            lda CORPSX,x                    ; 50ae bd0054
             asl                             ; 50b1 0a
             asl                             ; 50b2 0a
             adc #$4a                        ; 50b3 694a
-            cmp $d20a                       ; 50b5 cd0ad2
-            bcc _X3                         ; 50b8 905b
+            cmp SKREST/RANDOM               ; 50b5 cd0ad2    Reset serial port status register / Random byte
+            bcc _M_3                        ; 50b8 905b
             lda #$10                        ; 50ba a910
-_W2         sta $c7                         ; 50bc 85c7
+_SUPPLY_2   sta ACCLO                       ; 50bc 85c7
             ldy #$01                        ; 50be a001
             cpx #$37                        ; 50c0 e037
-            bcs _W3                         ; 50c2 b002
+            bcs _SUPPLY_3                   ; 50c2 b002
             ldy #$03                        ; 50c4 a003
-_W3         sty $0693                       ; 50c6 8c9306
-            lda units,x                     ; 50c9 bd0054
-            sta $cb                         ; 50cc 85cb
-            lda s_AH,x                      ; 50ce bd9f54
-            sta $ca                         ; 50d1 85ca
+_SUPPLY_3   sty HOMEDR                      ; 50c6 8c9306
+            lda CORPSX,x                    ; 50c9 bd0054
+            sta LON                         ; 50cc 85cb
+            lda CORPSY,x                    ; 50ce bd9f54
+            sta LAT                         ; 50d1 85ca
             lda #$00                        ; 50d3 a900
-            sta $cc                         ; 50d5 85cc
-_W4         lda $cb                         ; 50d7 a5cb
-            sta $0636                       ; 50d9 8d3606
-            lda $ca                         ; 50dc a5ca
-            sta $0637                       ; 50de 8d3706
-s_X         lda $0636                       ; 50e1 ad3606
+            sta RFR                         ; 50d5 85cc
+_SUPPLY_4   lda LON                         ; 50d7 a5cb
+            sta SQX                         ; 50d9 8d3606    adjacent square
+            lda LAT                         ; 50dc a5ca
+            sta SQY                         ; 50de 8d3706
+__M__       lda SQX                         ; 50e1 ad3606    adjacent square
             clc                             ; 50e4 18
-            adc s_DO,y                      ; 50e5 79f27b
-            sta $cb                         ; 50e8 85cb
-            lda $0637                       ; 50ea ad3706
+            adc YINC,y                      ; 50e5 79f27b
+            sta LON                         ; 50e8 85cb
+            lda SQY                         ; 50ea ad3706
             clc                             ; 50ed 18
-            adc s_DN,y                      ; 50ee 79f17b
-            sta $ca                         ; 50f1 85ca
-            jsr s_Y                         ; 50f3 204051
+            adc XINC,y                      ; 50ee 79f17b
+            sta LAT                         ; 50f1 85ca
+            jsr CHKZOC                      ; 50f3 204051
             cpx #$37                        ; 50f6 e037
-            bcc _X1                         ; 50f8 900a
-            jsr s_CG                        ; 50fa 204672
-            lda $062b                       ; 50fd ad2b06
+            bcc _M_1                        ; 50f8 900a
+            jsr TERRB                       ; 50fa 204672
+            lda TRNCOD                      ; 50fd ad2b06
             cmp #$bf                        ; 5100 c9bf
-            beq _X2                         ; 5102 f009
-_X1         lda $0694                       ; 5104 ad9406
+            beq _M_2                        ; 5102 f009
+_M_1        lda ZOC                         ; 5104 ad9406
             cmp #$02                        ; 5107 c902
-            bcc _X6                         ; 5109 901c
-            inc $cc                         ; 510b e6cc
-_X2         inc $cc                         ; 510d e6cc
-            lda $cc                         ; 510f a5cc
-            cmp $c7                         ; 5111 c5c7
-            bcc _X5                         ; 5113 9009
-_X3         lsr s_AJ,x                      ; 5115 5edd55
-            bne _X4                         ; 5118 d003
-            jmp s_Z                         ; 511a 4cab51
-_X4         rts                             ; 511d 60
-_X5         lda $d20a                       ; 511e ad0ad2
+            bcc _M_6                        ; 5109 901c
+            inc RFR                         ; 510b e6cc
+_M_2        inc RFR                         ; 510d e6cc
+            lda RFR                         ; 510f a5cc
+            cmp ACCLO                       ; 5111 c5c7
+            bcc _M_5                        ; 5113 9009
+_M_3        lsr CSTRNG,x                    ; 5115 5edd55
+            bne _M_4                        ; 5118 d003
+            jmp DEAD                        ; 511a 4cab51
+_M_4        rts                             ; 511d 60
+_M_5        lda SKREST/RANDOM               ; 511e ad0ad2    Reset serial port status register / Random byte
             and #$02                        ; 5121 2902
             tay                             ; 5123 a8
-            jmp s_X                         ; 5124 4ce150
-_X6         ldy $0693                       ; 5127 ac9306
-            lda $cb                         ; 512a a5cb
+            jmp __M__                       ; 5124 4ce150
+_M_6        ldy HOMEDR                      ; 5127 ac9306
+            lda LON                         ; 512a a5cb
             cpy #$01                        ; 512c c001
-            bne _X7                         ; 512e d00b
+            bne _M_7                        ; 512e d00b
             cmp #$ff                        ; 5130 c9ff
-            bne _W4                         ; 5132 d0a3
-            inc s_AI,x                      ; 5134 fe3e55
-            inc s_AI,x                      ; 5137 fe3e55
+            bne _SUPPLY_4                   ; 5132 d0a3
+            inc MSTRNG,x                    ; 5134 fe3e55
+            inc MSTRNG,x                    ; 5137 fe3e55
             rts                             ; 513a 60
-_X7         cmp #$2e                        ; 513b c92e
-            bne _W4                         ; 513d d098
+_M_7        cmp #$2e                        ; 513b c92e
+            bne _SUPPLY_4                   ; 513d d098
             rts                             ; 513f 60
-s_Y         lda #$00                        ; 5140 a900
-            sta $0694                       ; 5142 8d9406
+CHKZOC      lda #$00                        ; 5140 a900
+            sta ZOC                         ; 5142 8d9406
             lda #$40                        ; 5145 a940
             cpx #$37                        ; 5147 e037
-            bcs _Y1                         ; 5149 b002
+            bcs _CHKZOC_1                   ; 5149 b002
             lda #$c0                        ; 514b a9c0
-_Y1         sta $c5                         ; 514d 85c5
-            jsr s_CG                        ; 514f 204672
-            bne _Y4                         ; 5152 d01e
-            lda $062b                       ; 5154 ad2b06
+_CHKZOC_1   sta TEMPR                       ; 514d 85c5
+            jsr TERRB                       ; 514f 204672
+            bne _CHKZOC_4                   ; 5152 d01e
+            lda TRNCOD                      ; 5154 ad2b06
             and #$c0                        ; 5157 29c0
-            cmp $c5                         ; 5159 c5c5
-            beq _Y3                         ; 515b f00f
-            lda units,x                     ; 515d bd0054
-            cmp $cb                         ; 5160 c5cb
-            bne _Y2                         ; 5162 d007
-            lda s_AH,x                      ; 5164 bd9f54
-            cmp $ca                         ; 5167 c5ca
-            beq _Y4                         ; 5169 f007
-_Y2         rts                             ; 516b 60
-_Y3         lda #$02                        ; 516c a902
-            sta $0694                       ; 516e 8d9406
+            cmp TEMPR                       ; 5159 c5c5
+            beq _CHKZOC_3                   ; 515b f00f
+            lda CORPSX,x                    ; 515d bd0054
+            cmp LON                         ; 5160 c5cb
+            bne _CHKZOC_2                   ; 5162 d007
+            lda CORPSY,x                    ; 5164 bd9f54
+            cmp LAT                         ; 5167 c5ca
+            beq _CHKZOC_4                   ; 5169 f007
+_CHKZOC_2   rts                             ; 516b 60
+_CHKZOC_3   lda #$02                        ; 516c a902
+            sta ZOC                         ; 516e 8d9406
             rts                             ; 5171 60
-_Y4         ldx #$07                        ; 5172 a207
-_Y5         ldy s_DA,x                      ; 5174 bcac79
-            lda $cb                         ; 5177 a5cb
+_CHKZOC_4   ldx #$07                        ; 5172 a207
+_CHKZOC_5   ldy JSTP+16,x                   ; 5174 bcac79
+            lda LON                         ; 5177 a5cb
             clc                             ; 5179 18
-            adc s_DO,y                      ; 517a 79f27b
-            sta $cb                         ; 517d 85cb
-            lda $ca                         ; 517f a5ca
+            adc YINC,y                      ; 517a 79f27b
+            sta LON                         ; 517d 85cb
+            lda LAT                         ; 517f a5ca
             clc                             ; 5181 18
-            adc s_DN,y                      ; 5182 79f17b
-            sta $ca                         ; 5185 85ca
-            jsr s_CG                        ; 5187 204672
-            bne _Y6                         ; 518a d015
-            lda $062b                       ; 518c ad2b06
+            adc XINC,y                      ; 5182 79f17b
+            sta LAT                         ; 5185 85ca
+            jsr TERRB                       ; 5187 204672
+            bne _CHKZOC_6                   ; 518a d015
+            lda TRNCOD                      ; 518c ad2b06
             and #$c0                        ; 518f 29c0
-            cmp $c5                         ; 5191 c5c5
-            bne _Y6                         ; 5193 d00c
+            cmp TEMPR                       ; 5191 c5c5
+            bne _CHKZOC_6                   ; 5193 d00c
             txa                             ; 5195 8a
             and #$01                        ; 5196 2901
             clc                             ; 5198 18
             adc #$01                        ; 5199 6901
-            adc $0694                       ; 519b 6d9406
-            sta $0694                       ; 519e 8d9406
-_Y6         dex                             ; 51a1 ca
-            bpl _Y5                         ; 51a2 10d0
-            dec $ca                         ; 51a4 c6ca
-            dec $cb                         ; 51a6 c6cb
-            ldx $c2                         ; 51a8 a6c2
+            adc ZOC                         ; 519b 6d9406
+            sta ZOC                         ; 519e 8d9406
+_CHKZOC_6   dex                             ; 51a1 ca
+            bpl _CHKZOC_5                   ; 51a2 10d0
+            dec LAT                         ; 51a4 c6ca
+            dec LON                         ; 51a6 c6cb
+            ldx ARMY                        ; 51a8 a6c2
             rts                             ; 51aa 60
-s_Z         lda #$00                        ; 51ab a900
-            sta s_AI,x                      ; 51ad 9d3e55
-            sta s_AJ,x                      ; 51b0 9ddd55
-            sta s_AV,x                      ; 51b3 9d755d
+DEAD        lda #$00                        ; 51ab a900
+            sta MSTRNG,x                    ; 51ad 9d3e55
+            sta CSTRNG,x                    ; 51b0 9ddd55
+            sta HMORDS,x                    ; 51b3 9d755d
             lda #$ff                        ; 51b6 a9ff
-            sta s_BU,x                      ; 51b8 9d616d
-            sta s_AL,x                      ; 51bb 9d1b57
-            stx $b4                         ; 51be 86b4
-            lda units,x                     ; 51c0 bd0054
-            sta $be                         ; 51c3 85be
-            lda s_AH,x                      ; 51c5 bd9f54
-            sta $bf                         ; 51c8 85bf
-            jsr s_DD                        ; 51ca 20ef79
+            sta EXEC,x                      ; 51b8 9d616d
+            sta ARRIVE,x                    ; 51bb 9d1b57
+            stx CORPS                       ; 51be 86b4    Number of unit under window
+            lda CORPSX,x                    ; 51c0 bd0054
+            sta CNUNKX                      ; 51c3 85be    Cursor coords (pixel frame)
+            lda CORPSY,x                    ; 51c5 bd9f54
+            sta CHUNKY                      ; 51c8 85bf
+            jsr SWITCH                      ; 51ca 20ef79
             rts                             ; 51cd 60
-s_AA        cpx #$37                        ; 51ce e037
-            bcs _AA1                        ; 51d0 b00e
-            lda s_AO,x                      ; 51d2 bdca58
+BRKCHK      cpx #$37                        ; 51ce e037
+            bcs _BRKCHK_1                   ; 51d0 b00e
+            lda CORPT,x                     ; 51d2 bdca58
             and #$f0                        ; 51d5 29f0
-            bne _AA1                        ; 51d7 d007
-            lda s_AI,x                      ; 51d9 bd3e55
+            bne _BRKCHK_1                   ; 51d7 d007
+            lda MSTRNG,x                    ; 51d9 bd3e55
             lsr                             ; 51dc 4a
-            jmp s_AB                        ; 51dd 4cee51
-_AA1        lda s_AI,x                      ; 51e0 bd3e55
+            jmp __N__                       ; 51dd 4cee51
+_BRKCHK_1   lda MSTRNG,x                    ; 51e0 bd3e55
             lsr                             ; 51e3 4a
             lsr                             ; 51e4 4a
             lsr                             ; 51e5 4a
-            sta $c5                         ; 51e6 85c5
-            lda s_AI,x                      ; 51e8 bd3e55
+            sta TEMPR                       ; 51e6 85c5
+            lda MSTRNG,x                    ; 51e8 bd3e55
             sec                             ; 51eb 38
-            sbc $c5                         ; 51ec e5c5
-s_AB        cmp s_AJ,x                      ; 51ee dddd55
-            bcc _AB1                        ; 51f1 900a
+            sbc TEMPR                       ; 51ec e5c5
+__N__       cmp CSTRNG,x                    ; 51ee dddd55
+            bcc _N_1                        ; 51f1 900a
             lda #$ff                        ; 51f3 a9ff
-            sta s_BU,x                      ; 51f5 9d616d
+            sta EXEC,x                      ; 51f5 9d616d
             lda #$00                        ; 51f8 a900
-            sta s_AV,x                      ; 51fa 9d755d
-_AB1        rts                             ; 51fd 60
+            sta HMORDS,x                    ; 51fa 9d755d
+_N_1        rts                             ; 51fd 60
             !byte $0a                                                               ; 51fe .
-s_AC        !byte $a9                                                               ; 51ff .
-s_AD        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5200 ................
+PLYR0-1     !byte $a9                                                               ; 51ff .
+PLYR0       !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5200 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5210 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5220 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5230 ................
@@ -1123,7 +1123,7 @@ s_AD        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$0
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5250 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5260 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5270 ................
-s_AE        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5280 ................
+PLYR1       !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5280 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5290 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 52a0 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 52b0 ................
@@ -1131,14 +1131,14 @@ s_AE        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$0
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 52d0 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 52e0 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 52f0 ................
-s_AF        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5300 ................
+PLYR2       !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5300 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5310 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5320 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5330 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5340 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5350 ................
             !byte $00                                                               ; 5360 .
-s_AG        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5361 ................
+OBJY-55     !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5361 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$e0   ; 5371 ................
             !byte $47,$b0,$0e,$bd,$ca,$58,$29,$f0,$d0,$07,$bd,$3e,$55,$4a,$4c,$a0   ; 5381 G....X)....>UJL.
             !byte $53,$bd,$3e,$55,$4a,$4a,$4a,$85,$c5,$bd,$3e,$55,$38,$e5,$c5,$dd   ; 5391 S.>UJJJ...>U8...
@@ -1148,7 +1148,7 @@ s_AG        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$0
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$e0,$47,$b0,$0e,$bd,$ca,$58,$29   ; 53d1 .........G....X)
             !byte $f0,$d0,$07,$bd,$3e,$55,$4a,$4c,$f9,$53,$bd,$3e,$55,$4a,$4a,$4a   ; 53e1 ....>UJL.S.>UJJJ
             !byte $85,$c5,$bd,$3e,$55,$38,$e5,$c5,$dd,$dd,$55,$60,$00,$00,$00       ; 53f1 ...>U8....U`...
-units       !byte $00,$28,$28,$28,$28,$28,$29,$28,$29,$29,$29,$2a,$2a,$2a,$2a,$2b   ; 5400 .((((()()))****+
+CORPSX      !byte $00,$28,$28,$28,$28,$28,$29,$28,$29,$29,$29,$2a,$2a,$2a,$2a,$2b   ; 5400 .((((()()))****+
             !byte $2b,$2b,$29,$28,$28,$29,$29,$2a,$2a,$2a,$28,$29,$2a,$29,$2a,$2a   ; 5410 ++)(())***()*)**
             !byte $2b,$29,$2a,$2b,$1e,$1e,$1f,$21,$23,$25,$23,$24,$24,$2d,$2d,$26   ; 5420 +)*+...!#%#$$--&
             !byte $2d,$1f,$2d,$2d,$20,$2d,$2d,$1d,$1b,$18,$17,$14,$0f,$00,$00,$00   ; 5430 -.-- --.........
@@ -1158,7 +1158,7 @@ units       !byte $00,$28,$28,$28,$28,$28,$29,$28,$29,$29,$29,$2a,$2a,$2a,$2a,$2
             !byte $15,$1d,$00,$1c,$15,$15,$15,$14,$14,$0c,$00,$00,$00,$00,$00,$00   ; 5470 ................
             !byte $00,$15,$19,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5480 ................
             !byte $00,$00,$00,$00,$00,$26,$15,$0c,$14,$15,$14,$0f,$15,$14,$13       ; 5490 .....&.........
-s_AH        !byte $00,$14,$13,$12,$11,$10,$14,$13,$12,$11,$10,$14,$13,$12,$11,$13   ; 549f ................
+CORPSY      !byte $00,$14,$13,$12,$11,$10,$14,$13,$12,$11,$10,$14,$13,$12,$11,$13   ; 549f ................
             !byte $12,$11,$17,$16,$15,$15,$16,$16,$17,$18,$0f,$0e,$0d,$0f,$0e,$0c   ; 54af ................
             !byte $0d,$0f,$10,$10,$02,$03,$04,$06,$07,$08,$26,$25,$26,$14,$0f,$08   ; 54bf ..........&%&...
             !byte $10,$01,$14,$13,$01,$11,$12,$20,$1f,$26,$26,$26,$26,$14,$08,$12   ; 54cf ....... .&&&&...
@@ -1168,7 +1168,7 @@ s_AH        !byte $00,$14,$13,$12,$11,$10,$14,$13,$12,$11,$10,$14,$13,$12,$11,$1
             !byte $08,$21,$1c,$1e,$14,$1c,$21,$1b,$1e,$08,$0a,$20,$0b,$19,$0c,$17   ; 550f .!....!.... ....
             !byte $0d,$1d,$1e,$1f,$0f,$1b,$11,$19,$0b,$17,$13,$15,$21,$1c,$0d,$1a   ; 551f ............!...
             !byte $0a,$1d,$23,$1b,$0f,$1e,$16,$08,$0d,$0e,$1c,$03,$03,$03,$02       ; 552f ..#............
-s_AI        !byte $00,$cb,$cd,$c0,$c7,$b8,$88,$7f,$96,$81,$88,$6d,$48,$46,$51,$83   ; 553e ...........mHFQ.
+MSTRNG      !byte $00,$cb,$cd,$c0,$c7,$b8,$88,$7f,$96,$81,$88,$6d,$48,$46,$51,$83   ; 553e ...........mHFQ.
             !byte $66,$35,$c6,$c2,$81,$7b,$65,$68,$70,$78,$ca,$c3,$bf,$48,$8c,$8e   ; 554e f5...{ehpx...H..
             !byte $77,$6f,$7a,$4d,$61,$60,$5c,$7d,$83,$6a,$70,$68,$65,$d2,$61,$62   ; 555e wozMa`\}.jphe.ab
             !byte $5f,$34,$62,$60,$37,$68,$65,$64,$67,$6e,$65,$5c,$67,$69,$6b,$6f   ; 556e _4b`7hedgne\giko
@@ -1178,7 +1178,7 @@ s_AI        !byte $00,$cb,$cd,$c0,$c7,$b8,$88,$7f,$96,$81,$88,$6d,$48,$46,$51,$8
             !byte $4e,$79,$72,$69,$7a,$7f,$81,$69,$6f,$70,$7f,$77,$59,$6c,$71,$69   ; 55ae Nyriz..iop.wYlqi
             !byte $5e,$67,$61,$6c,$6e,$6f,$60,$6d,$70,$5f,$5d,$72,$67,$6b,$69,$5c   ; 55be ^galno`mp_]rgki\
             !byte $6d,$65,$6a,$5f,$63,$65,$76,$6a,$70,$68,$b9,$6c,$5e,$66,$62       ; 55ce mej_cevjph.l^fb
-s_AJ        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 55dd ................
+CSTRNG      !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 55dd ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 55ed ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 55fd ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 560d ................
@@ -1188,7 +1188,7 @@ s_AJ        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$0
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 564d ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 565d ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00       ; 566d ...............
-s_AK        !byte $00,$7e,$7e,$7e,$7e,$7e,$7d,$7d,$7d,$7d,$7d,$7d,$7d,$7d,$7d,$7d   ; 567c .~~~~~}}}}}}}}}}
+SWAP        !byte $00,$7e,$7e,$7e,$7e,$7e,$7d,$7d,$7d,$7d,$7d,$7d,$7d,$7d,$7d,$7d   ; 567c .~~~~~}}}}}}}}}}
             !byte $7d,$7d,$7e,$7e,$7d,$7d,$7d,$7d,$7d,$7d,$7e,$7e,$7e,$7e,$7d,$7d   ; 568c }}~~}}}}}}~~~~}}
             !byte $7d,$7d,$7d,$7d,$7d,$7d,$7d,$7d,$7d,$7d,$7d,$7d,$7d,$7e,$7d,$7e   ; 569c }}}}}}}}}}}}}~}~
             !byte $7d,$7d,$7d,$7d,$7d,$7d,$7e,$fd,$fd,$fd,$fd,$fd,$fd,$fd,$fd,$fd   ; 56ac }}}}}}~.........
@@ -1198,7 +1198,7 @@ s_AK        !byte $00,$7e,$7e,$7e,$7e,$7e,$7d,$7d,$7d,$7d,$7d,$7d,$7d,$7d,$7d,$7
             !byte $fd,$fd,$fd,$fd,$fd,$fd,$fd,$fd,$fd,$fd,$fd,$fd,$fd,$fd,$fd,$fd   ; 56ec ................
             !byte $fd,$fe,$fd,$fd,$fd,$fd,$fd,$fd,$fd,$fd,$fd,$fe,$fe,$fe,$fd,$fe   ; 56fc ................
             !byte $fd,$fe,$fe,$fd,$fe,$fd,$fd,$fd,$fd,$fd,$fd,$fd,$fd,$fd,$fd       ; 570c ...............
-s_AL        !byte $ff,$00,$ff,$00,$00,$00,$00,$00,$00,$00,$00,$ff,$ff,$ff,$ff,$ff   ; 571b ................
+ARRIVE      !byte $ff,$00,$ff,$00,$00,$00,$00,$00,$00,$00,$00,$ff,$ff,$ff,$ff,$ff   ; 571b ................
             !byte $ff,$ff,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$ff,$00,$00   ; 572b ................
             !byte $00,$00,$ff,$ff,$00,$00,$00,$00,$00,$00,$00,$00,$ff,$02,$ff,$02   ; 573b ................
             !byte $05,$06,$09,$0a,$0b,$14,$18,$04,$05,$07,$09,$0b,$0d,$07,$0c,$08   ; 574b ................
@@ -1208,7 +1208,7 @@ s_AL        !byte $ff,$00,$ff,$00,$00,$00,$00,$00,$00,$00,$00,$ff,$ff,$ff,$ff,$f
             !byte $02,$02,$02,$03,$03,$04,$04,$05,$05,$06,$06,$07,$08,$08,$08,$09   ; 578b ................
             !byte $09,$05,$05,$02,$09,$0a,$0a,$06,$0b,$05,$11,$02,$0b,$14,$15,$16   ; 579b ................
             !byte $17,$18,$1a,$1c,$1e,$02,$03,$03,$03,$03,$06,$06,$04,$04,$04       ; 57ab ...............
-s_AM        !byte $20,$20,$20,$20,$20,$20,$20,$20,$53,$53,$20,$20,$20,$20,$20,$20   ; 57ba         SS
+WORDS       !byte $20,$20,$20,$20,$20,$20,$20,$20,$53,$53,$20,$20,$20,$20,$20,$20   ; 57ba         SS
             !byte $46,$49,$4e,$4e,$49,$53,$48,$20,$52,$55,$4d,$41,$4e,$49,$41,$4e   ; 57ca FINNISH RUMANIAN
             !byte $49,$54,$41,$4c,$49,$41,$4e,$20,$48,$55,$4e,$47,$41,$52,$41,$4e   ; 57da ITALIAN HUNGARAN
             !byte $4d,$4f,$55,$4e,$54,$41,$49,$4e,$47,$55,$41,$52,$44,$53,$20,$20   ; 57ea MOUNTAINGUARDS
@@ -1224,8 +1224,8 @@ s_AM        !byte $20,$20,$20,$20,$20,$20,$20,$20,$53,$53,$20,$20,$20,$20,$20,$2
             !byte $4f,$43,$54,$4f,$42,$45,$52,$20,$4e,$4f,$56,$45,$4d,$42,$45,$52   ; 588a OCTOBER NOVEMBER
             !byte $44,$45,$43,$45,$4d,$42,$45,$52,$43,$4f,$52,$50,$53,$20,$20,$20   ; 589a DECEMBERCORPS
             !byte $41,$52,$4d,$59,$20,$20,$20,$20,$4d,$55,$53,$54,$45,$52,$20,$20   ; 58aa ARMY    MUSTER
-s_AN        !byte $43,$4f,$4d,$42,$41,$54,$20,$20,$53,$54,$52,$45,$4e,$47,$54,$48   ; 58ba COMBAT  STRENGTH
-s_AO        !byte $00,$03,$03,$03,$03,$03,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 58ca ................
+WORDS+256   !byte $43,$4f,$4d,$42,$41,$54,$20,$20,$53,$54,$52,$45,$4e,$47,$54,$48   ; 58ba COMBAT  STRENGTH
+CORPT       !byte $00,$03,$03,$03,$03,$03,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 58ca ................
             !byte $00,$40,$03,$03,$00,$00,$00,$00,$00,$00,$03,$03,$03,$03,$00,$00   ; 58da .@..............
             !byte $00,$00,$00,$00,$30,$30,$30,$00,$00,$00,$20,$20,$20,$03,$00,$53   ; 58ea ....000...   ..S
             !byte $00,$30,$00,$00,$40,$00,$07,$04,$04,$00,$00,$00,$00,$00,$00,$00   ; 58fa .0..@...........
@@ -1235,7 +1235,7 @@ s_AO        !byte $00,$03,$03,$03,$03,$03,$00,$00,$00,$00,$00,$00,$00,$00,$00,$0
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 593a ................
             !byte $00,$72,$00,$70,$70,$70,$70,$00,$00,$00,$00,$72,$01,$71,$70,$01   ; 594a .r.pppp....r.qp.
             !byte $70,$01,$01,$00,$00,$00,$00,$00,$00,$00,$04,$04,$04,$04,$04       ; 595a p..............
-s_AP        !byte $00,$18,$27,$2e,$2f,$39,$05,$06,$07,$08,$09,$0c,$0d,$14,$2a,$2b   ; 5969 ..'./9........*+
+CORPNO      !byte $00,$18,$27,$2e,$2f,$39,$05,$06,$07,$08,$09,$0c,$0d,$14,$2a,$2b   ; 5969 ..'./9........*+
             !byte $35,$03,$29,$38,$01,$02,$0a,$1a,$1c,$26,$03,$0e,$30,$34,$31,$04   ; 5979 5.)8.....&..041.
             !byte $11,$1d,$2c,$37,$01,$02,$04,$0b,$1e,$36,$02,$04,$06,$28,$1b,$01   ; 5989 ..,7.....6...(..
             !byte $17,$05,$22,$23,$04,$33,$32,$07,$0b,$29,$2a,$2b,$2c,$2d,$2e,$2f   ; 5999 .."#.32..)*+,-./
@@ -1245,7 +1245,7 @@ s_AP        !byte $00,$18,$27,$2e,$2f,$39,$05,$06,$07,$08,$09,$0c,$0d,$14,$2a,$2
             !byte $10,$14,$06,$18,$28,$1d,$1e,$1f,$20,$21,$25,$2b,$31,$32,$34,$36   ; 59d9 ....(... !%+1246
             !byte $37,$01,$22,$01,$02,$03,$04,$27,$3b,$3c,$3d,$02,$01,$01,$05,$02   ; 59e9 7."....';<=.....
             !byte $06,$03,$04,$26,$24,$23,$1c,$19,$17,$11,$08,$0a,$03,$05,$06       ; 59f9 ...&$#.........
-s_AQ        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5a08 ................
+HDIGIT      !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5a08 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5a18 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5a28 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5a38 ................
@@ -1261,7 +1261,7 @@ s_AQ        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$0
             !byte $02,$02,$02,$02,$02,$02,$02,$02,$02,$02,$02,$02,$02,$02,$02,$02   ; 5ad8 ................
             !byte $02,$02,$02,$02,$02,$02,$02,$02,$02,$02,$02,$02,$02,$02,$02,$02   ; 5ae8 ................
             !byte $02,$02,$02,$02,$02,$02,$02,$02,$02,$02,$02,$02,$02,$02,$02,$02   ; 5af8 ................
-s_AR        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$01,$01,$01,$01,$01,$01   ; 5b08 ................
+TDIGIT      !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$01,$01,$01,$01,$01,$01   ; 5b08 ................
             !byte $01,$01,$01,$01,$02,$02,$02,$02,$02,$02,$02,$02,$02,$02,$03,$03   ; 5b18 ................
             !byte $03,$03,$03,$03,$03,$03,$03,$03,$04,$04,$04,$04,$04,$04,$04,$04   ; 5b28 ................
             !byte $04,$04,$05,$05,$05,$05,$05,$05,$05,$05,$05,$05,$06,$06,$06,$06   ; 5b38 ................
@@ -1277,7 +1277,7 @@ s_AR        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$01,$01,$01,$01,$01,$0
             !byte $00,$00,$01,$01,$01,$01,$01,$01,$01,$01,$01,$01,$02,$02,$02,$02   ; 5bd8 ................
             !byte $02,$02,$02,$02,$02,$02,$03,$03,$03,$03,$03,$03,$03,$03,$03,$03   ; 5be8 ................
             !byte $04,$04,$04,$04,$04,$04,$04,$04,$04,$04,$05,$05,$05,$05,$05,$05   ; 5bf8 ................
-s_AS        !byte $00,$01,$02,$03,$04,$05,$06,$07,$08,$09,$00,$01,$02,$03,$04,$05   ; 5c08 ................
+ODIGIT      !byte $00,$01,$02,$03,$04,$05,$06,$07,$08,$09,$00,$01,$02,$03,$04,$05   ; 5c08 ................
             !byte $06,$07,$08,$09,$00,$01,$02,$03,$04,$05,$06,$07,$08,$09,$00,$01   ; 5c18 ................
             !byte $02,$03,$04,$05,$06,$07,$08,$09,$00,$01,$02,$03,$04,$05,$06,$07   ; 5c28 ................
             !byte $08,$09,$00,$01,$02,$03,$04,$05,$06,$07,$08,$09,$00,$01,$02,$03   ; 5c38 ................
@@ -1293,14 +1293,14 @@ s_AS        !byte $00,$01,$02,$03,$04,$05,$06,$07,$08,$09,$00,$01,$02,$03,$04,$0
             !byte $08,$09,$00,$01,$02,$03,$04,$05,$06,$07,$08,$09,$00,$01,$02,$03   ; 5cd8 ................
             !byte $04,$05,$06,$07,$08,$09,$00,$01,$02,$03,$04,$05,$06,$07,$08,$09   ; 5ce8 ................
             !byte $00,$01,$02,$03,$04,$05,$06,$07,$08,$09,$00,$01,$02,$03,$04,$05   ; 5cf8 ................
-s_AT        !byte $50,$4c,$45,$41,$53,$45,$20,$45,$4e,$54,$45,$52,$20,$59,$4f,$55   ; 5d08 PLEASE ENTER YOU
+TXTTBL      !byte $50,$4c,$45,$41,$53,$45,$20,$45,$4e,$54,$45,$52,$20,$59,$4f,$55   ; 5d08 PLEASE ENTER YOU
             !byte $52,$20,$4f,$52,$44,$45,$52,$53,$20,$4e,$4f,$57,$20,$20,$20,$20   ; 5d18 R ORDERS NOW
             !byte $20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$47,$41,$4d,$45,$20,$4f   ; 5d28           GAME O
             !byte $56,$45,$52,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20,$20   ; 5d38 VER
             !byte $46,$49,$47,$55,$52,$49,$4e,$47,$20,$4d,$4f,$56,$45,$3b,$20,$4e   ; 5d48 FIGURING MOVE; N
             !byte $4f,$20,$4f,$52,$44,$45,$52,$53,$20,$41,$4c,$4c,$4f,$57,$45,$44   ; 5d58 O ORDERS ALLOWED
-s_AU        !byte $00,$1f,$1c,$1f,$1e,$1f,$1e,$1f,$1f,$1e,$1f,$1e,$1f               ; 5d68 .............
-s_AV        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5d75 ................
+MONLEN      !byte $00,$1f,$1c,$1f,$1e,$1f,$1e,$1f,$1f,$1e,$1f,$1e,$1f               ; 5d68 .............
+HMORDS      !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5d75 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5d85 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5d95 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5da5 ................
@@ -1310,7 +1310,7 @@ s_AV        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$0
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5de5 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5df5 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00       ; 5e05 ...............
-s_AW        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5e14 ................
+WHORDS      !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5e14 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5e24 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5e34 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5e44 ................
@@ -1320,7 +1320,7 @@ s_AW        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$0
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5e84 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5e94 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00       ; 5ea4 ...............
-s_AX        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5eb3 ................
+WHORDH      !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5eb3 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5ec3 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5ed3 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5ee3 ................
@@ -1330,8 +1330,8 @@ s_AX        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$0
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5f23 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 5f33 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00       ; 5f43 ...............
-s_AY        !byte $1e,$28,$32,$3c                                                   ; 5f52 .(2<
-s_AZ        !byte $20,$20,$20,$20,$54,$48,$41,$54,$20,$49,$53,$20,$41,$20,$52,$55   ; 5f56     THAT IS A RU
+BEEPTB      !byte $1e,$28,$32,$3c                                                   ; 5f52 .(2<
+ERRMSG      !byte $20,$20,$20,$20,$54,$48,$41,$54,$20,$49,$53,$20,$41,$20,$52,$55   ; 5f56     THAT IS A RU
             !byte $53,$53,$49,$41,$4e,$20,$55,$4e,$49,$54,$21,$20,$20,$20,$20,$20   ; 5f66 SSIAN UNIT!
             !byte $20,$20,$20,$4f,$4e,$4c,$59,$20,$38,$20,$4f,$52,$44,$45,$52,$53   ; 5f76    ONLY 8 ORDERS
             !byte $20,$41,$52,$45,$20,$41,$4c,$4c,$4f,$57,$45,$44,$21,$20,$20,$20   ; 5f86  ARE ALLOWED!
@@ -1339,15 +1339,15 @@ s_AZ        !byte $20,$20,$20,$20,$54,$48,$41,$54,$20,$49,$53,$20,$41,$20,$52,$5
             !byte $52,$20,$4d,$41,$4c,$54,$41,$4b,$52,$45,$55,$5a,$45,$21,$20,$20   ; 5fa6 R MALTAKREUZE!
             !byte $20,$20,$20,$4e,$4f,$20,$44,$49,$41,$47,$4f,$4e,$41,$4c,$20,$4d   ; 5fb6    NO DIAGONAL M
             !byte $4f,$56,$45,$53,$20,$41,$4c,$4c,$4f,$57,$45,$44,$21,$20,$20,$20   ; 5fc6 OVES ALLOWED!
-s_BA        !byte $00,$08,$00,$f8                                                   ; 5fd6 ....
-s_BB        !byte $f8,$00,$08,$00                                                   ; 5fda ....
-s_BC        !byte $03,$0c,$30,$c0                                                   ; 5fde ..0.
-s_BD        !byte $00,$01,$00,$ff                                                   ; 5fe2 ....
-s_BE        !byte $ff,$00,$01,$00                                                   ; 5fe6 ....
-s_BF        !byte $00,$12,$12,$12,$d2,$d8,$d6,$c4,$d4,$c2,$12,$12,$12               ; 5fea .............
-s_BG        !byte $24,$24,$e7,$00,$00,$e7,$24,$24                                   ; 5ff7 $$....$$
-s_BH        !byte $00                                                               ; 5fff .
-fonts       !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$08,$1c,$3e,$08,$00,$00,$00   ; 6000 ...........>....
+XOFF        !byte $00,$08,$00,$f8                                                   ; 5fd6 ....
+YOFF        !byte $f8,$00,$08,$00                                                   ; 5fda ....
+MASKO       !byte $03,$0c,$30,$c0                                                   ; 5fde ..0.
+XADD        !byte $00,$01,$00,$ff                                                   ; 5fe2 ....
+YADD        !byte $ff,$00,$01,$00                                                   ; 5fe6 ....
+TRTAB       !byte $00,$12,$12,$12,$d2,$d8,$d6,$c4,$d4,$c2,$12,$12,$12               ; 5fea .............
+MLTKRZ      !byte $24,$24,$e7,$00,$00,$e7,$24,$24                                   ; 5ff7 $$....$$
+DBGFLG      !byte $00                                                               ; 5fff .
+FONTDATA    !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$08,$1c,$3e,$08,$00,$00,$00   ; 6000 ...........>....
             !byte $00,$00,$00,$08,$1c,$3e,$08,$00,$00,$00,$10,$38,$7c,$10,$00,$00   ; 6010 .....>.....8|...
             !byte $00,$10,$38,$7c,$10,$00,$00,$00,$00,$00,$00,$08,$1c,$3e,$7f,$08   ; 6020 ..8|.........>..
             !byte $00,$08,$1c,$3e,$7f,$08,$00,$00,$02,$5a,$00,$19,$d8,$00,$da,$50   ; 6030 ...>.....Z.....P
@@ -1411,25 +1411,25 @@ fonts       !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$08,$1c,$3e,$08,$00,$00,$0
             !byte $00,$00,$00,$e0,$3d,$0f,$07,$07,$08,$0c,$1c,$1e,$1f,$ff,$ff,$ff   ; 63d0 ....=...........
             !byte $08,$08,$10,$10,$70,$f0,$f8,$f8,$00,$7f,$63,$55,$49,$55,$63,$7f   ; 63e0 ....p.....cUIUc.
             !byte $00,$7f,$41,$5d,$55,$5d,$41,$7f,$ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff   ; 63f0 ..A]U]A.........
-            !byte $70,$70,$70,$c6,$e0,$64,$90,$90,$f7,$fe,$64,$f7,$2e,$65,$f7,$5e   ; 6400 ppp..d....d..e.^
+DISPLST     !byte $70,$70,$70,$c6,$e0,$64,$90,$90,$f7,$fe,$64,$f7,$2e,$65,$f7,$5e   ; 6400 ppp..d....d..e.^
             !byte $65,$f7,$8e,$65,$f7,$be,$65,$f7,$ee,$65,$f7,$1e,$66,$f7,$4e,$66   ; 6410 e..e..e..e..f.Nf
             !byte $f7,$7e,$66,$57,$ae,$66,$90,$c2,$50,$64,$02,$90,$02,$90,$41,$00   ; 6420 .~fW.f..Pd....A.
             !byte $64                                                               ; 6430 d
-s_BI        !byte $10,$38,$54,$92,$10,$10,$10,$10,$08,$04,$02,$ff,$02,$04,$08,$00   ; 6431 .8T.............
+ARRTAB      !byte $10,$38,$54,$92,$10,$10,$10,$10,$08,$04,$02,$ff,$02,$04,$08,$00   ; 6431 .8T.............
             !byte $10,$10,$10,$10,$92,$54,$38,$10,$10,$20,$40,$ff,$40,$20,$10       ; 6441 .....T8.. @.@ .
-s_BJ        !byte $00,$00,$00,$00,$00,$00,$00,$00                                   ; 6450 ........
-s_BK        !byte $00,$00,$00,$00,$00,$00,$00,$00,$25,$21,$33,$34,$25,$32,$2e,$00   ; 6458 ........%!34%2..
+TXTWDW      !byte $00,$00,$00,$00,$00,$00,$00,$00                                   ; 6450 ........
+TXTWDW+8    !byte $00,$00,$00,$00,$00,$00,$00,$00,$25,$21,$33,$34,$25,$32,$2e,$00   ; 6458 ........%!34%2..
             !byte $26,$32,$2f,$2e,$34,$00,$11,$19,$14,$11,$00,$00                   ; 6468 &2/.4.......
-s_BL        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 6474 ................
+TXTWDW+36   !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 6474 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$23,$2f,$30,$39,$32,$29,$27,$28,$34   ; 6484 .......#/092)'(4
             !byte $00,$11,$19,$18,$11,$00,$23,$28,$32,$29,$33,$00,$23,$32,$21,$37   ; 6494 ......#(2)3.#2!7
             !byte $26,$2f,$32,$24,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 64a4 &/2$............
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 64b4 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00                   ; 64c4 ............
-s_BM        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 64d0 ................
+TXTWDW+128  !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 64d0 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 64e0 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$7f   ; 64f0 ................
-map         !byte $7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f   ; 6500 ................
+MAPDATA     !byte $7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f   ; 6500 ................
             !byte $7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f   ; 6510 ................
             !byte $7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f   ; 6520 ................
             !byte $7f,$bf,$bf,$bf,$a9,$00,$00,$00,$00,$00,$00,$00,$00,$b4,$bf,$bf   ; 6530 ................
@@ -1553,21 +1553,21 @@ map         !byte $7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7
             !byte $7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f   ; 6c90 ................
             !byte $7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f,$7f   ; 6ca0 ................
             !byte $7f                                                               ; 6cb0 .
-s_BN        !byte $ff,$ff,$ff,$ff,$ff,$ff,$ff,$01,$ff,$ff,$ff,$03,$ff,$02,$00       ; 6cb1 ...............
-s_BO        !byte $ff,$28,$28,$28,$14,$00,$00,$00,$00,$00,$14,$28,$28               ; 6cc0 .(((.......((
-s_BP        !byte $06,$0c,$08,$00,$00,$12,$0e,$08,$14,$80,$04,$08,$06,$00,$00,$12   ; 6ccd ................
+STKTAB      !byte $ff,$ff,$ff,$ff,$ff,$ff,$ff,$01,$ff,$ff,$ff,$03,$ff,$02,$00       ; 6cb1 ...............
+SSNCOD      !byte $ff,$28,$28,$28,$14,$00,$00,$00,$00,$00,$14,$28,$28               ; 6cc0 .(((.......((
+TRNTAB      !byte $06,$0c,$08,$00,$00,$12,$0e,$08,$14,$80,$04,$08,$06,$00,$00,$12   ; 6ccd ................
             !byte $0d,$06,$10,$80,$18,$1e,$18,$00,$00,$1e,$1e,$1a,$1c,$80,$1e,$1e   ; 6cdd ................
             !byte $1e,$00,$00,$1e,$1e,$1e,$1e,$80,$0a,$10,$0a,$0c,$0c,$18,$1c,$0c   ; 6ced ................
             !byte $18,$80,$06,$0a,$08,$08,$08,$18,$1c,$08,$14,$80                   ; 6cfd ............
-s_BQ        !byte $28,$27,$26,$24,$23,$22,$16,$0f,$0f,$0e,$28,$27,$26,$23,$23,$22   ; 6d09 ('&$#"....('&##"
+BHX1        !byte $28,$27,$26,$24,$23,$22,$16,$0f,$0f,$0e,$28,$27,$26,$23,$23,$22   ; 6d09 ('&$#"....('&##"
             !byte $16,$0f,$0e,$0e,$13,$13                                           ; 6d19 ......
-s_BR        !byte $23,$23,$23,$21,$24,$24,$04,$07,$07,$08,$24,$24,$24,$21,$25,$25   ; 6d1f ###!$$....$$$!%%
+BHY1        !byte $23,$23,$23,$21,$24,$24,$04,$07,$07,$08,$24,$24,$24,$21,$25,$25   ; 6d1f ###!$$....$$$!%%
             !byte $03,$06,$07,$07,$04,$03                                           ; 6d2f ......
-s_BS        !byte $28,$27,$26,$23,$23,$22,$16,$0f,$0e,$0e,$28,$27,$26,$24,$23,$22   ; 6d35 ('&##"....('&$#"
+BHX2        !byte $28,$27,$26,$23,$23,$22,$16,$0f,$0e,$0e,$28,$27,$26,$24,$23,$22   ; 6d35 ('&##"....('&$#"
             !byte $16,$0f,$0f,$0e,$13,$13                                           ; 6d45 ......
-s_BT        !byte $24,$24,$24,$21,$25,$25,$03,$06,$07,$07,$23,$23,$23,$21,$24,$24   ; 6d4b $$$!%%....###!$$
+BHY2        !byte $24,$24,$24,$21,$25,$25,$03,$06,$07,$07,$23,$23,$23,$21,$24,$24   ; 6d4b $$$!%%....###!$$
             !byte $04,$07,$07,$08,$03,$04                                           ; 6d5b ......
-s_BU        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 6d61 ................
+EXEC        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 6d61 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 6d71 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 6d81 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 6d91 ................
@@ -1577,904 +1577,904 @@ s_BU        !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$0
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 6dd1 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 6de1 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00       ; 6df1 ...............
-init        ldx #$08                        ; 6e00 a208
-_init1      lda s_CK,x                      ; 6e02 bdb673
-            sta $b0,x                       ; 6e05 95b0
-            lda s_CM,x                      ; 6e07 bdcf73
-            sta $02c0,x                     ; 6e0a 9dc002
+INIT        ldx #$08                        ; 6e00 a208
+_INIT_1     lda ZPVAL,x                     ; 6e02 bdb673
+            sta DLSTPTL,x                   ; 6e05 95b0    Zero page pointer to display list
+            lda COLTAB,x                    ; 6e07 bdcf73
+            sta PCOLR0,x                    ; 6e0a 9dc002    Color of player 0 and missile 0, shadows $D012
             dex                             ; 6e0d ca
-            bpl _init1                      ; 6e0e 10f2
+            bpl _INIT_1                     ; 6e0e 10f2
             ldx #$0f                        ; 6e10 a20f
-_init2      lda s_CL,x                      ; 6e12 bdbf73
-            sta $0600,x                     ; 6e15 9d0006
+_INIT_2     lda PSXVAL,x                    ; 6e12 bdbf73
+            sta XPOSL,x                     ; 6e15 9d0006    Horiz pos of upper left of screen window
             dex                             ; 6e18 ca
-            bpl _init2                      ; 6e19 10f7
+            bpl _INIT_2                     ; 6e19 10f7
             lda #$00                        ; 6e1b a900
-            sta $0230                       ; 6e1d 8d3002
-            sta $d404                       ; 6e20 8d04d4
-            sta $d405                       ; 6e23 8d05d4
-            lda $b1                         ; 6e26 a5b1
-            sta $0231                       ; 6e28 8d3102
+            sta SDLSTLL                     ; 6e1d 8d3002    Starting address of the display list
+            sta HSCROL                      ; 6e20 8d04d4    Horizontal scroll enable
+            sta VSCROL                      ; 6e23 8d05d4    Vertical scroll enable
+            lda DLSTPTH                     ; 6e26 a5b1
+            sta SDLSTLH                     ; 6e28 8d3102    Starting address of the display list
             ldx #$00                        ; 6e2b a200
-_init3      lda s_AI,x                      ; 6e2d bd3e55
-            sta s_AJ,x                      ; 6e30 9ddd55
+_INIT_3     lda MSTRNG,x                    ; 6e2d bd3e55
+            sta CSTRNG,x                    ; 6e30 9ddd55
             lda #$00                        ; 6e33 a900
-            sta s_AV,x                      ; 6e35 9d755d
+            sta HMORDS,x                    ; 6e35 9d755d
             lda #$ff                        ; 6e38 a9ff
-            sta s_BU,x                      ; 6e3a 9d616d
+            sta EXEC,x                      ; 6e3a 9d616d
             inx                             ; 6e3d e8
             cpx #$a0                        ; 6e3e e0a0
-            bne _init3                      ; 6e40 d0eb
+            bne _INIT_3                     ; 6e40 d0eb
             lda #$50                        ; 6e42 a950
-            sta $d407                       ; 6e44 8d07d4
+            sta PMBASE                      ; 6e44 8d07d4    MSB of the player/missile base address
             lda #$2f                        ; 6e47 a92f
-            sta $022f                       ; 6e49 8d2f02
+            sta SDMCTL                      ; 6e49 8d2f02    Direct Memory Access (DMA) enable
             lda #$03                        ; 6e4c a903
-            sta $d01d                       ; 6e4e 8d1dd0
+            sta GRACTL                      ; 6e4e 8d1dd0    Used with DMACTLto latch all stick and paddle triggers
             lda #$78                        ; 6e51 a978
-            sta $d000                       ; 6e53 8d00d0
+            sta HPOSP0                      ; 6e53 8d00d0    Horizontal position of player 0
             lda #$01                        ; 6e56 a901
-            sta $068f                       ; 6e58 8d8f06
-            sta $026f                       ; 6e5b 8d6f02
-            sta $d008                       ; 6e5e 8d08d0
+            sta HANDCP                      ; 6e58 8d8f06
+            sta GPRIOR                      ; 6e5b 8d6f02    Priority selection register
+            sta SIZEP0                      ; 6e5e 8d08d0    Size of player 0
             ldx #$33                        ; 6e61 a233
             lda #$ff                        ; 6e63 a9ff
-            sta s_AD,x                      ; 6e65 9d0052
+            sta PLYR0,x                     ; 6e65 9d0052
             inx                             ; 6e68 e8
-            sta s_AD,x                      ; 6e69 9d0052
+            sta PLYR0,x                     ; 6e69 9d0052
             inx                             ; 6e6c e8
             lda #$81                        ; 6e6d a981
-_init4      sta s_AD,x                      ; 6e6f 9d0052
+_INIT_4     sta PLYR0,x                     ; 6e6f 9d0052
             inx                             ; 6e72 e8
             cpx #$3f                        ; 6e73 e03f
-            bne _init4                      ; 6e75 d0f8
+            bne _INIT_4                     ; 6e75 d0f8
             lda #$ff                        ; 6e77 a9ff
-            sta s_AD,x                      ; 6e79 9d0052
-            sta $c9                         ; 6e7c 85c9
+            sta PLYR0,x                     ; 6e79 9d0052
+            sta TURN                        ; 6e7c 85c9
             inx                             ; 6e7e e8
-            sta s_AD,x                      ; 6e7f 9d0052
+            sta PLYR0,x                     ; 6e7f 9d0052
             ldy #$00                        ; 6e82 a000
             ldx #$74                        ; 6e84 a274
             lda #$07                        ; 6e86 a907
-            jsr $e45c                       ; 6e88 205ce4
+            jsr SETVBV                      ; 6e88 205ce4    Set system timers during the VBLANK routine
             lda #$00                        ; 6e8b a900
-            sta $0200                       ; 6e8d 8d0002
+            sta VDSLSTL                     ; 6e8d 8d0002    The vector for NMI Display List Interrupts (DLI)
             lda #$7b                        ; 6e90 a97b
-            sta $0201                       ; 6e92 8d0102
+            sta VDSLSTH                     ; 6e92 8d0102    The vector for NMI Display List Interrupts (DLI)
             lda #$c0                        ; 6e95 a9c0
-            sta $d40e                       ; 6e97 8d0ed4
-s_BV        inc $c9                         ; 6e9a e6c9
-            lda $060b                       ; 6e9c ad0b06
+            sta NMIEN                       ; 6e97 8d0ed4    Non-maskable interrupt (NMI) enable
+NEWTRN      inc TURN                        ; 6e9a e6c9
+            lda DAY                         ; 6e9c ad0b06
             clc                             ; 6e9f 18
             adc #$07                        ; 6ea0 6907
-            ldx $060c                       ; 6ea2 ae0c06
-            cmp s_AU,x                      ; 6ea5 dd685d
-            beq _BV3                        ; 6ea8 f027
-            bcc _BV3                        ; 6eaa 9025
+            ldx MONTH                       ; 6ea2 ae0c06
+            cmp MONLEN,x                    ; 6ea5 dd685d
+            beq _NEWTRN_3                   ; 6ea8 f027
+            bcc _NEWTRN_3                   ; 6eaa 9025
             cpx #$02                        ; 6eac e002
-            bne _BV1                        ; 6eae d00a
-            ldy $060d                       ; 6eb0 ac0d06
+            bne _NEWTRN_1                   ; 6eae d00a
+            ldy YEAR                        ; 6eb0 ac0d06
             cpy #$2c                        ; 6eb3 c02c
-            bne _BV1                        ; 6eb5 d003
+            bne _NEWTRN_1                   ; 6eb5 d003
             sec                             ; 6eb7 38
             sbc #$01                        ; 6eb8 e901
-_BV1        sec                             ; 6eba 38
-            sbc s_AU,x                      ; 6ebb fd685d
+_NEWTRN_1   sec                             ; 6eba 38
+            sbc MONLEN,x                    ; 6ebb fd685d
             inx                             ; 6ebe e8
             cpx #$0d                        ; 6ebf e00d
-            bne _BV2                        ; 6ec1 d005
-            inc $060d                       ; 6ec3 ee0d06
+            bne _NEWTRN_2                   ; 6ec1 d005
+            inc YEAR                        ; 6ec3 ee0d06
             ldx #$01                        ; 6ec6 a201
-_BV2        stx $060c                       ; 6ec8 8e0c06
-            ldy s_BF,x                      ; 6ecb bcea5f
-            sty $0605                       ; 6ece 8c0506
-_BV3        sta $060b                       ; 6ed1 8d0b06
+_NEWTRN_2   stx MONTH                       ; 6ec8 8e0c06
+            ldy TRTAB,x                     ; 6ecb bcea5f
+            sty TRCOLR                      ; 6ece 8c0506
+_NEWTRN_3   sta DAY                         ; 6ed1 8d0b06
             ldy #$93                        ; 6ed4 a093
             lda #$00                        ; 6ed6 a900
-_BV4        sta s_BJ,y                      ; 6ed8 995064
+_NEWTRN_4   sta TXTWDW,y                    ; 6ed8 995064
             iny                             ; 6edb c8
             cpy #$a7                        ; 6edc c0a7
-            bne _BV4                        ; 6ede d0f8
+            bne _NEWTRN_4                   ; 6ede d0f8
             ldy #$93                        ; 6ee0 a093
             txa                             ; 6ee2 8a
             clc                             ; 6ee3 18
             adc #$10                        ; 6ee4 6910
-            jsr s_DC                        ; 6ee6 20c079
-            lda $060b                       ; 6ee9 ad0b06
-            jsr s_DL                        ; 6eec 20b27b
+            jsr DWORDS                      ; 6ee6 20c079
+            lda DAY                         ; 6ee9 ad0b06
+            jsr DNUMBR                      ; 6eec 20b27b
             lda #$0c                        ; 6eef a90c
-            sta s_BJ,y                      ; 6ef1 995064
+            sta TXTWDW,y                    ; 6ef1 995064
             iny                             ; 6ef4 c8
             iny                             ; 6ef5 c8
             lda #$11                        ; 6ef6 a911
-            sta s_BJ,y                      ; 6ef8 995064
+            sta TXTWDW,y                    ; 6ef8 995064
             iny                             ; 6efb c8
             lda #$19                        ; 6efc a919
-            sta s_BJ,y                      ; 6efe 995064
+            sta TXTWDW,y                    ; 6efe 995064
             iny                             ; 6f01 c8
-            ldx $060d                       ; 6f02 ae0d06
+            ldx YEAR                        ; 6f02 ae0d06
             lda #$14                        ; 6f05 a914
-            sta s_BJ,y                      ; 6f07 995064
+            sta TXTWDW,y                    ; 6f07 995064
             iny                             ; 6f0a c8
-            lda s_AS,x                      ; 6f0b bd085c
+            lda ODIGIT,x                    ; 6f0b bd085c
             clc                             ; 6f0e 18
             adc #$10                        ; 6f0f 6910
-            sta s_BJ,y                      ; 6f11 995064
-            lda $060c                       ; 6f14 ad0c06
+            sta TXTWDW,y                    ; 6f11 995064
+            lda MONTH                       ; 6f14 ad0c06
             cmp #$04                        ; 6f17 c904
-            bne _BV5                        ; 6f19 d017
+            bne _NEWTRN_5                   ; 6f19 d017
             lda #$02                        ; 6f1b a902
-            sta $0606                       ; 6f1d 8d0606
+            sta EARTH                       ; 6f1d 8d0606
             lda #$40                        ; 6f20 a940
-            sta $0608                       ; 6f22 8d0806
+            sta SEASN1                      ; 6f22 8d0806
             lda #$01                        ; 6f25 a901
-            sta $060a                       ; 6f27 8d0a06
+            sta SEASN3                      ; 6f27 8d0a06
             lda #$00                        ; 6f2a a900
-            sta $0609                       ; 6f2c 8d0906
-            jmp s_BX                        ; 6f2f 4ceb6f
-_BV5        cmp #$0a                        ; 6f32 c90a
-            bne _BV6                        ; 6f34 d008
+            sta SEASN2                      ; 6f2c 8d0906
+            jmp ENDSSN                      ; 6f2f 4ceb6f
+_NEWTRN_5   cmp #$0a                        ; 6f32 c90a
+            bne _NEWTRN_6                   ; 6f34 d008
             lda #$02                        ; 6f36 a902
-            sta $0606                       ; 6f38 8d0606
-            jmp s_BX                        ; 6f3b 4ceb6f
-_BV6        cmp #$05                        ; 6f3e c905
-            bne _BV7                        ; 6f40 d008
+            sta EARTH                       ; 6f38 8d0606
+            jmp ENDSSN                      ; 6f3b 4ceb6f
+_NEWTRN_6   cmp #$05                        ; 6f3e c905
+            bne _NEWTRN_7                   ; 6f40 d008
             lda #$10                        ; 6f42 a910
-            sta $0606                       ; 6f44 8d0606
-            jmp s_BX                        ; 6f47 4ceb6f
-_BV7        cmp #$0b                        ; 6f4a c90b
-            bne _BV8                        ; 6f4c d008
+            sta EARTH                       ; 6f44 8d0606
+            jmp ENDSSN                      ; 6f47 4ceb6f
+_NEWTRN_7   cmp #$0b                        ; 6f4a c90b
+            bne _NEWTRN_8                   ; 6f4c d008
             lda #$0a                        ; 6f4e a90a
-            sta $0606                       ; 6f50 8d0606
-            jmp s_BW                        ; 6f53 4c716f
-_BV8        cmp #$01                        ; 6f56 c901
-            bne _BV9                        ; 6f58 d010
+            sta EARTH                       ; 6f50 8d0606
+            jmp FRZRVRS                     ; 6f53 4c716f
+_NEWTRN_8   cmp #$01                        ; 6f56 c901
+            bne _NEWTRN_9                   ; 6f58 d010
             lda #$80                        ; 6f5a a980
-            sta $0608                       ; 6f5c 8d0806
+            sta SEASN1                      ; 6f5c 8d0806
             lda #$ff                        ; 6f5f a9ff
-            sta $0609                       ; 6f61 8d0906
-            sta $060a                       ; 6f64 8d0a06
-            jmp s_BX                        ; 6f67 4ceb6f
-_BV9        cmp #$03                        ; 6f6a c903
-            beq s_BW                        ; 6f6c f003
-            jmp s_BX                        ; 6f6e 4ceb6f
-s_BW        lda $d20a                       ; 6f71 ad0ad2
+            sta SEASN2                      ; 6f61 8d0906
+            sta SEASN3                      ; 6f64 8d0a06
+            jmp ENDSSN                      ; 6f67 4ceb6f
+_NEWTRN_9   cmp #$03                        ; 6f6a c903
+            beq FRZRVRS                     ; 6f6c f003
+            jmp ENDSSN                      ; 6f6e 4ceb6f
+FRZRVRS     lda SKREST/RANDOM               ; 6f71 ad0ad2    Reset serial port status register / Random byte
             and #$07                        ; 6f74 2907
             clc                             ; 6f76 18
             adc #$07                        ; 6f77 6907
-            eor $0609                       ; 6f79 4d0906
-            sta $c5                         ; 6f7c 85c5
-            lda $0607                       ; 6f7e ad0706
-            sta $062a                       ; 6f81 8d2a06
+            eor SEASN2                      ; 6f79 4d0906
+            sta TEMPR                       ; 6f7c 85c5
+            lda ICELAT                      ; 6f7e ad0706
+            sta OLDLAT                      ; 6f81 8d2a06
             sec                             ; 6f84 38
-            sbc $c5                         ; 6f85 e5c5
-            beq _BW1                        ; 6f87 f002
-            bpl _BW2                        ; 6f89 1002
-_BW1        lda #$01                        ; 6f8b a901
-_BW2        cmp #$27                        ; 6f8d c927
-            bcc _BW3                        ; 6f8f 9002
+            sbc TEMPR                       ; 6f85 e5c5
+            beq _FRZRVRS_1                  ; 6f87 f002
+            bpl _FRZRVRS_2                  ; 6f89 1002
+_FRZRVRS_1  lda #$01                        ; 6f8b a901
+_FRZRVRS_2  cmp #$27                        ; 6f8d c927
+            bcc _FRZRVRS_3                  ; 6f8f 9002
             lda #$27                        ; 6f91 a927
-_BW3        sta $0607                       ; 6f93 8d0706
+_FRZRVRS_3  sta ICELAT                      ; 6f93 8d0706
             lda #$01                        ; 6f96 a901
-            sta $be                         ; 6f98 85be
-            sta $cb                         ; 6f9a 85cb
-            lda $062a                       ; 6f9c ad2a06
-            sta $bf                         ; 6f9f 85bf
-            sta $ca                         ; 6fa1 85ca
-_BW4        jsr s_CF                        ; 6fa3 204072
+            sta CNUNKX                      ; 6f98 85be    Cursor coords (pixel frame)
+            sta LON                         ; 6f9a 85cb
+            lda OLDLAT                      ; 6f9c ad2a06
+            sta CHUNKY                      ; 6f9f 85bf
+            sta LAT                         ; 6fa1 85ca
+__O__       jsr TERR                        ; 6fa3 204072
             and #$3f                        ; 6fa6 293f
             cmp #$0b                        ; 6fa8 c90b
-            bcc _BW7                        ; 6faa 901d
+            bcc NOTCH                       ; 6faa 901d
             cmp #$29                        ; 6fac c929
-            bcs _BW7                        ; 6fae b019
-            ldx $bf                         ; 6fb0 a6bf
+            bcs NOTCH                       ; 6fae b019
+            ldx CHUNKY                      ; 6fb0 a6bf
             cpx #$0e                        ; 6fb2 e00e
-            bcs _BW5                        ; 6fb4 b004
+            bcs _O_1                        ; 6fb4 b004
             cmp #$23                        ; 6fb6 c923
-            bcs _BW7                        ; 6fb8 b00f
-_BW5        ora $0608                       ; 6fba 0d0806
-            ldx $c3                         ; 6fbd a6c3
-            beq _BW6                        ; 6fbf f006
-            sta s_AK,x                      ; 6fc1 9d7c56
-            jmp _BW7                        ; 6fc4 4cc96f
-_BW6        sta ($c0),y                     ; 6fc7 91c0
-_BW7        inc $be                         ; 6fc9 e6be
-            lda $be                         ; 6fcb a5be
-            sta $cb                         ; 6fcd 85cb
+            bcs NOTCH                       ; 6fb8 b00f
+_O_1        ora SEASN1                      ; 6fba 0d0806
+            ldx UNITNO                      ; 6fbd a6c3
+            beq _O_2                        ; 6fbf f006
+            sta SWAP,x                      ; 6fc1 9d7c56
+            jmp NOTCH                       ; 6fc4 4cc96f
+_O_2        sta (MAPPTRL),y                 ; 6fc7 91c0
+NOTCH       inc CNUNKX                      ; 6fc9 e6be    Cursor coords (pixel frame)
+            lda CNUNKX                      ; 6fcb a5be    Cursor coords (pixel frame)
+            sta LON                         ; 6fcd 85cb
             cmp #$2e                        ; 6fcf c92e
-            bne _BW4                        ; 6fd1 d0d0
+            bne __O__                       ; 6fd1 d0d0
             lda #$00                        ; 6fd3 a900
-            sta $be                         ; 6fd5 85be
-            sta $cb                         ; 6fd7 85cb
-            lda $bf                         ; 6fd9 a5bf
-            cmp $0607                       ; 6fdb cd0706
-            beq s_BX                        ; 6fde f00b
+            sta CNUNKX                      ; 6fd5 85be    Cursor coords (pixel frame)
+            sta LON                         ; 6fd7 85cb
+            lda CHUNKY                      ; 6fd9 a5bf
+            cmp ICELAT                      ; 6fdb cd0706
+            beq ENDSSN                      ; 6fde f00b
             sec                             ; 6fe0 38
-            sbc $060a                       ; 6fe1 ed0a06
-            sta $bf                         ; 6fe4 85bf
-            sta $ca                         ; 6fe6 85ca
-            jmp _BW4                        ; 6fe8 4ca36f
-s_BX        ldx #$9e                        ; 6feb a29e
-_BX1        lda s_AL,x                      ; 6fed bd1b57
-            cmp $c9                         ; 6ff0 c5c9
-            bne _BX4                        ; 6ff2 d02c
-            lda units,x                     ; 6ff4 bd0054
-            sta $be                         ; 6ff7 85be
-            sta $cb                         ; 6ff9 85cb
-            lda s_AH,x                      ; 6ffb bd9f54
-            sta $bf                         ; 6ffe 85bf
-            sta $ca                         ; 7000 85ca
-            stx $b4                         ; 7002 86b4
-            jsr s_CG                        ; 7004 204672
-            beq _BX3                        ; 7007 f00f
+            sbc SEASN3                      ; 6fe1 ed0a06
+            sta CHUNKY                      ; 6fe4 85bf
+            sta LAT                         ; 6fe6 85ca
+            jmp __O__                       ; 6fe8 4ca36f
+ENDSSN      ldx #$9e                        ; 6feb a29e
+_ENDSSN_1   lda ARRIVE,x                    ; 6fed bd1b57
+            cmp TURN                        ; 6ff0 c5c9
+            bne __P__                       ; 6ff2 d02c
+            lda CORPSX,x                    ; 6ff4 bd0054
+            sta CNUNKX                      ; 6ff7 85be    Cursor coords (pixel frame)
+            sta LON                         ; 6ff9 85cb
+            lda CORPSY,x                    ; 6ffb bd9f54
+            sta CHUNKY                      ; 6ffe 85bf
+            sta LAT                         ; 7000 85ca
+            stx CORPS                       ; 7002 86b4    Number of unit under window
+            jsr TERRB                       ; 7004 204672
+            beq _ENDSSN_3                   ; 7007 f00f
             cpx #$37                        ; 7009 e037
-            bcs _BX2                        ; 700b b005
+            bcs _ENDSSN_2                   ; 700b b005
             lda #$0a                        ; 700d a90a
-            sta s_BL                        ; 700f 8d7464
-_BX2        jsr s_DD                        ; 7012 20ef79
-            jmp _BX4                        ; 7015 4c2070
-_BX3        lda $c9                         ; 7018 a5c9
+            sta TXTWDW+36                   ; 700f 8d7464
+_ENDSSN_2   jsr SWITCH                      ; 7012 20ef79
+            jmp __P__                       ; 7015 4c2070
+_ENDSSN_3   lda TURN                        ; 7018 a5c9
             clc                             ; 701a 18
             adc #$01                        ; 701b 6901
-            sta s_AL,x                      ; 701d 9d1b57
-_BX4        dex                             ; 7020 ca
-            bne _BX1                        ; 7021 d0ca
+            sta ARRIVE,x                    ; 701d 9d1b57
+__P__       dex                             ; 7020 ca
+            bne _ENDSSN_1                   ; 7021 d0ca
             ldx #$9e                        ; 7023 a29e
-_BX5        stx $c2                         ; 7025 86c2
-            jsr s_W                         ; 7027 209150
-            ldx $c2                         ; 702a a6c2
+_P_1        stx ARMY                        ; 7025 86c2
+            jsr SUPPLY                      ; 7027 209150
+            ldx ARMY                        ; 702a a6c2
             dex                             ; 702c ca
-            bne _BX5                        ; 702d d0f6
+            bne _P_1                        ; 702d d0f6
             lda #$00                        ; 702f a900
-            sta $c7                         ; 7031 85c7
-            sta $c8                         ; 7033 85c8
+            sta ACCLO                       ; 7031 85c7
+            sta ACCHI                       ; 7033 85c8
             ldx #$01                        ; 7035 a201
-_BX6        lda #$30                        ; 7037 a930
+_P_2        lda #$30                        ; 7037 a930
             sec                             ; 7039 38
-            sbc units,x                     ; 703a fd0054
-            sta $c5                         ; 703d 85c5
-            lda s_AI,x                      ; 703f bd3e55
+            sbc CORPSX,x                    ; 703a fd0054
+            sta TEMPR                       ; 703d 85c5
+            lda MSTRNG,x                    ; 703f bd3e55
             lsr                             ; 7042 4a
-            beq _BX9                        ; 7043 f012
+            beq _P_5                        ; 7043 f012
             tay                             ; 7045 a8
             lda #$00                        ; 7046 a900
             clc                             ; 7048 18
-_BX7        adc $c5                         ; 7049 65c5
-            bcc _BX8                        ; 704b 9007
-            inc $c8                         ; 704d e6c8
+_P_3        adc TEMPR                       ; 7049 65c5
+            bcc _P_4                        ; 704b 9007
+            inc ACCHI                       ; 704d e6c8
             clc                             ; 704f 18
-            bne _BX8                        ; 7050 d002
-            dec $c8                         ; 7052 c6c8
-_BX8        dey                             ; 7054 88
-            bne _BX7                        ; 7055 d0f2
-_BX9        inx                             ; 7057 e8
+            bne _P_4                        ; 7050 d002
+            dec ACCHI                       ; 7052 c6c8
+_P_4        dey                             ; 7054 88
+            bne _P_3                        ; 7055 d0f2
+_P_5        inx                             ; 7057 e8
             cpx #$37                        ; 7058 e037
-            bne _BX6                        ; 705a d0db
-_BX10       lda units,x                     ; 705c bd0054
-            sta $c5                         ; 705f 85c5
-            lda s_AJ,x                      ; 7061 bddd55
+            bne _P_2                        ; 705a d0db
+_P_6        lda CORPSX,x                    ; 705c bd0054
+            sta TEMPR                       ; 705f 85c5
+            lda CSTRNG,x                    ; 7061 bddd55
             lsr                             ; 7064 4a
             lsr                             ; 7065 4a
             lsr                             ; 7066 4a
-            beq _BX13                       ; 7067 f012
+            beq _P_9                        ; 7067 f012
             tay                             ; 7069 a8
             lda #$00                        ; 706a a900
             clc                             ; 706c 18
-_BX11       adc $c5                         ; 706d 65c5
-            bcc _BX12                       ; 706f 9007
-            inc $c7                         ; 7071 e6c7
+_P_7        adc TEMPR                       ; 706d 65c5
+            bcc _P_8                        ; 706f 9007
+            inc ACCLO                       ; 7071 e6c7
             clc                             ; 7073 18
-            bne _BX12                       ; 7074 d002
-            dec $c7                         ; 7076 c6c7
-_BX12       dey                             ; 7078 88
-            bne _BX11                       ; 7079 d0f2
-_BX13       inx                             ; 707b e8
+            bne _P_8                        ; 7074 d002
+            dec ACCLO                       ; 7076 c6c7
+_P_8        dey                             ; 7078 88
+            bne _P_7                        ; 7079 d0f2
+_P_9        inx                             ; 707b e8
             cpx #$9e                        ; 707c e09e
-            bne _BX10                       ; 707e d0dc
-            lda $c8                         ; 7080 a5c8
+            bne _P_6                        ; 707e d0dc
+            lda ACCHI                       ; 7080 a5c8
             sec                             ; 7082 38
-            sbc $c7                         ; 7083 e5c7
-            bcs _BX14                       ; 7085 b002
+            sbc ACCLO                       ; 7083 e5c7
+            bcs _P_10                       ; 7085 b002
             lda #$00                        ; 7087 a900
-_BX14       ldx #$03                        ; 7089 a203
-_BX15       ldy s_CC,x                      ; 708b bcea71
-            beq _BX16                       ; 708e f008
+_P_10       ldx #$03                        ; 7089 a203
+_P_11       ldy MOSCOW,x                    ; 708b bcea71
+            beq _P_12                       ; 708e f008
             clc                             ; 7090 18
-            adc s_CN,x                      ; 7091 7dd873
-            bcc _BX16                       ; 7094 9002
+            adc MPTS,x                      ; 7091 7dd873
+            bcc _P_12                       ; 7094 9002
             lda #$ff                        ; 7096 a9ff
-_BX16       dex                             ; 7098 ca
-            bpl _BX15                       ; 7099 10f0
-            ldx $068f                       ; 709b ae8f06
-            bne _BX17                       ; 709e d001
+_P_12       dex                             ; 7098 ca
+            bpl _P_11                       ; 7099 10f0
+            ldx HANDCP                      ; 709b ae8f06
+            bne _P_13                       ; 709e d001
             lsr                             ; 70a0 4a
-_BX17       ldy #$05                        ; 70a1 a005
-            jsr s_DL                        ; 70a3 20b27b
+_P_13       ldy #$05                        ; 70a1 a005
+            jsr DNUMBR                      ; 70a3 20b27b
             lda #$00                        ; 70a6 a900
-            sta s_BJ,y                      ; 70a8 995064
-            lda $c9                         ; 70ab a5c9
+            sta TXTWDW,y                    ; 70a8 995064
+            lda TURN                        ; 70ab a5c9
             cmp #$28                        ; 70ad c928
-            bne _BY1                        ; 70af d008
+            bne _FINI_1                     ; 70af d008
             lda #$01                        ; 70b1 a901
-            jsr s_CQ                        ; 70b3 20e473
-s_BY        jmp s_BY                        ; 70b6 4cb670
-_BY1        lda #$00                        ; 70b9 a900
-            sta $060f                       ; 70bb 8d0f06
-            sta $b4                         ; 70be 85b4
-            jsr s_CQ                        ; 70c0 20e473
-            jsr think                       ; 70c3 200047
+            jsr TXTMSG                      ; 70b3 20e473
+FINI        jmp FINI                        ; 70b6 4cb670
+_FINI_1     lda #$00                        ; 70b9 a900
+            sta BUTMSK                      ; 70bb 8d0f06
+            sta CORPS                       ; 70be 85b4    Number of unit under window
+            jsr TXTMSG                      ; 70c0 20e473
+            jsr THINK                       ; 70c3 200047
             lda #$01                        ; 70c6 a901
-            sta $060f                       ; 70c8 8d0f06
+            sta BUTMSK                      ; 70c8 8d0f06
             lda #$02                        ; 70cb a902
-            jsr s_CQ                        ; 70cd 20e473
+            jsr TXTMSG                      ; 70cd 20e473
             lda #$00                        ; 70d0 a900
-            sta $062e                       ; 70d2 8d2e06
+            sta TICK                        ; 70d2 8d2e06
             ldx #$9e                        ; 70d5 a29e
-_BY2        stx $c2                         ; 70d7 86c2
-            jsr s_CI                        ; 70d9 20d172
+_FINI_2     stx ARMY                        ; 70d7 86c2
+            jsr DINGO                       ; 70d9 20d172
             dex                             ; 70dc ca
-            bne _BY2                        ; 70dd d0f8
-s_BZ        ldx #$9e                        ; 70df a29e
-s_CA        stx $c2                         ; 70e1 86c2
-            lda s_AI,x                      ; 70e3 bd3e55
+            bne _FINI_2                     ; 70dd d0f8
+__Q__       ldx #$9e                        ; 70df a29e
+__R__       stx ARMY                        ; 70e1 86c2
+            lda MSTRNG,x                    ; 70e3 bd3e55
             sec                             ; 70e6 38
-            sbc s_AJ,x                      ; 70e7 fddd55
+            sbc CSTRNG,x                    ; 70e7 fddd55
             cmp #$02                        ; 70ea c902
-            bcc _CA1                        ; 70ec 900b
-            inc s_AJ,x                      ; 70ee fedd55
-            cmp $d20a                       ; 70f1 cd0ad2
-            bcc _CA1                        ; 70f4 9003
-            inc s_AJ,x                      ; 70f6 fedd55
-_CA1        lda s_BU,x                      ; 70f9 bd616d
-            bmi _CA4                        ; 70fc 3045
-            cmp $062e                       ; 70fe cd2e06
-            bne _CA4                        ; 7101 d040
-            lda s_AW,x                      ; 7103 bd145e
+            bcc _R_1                        ; 70ec 900b
+            inc CSTRNG,x                    ; 70ee fedd55
+            cmp SKREST/RANDOM               ; 70f1 cd0ad2    Reset serial port status register / Random byte
+            bcc _R_1                        ; 70f4 9003
+            inc CSTRNG,x                    ; 70f6 fedd55
+_R_1        lda EXEC,x                      ; 70f9 bd616d
+            bmi _R_4                        ; 70fc 3045
+            cmp TICK                        ; 70fe cd2e06
+            bne _R_4                        ; 7101 d040
+            lda WHORDS,x                    ; 7103 bd145e
             and #$03                        ; 7106 2903
             tay                             ; 7108 a8
-            lda units,x                     ; 7109 bd0054
+            lda CORPSX,x                    ; 7109 bd0054
             clc                             ; 710c 18
-            adc s_DO,y                      ; 710d 79f27b
-            sta $cb                         ; 7110 85cb
-            sta $c7                         ; 7112 85c7
-            lda s_AH,x                      ; 7114 bd9f54
+            adc YINC,y                      ; 710d 79f27b
+            sta LON                         ; 7110 85cb
+            sta ACCLO                       ; 7112 85c7
+            lda CORPSY,x                    ; 7114 bd9f54
             clc                             ; 7117 18
-            adc s_DN,y                      ; 7118 79f17b
-            sta $ca                         ; 711b 85ca
-            sta $c8                         ; 711d 85c8
-            jsr s_CF                        ; 711f 204072
-            lda $c3                         ; 7122 a5c3
-            beq _CA6                        ; 7124 f02a
+            adc XINC,y                      ; 7118 79f17b
+            sta LAT                         ; 711b 85ca
+            sta ACCHI                       ; 711d 85c8
+            jsr TERR                        ; 711f 204072
+            lda UNITNO                      ; 7122 a5c3
+            beq _R_6                        ; 7124 f02a
             cmp #$37                        ; 7126 c937
-            bcc _CA2                        ; 7128 9008
-            lda $c2                         ; 712a a5c2
+            bcc _R_2                        ; 7128 9008
+            lda ARMY                        ; 712a a5c2
             cmp #$37                        ; 712c c937
-            bcs _CA3                        ; 712e b008
-            bcc _CA5                        ; 7130 9014
-_CA2        lda $c2                         ; 7132 a5c2
+            bcs _R_3                        ; 712e b008
+            bcc _R_5                        ; 7130 9014
+_R_2        lda ARMY                        ; 7132 a5c2
             cmp #$37                        ; 7134 c937
-            bcs _CA5                        ; 7136 b00e
-_CA3        ldx $c2                         ; 7138 a6c2
-            lda $062e                       ; 713a ad2e06
+            bcs _R_5                        ; 7136 b00e
+_R_3        ldx ARMY                        ; 7138 a6c2
+            lda TICK                        ; 713a ad2e06
             clc                             ; 713d 18
             adc #$02                        ; 713e 6902
-            sta s_BU,x                      ; 7140 9d616d
-_CA4        jmp s_CB                        ; 7143 4cd271
-_CA5        jsr s_T                         ; 7146 20d84e
-            lda $0697                       ; 7149 ad9706
-            beq _CA4                        ; 714c f0f5
-            bne _CA7                        ; 714e d02e
-_CA6        ldx $c2                         ; 7150 a6c2
-            stx $b4                         ; 7152 86b4
-            lda s_AH,x                      ; 7154 bd9f54
-            sta $bf                         ; 7157 85bf
-            sta $ca                         ; 7159 85ca
-            lda units,x                     ; 715b bd0054
-            sta $be                         ; 715e 85be
-            sta $cb                         ; 7160 85cb
-            jsr s_Y                         ; 7162 204051
-            lda $c8                         ; 7165 a5c8
-            sta $ca                         ; 7167 85ca
-            lda $c7                         ; 7169 a5c7
-            sta $cb                         ; 716b 85cb
-            lda $0694                       ; 716d ad9406
+            sta EXEC,x                      ; 7140 9d616d
+_R_4        jmp __S__                       ; 7143 4cd271
+_R_5        jsr COMBAT                      ; 7146 20d84e
+            lda VICTRY                      ; 7149 ad9706
+            beq _R_4                        ; 714c f0f5
+            bne _R_7                        ; 714e d02e
+_R_6        ldx ARMY                        ; 7150 a6c2
+            stx CORPS                       ; 7152 86b4    Number of unit under window
+            lda CORPSY,x                    ; 7154 bd9f54
+            sta CHUNKY                      ; 7157 85bf
+            sta LAT                         ; 7159 85ca
+            lda CORPSX,x                    ; 715b bd0054
+            sta CNUNKX                      ; 715e 85be    Cursor coords (pixel frame)
+            sta LON                         ; 7160 85cb
+            jsr CHKZOC                      ; 7162 204051
+            lda ACCHI                       ; 7165 a5c8
+            sta LAT                         ; 7167 85ca
+            lda ACCLO                       ; 7169 a5c7
+            sta LON                         ; 716b 85cb
+            lda ZOC                         ; 716d ad9406
             cmp #$02                        ; 7170 c902
-            bcc _CA7                        ; 7172 900a
-            jsr s_Y                         ; 7174 204051
-            lda $0694                       ; 7177 ad9406
+            bcc _R_7                        ; 7172 900a
+            jsr CHKZOC                      ; 7174 204051
+            lda ZOC                         ; 7177 ad9406
             cmp #$02                        ; 717a c902
-            bcs _CA3                        ; 717c b0ba
-_CA7        jsr s_DD                        ; 717e 20ef79
-            ldx $b4                         ; 7181 a6b4
-            lda $ca                         ; 7183 a5ca
-            sta $bf                         ; 7185 85bf
-            sta s_AH,x                      ; 7187 9d9f54
-            lda $cb                         ; 718a a5cb
-            sta $be                         ; 718c 85be
-            sta units,x                     ; 718e 9d0054
-            jsr s_DD                        ; 7191 20ef79
-            ldx $c2                         ; 7194 a6c2
+            bcs _R_3                        ; 717c b0ba
+_R_7        jsr SWITCH                      ; 717e 20ef79
+            ldx CORPS                       ; 7181 a6b4    Number of unit under window
+            lda LAT                         ; 7183 a5ca
+            sta CHUNKY                      ; 7185 85bf
+            sta CORPSY,x                    ; 7187 9d9f54
+            lda LON                         ; 718a a5cb
+            sta CNUNKX                      ; 718c 85be    Cursor coords (pixel frame)
+            sta CORPSX,x                    ; 718e 9d0054
+            jsr SWITCH                      ; 7191 20ef79
+            ldx ARMY                        ; 7194 a6c2
             lda #$ff                        ; 7196 a9ff
-            sta s_BU,x                      ; 7198 9d616d
-            dec s_AV,x                      ; 719b de755d
-            beq s_CB                        ; 719e f032
-            lsr s_AX,x                      ; 71a0 5eb35e
-            ror s_AW,x                      ; 71a3 7e145e
-            lsr s_AX,x                      ; 71a6 5eb35e
-            ror s_AW,x                      ; 71a9 7e145e
+            sta EXEC,x                      ; 7198 9d616d
+            dec HMORDS,x                    ; 719b de755d
+            beq __S__                       ; 719e f032
+            lsr WHORDH,x                    ; 71a0 5eb35e
+            ror WHORDS,x                    ; 71a3 7e145e
+            lsr WHORDH,x                    ; 71a6 5eb35e
+            ror WHORDS,x                    ; 71a9 7e145e
             ldy #$03                        ; 71ac a003
-_CA8        lda units,x                     ; 71ae bd0054
-            cmp s_CO,y                      ; 71b1 d9dc73
-            bne _CA10                       ; 71b4 d013
-            lda s_AH,x                      ; 71b6 bd9f54
-            cmp s_CP,y                      ; 71b9 d9e073
-            bne _CA10                       ; 71bc d00b
+_R_8        lda CORPSX,x                    ; 71ae bd0054
+            cmp MOSCX,y                     ; 71b1 d9dc73
+            bne _R_10                       ; 71b4 d013
+            lda CORPSY,x                    ; 71b6 bd9f54
+            cmp MOSCY,y                     ; 71b9 d9e073
+            bne _R_10                       ; 71bc d00b
             lda #$ff                        ; 71be a9ff
             cpx #$37                        ; 71c0 e037
-            bcc _CA9                        ; 71c2 9002
+            bcc _R_9                        ; 71c2 9002
             lda #$00                        ; 71c4 a900
-_CA9        sta s_CC,y                      ; 71c6 99ea71
-_CA10       dey                             ; 71c9 88
-            bpl _CA8                        ; 71ca 10e2
-            jsr s_CI                        ; 71cc 20d172
-            jsr s_CD                        ; 71cf 200072
-s_CB        ldx $c2                         ; 71d2 a6c2
+_R_9        sta MOSCOW,y                    ; 71c6 99ea71
+_R_10       dey                             ; 71c9 88
+            bpl _R_8                        ; 71ca 10e2
+            jsr DINGO                       ; 71cc 20d172
+            jsr STALL                       ; 71cf 200072
+__S__       ldx ARMY                        ; 71d2 a6c2
             dex                             ; 71d4 ca
-            beq _CB1                        ; 71d5 f003
-            jmp s_CA                        ; 71d7 4ce170
-_CB1        inc $062e                       ; 71da ee2e06
-            lda $062e                       ; 71dd ad2e06
+            beq _S_1                        ; 71d5 f003
+            jmp __R__                       ; 71d7 4ce170
+_S_1        inc TICK                        ; 71da ee2e06
+            lda TICK                        ; 71dd ad2e06
             cmp #$20                        ; 71e0 c920
-            beq _CB2                        ; 71e2 f003
-            jmp s_BZ                        ; 71e4 4cdf70
-_CB2        jmp s_BV                        ; 71e7 4c9a6e
-s_CC        !byte $00,$00,$00,$00,$22,$50,$a6,$c2,$ca,$f0,$03,$4c,$ff,$70,$ee,$2e   ; 71ea ...."P.....L.p..
+            beq _S_2                        ; 71e2 f003
+            jmp __Q__                       ; 71e4 4cdf70
+_S_2        jmp NEWTRN                      ; 71e7 4c9a6e
+MOSCOW      !byte $00,$00,$00,$00,$22,$50,$a6,$c2,$ca,$f0,$03,$4c,$ff,$70,$ee,$2e   ; 71ea ...."P.....L.p..
             !byte $06,$ad,$2e,$06,$c9,$20                                           ; 71fa .....
-s_CD        lda #$00                        ; 7200 a900
-_CD1        pha                             ; 7202 48
+STALL       lda #$00                        ; 7200 a900
+_STALL_1    pha                             ; 7202 48
             pla                             ; 7203 68
             pha                             ; 7204 48
             pla                             ; 7205 68
             pha                             ; 7206 48
             pla                             ; 7207 68
             adc #$01                        ; 7208 6901
-            bne _CD1                        ; 720a d0f6
+            bne _STALL_1                    ; 720a d0f6
             rts                             ; 720c 60
             !byte $4c,$9a,$6e                                                       ; 720d L.n
-s_CE        lda #$00                        ; 7210 a900
-            sta $d01d                       ; 7212 8d1dd0
-            sta $d00d                       ; 7215 8d0dd0
-            sta $d00e                       ; 7218 8d0ed0
-            sta $d00f                       ; 721b 8d0fd0
+DEBUG       lda #$00                        ; 7210 a900
+            sta GRACTL                      ; 7212 8d1dd0    Used with DMACTLto latch all stick and paddle triggers
+            sta GRAFP0                      ; 7215 8d0dd0    Graphics shape for player 0
+            sta GRAFP1                      ; 7218 8d0ed0    Graphics shape for player 1
+            sta GRAFP2                      ; 721b 8d0fd0    Graphics shape for player 2
             lda #$22                        ; 721e a922
-            sta $022f                       ; 7220 8d2f02
+            sta SDMCTL                      ; 7220 8d2f02    Direct Memory Access (DMA) enable
             lda #$20                        ; 7223 a920
-            sta $0230                       ; 7225 8d3002
+            sta SDLSTLL                     ; 7225 8d3002    Starting address of the display list
             lda #$bc                        ; 7228 a9bc
-            sta $0231                       ; 722a 8d3102
+            sta SDLSTLH                     ; 722a 8d3102    Starting address of the display list
             lda #$40                        ; 722d a940
-            sta $d40e                       ; 722f 8d0ed4
+            sta NMIEN                       ; 722f 8d0ed4    Non-maskable interrupt (NMI) enable
             lda #$0a                        ; 7232 a90a
-            sta $02c5                       ; 7234 8dc502
+            sta COLOR1                      ; 7234 8dc502    Color register 1, color of playfield 1, shadows $D017
             lda #$00                        ; 7237 a900
-            sta s_BH                        ; 7239 8dff5f
-            sta $02c8                       ; 723c 8dc802
+            sta DBGFLG                      ; 7239 8dff5f
+            sta COLOR4                      ; 723c 8dc802    Background and border color, shadows $D01A
             brk                             ; 723f 00
-s_CF        jsr s_CG                        ; 7240 204672
-            beq _CG2                        ; 7243 f046
+TERR        jsr TERRB                       ; 7240 204672
+            beq _TERRB_2                    ; 7243 f046
             rts                             ; 7245 60
-s_CG        lda #$00                        ; 7246 a900
-            sta $c1                         ; 7248 85c1
-            sta $c3                         ; 724a 85c3
+TERRB       lda #$00                        ; 7246 a900
+            sta MAPPRTH                     ; 7248 85c1
+            sta UNITNO                      ; 724a 85c3
             lda #$27                        ; 724c a927
             sec                             ; 724e 38
-            sbc $ca                         ; 724f e5ca
+            sbc LAT                         ; 724f e5ca
             asl                             ; 7251 0a
-            rol $c1                         ; 7252 26c1
+            rol MAPPRTH                     ; 7252 26c1
             asl                             ; 7254 0a
-            rol $c1                         ; 7255 26c1
+            rol MAPPRTH                     ; 7255 26c1
             asl                             ; 7257 0a
-            rol $c1                         ; 7258 26c1
+            rol MAPPRTH                     ; 7258 26c1
             asl                             ; 725a 0a
-            rol $c1                         ; 725b 26c1
-            sta $062c                       ; 725d 8d2c06
-            ldy $c1                         ; 7260 a4c1
-            sty $062d                       ; 7262 8c2d06
+            rol MAPPRTH                     ; 725b 26c1
+            sta TLO                         ; 725d 8d2c06
+            ldy MAPPRTH                     ; 7260 a4c1
+            sty THI                         ; 7262 8c2d06
             asl                             ; 7265 0a
-            rol $c1                         ; 7266 26c1
+            rol MAPPRTH                     ; 7266 26c1
             clc                             ; 7268 18
-            adc $062c                       ; 7269 6d2c06
-            sta $c0                         ; 726c 85c0
-            lda $c1                         ; 726e a5c1
-            adc $062d                       ; 7270 6d2d06
+            adc TLO                         ; 7269 6d2c06
+            sta MAPPTRL                     ; 726c 85c0
+            lda MAPPRTH                     ; 726e a5c1
+            adc THI                         ; 7270 6d2d06
             adc #$65                        ; 7273 6965
-            sta $c1                         ; 7275 85c1
+            sta MAPPRTH                     ; 7275 85c1
             lda #$2e                        ; 7277 a92e
             sec                             ; 7279 38
-            sbc $cb                         ; 727a e5cb
+            sbc LON                         ; 727a e5cb
             tay                             ; 727c a8
-            lda ($c0),y                     ; 727d b1c0
-            sta $062b                       ; 727f 8d2b06
+            lda (MAPPTRL),y                 ; 727d b1c0
+            sta TRNCOD                      ; 727f 8d2b06
             and #$3f                        ; 7282 293f
             cmp #$3d                        ; 7284 c93d
-            beq _CG1                        ; 7286 f002
+            beq _TERRB_1                    ; 7286 f002
             cmp #$3e                        ; 7288 c93e
-_CG1        rts                             ; 728a 60
-_CG2        lda $062b                       ; 728b ad2b06
-            sta $062f                       ; 728e 8d2f06
+_TERRB_1    rts                             ; 728a 60
+_TERRB_2    lda TRNCOD                      ; 728b ad2b06
+            sta UNTCOD                      ; 728e 8d2f06
             and #$c0                        ; 7291 29c0
             ldx #$9e                        ; 7293 a29e
             cmp #$40                        ; 7295 c940
-            bne _CG3                        ; 7297 d002
+            bne _TERRB_3                    ; 7297 d002
             ldx #$37                        ; 7299 a237
-_CG3        lda $ca                         ; 729b a5ca
-_CG4        cmp s_AH,x                      ; 729d dd9f54
-            beq _CH1                        ; 72a0 f00a
-s_CH        dex                             ; 72a2 ca
-            bne _CG4                        ; 72a3 d0f8
+_TERRB_3    lda LAT                         ; 729b a5ca
+_TERRB_4    cmp CORPSY,x                    ; 729d dd9f54
+            beq _T_1                        ; 72a0 f00a
+__T__       dex                             ; 72a2 ca
+            bne _TERRB_4                    ; 72a3 d0f8
             lda #$ff                        ; 72a5 a9ff
-            sta s_BM                        ; 72a7 8dd064
-            bmi _CH3                        ; 72aa 301c
-_CH1        lda $cb                         ; 72ac a5cb
-            cmp units,x                     ; 72ae dd0054
-            bne _CH2                        ; 72b1 d010
-            lda s_AJ,x                      ; 72b3 bddd55
-            beq _CH2                        ; 72b6 f00b
-            lda s_AL,x                      ; 72b8 bd1b57
-            bmi _CH2                        ; 72bb 3006
-            cmp $c9                         ; 72bd c5c9
-            bcc _CH3                        ; 72bf 9007
-            beq _CH3                        ; 72c1 f005
-_CH2        lda $ca                         ; 72c3 a5ca
-            jmp s_CH                        ; 72c5 4ca272
-_CH3        stx $c3                         ; 72c8 86c3
-            lda s_AK,x                      ; 72ca bd7c56
-            sta $062b                       ; 72cd 8d2b06
+            sta TXTWDW+128                  ; 72a7 8dd064
+            bmi _T_3                        ; 72aa 301c
+_T_1        lda LON                         ; 72ac a5cb
+            cmp CORPSX,x                    ; 72ae dd0054
+            bne _T_2                        ; 72b1 d010
+            lda CSTRNG,x                    ; 72b3 bddd55
+            beq _T_2                        ; 72b6 f00b
+            lda ARRIVE,x                    ; 72b8 bd1b57
+            bmi _T_2                        ; 72bb 3006
+            cmp TURN                        ; 72bd c5c9
+            bcc _T_3                        ; 72bf 9007
+            beq _T_3                        ; 72c1 f005
+_T_2        lda LAT                         ; 72c3 a5ca
+            jmp __T__                       ; 72c5 4ca272
+_T_3        stx UNITNO                      ; 72c8 86c3
+            lda SWAP,x                      ; 72ca bd7c56
+            sta TRNCOD                      ; 72cd 8d2b06
             rts                             ; 72d0 60
-s_CI        ldx $c2                         ; 72d1 a6c2
-            lda s_AV,x                      ; 72d3 bd755d
-            bne _CI1                        ; 72d6 d006
+DINGO       ldx ARMY                        ; 72d1 a6c2
+            lda HMORDS,x                    ; 72d3 bd755d
+            bne __U__                       ; 72d6 d006
             lda #$ff                        ; 72d8 a9ff
-            sta s_BU,x                      ; 72da 9d616d
+            sta EXEC,x                      ; 72da 9d616d
             rts                             ; 72dd 60
-_CI1        lda units,x                     ; 72de bd0054
-            sta $cb                         ; 72e1 85cb
-            lda s_AH,x                      ; 72e3 bd9f54
-            sta $ca                         ; 72e6 85ca
-            jsr s_CF                        ; 72e8 204072
-            lda $062f                       ; 72eb ad2f06
-            sta $0630                       ; 72ee 8d3006
-            ldx $c2                         ; 72f1 a6c2
-            lda s_AW,x                      ; 72f3 bd145e
+__U__       lda CORPSX,x                    ; 72de bd0054
+            sta LON                         ; 72e1 85cb
+            lda CORPSY,x                    ; 72e3 bd9f54
+            sta LAT                         ; 72e6 85ca
+            jsr TERR                        ; 72e8 204072
+            lda UNTCOD                      ; 72eb ad2f06
+            sta UNTCD1                      ; 72ee 8d3006
+            ldx ARMY                        ; 72f1 a6c2
+            lda WHORDS,x                    ; 72f3 bd145e
             eor #$02                        ; 72f6 4902
             and #$03                        ; 72f8 2903
             tay                             ; 72fa a8
-            lda units,x                     ; 72fb bd0054
+            lda CORPSX,x                    ; 72fb bd0054
             clc                             ; 72fe 18
-            adc s_BD,y                      ; 72ff 79e25f
-            sta $cb                         ; 7302 85cb
-            lda s_AH,x                      ; 7304 bd9f54
+            adc XADD,y                      ; 72ff 79e25f
+            sta LON                         ; 7302 85cb
+            lda CORPSY,x                    ; 7304 bd9f54
             clc                             ; 7307 18
-            adc s_BE,y                      ; 7308 79e65f
-            sta $ca                         ; 730b 85ca
-            jsr s_CF                        ; 730d 204072
-            jsr s_CJ                        ; 7310 206973
-            lda $0630                       ; 7313 ad3006
+            adc YADD,y                      ; 7308 79e65f
+            sta LAT                         ; 730b 85ca
+            jsr TERR                        ; 730d 204072
+            jsr TERRTY                      ; 7310 206973
+            lda UNTCD1                      ; 7313 ad3006
             and #$3f                        ; 7316 293f
             ldx #$00                        ; 7318 a200
             cmp #$3d                        ; 731a c93d
-            beq _CI2                        ; 731c f002
+            beq _U_1                        ; 731c f002
             ldx #$0a                        ; 731e a20a
-_CI2        txa                             ; 7320 8a
-            ldx $060c                       ; 7321 ae0c06
+_U_1        txa                             ; 7320 8a
+            ldx MONTH                       ; 7321 ae0c06
             clc                             ; 7324 18
-            adc s_BO,x                      ; 7325 7dc06c
-            adc $cd                         ; 7328 65cd
+            adc SSNCOD,x                    ; 7325 7dc06c
+            adc TRNTYP                      ; 7328 65cd
             tax                             ; 732a aa
-            lda s_BP,x                      ; 732b bdcd6c
+            lda TRNTAB,x                    ; 732b bdcd6c
             clc                             ; 732e 18
-            adc $062e                       ; 732f 6d2e06
-            ldx $c2                         ; 7332 a6c2
-            sta s_BU,x                      ; 7334 9d616d
-            lda $cd                         ; 7337 a5cd
+            adc TICK                        ; 732f 6d2e06
+            ldx ARMY                        ; 7332 a6c2
+            sta EXEC,x                      ; 7334 9d616d
+            lda TRNTYP                      ; 7337 a5cd
             cmp #$07                        ; 7339 c907
-            bcc _CI5                        ; 733b 902b
+            bcc _U_4                        ; 733b 902b
             ldy #$15                        ; 733d a015
-_CI3        lda $ca                         ; 733f a5ca
-            cmp s_BR,y                      ; 7341 d91f6d
-            bne _CI4                        ; 7344 d01f
-            lda $cb                         ; 7346 a5cb
-            cmp s_BQ,y                      ; 7348 d9096d
-            bne _CI4                        ; 734b d018
-            ldx $c2                         ; 734d a6c2
-            lda units,x                     ; 734f bd0054
-            cmp s_BS,y                      ; 7352 d9356d
-            bne _CI4                        ; 7355 d00e
-            lda s_AH,x                      ; 7357 bd9f54
-            cmp s_BT,y                      ; 735a d94b6d
-            bne _CI4                        ; 735d d006
+_U_2        lda LAT                         ; 733f a5ca
+            cmp BHY1,y                      ; 7341 d91f6d
+            bne _U_3                        ; 7344 d01f
+            lda LON                         ; 7346 a5cb
+            cmp BHX1,y                      ; 7348 d9096d
+            bne _U_3                        ; 734b d018
+            ldx ARMY                        ; 734d a6c2
+            lda CORPSX,x                    ; 734f bd0054
+            cmp BHX2,y                      ; 7352 d9356d
+            bne _U_3                        ; 7355 d00e
+            lda CORPSY,x                    ; 7357 bd9f54
+            cmp BHY2,y                      ; 735a d94b6d
+            bne _U_3                        ; 735d d006
             lda #$ff                        ; 735f a9ff
-            sta s_BU,x                      ; 7361 9d616d
+            sta EXEC,x                      ; 7361 9d616d
             rts                             ; 7364 60
-_CI4        dey                             ; 7365 88
-            bpl _CI3                        ; 7366 10d7
-_CI5        rts                             ; 7368 60
-s_CJ        ldy #$00                        ; 7369 a000
-            lda $062b                       ; 736b ad2b06
-            beq _CJ4                        ; 736e f043
+_U_3        dey                             ; 7365 88
+            bpl _U_2                        ; 7366 10d7
+_U_4        rts                             ; 7368 60
+TERRTY      ldy #$00                        ; 7369 a000
+            lda TRNCOD                      ; 736b ad2b06
+            beq _TERRTY_4                   ; 736e f043
             cmp #$7f                        ; 7370 c97f
-            bne _CJ1                        ; 7372 d004
+            bne _TERRTY_1                   ; 7372 d004
             ldy #$09                        ; 7374 a009
-            bne _CJ4                        ; 7376 d03b
-_CJ1        iny                             ; 7378 c8
+            bne _TERRTY_4                   ; 7376 d03b
+_TERRTY_1   iny                             ; 7378 c8
             cmp #$07                        ; 7379 c907
-            bcc _CJ4                        ; 737b 9036
+            bcc _TERRTY_4                   ; 737b 9036
             iny                             ; 737d c8
             cmp #$4b                        ; 737e c94b
-            bcc _CJ4                        ; 7380 9031
+            bcc _TERRTY_4                   ; 7380 9031
             iny                             ; 7382 c8
             cmp #$4f                        ; 7383 c94f
-            bcc _CJ4                        ; 7385 902c
+            bcc _TERRTY_4                   ; 7385 902c
             iny                             ; 7387 c8
             cmp #$69                        ; 7388 c969
-            bcc _CJ4                        ; 738a 9027
+            bcc _TERRTY_4                   ; 738a 9027
             iny                             ; 738c c8
             cmp #$8f                        ; 738d c98f
-            bcc _CJ4                        ; 738f 9022
+            bcc _TERRTY_4                   ; 738f 9022
             iny                             ; 7391 c8
             cmp #$a4                        ; 7392 c9a4
-            bcc _CJ4                        ; 7394 901d
-            ldx $ca                         ; 7396 a6ca
+            bcc _TERRTY_4                   ; 7394 901d
+            ldx LAT                         ; 7396 a6ca
             cpx #$0e                        ; 7398 e00e
-            bcc _CJ2                        ; 739a 9004
+            bcc _TERRTY_2                   ; 739a 9004
             cmp #$a9                        ; 739c c9a9
-            bcc _CJ4                        ; 739e 9013
-_CJ2        iny                             ; 73a0 c8
+            bcc _TERRTY_4                   ; 739e 9013
+_TERRTY_2   iny                             ; 73a0 c8
             cmp #$ba                        ; 73a1 c9ba
-            bcc _CJ4                        ; 73a3 900e
+            bcc _TERRTY_4                   ; 73a3 900e
             cpx #$0e                        ; 73a5 e00e
-            bcc _CJ3                        ; 73a7 9004
+            bcc _TERRTY_3                   ; 73a7 9004
             cmp #$bb                        ; 73a9 c9bb
-            bcc _CJ4                        ; 73ab 9006
-_CJ3        iny                             ; 73ad c8
+            bcc _TERRTY_4                   ; 73ab 9006
+_TERRTY_3   iny                             ; 73ad c8
             cmp #$bd                        ; 73ae c9bd
-            bcc _CJ4                        ; 73b0 9001
+            bcc _TERRTY_4                   ; 73b0 9001
             iny                             ; 73b2 c8
-_CJ4        sty $cd                         ; 73b3 84cd
+_TERRTY_4   sty TRNTYP                      ; 73b3 84cd
             rts                             ; 73b5 60
-s_CK        !byte $00,$64,$00,$00,$00,$22,$01,$30,$02                               ; 73b6 .d...".0.
-s_CL        !byte $e0,$00,$00,$33,$78,$d6,$10,$27,$40,$00,$01,$0f,$06,$29,$00,$01   ; 73bf ...3x..'@....)..
-s_CM        !byte $58,$dc,$2f,$00,$6a,$0c,$94,$46,$b0                               ; 73cf X./.j..F.
-s_CN        !byte $14,$0a,$0a,$0a                                                   ; 73d8 ....
-s_CO        !byte $14,$21,$14,$06                                                   ; 73dc .!..
-s_CP        !byte $1c,$24,$00,$0f                                                   ; 73e0 .$..
-s_CQ        asl                             ; 73e4 0a
+ZPVAL       !byte $00,$64,$00,$00,$00,$22,$01,$30,$02                               ; 73b6 .d...".0.
+PSXVAL      !byte $e0,$00,$00,$33,$78,$d6,$10,$27,$40,$00,$01,$0f,$06,$29,$00,$01   ; 73bf ...3x..'@....)..
+COLTAB      !byte $58,$dc,$2f,$00,$6a,$0c,$94,$46,$b0                               ; 73cf X./.j..F.
+MPTS        !byte $14,$0a,$0a,$0a                                                   ; 73d8 ....
+MOSCX       !byte $14,$21,$14,$06                                                   ; 73dc .!..
+MOSCY       !byte $1c,$24,$00,$0f                                                   ; 73e0 .$..
+TXTMSG      asl                             ; 73e4 0a
             asl                             ; 73e5 0a
             asl                             ; 73e6 0a
             asl                             ; 73e7 0a
             asl                             ; 73e8 0a
             tax                             ; 73e9 aa
             ldy #$69                        ; 73ea a069
-_CQ1        lda s_AT,x                      ; 73ec bd085d
+_TXTMSG_1   lda TXTTBL,x                    ; 73ec bd085d
             sec                             ; 73ef 38
             sbc #$20                        ; 73f0 e920
-            sta s_BJ,y                      ; 73f2 995064
+            sta TXTWDW,y                    ; 73f2 995064
             iny                             ; 73f5 c8
             inx                             ; 73f6 e8
             txa                             ; 73f7 8a
             and #$1f                        ; 73f8 291f
-            bne _CQ1                        ; 73fa d0f0
+            bne _TXTMSG_1                   ; 73fa d0f0
             rts                             ; 73fc 60
             !byte $00,$00,$00                                                       ; 73fd ...
-vbi         lda #$ff                        ; 7400 a9ff
+VBI         lda #$ff                        ; 7400 a9ff
             nop                             ; 7402 ea
-            bne _vbi1                       ; 7403 d00f
+            bne _VBI_1                      ; 7403 d00f
             ldy #$3e                        ; 7405 a03e
             ldx #$e9                        ; 7407 a2e9
             lda #$07                        ; 7409 a907
-            jsr $e45c                       ; 740b 205ce4
+            jsr SETVBV                      ; 740b 205ce4    Set system timers during the VBLANK routine
             pla                             ; 740e 68
             pla                             ; 740f 68
             pla                             ; 7410 68
-            jmp s_CE                        ; 7411 4c1072
-_vbi1       lda $068f                       ; 7414 ad8f06
-            beq _vbi4                       ; 7417 f02d
-            lda $d010                       ; 7419 ad10d0
-            beq _vbi4                       ; 741c f028
+            jmp DEBUG                       ; 7411 4c1072
+_VBI_1      lda HANDCP                      ; 7414 ad8f06
+            beq _VBI_4                      ; 7417 f02d
+            lda GRAFP3                      ; 7419 ad10d0    Graphics shape for player 3
+            beq _VBI_4                      ; 741c f028
             lda #$08                        ; 741e a908
-            sta $d01f                       ; 7420 8d1fd0
-            lda $d01f                       ; 7423 ad1fd0
+            sta CONSOL                      ; 7420 8d1fd0    Check for three yellow console button press (not RESET)
+            lda CONSOL                      ; 7423 ad1fd0    Check for three yellow console button press (not RESET)
             and #$04                        ; 7426 2904
-            bne _vbi4                       ; 7428 d01c
-            sta $068f                       ; 742a 8d8f06
+            bne _VBI_4                      ; 7428 d01c
+            sta HANDCP                      ; 742a 8d8f06
             lda #$30                        ; 742d a930
-            sta s_DK                        ; 742f 8d7a7b
+            sta __X__                       ; 742f 8d7a7b
             ldx #$36                        ; 7432 a236
-_vbi2       lda s_AI,x                      ; 7434 bd3e55
-            sta $bb                         ; 7437 85bb
+_VBI_2      lda MSTRNG,x                    ; 7434 bd3e55
+            sta TEMP1                       ; 7437 85bb    all purpose temp
             lsr                             ; 7439 4a
-            adc $bb                         ; 743a 65bb
-            bcc _vbi3                       ; 743c 9002
+            adc TEMP1                       ; 743a 65bb    all purpose temp
+            bcc _VBI_3                      ; 743c 9002
             lda #$ff                        ; 743e a9ff
-_vbi3       sta s_AI,x                      ; 7440 9d3e55
+_VBI_3      sta MSTRNG,x                    ; 7440 9d3e55
             dex                             ; 7443 ca
-            bne _vbi2                       ; 7444 d0ee
-_vbi4       lda $d010                       ; 7446 ad10d0
-            ora $060f                       ; 7449 0d0f06
-            beq _vbi7                       ; 744c f03b
-            lda $060e                       ; 744e ad0e06
-            bne _vbi5                       ; 7451 d003
-            jmp s_CX                        ; 7453 4ccf77
-_vbi5       lda #$58                        ; 7456 a958
-            sta $02c0                       ; 7458 8dc002
+            bne _VBI_2                      ; 7444 d0ee
+_VBI_4      lda GRAFP3                      ; 7446 ad10d0    Graphics shape for player 3
+            ora BUTMSK                      ; 7449 0d0f06
+            beq _VBI_7                      ; 744c f03b
+            lda BUTFLG                      ; 744e ad0e06
+            bne _VBI_5                      ; 7451 d003
+            jmp NOBUT                       ; 7453 4ccf77
+_VBI_5      lda #$58                        ; 7456 a958
+            sta PCOLR0                      ; 7458 8dc002    Color of player 0 and missile 0, shadows $D012
             lda #$00                        ; 745b a900
-            sta $060e                       ; 745d 8d0e06
-            sta $0625                       ; 7460 8d2506
-            sta $d201                       ; 7463 8d01d2
+            sta BUTFLG                      ; 745d 8d0e06
+            sta KRZFLG                      ; 7460 8d2506
+            sta AUDC1/POT1                  ; 7463 8d01d2    Audio channel one control
             ldx #$52                        ; 7466 a252
-_vbi6       sta s_BK,x                      ; 7468 9d5864
+_VBI_6      sta TXTWDW+8,x                  ; 7468 9d5864
             dex                             ; 746b ca
-            bpl _vbi6                       ; 746c 10fa
+            bpl _VBI_6                      ; 746c 10fa
             lda #$08                        ; 746e a908
-            sta $0612                       ; 7470 8d1206
+            sta DELAY                       ; 7470 8d1206    accel delay on scrolling
             clc                             ; 7473 18
-            adc $14                         ; 7474 6514
-            sta $0613                       ; 7476 8d1306
-            jsr s_DD                        ; 7479 20ef79
+            adc RTCLOK2                     ; 7474 6514    One tick per VBI (60/sec)
+            sta TIMSCL                      ; 7476 8d1306    frame to scroll in
+            jsr SWITCH                      ; 7479 20ef79
             lda #$00                        ; 747c a900
-            sta $b4                         ; 747e 85b4
-            jsr s_DE                        ; 7480 20357a
-            jsr s_DF                        ; 7483 204a7a
-            jmp s_CY                        ; 7486 4c6f79
-_vbi7       sta $4d                         ; 7489 854d
-            lda $0278                       ; 748b ad7802
+            sta CORPS                       ; 747e 85b4    Number of unit under window
+            jsr CLRP1                       ; 7480 20357a
+            jsr CLRP2                       ; 7483 204a7a
+            jmp ENDISR                      ; 7486 4c6f79
+_VBI_7      sta ATRACT                      ; 7489 854d    Attract mode timer and flag
+            lda STICK0                      ; 748b ad7802    The value of joystick 0
             and #$0f                        ; 748e 290f
             eor #$0f                        ; 7490 490f
-            beq _vbi8                       ; 7492 f003
-            jmp s_CU                        ; 7494 4cda76
-_vbi8       sta $0622                       ; 7497 8d2206
-            sta $d201                       ; 749a 8d01d2
-            sta $0626                       ; 749d 8d2606
-            lda $060e                       ; 74a0 ad0e06
-            bne _vbi9                       ; 74a3 d003
-            jmp s_CS                        ; 74a5 4caa75
-_vbi9       jsr s_DH                        ; 74a8 205e7a
-            lda $0627                       ; 74ab ad2706
-            beq _vbi10                      ; 74ae f003
-            jmp s_CY                        ; 74b0 4c6f79
-_vbi10      lda $02fc                       ; 74b3 adfc02
+            beq _VBI_8                      ; 7492 f003
+            jmp ORDERS                      ; 7494 4cda76
+_VBI_8      sta DBTIMR                      ; 7497 8d2206    joystick debounce timer
+            sta AUDC1/POT1                  ; 749a 8d01d2    Audio channel one control
+            sta STKFLG                      ; 749d 8d2606
+            lda BUTFLG                      ; 74a0 ad0e06
+            bne _VBI_9                      ; 74a3 d003
+            jmp FBUTPS                      ; 74a5 4caa75
+_VBI_9      jsr ERRCLR                      ; 74a8 205e7a
+            lda HITFLG                      ; 74ab ad2706
+            beq _VBI_10                     ; 74ae f003
+            jmp ENDISR                      ; 74b0 4c6f79
+_VBI_10     lda CH                          ; 74b3 adfc02    Internal hardware value for the last key pressed
             cmp #$21                        ; 74b6 c921
-            bne _vbi11                      ; 74b8 d02b
-            ldx $b4                         ; 74ba a6b4
+            bne _VBI_11                     ; 74b8 d02b
+            ldx CORPS                       ; 74ba a6b4    Number of unit under window
             cpx #$37                        ; 74bc e037
-            bcs _vbi11                      ; 74be b025
+            bcs _VBI_11                     ; 74be b025
             lda #$00                        ; 74c0 a900
-            sta $02fc                       ; 74c2 8dfc02
-            sta s_AV,x                      ; 74c5 9d755d
-            sta $061f                       ; 74c8 8d1f06
-            sta $061a                       ; 74cb 8d1a06
+            sta CH                          ; 74c2 8dfc02    Internal hardware value for the last key pressed
+            sta HMORDS,x                    ; 74c5 9d755d
+            sta HOWMNY                      ; 74c8 8d1f06    how many orders for unit under cursor
+            sta STPCNT                      ; 74cb 8d1a06    which intermediate step arrow is on
             lda #$01                        ; 74ce a901
-            sta $061b                       ; 74d0 8d1b06
-            jsr s_DE                        ; 74d3 20357a
-            jsr s_DF                        ; 74d6 204a7a
-            lda $0616                       ; 74d9 ad1606
-            sta $0618                       ; 74dc 8d1806
-            lda $0617                       ; 74df ad1706
-            sta $0619                       ; 74e2 8d1906
-_vbi11      lda $14                         ; 74e5 a514
+            sta ORDCNT                      ; 74d0 8d1b06    which order arrow is showing
+            jsr CLRP1                       ; 74d3 20357a
+            jsr CLRP2                       ; 74d6 204a7a
+            lda BASEX                       ; 74d9 ad1606    start pos of arrow (player frame)
+            sta STEPX                       ; 74dc 8d1806    intermediate pos of arrow
+            lda BASEY                       ; 74df ad1706
+            sta STEPY                       ; 74e2 8d1906
+_VBI_11     lda RTCLOK2                     ; 74e5 a514    One tick per VBI (60/sec)
             and #$03                        ; 74e7 2903
-            beq _vbi12                      ; 74e9 f003
-            jmp s_CY                        ; 74eb 4c6f79
-_vbi12      ldy $061f                       ; 74ee ac1f06
-            bne _vbi13                      ; 74f1 d003
-            jmp s_CR                        ; 74f3 4c6f75
-_vbi13      jsr s_DE                        ; 74f6 20357a
-            lda $061b                       ; 74f9 ad1b06
+            beq _VBI_12                     ; 74e9 f003
+            jmp ENDISR                      ; 74eb 4c6f79
+_VBI_12     ldy HOWMNY                      ; 74ee ac1f06    how many orders for unit under cursor
+            bne _VBI_13                     ; 74f1 d003
+            jmp PCURSE                      ; 74f3 4c6f75
+_VBI_13     jsr CLRP1                       ; 74f6 20357a
+            lda ORDCNT                      ; 74f9 ad1b06    which order arrow is showing
             ldx #$00                        ; 74fc a200
             cmp #$05                        ; 74fe c905
-            bcc _vbi14                      ; 7500 9001
+            bcc _VBI_14                     ; 7500 9001
             inx                             ; 7502 e8
-_vbi14      and #$03                        ; 7503 2903
+_VBI_14     and #$03                        ; 7503 2903
             tay                             ; 7505 a8
-            lda s_DI,y                      ; 7506 b9747a
-            and $061c,x                     ; 7509 3d1c06
+            lda BITTAB,y                    ; 7506 b9747a
+            and ORD1,x                      ; 7509 3d1c06    orders record
             dey                             ; 750c 88
-            bpl _vbi15                      ; 750d 1002
+            bpl _VBI_15                     ; 750d 1002
             ldy #$03                        ; 750f a003
-_vbi15      beq _vbi17                      ; 7511 f005
-_vbi16      lsr                             ; 7513 4a
+_VBI_15     beq _VBI_17                     ; 7511 f005
+_VBI_16     lsr                             ; 7513 4a
             lsr                             ; 7514 4a
             dey                             ; 7515 88
-            bne _vbi16                      ; 7516 d0fb
-_vbi17      sta $061e                       ; 7518 8d1e06
+            bne _VBI_16                     ; 7516 d0fb
+_VBI_17     sta ARRNDX                      ; 7518 8d1e06    arrow index
             asl                             ; 751b 0a
             asl                             ; 751c 0a
             asl                             ; 751d 0a
             tax                             ; 751e aa
-            ldy $0619                       ; 751f ac1906
-_vbi18      lda s_BI,x                      ; 7522 bd3164
+            ldy STEPY                       ; 751f ac1906
+_VBI_18     lda ARRTAB,x                    ; 7522 bd3164
             cpy #$80                        ; 7525 c080
-            bcs _vbi19                      ; 7527 b003
-            sta s_AE,y                      ; 7529 998052
-_vbi19      inx                             ; 752c e8
+            bcs _VBI_19                     ; 7527 b003
+            sta PLYR1,y                     ; 7529 998052
+_VBI_19     inx                             ; 752c e8
             iny                             ; 752d c8
             txa                             ; 752e 8a
             and #$07                        ; 752f 2907
-            bne _vbi18                      ; 7531 d0ef
-            lda $0618                       ; 7533 ad1806
-            sta $d001                       ; 7536 8d01d0
-            ldx $061e                       ; 7539 ae1e06
-            lda $0618                       ; 753c ad1806
+            bne _VBI_18                     ; 7531 d0ef
+            lda STEPX                       ; 7533 ad1806    intermediate pos of arrow
+            sta HPOSP1                      ; 7536 8d01d0    Horizontal position of player 1
+            ldx ARRNDX                      ; 7539 ae1e06    arrow index
+            lda STEPX                       ; 753c ad1806    intermediate pos of arrow
             clc                             ; 753f 18
-            adc s_BD,x                      ; 7540 7de25f
-            sta $0618                       ; 7543 8d1806
-            lda $0619                       ; 7546 ad1906
+            adc XADD,x                      ; 7540 7de25f
+            sta STEPX                       ; 7543 8d1806    intermediate pos of arrow
+            lda STEPY                       ; 7546 ad1906
             clc                             ; 7549 18
-            adc s_BE,x                      ; 754a 7de65f
-            sta $0619                       ; 754d 8d1906
-            inc $061a                       ; 7550 ee1a06
-            lda $061a                       ; 7553 ad1a06
+            adc YADD,x                      ; 754a 7de65f
+            sta STEPY                       ; 754d 8d1906
+            inc STPCNT                      ; 7550 ee1a06    which intermediate step arrow is on
+            lda STPCNT                      ; 7553 ad1a06    which intermediate step arrow is on
             and #$07                        ; 7556 2907
-            bne _CR3                        ; 7558 d04d
-            sta $061a                       ; 755a 8d1a06
-            inc $061b                       ; 755d ee1b06
-            lda $061b                       ; 7560 ad1b06
-            cmp $061f                       ; 7563 cd1f06
-            bcc _CR3                        ; 7566 903f
-            beq _CR3                        ; 7568 f03d
+            bne _PCURSE_3                   ; 7558 d04d
+            sta STPCNT                      ; 755a 8d1a06    which intermediate step arrow is on
+            inc ORDCNT                      ; 755d ee1b06    which order arrow is showing
+            lda ORDCNT                      ; 7560 ad1b06    which order arrow is showing
+            cmp HOWMNY                      ; 7563 cd1f06    how many orders for unit under cursor
+            bcc _PCURSE_3                   ; 7566 903f
+            beq _PCURSE_3                   ; 7568 f03d
             lda #$01                        ; 756a a901
-            sta $061b                       ; 756c 8d1b06
-s_CR        ldy $0619                       ; 756f ac1906
-            sty $0621                       ; 7572 8c2106
+            sta ORDCNT                      ; 756c 8d1b06    which order arrow is showing
+PCURSE      ldy STEPY                       ; 756f ac1906
+            sty KRZY                        ; 7572 8c2106
             lda #$ff                        ; 7575 a9ff
-            sta $0625                       ; 7577 8d2506
+            sta KRZFLG                      ; 7577 8d2506
             ldx #$00                        ; 757a a200
-_CR1        lda s_BG,x                      ; 757c bdf75f
+_PCURSE_1   lda MLTKRZ,x                    ; 757c bdf75f
             cpy #$80                        ; 757f c080
-            bcs _CR2                        ; 7581 b003
-            sta s_AF,y                      ; 7583 990053
-_CR2        iny                             ; 7586 c8
+            bcs _PCURSE_2                   ; 7581 b003
+            sta PLYR2,y                     ; 7583 990053
+_PCURSE_2   iny                             ; 7586 c8
             inx                             ; 7587 e8
             cpx #$08                        ; 7588 e008
-            bne _CR1                        ; 758a d0f0
-            lda $0618                       ; 758c ad1806
+            bne _PCURSE_1                   ; 758a d0f0
+            lda STEPX                       ; 758c ad1806    intermediate pos of arrow
             sec                             ; 758f 38
             sbc #$01                        ; 7590 e901
-            sta $0620                       ; 7592 8d2006
-            sta $d002                       ; 7595 8d02d0
-            jsr s_DE                        ; 7598 20357a
-            lda $0616                       ; 759b ad1606
-            sta $0618                       ; 759e 8d1806
-            lda $0617                       ; 75a1 ad1706
-            sta $0619                       ; 75a4 8d1906
-_CR3        jmp s_CY                        ; 75a7 4c6f79
-s_CS        lda #$ff                        ; 75aa a9ff
-            sta $060e                       ; 75ac 8d0e06
-            lda $b5                         ; 75af a5b5
+            sta KRZX                        ; 7592 8d2006    maltakreuze coords (player frame)
+            sta HPOSP2                      ; 7595 8d02d0    Horizontal position of player 2
+            jsr CLRP1                       ; 7598 20357a
+            lda BASEX                       ; 759b ad1606    start pos of arrow (player frame)
+            sta STEPX                       ; 759e 8d1806    intermediate pos of arrow
+            lda BASEY                       ; 75a1 ad1706
+            sta STEPY                       ; 75a4 8d1906
+_PCURSE_3   jmp ENDISR                      ; 75a7 4c6f79
+FBUTPS      lda #$ff                        ; 75aa a9ff
+            sta BUTFLG                      ; 75ac 8d0e06
+            lda CURSXL                      ; 75af a5b5
             clc                             ; 75b1 18
             adc #$06                        ; 75b2 6906
-            sta $0628                       ; 75b4 8d2806
-            lda $b6                         ; 75b7 a5b6
+            sta TXL                         ; 75b4 8d2806    temp values -- slightly shifted
+            lda CURSXH                      ; 75b7 a5b6
             adc #$00                        ; 75b9 6900
-            sta $0629                       ; 75bb 8d2906
-            lda $b7                         ; 75be a5b7
+            sta TXH                         ; 75bb 8d2906
+            lda CURSYL                      ; 75be a5b7    Cursor coords on screen (map frame)
             clc                             ; 75c0 18
             adc #$09                        ; 75c1 6909
-            sta $0610                       ; 75c3 8d1006
-            lda $b8                         ; 75c6 a5b8
+            sta TYL                         ; 75c3 8d1006
+            lda CURSYH                      ; 75c6 a5b8
             adc #$00                        ; 75c8 6900
-            sta $0611                       ; 75ca 8d1106
-            lda $0629                       ; 75cd ad2906
+            sta TYH                         ; 75ca 8d1106
+            lda TXH                         ; 75cd ad2906
             lsr                             ; 75d0 4a
-            lda $0628                       ; 75d1 ad2806
+            lda TXL                         ; 75d1 ad2806    temp values -- slightly shifted
             ror                             ; 75d4 6a
             lsr                             ; 75d5 4a
             lsr                             ; 75d6 4a
-            sta $be                         ; 75d7 85be
-            lda $0611                       ; 75d9 ad1106
+            sta CNUNKX                      ; 75d7 85be    Cursor coords (pixel frame)
+            lda TYH                         ; 75d9 ad1106
             lsr                             ; 75dc 4a
             tax                             ; 75dd aa
-            lda $0610                       ; 75de ad1006
+            lda TYL                         ; 75de ad1006
             ror                             ; 75e1 6a
             tay                             ; 75e2 a8
             txa                             ; 75e3 8a
@@ -2483,560 +2483,560 @@ s_CS        lda #$ff                        ; 75aa a9ff
             ror                             ; 75e6 6a
             lsr                             ; 75e7 4a
             lsr                             ; 75e8 4a
-            sta $bf                         ; 75e9 85bf
+            sta CHUNKY                      ; 75e9 85bf
             ldx #$9e                        ; 75eb a29e
-_CS1        cmp s_AH,x                      ; 75ed dd9f54
-            beq _CT1                        ; 75f0 f00c
-s_CT        dex                             ; 75f2 ca
-            bne _CS1                        ; 75f3 d0f8
-            stx $b4                         ; 75f5 86b4
+_FBUTPS_1   cmp CORPSY,x                    ; 75ed dd9f54
+            beq _V_1                        ; 75f0 f00c
+__V__       dex                             ; 75f2 ca
+            bne _FBUTPS_1                   ; 75f3 d0f8
+            stx CORPS                       ; 75f5 86b4    Number of unit under window
             dex                             ; 75f7 ca
-            stx $0627                       ; 75f8 8e2706
-            jmp s_CY                        ; 75fb 4c6f79
-_CT1        lda $be                         ; 75fe a5be
-            cmp units,x                     ; 7600 dd0054
-            bne _CT2                        ; 7603 d00b
-            lda s_AL,x                      ; 7605 bd1b57
-            bmi _CT2                        ; 7608 3006
-            cmp $c9                         ; 760a c5c9
-            bcc _CT3                        ; 760c 9007
-            beq _CT3                        ; 760e f005
-_CT2        lda $bf                         ; 7610 a5bf
-            jmp s_CT                        ; 7612 4cf275
-_CT3        lda #$00                        ; 7615 a900
-            sta $0627                       ; 7617 8d2706
-            sta $02fc                       ; 761a 8dfc02
+            stx HITFLG                      ; 75f8 8e2706
+            jmp ENDISR                      ; 75fb 4c6f79
+_V_1        lda CNUNKX                      ; 75fe a5be    Cursor coords (pixel frame)
+            cmp CORPSX,x                    ; 7600 dd0054
+            bne _V_2                        ; 7603 d00b
+            lda ARRIVE,x                    ; 7605 bd1b57
+            bmi _V_2                        ; 7608 3006
+            cmp TURN                        ; 760a c5c9
+            bcc _V_3                        ; 760c 9007
+            beq _V_3                        ; 760e f005
+_V_2        lda CHUNKY                      ; 7610 a5bf
+            jmp __V__                       ; 7612 4cf275
+_V_3        lda #$00                        ; 7615 a900
+            sta HITFLG                      ; 7617 8d2706
+            sta CH                          ; 761a 8dfc02    Internal hardware value for the last key pressed
             lda #$5c                        ; 761d a95c
-            sta $02c0                       ; 761f 8dc002
-            stx $b4                         ; 7622 86b4
+            sta PCOLR0                      ; 761f 8dc002    Color of player 0 and missile 0, shadows $D012
+            stx CORPS                       ; 7622 86b4    Number of unit under window
             ldy #$0d                        ; 7624 a00d
-            lda s_AP,x                      ; 7626 bd6959
-            jsr s_DL                        ; 7629 20b27b
+            lda CORPNO,x                    ; 7626 bd6959
+            jsr DNUMBR                      ; 7629 20b27b
             iny                             ; 762c c8
-            ldx $b4                         ; 762d a6b4
-            lda s_AO,x                      ; 762f bdca58
-            sta $bb                         ; 7632 85bb
+            ldx CORPS                       ; 762d a6b4    Number of unit under window
+            lda CORPT,x                     ; 762f bdca58
+            sta TEMP1                       ; 7632 85bb    all purpose temp
             and #$f0                        ; 7634 29f0
             lsr                             ; 7636 4a
-            jsr _DC3                        ; 7637 20da79
-            lda $bb                         ; 763a a5bb
+            jsr DWORDSB                     ; 7637 20da79
+            lda TEMP1                       ; 763a a5bb    all purpose temp
             and #$0f                        ; 763c 290f
             clc                             ; 763e 18
             adc #$08                        ; 763f 6908
-            jsr s_DC                        ; 7641 20c079
+            jsr DWORDS                      ; 7641 20c079
             lda #$1e                        ; 7644 a91e
-            ldx $b4                         ; 7646 a6b4
+            ldx CORPS                       ; 7646 a6b4    Number of unit under window
             cpx #$37                        ; 7648 e037
-            bcs _CT4                        ; 764a b002
+            bcs _V_4                        ; 764a b002
             lda #$1d                        ; 764c a91d
-_CT4        jsr s_DC                        ; 764e 20c079
+_V_4        jsr DWORDS                      ; 764e 20c079
             ldy #$38                        ; 7651 a038
             lda #$1f                        ; 7653 a91f
-            jsr s_DC                        ; 7655 20c079
+            jsr DWORDS                      ; 7655 20c079
             dey                             ; 7658 88
             lda #$1a                        ; 7659 a91a
-            sta s_BJ,y                      ; 765b 995064
+            sta TXTWDW,y                    ; 765b 995064
             iny                             ; 765e c8
             iny                             ; 765f c8
-            ldx $b4                         ; 7660 a6b4
-            lda s_AI,x                      ; 7662 bd3e55
-            jsr s_DL                        ; 7665 20b27b
+            ldx CORPS                       ; 7660 a6b4    Number of unit under window
+            lda MSTRNG,x                    ; 7662 bd3e55
+            jsr DNUMBR                      ; 7665 20b27b
             iny                             ; 7668 c8
             iny                             ; 7669 c8
             lda #$20                        ; 766a a920
-            jsr s_DC                        ; 766c 20c079
+            jsr DWORDS                      ; 766c 20c079
             lda #$21                        ; 766f a921
-            jsr s_DC                        ; 7671 20c079
+            jsr DWORDS                      ; 7671 20c079
             dey                             ; 7674 88
             lda #$1a                        ; 7675 a91a
-            sta s_BJ,y                      ; 7677 995064
+            sta TXTWDW,y                    ; 7677 995064
             iny                             ; 767a c8
             iny                             ; 767b c8
-            ldx $b4                         ; 767c a6b4
-            lda s_AJ,x                      ; 767e bddd55
-            jsr s_DL                        ; 7681 20b27b
-            jsr s_DD                        ; 7684 20ef79
-            lda $b4                         ; 7687 a5b4
+            ldx CORPS                       ; 767c a6b4    Number of unit under window
+            lda CSTRNG,x                    ; 767e bddd55
+            jsr DNUMBR                      ; 7681 20b27b
+            jsr SWITCH                      ; 7684 20ef79
+            lda CORPS                       ; 7687 a5b4    Number of unit under window
             cmp #$37                        ; 7689 c937
-            bcc _CT5                        ; 768b 9007
+            bcc _V_5                        ; 768b 9007
             lda #$ff                        ; 768d a9ff
-            sta $0627                       ; 768f 8d2706
-            bmi _CT6                        ; 7692 3043
-_CT5        lda #$01                        ; 7694 a901
-            sta $061b                       ; 7696 8d1b06
+            sta HITFLG                      ; 768f 8d2706
+            bmi _V_6                        ; 7692 3043
+_V_5        lda #$01                        ; 7694 a901
+            sta ORDCNT                      ; 7696 8d1b06    which order arrow is showing
             lda #$00                        ; 7699 a900
-            sta $061a                       ; 769b 8d1a06
-            lda $0628                       ; 769e ad2806
+            sta STPCNT                      ; 769b 8d1a06    which intermediate step arrow is on
+            lda TXL                         ; 769e ad2806    temp values -- slightly shifted
             and #$07                        ; 76a1 2907
             clc                             ; 76a3 18
             adc #$01                        ; 76a4 6901
             clc                             ; 76a6 18
-            adc $0604                       ; 76a7 6d0406
-            sta $0616                       ; 76aa 8d1606
-            sta $0618                       ; 76ad 8d1806
-            lda $0610                       ; 76b0 ad1006
+            adc SHPOS0                      ; 76a7 6d0406    shadows player 0 position
+            sta BASEX                       ; 76aa 8d1606    start pos of arrow (player frame)
+            sta STEPX                       ; 76ad 8d1806    intermediate pos of arrow
+            lda TYL                         ; 76b0 ad1006
             and #$0f                        ; 76b3 290f
             lsr                             ; 76b5 4a
             sec                             ; 76b6 38
             sbc #$01                        ; 76b7 e901
             clc                             ; 76b9 18
-            adc $0603                       ; 76ba 6d0306
-            sta $0617                       ; 76bd 8d1706
-            sta $0619                       ; 76c0 8d1906
-            ldx $b4                         ; 76c3 a6b4
-            lda s_AV,x                      ; 76c5 bd755d
-            sta $061f                       ; 76c8 8d1f06
-            lda s_AW,x                      ; 76cb bd145e
-            sta $061c                       ; 76ce 8d1c06
-            lda s_AX,x                      ; 76d1 bdb35e
-            sta $061d                       ; 76d4 8d1d06
-_CT6        jmp s_CY                        ; 76d7 4c6f79
-s_CU        lda $0626                       ; 76da ad2606
-            bne _CT6                        ; 76dd d0f8
-            ldx $b4                         ; 76df a6b4
+            adc SCY                         ; 76ba 6d0306    vert pos of cursor (player frame)
+            sta BASEY                       ; 76bd 8d1706
+            sta STEPY                       ; 76c0 8d1906
+            ldx CORPS                       ; 76c3 a6b4    Number of unit under window
+            lda HMORDS,x                    ; 76c5 bd755d
+            sta HOWMNY                      ; 76c8 8d1f06    how many orders for unit under cursor
+            lda WHORDS,x                    ; 76cb bd145e
+            sta ORD1                        ; 76ce 8d1c06    orders record
+            lda WHORDH,x                    ; 76d1 bdb35e
+            sta ORD2                        ; 76d4 8d1d06
+_V_6        jmp ENDISR                      ; 76d7 4c6f79
+ORDERS      lda STKFLG                      ; 76da ad2606
+            bne _V_6                        ; 76dd d0f8
+            ldx CORPS                       ; 76df a6b4    Number of unit under window
             cpx #$37                        ; 76e1 e037
-            bcc _CU1                        ; 76e3 9005
+            bcc _ORDERS_1                   ; 76e3 9005
             ldx #$00                        ; 76e5 a200
-            jmp s_CW                        ; 76e7 4cac77
-_CU1        lda s_AV,x                      ; 76ea bd755d
+            jmp SQUAWK                      ; 76e7 4cac77
+_ORDERS_1   lda HMORDS,x                    ; 76ea bd755d
             cmp #$08                        ; 76ed c908
-            bcc _CU2                        ; 76ef 9005
+            bcc _ORDERS_2                   ; 76ef 9005
             ldx #$20                        ; 76f1 a220
-            jmp s_CW                        ; 76f3 4cac77
-_CU2        lda $0625                       ; 76f6 ad2506
-            bne _CU3                        ; 76f9 d005
+            jmp SQUAWK                      ; 76f3 4cac77
+_ORDERS_2   lda KRZFLG                      ; 76f6 ad2506
+            bne _ORDERS_3                   ; 76f9 d005
             ldx #$40                        ; 76fb a240
-            jmp s_CW                        ; 76fd 4cac77
-_CU3        inc $0622                       ; 7700 ee2206
-            lda $0622                       ; 7703 ad2206
+            jmp SQUAWK                      ; 76fd 4cac77
+_ORDERS_3   inc DBTIMR                      ; 7700 ee2206    joystick debounce timer
+            lda DBTIMR                      ; 7703 ad2206    joystick debounce timer
             cmp #$10                        ; 7706 c910
-            bcs _CU4                        ; 7708 b002
-            bcc _CT6                        ; 770a 90cb
-_CU4        lda #$00                        ; 770c a900
-            sta $0622                       ; 770e 8d2206
-            ldx $0278                       ; 7711 ae7802
-            lda s_BN,x                      ; 7714 bdb16c
-            bpl _CU5                        ; 7717 1005
+            bcs _ORDERS_4                   ; 7708 b002
+            bcc _V_6                        ; 770a 90cb
+_ORDERS_4   lda #$00                        ; 770c a900
+            sta DBTIMR                      ; 770e 8d2206    joystick debounce timer
+            ldx STICK0                      ; 7711 ae7802    The value of joystick 0
+            lda STKTAB,x                    ; 7714 bdb16c
+            bpl _ORDERS_5                   ; 7717 1005
             ldx #$60                        ; 7719 a260
-            jmp s_CW                        ; 771b 4cac77
-_CU5        tay                             ; 771e a8
-            sta $0623                       ; 771f 8d2306
-            lda s_AY,y                      ; 7722 b9525f
-            sta $d200                       ; 7725 8d00d2
+            jmp SQUAWK                      ; 771b 4cac77
+_ORDERS_5   tay                             ; 771e a8
+            sta STICK1                      ; 771f 8d2306    coded value of stick direction (0-3)
+            lda BEEPTB,y                    ; 7722 b9525f
+            sta AUDF1/POT0                  ; 7725 8d00d2    Audio channel one frequency
             lda #$a8                        ; 7728 a9a8
-            sta $d201                       ; 772a 8d01d2
+            sta AUDC1/POT1                  ; 772a 8d01d2    Audio channel one control
             lda #$ff                        ; 772d a9ff
-            sta $0626                       ; 772f 8d2606
-            ldx $b4                         ; 7732 a6b4
-            inc s_AV,x                      ; 7734 fe755d
-            lda s_AV,x                      ; 7737 bd755d
-            sta $061f                       ; 773a 8d1f06
+            sta STKFLG                      ; 772f 8d2606
+            ldx CORPS                       ; 7732 a6b4    Number of unit under window
+            inc HMORDS,x                    ; 7734 fe755d
+            lda HMORDS,x                    ; 7737 bd755d
+            sta HOWMNY                      ; 773a 8d1f06    how many orders for unit under cursor
             sec                             ; 773d 38
             sbc #$01                        ; 773e e901
             and #$03                        ; 7740 2903
             tay                             ; 7742 a8
-            sty $bb                         ; 7743 84bb
-            lda s_AV,x                      ; 7745 bd755d
+            sty TEMP1                       ; 7743 84bb    all purpose temp
+            lda HMORDS,x                    ; 7745 bd755d
             sec                             ; 7748 38
             sbc #$01                        ; 7749 e901
             lsr                             ; 774b 4a
             lsr                             ; 774c 4a
             tax                             ; 774d aa
-            lda $0623                       ; 774e ad2306
-s_CV        dey                             ; 7751 88
-            bmi _CV1                        ; 7752 3005
+            lda STICK1                      ; 774e ad2306    coded value of stick direction (0-3)
+__W__       dey                             ; 7751 88
+            bmi _W_1                        ; 7752 3005
             asl                             ; 7754 0a
             asl                             ; 7755 0a
-            jmp s_CV                        ; 7756 4c5177
-_CV1        ldy $bb                         ; 7759 a4bb
-            eor $061c,x                     ; 775b 5d1c06
-            and s_BC,y                      ; 775e 39de5f
-            eor $061c,x                     ; 7761 5d1c06
-            sta $061c,x                     ; 7764 9d1c06
-            lda $061c                       ; 7767 ad1c06
-            ldx $b4                         ; 776a a6b4
-            sta s_AW,x                      ; 776c 9d145e
-            lda $061d                       ; 776f ad1d06
-            sta s_AX,x                      ; 7772 9db35e
-            jsr s_DF                        ; 7775 204a7a
-            ldx $0623                       ; 7778 ae2306
-            lda $0620                       ; 777b ad2006
+            jmp __W__                       ; 7756 4c5177
+_W_1        ldy TEMP1                       ; 7759 a4bb    all purpose temp
+            eor ORD1,x                      ; 775b 5d1c06    orders record
+            and MASKO,y                     ; 775e 39de5f
+            eor ORD1,x                      ; 7761 5d1c06    orders record
+            sta ORD1,x                      ; 7764 9d1c06    orders record
+            lda ORD1                        ; 7767 ad1c06    orders record
+            ldx CORPS                       ; 776a a6b4    Number of unit under window
+            sta WHORDS,x                    ; 776c 9d145e
+            lda ORD2                        ; 776f ad1d06
+            sta WHORDH,x                    ; 7772 9db35e
+            jsr CLRP2                       ; 7775 204a7a
+            ldx STICK1                      ; 7778 ae2306    coded value of stick direction (0-3)
+            lda KRZX                        ; 777b ad2006    maltakreuze coords (player frame)
             clc                             ; 777e 18
-            adc s_BA,x                      ; 777f 7dd65f
-            sta $0620                       ; 7782 8d2006
-            lda $0621                       ; 7785 ad2106
+            adc XOFF,x                      ; 777f 7dd65f
+            sta KRZX                        ; 7782 8d2006    maltakreuze coords (player frame)
+            lda KRZY                        ; 7785 ad2106
             clc                             ; 7788 18
-            adc s_BB,x                      ; 7789 7dda5f
-            sta $0621                       ; 778c 8d2106
-            lda $0620                       ; 778f ad2006
-            sta $d002                       ; 7792 8d02d0
-            ldy $0621                       ; 7795 ac2106
+            adc YOFF,x                      ; 7789 7dda5f
+            sta KRZY                        ; 778c 8d2106
+            lda KRZX                        ; 778f ad2006    maltakreuze coords (player frame)
+            sta HPOSP2                      ; 7792 8d02d0    Horizontal position of player 2
+            ldy KRZY                        ; 7795 ac2106
             ldx #$00                        ; 7798 a200
-_CV2        lda s_BG,x                      ; 779a bdf75f
+_W_2        lda MLTKRZ,x                    ; 779a bdf75f
             cpy #$80                        ; 779d c080
-            bcs _CV3                        ; 779f b003
-            sta s_AF,y                      ; 77a1 990053
-_CV3        iny                             ; 77a4 c8
+            bcs _W_3                        ; 779f b003
+            sta PLYR2,y                     ; 77a1 990053
+_W_3        iny                             ; 77a4 c8
             inx                             ; 77a5 e8
             cpx #$08                        ; 77a6 e008
-            bne _CV2                        ; 77a8 d0f0
-            beq _CX1                        ; 77aa f043
-s_CW        ldy #$69                        ; 77ac a069
-_CW1        lda s_AZ,x                      ; 77ae bd565f
+            bne _W_2                        ; 77a8 d0f0
+            beq _NOBUT_1                    ; 77aa f043
+SQUAWK      ldy #$69                        ; 77ac a069
+_SQUAWK_1   lda ERRMSG,x                    ; 77ae bd565f
             sec                             ; 77b1 38
             sbc #$20                        ; 77b2 e920
-            sta s_BJ,y                      ; 77b4 995064
+            sta TXTWDW,y                    ; 77b4 995064
             iny                             ; 77b7 c8
             inx                             ; 77b8 e8
             txa                             ; 77b9 8a
             and #$1f                        ; 77ba 291f
-            bne _CW1                        ; 77bc d0f0
+            bne _SQUAWK_1                   ; 77bc d0f0
             lda #$68                        ; 77be a968
-            sta $d201                       ; 77c0 8d01d2
+            sta AUDC1/POT1                  ; 77c0 8d01d2    Audio channel one control
             lda #$50                        ; 77c3 a950
-            sta $d200                       ; 77c5 8d00d2
+            sta AUDF1/POT0                  ; 77c5 8d00d2    Audio channel one frequency
             lda #$ff                        ; 77c8 a9ff
-            sta $0624                       ; 77ca 8d2406
-            bmi _CX1                        ; 77cd 3020
-s_CX        sta $0622                       ; 77cf 8d2206
-            lda $0278                       ; 77d2 ad7802
+            sta ERRFLG                      ; 77ca 8d2406
+            bmi _NOBUT_1                    ; 77cd 3020
+NOBUT       sta DBTIMR                      ; 77cf 8d2206    joystick debounce timer
+            lda STICK0                      ; 77d2 ad7802    The value of joystick 0
             and #$0f                        ; 77d5 290f
             eor #$0f                        ; 77d7 490f
-            bne _CX2                        ; 77d9 d017
-            sta $d201                       ; 77db 8d01d2
-            sta $0626                       ; 77de 8d2606
+            bne _NOBUT_2                    ; 77d9 d017
+            sta AUDC1/POT1                  ; 77db 8d01d2    Audio channel one control
+            sta STKFLG                      ; 77de 8d2606
             lda #$08                        ; 77e1 a908
-            sta $0612                       ; 77e3 8d1206
+            sta DELAY                       ; 77e3 8d1206    accel delay on scrolling
             clc                             ; 77e6 18
-            adc $14                         ; 77e7 6514
-            sta $0613                       ; 77e9 8d1306
-            jsr s_DH                        ; 77ec 205e7a
-_CX1        jmp s_CY                        ; 77ef 4c6f79
-_CX2        lda #$00                        ; 77f2 a900
-            sta $4d                         ; 77f4 854d
-            lda $0613                       ; 77f6 ad1306
-            cmp $14                         ; 77f9 c514
-            bne _CX1                        ; 77fb d0f2
-            lda $0612                       ; 77fd ad1206
+            adc RTCLOK2                     ; 77e7 6514    One tick per VBI (60/sec)
+            sta TIMSCL                      ; 77e9 8d1306    frame to scroll in
+            jsr ERRCLR                      ; 77ec 205e7a
+_NOBUT_1    jmp ENDISR                      ; 77ef 4c6f79
+_NOBUT_2    lda #$00                        ; 77f2 a900
+            sta ATRACT                      ; 77f4 854d    Attract mode timer and flag
+            lda TIMSCL                      ; 77f6 ad1306    frame to scroll in
+            cmp RTCLOK2                     ; 77f9 c514    One tick per VBI (60/sec)
+            bne _NOBUT_1                    ; 77fb d0f2
+            lda DELAY                       ; 77fd ad1206    accel delay on scrolling
             cmp #$01                        ; 7800 c901
-            beq _CX3                        ; 7802 f006
+            beq _NOBUT_3                    ; 7802 f006
             sec                             ; 7804 38
             sbc #$01                        ; 7805 e901
-            sta $0612                       ; 7807 8d1206
-_CX3        clc                             ; 780a 18
-            adc $14                         ; 780b 6514
-            sta $0613                       ; 780d 8d1306
+            sta DELAY                       ; 7807 8d1206    accel delay on scrolling
+_NOBUT_3    clc                             ; 780a 18
+            adc RTCLOK2                     ; 780b 6514    One tick per VBI (60/sec)
+            sta TIMSCL                      ; 780d 8d1306    frame to scroll in
             lda #$00                        ; 7810 a900
-            sta $b9                         ; 7812 85b9
-            sta $ba                         ; 7814 85ba
-            lda $0278                       ; 7816 ad7802
+            sta OFFLO                       ; 7812 85b9    How far to offset new LMS value
+            sta OFFHI                       ; 7814 85ba
+            lda STICK0                      ; 7816 ad7802    The value of joystick 0
             pha                             ; 7819 48
             and #$08                        ; 781a 2908
-            bne _CX7                        ; 781c d03a
-            lda $b5                         ; 781e a5b5
-            bne _CX4                        ; 7820 d004
-            ldx $b6                         ; 7822 a6b6
-            beq _CX11                       ; 7824 f071
-_CX4        sec                             ; 7826 38
+            bne _NOBUT_7                    ; 781c d03a
+            lda CURSXL                      ; 781e a5b5
+            bne _NOBUT_4                    ; 7820 d004
+            ldx CURSXH                      ; 7822 a6b6
+            beq _NOBUT_11                   ; 7824 f071
+_NOBUT_4    sec                             ; 7826 38
             sbc #$01                        ; 7827 e901
-            sta $b5                         ; 7829 85b5
-            bcs _CX5                        ; 782b b002
-            dec $b6                         ; 782d c6b6
-_CX5        lda $0604                       ; 782f ad0406
+            sta CURSXL                      ; 7829 85b5
+            bcs _NOBUT_5                    ; 782b b002
+            dec CURSXH                      ; 782d c6b6
+_NOBUT_5    lda SHPOS0                      ; 782f ad0406    shadows player 0 position
             cmp #$ba                        ; 7832 c9ba
-            beq _CX6                        ; 7834 f00b
+            beq _NOBUT_6                    ; 7834 f00b
             clc                             ; 7836 18
             adc #$01                        ; 7837 6901
-            sta $0604                       ; 7839 8d0406
-            sta $d000                       ; 783c 8d00d0
-            bne _CX11                       ; 783f d056
-_CX6        lda $0600                       ; 7841 ad0006
+            sta SHPOS0                      ; 7839 8d0406    shadows player 0 position
+            sta HPOSP0                      ; 783c 8d00d0    Horizontal position of player 0
+            bne _NOBUT_11                   ; 783f d056
+_NOBUT_6    lda XPOSL                       ; 7841 ad0006    Horiz pos of upper left of screen window
             sec                             ; 7844 38
             sbc #$01                        ; 7845 e901
-            sta $0600                       ; 7847 8d0006
+            sta XPOSL                       ; 7847 8d0006    Horiz pos of upper left of screen window
             and #$07                        ; 784a 2907
-            sta $d404                       ; 784c 8d04d4
+            sta HSCROL                      ; 784c 8d04d4    Horizontal scroll enable
             cmp #$07                        ; 784f c907
-            bne _CX11                       ; 7851 d044
-            inc $b9                         ; 7853 e6b9
+            bne _NOBUT_11                   ; 7851 d044
+            inc OFFLO                       ; 7853 e6b9    How far to offset new LMS value
             clv                             ; 7855 b8
-            bvc _CX11                       ; 7856 503f
-_CX7        pla                             ; 7858 68
+            bvc _NOBUT_11                   ; 7856 503f
+_NOBUT_7    pla                             ; 7858 68
             pha                             ; 7859 48
             and #$04                        ; 785a 2904
-            bne _CX11                       ; 785c d039
-            lda $b5                         ; 785e a5b5
+            bne _NOBUT_11                   ; 785c d039
+            lda CURSXL                      ; 785e a5b5
             cmp #$64                        ; 7860 c964
-            bne _CX8                        ; 7862 d004
-            ldx $b6                         ; 7864 a6b6
-            bne _CX11                       ; 7866 d02f
-_CX8        clc                             ; 7868 18
+            bne _NOBUT_8                    ; 7862 d004
+            ldx CURSXH                      ; 7864 a6b6
+            bne _NOBUT_11                   ; 7866 d02f
+_NOBUT_8    clc                             ; 7868 18
             adc #$01                        ; 7869 6901
-            sta $b5                         ; 786b 85b5
-            bcc _CX9                        ; 786d 9002
-            inc $b6                         ; 786f e6b6
-_CX9        lda $0604                       ; 7871 ad0406
+            sta CURSXL                      ; 786b 85b5
+            bcc _NOBUT_9                    ; 786d 9002
+            inc CURSXH                      ; 786f e6b6
+_NOBUT_9    lda SHPOS0                      ; 7871 ad0406    shadows player 0 position
             cmp #$36                        ; 7874 c936
-            beq _CX10                       ; 7876 f00b
+            beq _NOBUT_10                   ; 7876 f00b
             sec                             ; 7878 38
             sbc #$01                        ; 7879 e901
-            sta $0604                       ; 787b 8d0406
-            sta $d000                       ; 787e 8d00d0
-            bne _CX11                       ; 7881 d014
-_CX10       lda $0600                       ; 7883 ad0006
+            sta SHPOS0                      ; 787b 8d0406    shadows player 0 position
+            sta HPOSP0                      ; 787e 8d00d0    Horizontal position of player 0
+            bne _NOBUT_11                   ; 7881 d014
+_NOBUT_10   lda XPOSL                       ; 7883 ad0006    Horiz pos of upper left of screen window
             clc                             ; 7886 18
             adc #$01                        ; 7887 6901
-            sta $0600                       ; 7889 8d0006
+            sta XPOSL                       ; 7889 8d0006    Horiz pos of upper left of screen window
             and #$07                        ; 788c 2907
-            sta $d404                       ; 788e 8d04d4
-            bne _CX11                       ; 7891 d004
-            dec $b9                         ; 7893 c6b9
-            dec $ba                         ; 7895 c6ba
-_CX11       pla                             ; 7897 68
+            sta HSCROL                      ; 788e 8d04d4    Horizontal scroll enable
+            bne _NOBUT_11                   ; 7891 d004
+            dec OFFLO                       ; 7893 c6b9    How far to offset new LMS value
+            dec OFFHI                       ; 7895 c6ba
+_NOBUT_11   pla                             ; 7897 68
             lsr                             ; 7898 4a
             pha                             ; 7899 48
-            bcs _CX18                       ; 789a b05a
-            lda $b7                         ; 789c a5b7
+            bcs _NOBUT_18                   ; 789a b05a
+            lda CURSYL                      ; 789c a5b7    Cursor coords on screen (map frame)
             cmp #$5e                        ; 789e c95e
-            bne _CX12                       ; 78a0 d006
-            ldx $b8                         ; 78a2 a6b8
+            bne _NOBUT_12                   ; 78a0 d006
+            ldx CURSYH                      ; 78a2 a6b8
             cpx #$02                        ; 78a4 e002
-            beq _CX18                       ; 78a6 f04e
-_CX12       inc $b7                         ; 78a8 e6b7
-            bne _CX13                       ; 78aa d002
-            inc $b8                         ; 78ac e6b8
-_CX13       ldx $0603                       ; 78ae ae0306
+            beq _NOBUT_18                   ; 78a6 f04e
+_NOBUT_12   inc CURSYL                      ; 78a8 e6b7    Cursor coords on screen (map frame)
+            bne _NOBUT_13                   ; 78aa d002
+            inc CURSYH                      ; 78ac e6b8
+_NOBUT_13   ldx SCY                         ; 78ae ae0306    vert pos of cursor (player frame)
             cpx #$1b                        ; 78b1 e01b
-            beq _CX16                       ; 78b3 f01d
-            inc $b7                         ; 78b5 e6b7
-            bne _CX14                       ; 78b7 d002
-            inc $b8                         ; 78b9 e6b8
-_CX14       dex                             ; 78bb ca
-            stx $0603                       ; 78bc 8e0306
+            beq _NOBUT_16                   ; 78b3 f01d
+            inc CURSYL                      ; 78b5 e6b7    Cursor coords on screen (map frame)
+            bne _NOBUT_14                   ; 78b7 d002
+            inc CURSYH                      ; 78b9 e6b8
+_NOBUT_14   dex                             ; 78bb ca
+            stx SCY                         ; 78bc 8e0306    vert pos of cursor (player frame)
             txa                             ; 78bf 8a
             clc                             ; 78c0 18
             adc #$12                        ; 78c1 6912
-            sta $bb                         ; 78c3 85bb
-_CX15       lda s_AD,x                      ; 78c5 bd0052
-            sta s_AC,x                      ; 78c8 9dff51
+            sta TEMP1                       ; 78c3 85bb    all purpose temp
+_NOBUT_15   lda PLYR0,x                     ; 78c5 bd0052
+            sta PLYR0-1,x                   ; 78c8 9dff51
             inx                             ; 78cb e8
-            cpx $bb                         ; 78cc e4bb
-            bne _CX15                       ; 78ce d0f5
-            beq _CX18                       ; 78d0 f024
-_CX16       lda $0601                       ; 78d2 ad0106
+            cpx TEMP1                       ; 78cc e4bb    all purpose temp
+            bne _NOBUT_15                   ; 78ce d0f5
+            beq _NOBUT_18                   ; 78d0 f024
+_NOBUT_16   lda YPOSL                       ; 78d2 ad0106    Vert pos of upper left of screen window
             sec                             ; 78d5 38
             sbc #$01                        ; 78d6 e901
-            bcs _CX17                       ; 78d8 b003
-            dec $0602                       ; 78da ce0206
-_CX17       sta $0601                       ; 78dd 8d0106
+            bcs _NOBUT_17                   ; 78d8 b003
+            dec XPOSH                       ; 78da ce0206
+_NOBUT_17   sta YPOSL                       ; 78dd 8d0106    Vert pos of upper left of screen window
             and #$0f                        ; 78e0 290f
-            sta $d405                       ; 78e2 8d05d4
+            sta VSCROL                      ; 78e2 8d05d4    Vertical scroll enable
             cmp #$0f                        ; 78e5 c90f
-            bne _CX18                       ; 78e7 d00d
-            lda $b9                         ; 78e9 a5b9
+            bne _NOBUT_18                   ; 78e7 d00d
+            lda OFFLO                       ; 78e9 a5b9    How far to offset new LMS value
             sec                             ; 78eb 38
             sbc #$30                        ; 78ec e930
-            sta $b9                         ; 78ee 85b9
-            lda $ba                         ; 78f0 a5ba
+            sta OFFLO                       ; 78ee 85b9    How far to offset new LMS value
+            lda OFFHI                       ; 78f0 a5ba
             sbc #$00                        ; 78f2 e900
-            sta $ba                         ; 78f4 85ba
-_CX18       pla                             ; 78f6 68
+            sta OFFHI                       ; 78f4 85ba
+_NOBUT_18   pla                             ; 78f6 68
             lsr                             ; 78f7 4a
-            bcs _CX25                       ; 78f8 b05f
-            lda $b7                         ; 78fa a5b7
+            bcs _NOBUT_25                   ; 78f8 b05f
+            lda CURSYL                      ; 78fa a5b7    Cursor coords on screen (map frame)
             cmp #$02                        ; 78fc c902
-            bne _CX19                       ; 78fe d004
-            ldx $b8                         ; 7900 a6b8
-            beq _CX25                       ; 7902 f055
-_CX19       sec                             ; 7904 38
+            bne _NOBUT_19                   ; 78fe d004
+            ldx CURSYH                      ; 7900 a6b8
+            beq _NOBUT_25                   ; 7902 f055
+_NOBUT_19   sec                             ; 7904 38
             sbc #$01                        ; 7905 e901
-            sta $b7                         ; 7907 85b7
-            bcs _CX20                       ; 7909 b002
-            dec $b8                         ; 790b c6b8
-_CX20       ldx $0603                       ; 790d ae0306
+            sta CURSYL                      ; 7907 85b7    Cursor coords on screen (map frame)
+            bcs _NOBUT_20                   ; 7909 b002
+            dec CURSYH                      ; 790b c6b8
+_NOBUT_20   ldx SCY                         ; 790d ae0306    vert pos of cursor (player frame)
             cpx #$4e                        ; 7910 e04e
-            beq _CX23                       ; 7912 f023
+            beq _NOBUT_23                   ; 7912 f023
             sec                             ; 7914 38
             sbc #$01                        ; 7915 e901
-            sta $b7                         ; 7917 85b7
-            bcs _CX21                       ; 7919 b002
-            dec $b8                         ; 791b c6b8
-_CX21       inx                             ; 791d e8
-            stx $0603                       ; 791e 8e0306
+            sta CURSYL                      ; 7917 85b7    Cursor coords on screen (map frame)
+            bcs _NOBUT_21                   ; 7919 b002
+            dec CURSYH                      ; 791b c6b8
+_NOBUT_21   inx                             ; 791d e8
+            stx SCY                         ; 791e 8e0306    vert pos of cursor (player frame)
             txa                             ; 7921 8a
             clc                             ; 7922 18
             adc #$12                        ; 7923 6912
             dex                             ; 7925 ca
             dex                             ; 7926 ca
-            stx $bb                         ; 7927 86bb
+            stx TEMP1                       ; 7927 86bb    all purpose temp
             tax                             ; 7929 aa
-_CX22       lda s_AC,x                      ; 792a bdff51
-            sta s_AD,x                      ; 792d 9d0052
+_NOBUT_22   lda PLYR0-1,x                   ; 792a bdff51
+            sta PLYR0,x                     ; 792d 9d0052
             dex                             ; 7930 ca
-            cpx $bb                         ; 7931 e4bb
-            bne _CX22                       ; 7933 d0f5
-            beq _CX25                       ; 7935 f022
-_CX23       lda $0601                       ; 7937 ad0106
+            cpx TEMP1                       ; 7931 e4bb    all purpose temp
+            bne _NOBUT_22                   ; 7933 d0f5
+            beq _NOBUT_25                   ; 7935 f022
+_NOBUT_23   lda YPOSL                       ; 7937 ad0106    Vert pos of upper left of screen window
             clc                             ; 793a 18
             adc #$01                        ; 793b 6901
-            sta $0601                       ; 793d 8d0106
-            bcc _CX24                       ; 7940 9003
-            inc $0602                       ; 7942 ee0206
-_CX24       and #$0f                        ; 7945 290f
-            sta $d405                       ; 7947 8d05d4
-            bne _CX25                       ; 794a d00d
-            lda $b9                         ; 794c a5b9
+            sta YPOSL                       ; 793d 8d0106    Vert pos of upper left of screen window
+            bcc _NOBUT_24                   ; 7940 9003
+            inc XPOSH                       ; 7942 ee0206
+_NOBUT_24   and #$0f                        ; 7945 290f
+            sta VSCROL                      ; 7947 8d05d4    Vertical scroll enable
+            bne _NOBUT_25                   ; 794a d00d
+            lda OFFLO                       ; 794c a5b9    How far to offset new LMS value
             clc                             ; 794e 18
             adc #$30                        ; 794f 6930
-            sta $b9                         ; 7951 85b9
-            lda $ba                         ; 7953 a5ba
+            sta OFFLO                       ; 7951 85b9    How far to offset new LMS value
+            lda OFFHI                       ; 7953 a5ba
             adc #$00                        ; 7955 6900
-            sta $ba                         ; 7957 85ba
-_CX25       ldy #$09                        ; 7959 a009
-_CX26       lda ($b0),y                     ; 795b b1b0
+            sta OFFHI                       ; 7957 85ba
+_NOBUT_25   ldy #$09                        ; 7959 a009
+_NOBUT_26   lda (DLSTPTL),y                 ; 795b b1b0    Zero page pointer to display list
             clc                             ; 795d 18
-            adc $b9                         ; 795e 65b9
-            sta ($b0),y                     ; 7960 91b0
+            adc OFFLO                       ; 795e 65b9    How far to offset new LMS value
+            sta (DLSTPTL),y                 ; 7960 91b0    Zero page pointer to display list
             iny                             ; 7962 c8
-            lda ($b0),y                     ; 7963 b1b0
-            adc $ba                         ; 7965 65ba
-            sta ($b0),y                     ; 7967 91b0
+            lda (DLSTPTL),y                 ; 7963 b1b0    Zero page pointer to display list
+            adc OFFHI                       ; 7965 65ba
+            sta (DLSTPTL),y                 ; 7967 91b0    Zero page pointer to display list
             iny                             ; 7969 c8
             iny                             ; 796a c8
             cpy #$27                        ; 796b c027
-            bne _CX26                       ; 796d d0ec
-s_CY        lda $0602                       ; 796f ad0206
+            bne _NOBUT_26                   ; 796d d0ec
+ENDISR      lda XPOSH                       ; 796f ad0206
             lsr                             ; 7972 4a
-            lda $0601                       ; 7973 ad0106
+            lda YPOSL                       ; 7973 ad0106    Vert pos of upper left of screen window
             ror                             ; 7976 6a
             lsr                             ; 7977 4a
             lsr                             ; 7978 4a
             lsr                             ; 7979 4a
             cmp #$11                        ; 797a c911
-            bcs _CY1                        ; 797c b004
+            bcs _ENDISR_1                   ; 797c b004
             lda #$ff                        ; 797e a9ff
-            bmi _CY3                        ; 7980 3010
-_CY1        cmp #$1a                        ; 7982 c91a
-            bcc _CY2                        ; 7984 9004
+            bmi _ENDISR_3                   ; 7980 3010
+_ENDISR_1   cmp #$1a                        ; 7982 c91a
+            bcc _ENDISR_2                   ; 7984 9004
             lda #$02                        ; 7986 a902
-            bpl _CY3                        ; 7988 1008
-_CY2        sta $bb                         ; 798a 85bb
+            bpl _ENDISR_3                   ; 7988 1008
+_ENDISR_2   sta TEMP1                       ; 798a 85bb    all purpose temp
             inx                             ; 798c e8
             lda #$1d                        ; 798d a91d
             sec                             ; 798f 38
-            sbc $bb                         ; 7990 e5bb
-_CY3        sta $bc                         ; 7992 85bc
+            sbc TEMP1                       ; 7990 e5bb    all purpose temp
+_ENDISR_3   sta CNT1                        ; 7992 85bc    DLI counter
             lda #$00                        ; 7994 a900
-            sta $bd                         ; 7996 85bd
-            jmp $e462                       ; 7998 4c62e4
+            sta CNT2                        ; 7996 85bd    DLI counter for moveable map DLI
+            jmp XITVBV                      ; 7998 4c62e4    Exit from the VBLANK routine
             !byte $e4                                                               ; 799b .
-s_CZ        !byte $00,$00,$00,$00,$03,$03,$03,$03,$02,$02,$02,$02,$01,$01,$01,$00   ; 799c ................
-s_DA        !byte $00,$00,$03,$03,$02,$02,$01,$00                                   ; 79ac ........
-s_DB        !byte $02,$03,$03,$02,$02,$02,$01,$01,$02,$00,$00,$00                   ; 79b4 ............
-s_DC        asl                             ; 79c0 0a
+JSTP        !byte $00,$00,$00,$00,$03,$03,$03,$03,$02,$02,$02,$02,$01,$01,$01,$00   ; 799c ................
+JSTP+16     !byte $00,$00,$03,$03,$02,$02,$01,$00                                   ; 79ac ........
+DEFNC       !byte $02,$03,$03,$02,$02,$02,$01,$01,$02,$00,$00,$00                   ; 79b4 ............
+DWORDS      asl                             ; 79c0 0a
             asl                             ; 79c1 0a
             asl                             ; 79c2 0a
-            bcc _DC3                        ; 79c3 9015
+            bcc DWORDSB                     ; 79c3 9015
             tax                             ; 79c5 aa
-_DC1        lda s_AN,x                      ; 79c6 bdba58
+_DWORDS_1   lda WORDS+256,x                 ; 79c6 bdba58
             sec                             ; 79c9 38
             sbc #$20                        ; 79ca e920
-            beq _DC2                        ; 79cc f00a
-            sta s_BJ,y                      ; 79ce 995064
+            beq _DWORDS_2                   ; 79cc f00a
+            sta TXTWDW,y                    ; 79ce 995064
             iny                             ; 79d1 c8
             inx                             ; 79d2 e8
             txa                             ; 79d3 8a
             and #$07                        ; 79d4 2907
-            bne _DC1                        ; 79d6 d0ee
-_DC2        iny                             ; 79d8 c8
+            bne _DWORDS_1                   ; 79d6 d0ee
+_DWORDS_2   iny                             ; 79d8 c8
             rts                             ; 79d9 60
-_DC3        tax                             ; 79da aa
-_DC4        lda s_AM,x                      ; 79db bdba57
+DWORDSB     tax                             ; 79da aa
+_DWORDSB_1  lda WORDS,x                     ; 79db bdba57
             sec                             ; 79de 38
             sbc #$20                        ; 79df e920
-            beq _DC5                        ; 79e1 f00a
-            sta s_BJ,y                      ; 79e3 995064
+            beq _DWORDSB_2                  ; 79e1 f00a
+            sta TXTWDW,y                    ; 79e3 995064
             iny                             ; 79e6 c8
             inx                             ; 79e7 e8
             txa                             ; 79e8 8a
             and #$07                        ; 79e9 2907
-            bne _DC4                        ; 79eb d0ee
-_DC5        iny                             ; 79ed c8
+            bne _DWORDSB_1                  ; 79eb d0ee
+_DWORDSB_2  iny                             ; 79ed c8
             rts                             ; 79ee 60
-s_DD        lda #$00                        ; 79ef a900
-            sta $b3                         ; 79f1 85b3
+SWITCH      lda #$00                        ; 79ef a900
+            sta MAPHI                       ; 79f1 85b3
             lda #$27                        ; 79f3 a927
             sec                             ; 79f5 38
-            sbc $bf                         ; 79f6 e5bf
+            sbc CHUNKY                      ; 79f6 e5bf
             asl                             ; 79f8 0a
-            rol $b3                         ; 79f9 26b3
+            rol MAPHI                       ; 79f9 26b3
             asl                             ; 79fb 0a
-            rol $b3                         ; 79fc 26b3
+            rol MAPHI                       ; 79fc 26b3
             asl                             ; 79fe 0a
-            rol $b3                         ; 79ff 26b3
+            rol MAPHI                       ; 79ff 26b3
             asl                             ; 7a01 0a
-            rol $b3                         ; 7a02 26b3
-            sta $0614                       ; 7a04 8d1406
-            ldx $b3                         ; 7a07 a6b3
-            stx $0615                       ; 7a09 8e1506
+            rol MAPHI                       ; 7a02 26b3
+            sta TEMPLO                      ; 7a04 8d1406    temp word
+            ldx MAPHI                       ; 7a07 a6b3
+            stx TEMPHI                      ; 7a09 8e1506
             asl                             ; 7a0c 0a
-            rol $b3                         ; 7a0d 26b3
+            rol MAPHI                       ; 7a0d 26b3
             clc                             ; 7a0f 18
-            adc $0614                       ; 7a10 6d1406
-            sta $b2                         ; 7a13 85b2
-            lda $b3                         ; 7a15 a5b3
-            adc $0615                       ; 7a17 6d1506
+            adc TEMPLO                      ; 7a10 6d1406    temp word
+            sta MAPLO                       ; 7a13 85b2
+            lda MAPHI                       ; 7a15 a5b3
+            adc TEMPHI                      ; 7a17 6d1506
             adc #$65                        ; 7a1a 6965
-            sta $b3                         ; 7a1c 85b3
+            sta MAPHI                       ; 7a1c 85b3
             lda #$2e                        ; 7a1e a92e
             sec                             ; 7a20 38
-            sbc $be                         ; 7a21 e5be
+            sbc CNUNKX                      ; 7a21 e5be    Cursor coords (pixel frame)
             tay                             ; 7a23 a8
-            lda ($b2),y                     ; 7a24 b1b2
-            ldx $b4                         ; 7a26 a6b4
-            beq _DD1                        ; 7a28 f00a
+            lda (MAPLO),y                   ; 7a24 b1b2
+            ldx CORPS                       ; 7a26 a6b4    Number of unit under window
+            beq _SWITCH_1                   ; 7a28 f00a
             pha                             ; 7a2a 48
-            lda s_AK,x                      ; 7a2b bd7c56
-            sta ($b2),y                     ; 7a2e 91b2
+            lda SWAP,x                      ; 7a2b bd7c56
+            sta (MAPLO),y                   ; 7a2e 91b2
             pla                             ; 7a30 68
-            sta s_AK,x                      ; 7a31 9d7c56
-_DD1        rts                             ; 7a34 60
-s_DE        lda #$00                        ; 7a35 a900
-            ldy $0619                       ; 7a37 ac1906
+            sta SWAP,x                      ; 7a31 9d7c56
+_SWITCH_1   rts                             ; 7a34 60
+CLRP1       lda #$00                        ; 7a35 a900
+            ldy STEPY                       ; 7a37 ac1906
             dey                             ; 7a3a 88
             tax                             ; 7a3b aa
-_DE1        cpy #$80                        ; 7a3c c080
-            bcs _DE2                        ; 7a3e b003
-            sta s_AE,y                      ; 7a40 998052
-_DE2        iny                             ; 7a43 c8
+_CLRP1_1    cpy #$80                        ; 7a3c c080
+            bcs _CLRP1_2                    ; 7a3e b003
+            sta PLYR1,y                     ; 7a40 998052
+_CLRP1_2    iny                             ; 7a43 c8
             inx                             ; 7a44 e8
             cpx #$0b                        ; 7a45 e00b
-            bne _DE1                        ; 7a47 d0f3
+            bne _CLRP1_1                    ; 7a47 d0f3
             rts                             ; 7a49 60
-s_DF        lda #$00                        ; 7a4a a900
-            ldy $0621                       ; 7a4c ac2106
+CLRP2       lda #$00                        ; 7a4a a900
+            ldy KRZY                        ; 7a4c ac2106
             tax                             ; 7a4f aa
-_DF1        cpy #$80                        ; 7a50 c080
-            bcs _DF2                        ; 7a52 b003
-            sta s_AF,y                      ; 7a54 990053
-_DF2        iny                             ; 7a57 c8
+_CLRP2_1    cpy #$80                        ; 7a50 c080
+            bcs _CLRP2_2                    ; 7a52 b003
+            sta PLYR2,y                     ; 7a54 990053
+_CLRP2_2    iny                             ; 7a57 c8
             inx                             ; 7a58 e8
             cpx #$0a                        ; 7a59 e00a
-            bne _DF1                        ; 7a5b d0f3
+            bne _CLRP2_1                    ; 7a5b d0f3
             rts                             ; 7a5d 60
-s_DH        lda $0624                       ; 7a5e ad2406
-            bpl _DH2                        ; 7a61 1010
+ERRCLR      lda ERRFLG                      ; 7a5e ad2406
+            bpl _ERRCLR_2                   ; 7a61 1010
             lda #$00                        ; 7a63 a900
-            sta $0624                       ; 7a65 8d2406
+            sta ERRFLG                      ; 7a65 8d2406
             ldy #$86                        ; 7a68 a086
             ldx #$1f                        ; 7a6a a21f
-_DH1        sta s_BJ,y                      ; 7a6c 995064
+_ERRCLR_1   sta TXTWDW,y                    ; 7a6c 995064
             dey                             ; 7a6f 88
             dex                             ; 7a70 ca
-            bpl _DH1                        ; 7a71 10f9
-_DH2        rts                             ; 7a73 60
-s_DI        !byte $c0,$03,$0c,$30                                                   ; 7a74 ...0
-s_DJ        !byte $04,$09,$0e,$13,$18,$03,$08,$0d,$12,$17,$02,$07,$0c,$11,$16,$01   ; 7a78 ................
+            bpl _ERRCLR_1                   ; 7a71 10f9
+_ERRCLR_2   rts                             ; 7a73 60
+BITTAB      !byte $c0,$03,$0c,$30                                                   ; 7a74 ...0
+ROTARR      !byte $04,$09,$0e,$13,$18,$03,$08,$0d,$12,$17,$02,$07,$0c,$11,$16,$01   ; 7a78 ................
             !byte $06,$0b,$10,$15,$00,$05,$0a,$0f,$14,$03,$08,$0d,$12,$17,$02,$07   ; 7a88 ................
             !byte $0c,$11,$16,$01,$06,$0b,$10,$15,$00,$05,$0a,$0f,$14,$00,$00,$00   ; 7a98 ................
             !byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00   ; 7aa8 ................
@@ -3053,34 +3053,34 @@ s_DJ        !byte $04,$09,$0e,$13,$18,$03,$08,$0d,$12,$17,$02,$07,$0c,$11,$16,$0
             !byte $60,$8d,$09,$d4,$4c,$ae,$7b,$c9,$03,$d0,$10,$ad,$06,$06,$45,$4f   ; 7b58 `...L.{.......EO
             !byte $25,$4e,$8d,$0a,$d4,$8d,$1a,$d0,$4c,$ae,$7b,$c9,$0d,$d0,$14,$a2   ; 7b68 %N......L.{.....
             !byte $e0,$a9                                                           ; 7b78 ..
-s_DK        !byte $22,$45,$4f,$25,$4e,$8d,$0a,$d4,$8d,$18,$d0,$8e,$09,$d4,$4c,$ae   ; 7b7a "EO%N.........L.
+__X__       !byte $22,$45,$4f,$25,$4e,$8d,$0a,$d4,$8d,$18,$d0,$8e,$09,$d4,$4c,$ae   ; 7b7a "EO%N.........L.
             !byte $7b,$c9,$0e,$d0,$0f,$a9,$8a,$45,$4f,$25,$4e,$8d,$0a,$d4,$8d,$1a   ; 7b8a {......EO%N.....
             !byte $d0,$4c,$ae,$7b,$c9,$10,$d0,$0c,$a9,$d4,$45,$4f,$25,$4e,$48,$68   ; 7b9a .L.{......EO%NHh
             !byte $ea,$8d,$1a,$d0,$68,$aa,$68,$40                                   ; 7baa ....h.h@
-s_DL        tax                             ; 7bb2 aa
+DNUMBR      tax                             ; 7bb2 aa
             clc                             ; 7bb3 18
-            lda s_AQ,x                      ; 7bb4 bd085a
-            beq _DL1                        ; 7bb7 f007
+            lda HDIGIT,x                    ; 7bb4 bd085a
+            beq _DNUMBR_1                   ; 7bb7 f007
             adc #$10                        ; 7bb9 6910
-            sta s_BJ,y                      ; 7bbb 995064
+            sta TXTWDW,y                    ; 7bbb 995064
             iny                             ; 7bbe c8
             sec                             ; 7bbf 38
-_DL1        lda s_AR,x                      ; 7bc0 bd085b
-            bcs _DL2                        ; 7bc3 b002
-            beq _DL3                        ; 7bc5 f007
-_DL2        clc                             ; 7bc7 18
+_DNUMBR_1   lda TDIGIT,x                    ; 7bc0 bd085b
+            bcs _DNUMBR_2                   ; 7bc3 b002
+            beq _DNUMBR_3                   ; 7bc5 f007
+_DNUMBR_2   clc                             ; 7bc7 18
             adc #$10                        ; 7bc8 6910
-            sta s_BJ,y                      ; 7bca 995064
+            sta TXTWDW,y                    ; 7bca 995064
             iny                             ; 7bcd c8
-_DL3        lda s_AS,x                      ; 7bce bd085c
+_DNUMBR_3   lda ODIGIT,x                    ; 7bce bd085c
             clc                             ; 7bd1 18
             adc #$10                        ; 7bd2 6910
-            sta s_BJ,y                      ; 7bd4 995064
+            sta TXTWDW,y                    ; 7bd4 995064
             iny                             ; 7bd7 c8
             rts                             ; 7bd8 60
-s_DM        !byte $00,$01,$02,$03,$04,$09,$0e,$13,$18,$17,$16,$15,$14,$0f,$0a,$05   ; 7bd9 ................
+NDX         !byte $00,$01,$02,$03,$04,$09,$0e,$13,$18,$17,$16,$15,$14,$0f,$0a,$05   ; 7bd9 ................
             !byte $06,$07,$08,$0d,$12,$11,$10,$0b                                   ; 7be9 ........
-s_DN        !byte $01                                                               ; 7bf1 .
-s_DO        !byte $00,$ff,$00,$01                                                   ; 7bf2 ....
-s_DP        !byte $01,$01,$01,$01,$01,$01,$02,$02,$01,$00,$00,$e0,$02,$e1,$02,$00   ; 7bf6 ................
+XINC        !byte $01                                                               ; 7bf1 .
+YINC        !byte $00,$ff,$00,$01                                                   ; 7bf2 ....
+OFFNC       !byte $01,$01,$01,$01,$01,$01,$02,$02,$01,$00,$00,$e0,$02,$e1,$02,$00   ; 7bf6 ................
             !byte $6e                                                               ; 7c06 n

@@ -1,9 +1,66 @@
 {
     "startaddress": "8000",
     "entrypoints": [
-        {"addr": "8000", "mode": "data"},
-        {"addr": "9000", "mode": "data", "label": "fonts"},
-        {"addr": "b91f", "mode": "code", "label": "init"},
-        {"addr": "b920", "mode": "code", "label": "start"}
+        {"addr": "89", "symbol": "TRCOLR", "mode": "data"},
+        {"addr": "8f", "symbol": "DAY", "mode": "data"},
+        {"addr": "90", "symbol": "MONTH", "mode": "data"},
+
+
+        {"addr": "2bb1", "symbol": "CORPSX", "mode": "data"},
+        {"addr": "2c58", "symbol": "CORPSY", "mode": "data"},
+        {"addr": "2cff", "symbol": "MSTRNG", "mode": "data"},
+        {"addr": "2da6", "symbol": "ARRIVE", "mode": "data"},
+        {"addr": "2e4d", "symbol": "CORPT", "mode": "data"},
+
+        {"addr": "3027", "symbol": "YEAR", "mode": "data"},
+
+        {"addr": "30dc", "symbol": "EXEC", "mode": "data"},
+        {"addr": "32d2", "symbol": "HMORDS", "mode": "data"},
+
+        {"addr": "8000", "symbol": "EMPTY", "mode": "data"},
+
+        {"addr": "9000", "symbol": "FONTDATA", "mode": "data", "length": "0x400"},
+        {"addr": "9400", "symbol": "MAPRLE_2400", "mode": "data"},
+        {"addr": "973a", "symbol": "CORPSX_2bb1", "mode": "data"},
+        {"addr": "97e1", "symbol": "CORPSY_2c58", "mode": "data"},
+        {"addr": "9888", "symbol": "MSTRNG_2cff", "mode": "data"},
+        {"addr": "992f", "symbol": "ARRIVE_2da6", "mode": "data"},
+        {"addr": "99d6", "symbol": "CORPT_2e4d", "mode": "data"},
+
+        {"addr": "9a7d", "symbol": "CORPNO_2ef4", "mode": "data"},
+        {"addr": "9b24", "symbol": "RELOC_2f9b", "mode": "data"},
+
+        {"addr": "9b74", "symbol": "RELOC_2feb", "mode": "data"},
+        {"addr": "9b7d", "symbol": "RELOC_2ff4", "mode": "data"},
+        {"addr": "9b82", "symbol": "RELOC_2ff9", "mode": "data"},
+        {"addr": "9b87", "symbol": "RELOC_2ffe", "mode": "data"},
+
+        {"addr": "9be0", "symbol": "SSNCOD", "mode": "data"},
+        {"addr": "9bed", "symbol": "TRNTAB", "mode": "data"},
+        {"addr": "9c29", "symbol": "BHX1", "mode": "data"},
+        {"addr": "9c3f", "symbol": "BHY1", "mode": "data"},
+        {"addr": "9c55", "symbol": "BHX2", "mode": "data"},
+        {"addr": "9c6b", "symbol": "BHY2", "mode": "data"},
+
+        {"addr": "9d67", "symbol": "MONTHS", "mode": "data"},
+        {"addr": "9e8e", "symbol": "ERRMSG", "mode": "data"},
+        {"addr": "9f82", "symbol": "CITIES", "mode": "data"},
+        {"addr": "a021", "symbol": "MONLEN", "mode": "data"},
+        {"addr": "a038", "symbol": "MASKO", "mode": "data"},
+        {"addr": "a03c", "symbol": "YADD", "mode": "data"},
+        {"addr": "a03d", "symbol": "XADD", "mode": "data"},
+        {"addr": "a03e", "symbol": "XINC", "mode": "data"},
+        {"addr": "a03f", "symbol": "YINC", "mode": "data"},
+        {"addr": "a043", "symbol": "TRTAB", "mode": "data"},
+
+        {"addr": "ab74", "symbol": "DINGO", "mode": "code"},
+
+        {"addr": "b91f", "symbol": "INIT", "mode": "code"},
+        {"addr": "b920", "symbol": "START", "mode": "code", "comm": "Main entry point"},
+        {"addr": "b1a8", "symbol": "RPTBYTE", "mode": "data", "comm": "byte x1yz vvvv (y+z>0) => repeat byte xy * (vvvv + 1) "},
+        {"addr": "b1ac", "symbol": "INCFR", "mode": "code"},
+        {"addr": "b1b3", "symbol": "STTOYINCTO", "mode": "code"},
+
+        {"addr": "bfa0", "symbol": "INCDATE", "mode": "code"}
     ]
 }
