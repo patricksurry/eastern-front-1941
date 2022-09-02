@@ -12,6 +12,11 @@ TODO
 - swith maplabel colors to atari hexcolors
 - score in info window instead of console
 
+- extras should just be a class tag with visibility on/off
+
+- add a health meter with mstrng/cstrng bar scaled to 255 as height or width of unit
+- show movement cost or range somehow?
+
 - implement AI
 */
 
@@ -342,6 +347,14 @@ function nextTurn() {
         .on('mouseover', mapinfo)
         .filter(d => d.unitid !== null)
         .classed('chr-unit', true)
+        .append('div')
+        .classed('chr-overlay', true)
+        .append('div')
+        .classed('chr-mstrng', true)
+        .style('width', d => (90*oob[d.unitid].mstrng/255) + '%')
+        .append('div')
+        .classed('chr-cstrng', true)
+        .style('width', d => (100*oob[d.unitid].cstrng/oob[d.unitid].mstrng) + '%');
 
     console.log(JSON.stringify(gameState));
     console.log('Current score', score());

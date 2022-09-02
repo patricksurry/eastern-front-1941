@@ -92,3 +92,26 @@
 .chr-unit {
     z-index: 2;
 }
+.chr-overlay {
+    position:  absolute;
+    bottom: 0;
+    right: 0;
+    width: 6px;
+    height: 6px;
+    padding: 0.5px;
+}
+.chr-mstrng {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    margin: 5%;
+    width: 90%;
+    height: 1px;
+    background-color: rgb(50,205,50, 0.4);
+    border-radius: 1px;
+    overflow: hidden;
+}
+.chr-cstrng {
+    background-color: rgb(50,205,50, 0.8);
+    height: 100%;
+}

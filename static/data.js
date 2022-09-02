@@ -292,7 +292,7 @@ M.ASM:8600 PSXVAL .BYTE $E0,0,0,$33,$78,$D6,$10,$27,$40,0,1,15,6,41,0,1
                 (c, j) => Object.assign({unitid: null}, mapencoding[i <= 25 ? 0: 1][c])
             )
         ),
-    // order-of-battle table with 159 units comes from D.ASM:0x5400
+    // order-of-battle table with 159 units (55 german) comes from D.ASM:0x5400
     // in the original game each column is stored separately,
     // we've transposed into a list of rows which we map to unit objects
     oob = [
