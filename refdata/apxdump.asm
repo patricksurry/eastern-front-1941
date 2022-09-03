@@ -397,7 +397,7 @@ _C_10       ldy NBVAL                        ; 4a45 ac3a06  another best value
             jmp EVALSQ                       ; 4a4c 4cd64a  
 
 _C_11       ldy TRNTYP                       ; 4a4f a4cd    
-            lda DEFNC,y                      ; 4a51 b9b479  
+            lda DEFNC,y                      ; 4a51 b9b479  Defensive combat modifiers; 1 => half, 2 => no effect, 3 => double
             clc                              ; 4a54 18      
             adc NBVAL                        ; 4a55 6d3a06  another best value
             tay                              ; 4a58 a8      
@@ -795,7 +795,7 @@ _COMBAT_2   ldy UNITNO                       ; 4ee8 a4c3
             ldx DEFNDR                       ; 4eec a6c4    
             lda SWAP,x                       ; 4eee bd7c56  terrain code underneath unit
             pha                              ; 4ef1 48      
-            lda #$ff                         ; 4ef2 a9ff    
+            lda #$ff                         ; 4ef2 a9ff    Choose solid red or white square
             cpx #$37                         ; 4ef4 e037    
             bcs _COMBAT_3                    ; 4ef6 b002    
             lda #$7f                         ; 4ef8 a97f    
@@ -805,7 +805,7 @@ _COMBAT_3   sta SWAP,x                       ; 4efa 9d7c56  terrain code underne
             sta CHUNKX                       ; 4f02 85be    Cursor coords (pixel frame)
             lda CORPSY,x                     ; 4f04 bd9f54  latitude of all units
             sta CHUNKY                       ; 4f07 85bf    
-            jsr SWITCH                       ; 4f09 20ef79  
+            jsr SWITCH                       ; 4f09 20ef79  Swap map CHUNKX/Y with SWAP,x; x = CORPS, y = map offset
             ldy #$08                         ; 4f0c a008    
             ldx #$8f                         ; 4f0e a28f    
 _COMBAT_4   stx AUDC1/POT1                   ; 4f10 8e01d2  Audio channel one control
@@ -818,97 +818,97 @@ _COMBAT_4   stx AUDC1/POT1                   ; 4f10 8e01d2  Audio channel one co
             dex                              ; 4f1e ca      
             cpx #$7f                         ; 4f1f e07f    
             bne _COMBAT_4                    ; 4f21 d0ed    
-            jsr SWITCH                       ; 4f23 20ef79  
+            jsr SWITCH                       ; 4f23 20ef79  Swap map CHUNKX/Y with SWAP,x; x = CORPS, y = map offset
             ldx DEFNDR                       ; 4f26 a6c4    
             pla                              ; 4f28 68      
             sta SWAP,x                       ; 4f29 9d7c56  terrain code underneath unit
-            jsr TERRTY                       ; 4f2c 206973  
-            ldx DEFNC,x                      ; 4f2f beb479  
+            jsr TERRTY                       ; 4f2c 206973  convert map chr in TRNCOD => TRNTYP, also y reg
+            ldx DEFNC,x                      ; 4f2f beb479  Defensive combat modifiers; 1 => half, 2 => no effect, 3 => double
             lda CSTRNG,y                     ; 4f32 b9dd55  combat strengths
-            lsr                              ; 4f35 4a      
+            lsr                              ; 4f35 4a      adjust for terrain, max 255
 _COMBAT_5   dex                              ; 4f36 ca      
             beq _COMBAT_6                    ; 4f37 f005    
             rol                              ; 4f39 2a      
             bcc _COMBAT_5                    ; 4f3a 90fa    
             lda #$ff                         ; 4f3c a9ff    
 _COMBAT_6   ldx HMORDS,x                     ; 4f3e be755d  how many orders queued for each unit
-            beq _COMBAT_7                    ; 4f41 f001    
-            lsr                              ; 4f43 4a      
-_COMBAT_7   cmp SKREST/RANDOM                ; 4f44 cd0ad2  Reset serial port status register / Random byte
-            bcc _COMBAT_10                   ; 4f47 9017    
+            beq DOBATL                       ; 4f41 f001    
+            lsr                              ; 4f43 4a      penalty if moving
+DOBATL      cmp SKREST/RANDOM                ; 4f44 cd0ad2  evaluate defender's strike
+            bcc ATAKR                        ; 4f47 9017    
             ldx ARMY                         ; 4f49 a6c2    
             dec MSTRNG,x                     ; 4f4b de3e55  muster strengths
             lda CSTRNG,x                     ; 4f4e bddd55  combat strengths
             sbc #$05                         ; 4f51 e905    
             sta CSTRNG,x                     ; 4f53 9ddd55  combat strengths
-            beq _COMBAT_8                    ; 4f56 f002    
-            bcs _COMBAT_9                    ; 4f58 b003    
-_COMBAT_8   jmp DEAD                         ; 4f5a 4cab51  
+            beq _DOBATL_1                    ; 4f56 f002    
+            bcs _DOBATL_2                    ; 4f58 b003    
+_DOBATL_1   jmp DEAD                         ; 4f5a 4cab51  
 
-_COMBAT_9   jsr BRKCHK                       ; 4f5d 20ce51  
-_COMBAT_10  ldx ARMY                         ; 4f60 a6c2    
+_DOBATL_2   jsr BRKCHK                       ; 4f5d 20ce51  Maybe break unit X, reset orders, suffer damange
+ATAKR       ldx ARMY                         ; 4f60 a6c2    evaluate attacker's strike
             lda CORPSX,x                     ; 4f62 bd0054  longitude of all units
             sta LON                          ; 4f65 85cb    
             lda CORPSY,x                     ; 4f67 bd9f54  latitude of all units
             sta LAT                          ; 4f6a 85ca    
             jsr TERR                         ; 4f6c 204072  
-            jsr TERRTY                       ; 4f6f 206973  
-            lda OFFNC,y                      ; 4f72 b9f67b  
+            jsr TERRTY                       ; 4f6f 206973  convert map chr in TRNCOD => TRNTYP, also y reg
+            lda OFFNC,y                      ; 4f72 b9f67b  Offence combat modifiers, 1 => half, 2 => no effect
             tay                              ; 4f75 a8      
             ldx ARMY                         ; 4f76 a6c2    
             lda CSTRNG,x                     ; 4f78 bddd55  combat strengths
             dey                              ; 4f7b 88      
-            beq _COMBAT_11                   ; 4f7c f001    
+            beq _ATAKR_1                     ; 4f7c f001    
             lsr                              ; 4f7e 4a      
-_COMBAT_11  cmp SKREST/RANDOM                ; 4f7f cd0ad2  Reset serial port status register / Random byte
-            bcc _COMBAT_13                   ; 4f82 9014    
-            ldx DEFNDR                       ; 4f84 a6c4    
+_ATAKR_1    cmp SKREST/RANDOM                ; 4f7f cd0ad2  Reset serial port status register / Random byte
+            bcc _ATAKR_3                     ; 4f82 9014    
+            ldx DEFNDR                       ; 4f84 a6c4    attacker strikes defender
             dec MSTRNG,x                     ; 4f86 de3e55  muster strengths
             lda CSTRNG,x                     ; 4f89 bddd55  combat strengths
             sbc #$05                         ; 4f8c e905    
             sta CSTRNG,x                     ; 4f8e 9ddd55  combat strengths
-            beq _COMBAT_12                   ; 4f91 f002    
-            bcs _COMBAT_14                   ; 4f93 b006    
-_COMBAT_12  jsr DEAD                         ; 4f95 20ab51  
-_COMBAT_13  jmp ENDCOM                       ; 4f98 4c1c50  
+            beq _ATAKR_2                     ; 4f91 f002    
+            bcs _ATAKR_4                     ; 4f93 b006    
+_ATAKR_2    jsr DEAD                         ; 4f95 20ab51  
+_ATAKR_3    jmp ENDCOM                       ; 4f98 4c1c50  
 
-_COMBAT_14  jsr BRKCHK                       ; 4f9b 20ce51  
-            bcc _COMBAT_13                   ; 4f9e 90f8    
+_ATAKR_4    jsr BRKCHK                       ; 4f9b 20ce51  Maybe break unit X, reset orders, suffer damange
+            bcc _ATAKR_3                     ; 4f9e 90f8    
             ldy ARMY                         ; 4fa0 a4c2    
             lda WHORDS,y                     ; 4fa2 b9145e  what unit orders are (2 bits per order)
             and #$03                         ; 4fa5 2903    
             tay                              ; 4fa7 a8      
-            jsr RETRET                       ; 4fa8 202250  
-            bcc _COMBAT_18                   ; 4fab 9054    
-            beq _COMBAT_17                   ; 4fad f030    
+            jsr RETRET                       ; 4fa8 202250  retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
+            bcc VICCOM                       ; 4fab 9054    
+            beq _ATAKR_7                     ; 4fad f030    
             ldy #$01                         ; 4faf a001    
             cpx #$37                         ; 4fb1 e037    
-            bcs _COMBAT_15                   ; 4fb3 b002    
+            bcs _ATAKR_5                     ; 4fb3 b002    
             ldy #$03                         ; 4fb5 a003    
-_COMBAT_15  jsr RETRET                       ; 4fb7 202250  
-            bcc _COMBAT_18                   ; 4fba 9045    
-            beq _COMBAT_17                   ; 4fbc f021    
+_ATAKR_5    jsr RETRET                       ; 4fb7 202250  retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
+            bcc VICCOM                       ; 4fba 9045    
+            beq _ATAKR_7                     ; 4fbc f021    
             ldy #$02                         ; 4fbe a002    
-            jsr RETRET                       ; 4fc0 202250  
-            bcc _COMBAT_18                   ; 4fc3 903c    
-            beq _COMBAT_17                   ; 4fc5 f018    
+            jsr RETRET                       ; 4fc0 202250  retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
+            bcc VICCOM                       ; 4fc3 903c    
+            beq _ATAKR_7                     ; 4fc5 f018    
             ldy #$00                         ; 4fc7 a000    
-            jsr RETRET                       ; 4fc9 202250  
-            bcc _COMBAT_18                   ; 4fcc 9033    
-            beq _COMBAT_17                   ; 4fce f00f    
+            jsr RETRET                       ; 4fc9 202250  retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
+            bcc VICCOM                       ; 4fcc 9033    
+            beq _ATAKR_7                     ; 4fce f00f    
             ldy #$03                         ; 4fd0 a003    
             cpx #$37                         ; 4fd2 e037    
-            bcs _COMBAT_16                   ; 4fd4 b002    
+            bcs _ATAKR_6                     ; 4fd4 b002    
             ldy #$01                         ; 4fd6 a001    
-_COMBAT_16  jsr RETRET                       ; 4fd8 202250  
-            bcc _COMBAT_18                   ; 4fdb 9024    
+_ATAKR_6    jsr RETRET                       ; 4fd8 202250  retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
+            bcc VICCOM                       ; 4fdb 9024    
             bne ENDCOM                       ; 4fdd d03d    
-_COMBAT_17  stx CORPS                        ; 4fdf 86b4    Number of unit under window
+_ATAKR_7    stx CORPS                        ; 4fdf 86b4    Number of unit under window
             lda CORPSX,x                     ; 4fe1 bd0054  longitude of all units
             sta CHUNKX                       ; 4fe4 85be    Cursor coords (pixel frame)
             lda CORPSY,x                     ; 4fe6 bd9f54  latitude of all units
             sta CHUNKY                       ; 4fe9 85bf    
-            jsr SWITCH                       ; 4feb 20ef79  
+            jsr SWITCH                       ; 4feb 20ef79  Swap map CHUNKX/Y with SWAP,x; x = CORPS, y = map offset
             ldx CORPS                        ; 4fee a6b4    Number of unit under window
             lda LAT                          ; 4ff0 a5ca    
             sta CORPSY,x                     ; 4ff2 9d9f54  latitude of all units
@@ -916,8 +916,8 @@ _COMBAT_17  stx CORPS                        ; 4fdf 86b4    Number of unit under
             lda LON                          ; 4ff7 a5cb    
             sta CORPSX,x                     ; 4ff9 9d0054  longitude of all units
             sta CHUNKX                       ; 4ffc 85be    Cursor coords (pixel frame)
-            jsr SWITCH                       ; 4ffe 20ef79  
-_COMBAT_18  ldx ARMY                         ; 5001 a6c2    
+            jsr SWITCH                       ; 4ffe 20ef79  Swap map CHUNKX/Y with SWAP,x; x = CORPS, y = map offset
+VICCOM      ldx ARMY                         ; 5001 a6c2    
             stx CORPS                        ; 5003 86b4    Number of unit under window
             lda CORPSX,x                     ; 5005 bd0054  longitude of all units
             sta CHUNKX                       ; 5008 85be    Cursor coords (pixel frame)
@@ -933,7 +933,7 @@ ENDCOM      ldx ARMY                         ; 501c a6c2
             inc EXEC,x                       ; 501e fe616d  unit execution times
             rts                              ; 5021 60      
 
-RETRET      lda CORPSX,x                     ; 5022 bd0054  longitude of all units
+RETRET      lda CORPSX,x                     ; 5022 bd0054  retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
             clc                              ; 5025 18      
             adc XINC,y                       ; 5026 79f27b  
             sta LON                          ; 5029 85cb    
@@ -942,7 +942,7 @@ RETRET      lda CORPSX,x                     ; 5022 bd0054  longitude of all uni
             adc YINC,y                       ; 502f 79f17b  note YINC/XINC overlap
             sta LAT                          ; 5032 85ca    
             jsr TERR                         ; 5034 204072  
-            jsr TERRTY                       ; 5037 206973  
+            jsr TERRTY                       ; 5037 206973  convert map chr in TRNCOD => TRNTYP, also y reg
             ldx DEFNDR                       ; 503a a6c4    
             lda UNITNO                       ; 503c a5c3    
             bne _RETRET_4                    ; 503e d03d    
@@ -1138,10 +1138,10 @@ DEAD        lda #$00                         ; 51ab a900
             sta CHUNKX                       ; 51c3 85be    Cursor coords (pixel frame)
             lda CORPSY,x                     ; 51c5 bd9f54  latitude of all units
             sta CHUNKY                       ; 51c8 85bf    
-            jsr SWITCH                       ; 51ca 20ef79  
+            jsr SWITCH                       ; 51ca 20ef79  Swap map CHUNKX/Y with SWAP,x; x = CORPS, y = map offset
             rts                              ; 51cd 60      
 
-BRKCHK      cpx #$37                         ; 51ce e037    
+BRKCHK      cpx #$37                         ; 51ce e037    Maybe break unit X, reset orders, suffer damange
             bcs _BRKCHK_1                    ; 51d0 b00e    
             lda CORPT,x                      ; 51d2 bdca58  codes for unit types
             and #$f0                         ; 51d5 29f0    
@@ -1924,7 +1924,7 @@ _ENDSSN_1   lda ARRIVE,x                     ; 6fed bd1b57  arrival turns
             bcs _ENDSSN_2                    ; 700b b005    
             lda #$0a                         ; 700d a90a    
             sta TXTWDW+36                    ; 700f 8d7464  
-_ENDSSN_2   jsr SWITCH                       ; 7012 20ef79  
+_ENDSSN_2   jsr SWITCH                       ; 7012 20ef79  Swap map CHUNKX/Y with SWAP,x; x = CORPS, y = map offset
             jmp __O__                        ; 7015 4c2070  
 
 _ENDSSN_3   lda TURN                         ; 7018 a5c9    
@@ -2100,7 +2100,7 @@ _Q_6        ldx ARMY                         ; 7150 a6c2
             lda ZOC                          ; 7177 ad9406  
             cmp #$02                         ; 717a c902    
             bcs _Q_3                         ; 717c b0ba    
-_Q_7        jsr SWITCH                       ; 717e 20ef79  
+_Q_7        jsr SWITCH                       ; 717e 20ef79  Swap map CHUNKX/Y with SWAP,x; x = CORPS, y = map offset
             ldx CORPS                        ; 7181 a6b4    Number of unit under window
             lda LAT                          ; 7183 a5ca    
             sta CHUNKY                       ; 7185 85bf    
@@ -2108,7 +2108,7 @@ _Q_7        jsr SWITCH                       ; 717e 20ef79
             lda LON                          ; 718a a5cb    
             sta CHUNKX                       ; 718c 85be    Cursor coords (pixel frame)
             sta CORPSX,x                     ; 718e 9d0054  longitude of all units
-            jsr SWITCH                       ; 7191 20ef79  
+            jsr SWITCH                       ; 7191 20ef79  Swap map CHUNKX/Y with SWAP,x; x = CORPS, y = map offset
             ldx ARMY                         ; 7194 a6c2    
             lda #$ff                         ; 7196 a9ff    
             sta EXEC,x                       ; 7198 9d616d  unit execution times
@@ -2286,7 +2286,7 @@ __T__       lda CORPSX,x                     ; 72de bd0054  longitude of all uni
             adc YADD,y                       ; 7308 79e65f  
             sta LAT                          ; 730b 85ca    
             jsr TERR                         ; 730d 204072  
-            jsr TERRTY                       ; 7310 206973  
+            jsr TERRTY                       ; 7310 206973  convert map chr in TRNCOD => TRNTYP, also y reg
             lda UNTCD1                       ; 7313 ad3006  
             and #$3f                         ; 7316 293f    
             ldx #$00                         ; 7318 a200    
@@ -2329,7 +2329,7 @@ _T_3        dey                              ; 7365 88
             bpl _T_2                         ; 7366 10d7    
 _T_4        rts                              ; 7368 60      
 
-TERRTY      ldy #$00                         ; 7369 a000    
+TERRTY      ldy #$00                         ; 7369 a000    convert map chr in TRNCOD => TRNTYP, also y reg
             lda TRNCOD                       ; 736b ad2b06  
             beq _TERRTY_4                    ; 736e f043    
             cmp #$7f                         ; 7370 c97f    
@@ -2462,7 +2462,7 @@ _VBISRV_6   sta TXTWDW+8,x                   ; 7468 9d5864
             clc                              ; 7473 18      
             adc RTCLOK2                      ; 7474 6514    One tick per VBI (60/sec)
             sta TIMSCL                       ; 7476 8d1306  frame to scroll in
-            jsr SWITCH                       ; 7479 20ef79  
+            jsr SWITCH                       ; 7479 20ef79  Swap map CHUNKX/Y with SWAP,x; x = CORPS, y = map offset
             lda #$00                         ; 747c a900    
             sta CORPS                        ; 747e 85b4    Number of unit under window
             jsr CLRP1                        ; 7480 20357a  
@@ -2706,7 +2706,7 @@ _U_4        jsr DWORDS                       ; 764e 20c079
             ldx CORPS                        ; 767c a6b4    Number of unit under window
             lda CSTRNG,x                     ; 767e bddd55  combat strengths
             jsr DNUMBR                       ; 7681 20b27b  
-            jsr SWITCH                       ; 7684 20ef79  
+            jsr SWITCH                       ; 7684 20ef79  Swap map CHUNKX/Y with SWAP,x; x = CORPS, y = map offset
             lda CORPS                        ; 7687 a5b4    Number of unit under window
             cmp #$37                         ; 7689 c937    
             bcc _U_5                         ; 768b 9007    
@@ -3093,7 +3093,7 @@ JSTP  ; Dirs to spiral around 5x5 square (incl 3x3 steps)
     !byte $00,$00,$00,$00,$03,$03,$03,$03,$02,$02,$02,$02,$01,$01,$01,$00   ; 799c ................
 JSTP+16  ; Dirs to spiral from loc around 3x3 (reverse order)
     !byte $00,$00,$03,$03,$02,$02,$01,$00                                   ; 79ac ........
-DEFNC
+DEFNC  ; Defensive combat modifiers; 1 => half, 2 => no effect, 3 => double
     !byte $02,$03,$03,$02,$02,$02,$01,$01,$02,$00,$00,$00                   ; 79b4 ............
 
 DWORDS      asl                              ; 79c0 0a      
@@ -3128,7 +3128,7 @@ _DWORDSB_1  lda WORDS,x                      ; 79db bdba57  various words for me
 _DWORDSB_2  iny                              ; 79ed c8      
             rts                              ; 79ee 60      
 
-SWITCH      lda #$00                         ; 79ef a900    
+SWITCH      lda #$00                         ; 79ef a900    Swap map CHUNKX/Y with SWAP,x; x = CORPS, y = map offset
             sta MAPHI                        ; 79f1 85b3    
             lda #$27                         ; 79f3 a927    calc map offset $6500 + (#$27-CHUNKY)*48 + (#$2e-CHUNKX)
             sec                              ; 79f5 38      
@@ -3339,6 +3339,6 @@ YINC  ; note YINC/XINC overlap
     !byte $01                                                               ; 7bf1 .
 XINC
     !byte $00,$ff,$00,$01                                                   ; 7bf2 ....
-OFFNC
-    !byte $01,$01,$01,$01,$01,$01,$02,$02,$01,$00,$00,$e0,$02,$e1,$02,$00   ; 7bf6 ...........`.a..
-    !byte $6e                                                               ; 7c06 n
+OFFNC  ; Offence combat modifiers, 1 => half, 2 => no effect
+    !byte $01,$01,$01,$01,$01,$01,$02,$02,$01,$00                           ; 7bf6 ..........
+    !byte $00,$e0,$02,$e1,$02,$00,$6e                                       ; 7c00 .`.a..n

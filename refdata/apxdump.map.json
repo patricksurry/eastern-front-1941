@@ -162,12 +162,20 @@
 
         {"addr": "4ed8", "symbol": "COMBAT", "mode": "code"},
         {"addr": "4edf", "comm": "Finns can't attack"},
+        {"addr": "4ef2", "comm": "Choose solid red or white square"},
+
+        {"addr": "4f35", "comm": "adjust for terrain, max 255"},
+        {"addr": "4f43", "comm": "penalty if moving"},
+        {"addr": "4f44", "symbol": "DOBATL", "mode": "code", "comm": "evaluate defender's strike"},
+        {"addr": "4f60", "symbol": "ATAKR", "mode": "code", "comm": "evaluate attacker's strike"},
+        {"addr": "4f84", "comm": "attacker strikes defender"},
+        {"addr": "5001", "symbol": "VICCOM", "mode": "code"},
         {"addr": "501c", "symbol": "ENDCOM", "mode": "code"},
-        {"addr": "5022", "symbol": "RETRET", "mode": "code"},
+        {"addr": "5022", "symbol": "RETRET", "mode": "code", "comm": "retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked"},
         {"addr": "5091", "symbol": "SUPPLY", "mode": "code"},
         {"addr": "5140", "symbol": "CHKZOC", "mode": "code"},
         {"addr": "51ab", "symbol": "DEAD", "mode": "code"},
-        {"addr": "51ce", "symbol": "BRKCHK", "mode": "code"},
+        {"addr": "51ce", "symbol": "BRKCHK", "mode": "code", "comm": "Maybe break unit X, reset orders, suffer damange"},
 
         {"addr": "51ff", "symbol": "PLYR0-1", "mode": "data"},
 
@@ -236,7 +244,7 @@
         {"addr": "7240", "symbol": "TERR", "mode": "code"},
         {"addr": "7246", "symbol": "TERRB", "mode": "code"},
         {"addr": "72d1", "symbol": "CALCEXEC", "mode": "code", "comm": "init calc EXEC,x for next order (was DINGO)"},
-        {"addr": "7369", "symbol": "TERRTY", "mode": "code"},
+        {"addr": "7369", "symbol": "TERRTY", "mode": "code", "comm": "convert map chr in TRNCOD => TRNTYP, also y reg"},
         {"addr": "73b6", "symbol": "ZPVAL", "mode": "data", "comm": "init for DLSTPT/2, MAP/2, CORPS, CURS{X|Y}/2"},
         {"addr": "73bf", "symbol": "PSXVAL", "mode": "data"},
         {"addr": "73cf", "symbol": "COLTAB", "mode": "data"},
@@ -254,10 +262,10 @@
         {"addr": "796f", "symbol": "ENDISR", "mode": "code"},
         {"addr": "799c", "symbol": "JSTP", "mode": "data", "comm": "Dirs to spiral around 5x5 square (incl 3x3 steps)"},
         {"addr": "79ac", "symbol": "JSTP+16", "mode": "data", "comm": "Dirs to spiral from loc around 3x3 (reverse order)"},
-        {"addr": "79b4", "symbol": "DEFNC", "mode": "data"},
+        {"addr": "79b4", "symbol": "DEFNC", "mode": "data", "comm": "Defensive combat modifiers; 1 => half, 2 => no effect, 3 => double"},
         {"addr": "79c0", "symbol": "DWORDS", "mode": "code"},
         {"addr": "79da", "symbol": "DWORDSB", "mode": "code"},
-        {"addr": "79ef", "symbol": "SWITCH", "mode": "code"},
+        {"addr": "79ef", "symbol": "SWITCH", "mode": "code", "comm": "Swap map CHUNKX/Y with SWAP,x; x = CORPS, y = map offset"},
         {"addr": "79f3", "comm": "calc map offset $6500 + (#$27-CHUNKY)*48 + (#$2e-CHUNKX)"},
         {"addr": "7a35", "symbol": "CLRP1", "mode": "code"},
         {"addr": "7a4a", "symbol": "CLRP2", "mode": "code"},
@@ -272,7 +280,7 @@
         {"addr": "7bd9", "symbol": "NDX", "mode": "data"},
         {"addr": "7bf1", "symbol": "YINC", "mode": "data", "comm": "note YINC/XINC overlap"},
         {"addr": "7bf2", "symbol": "XINC", "mode": "data"},
-        {"addr": "7bf6", "symbol": "OFFNC", "mode": "data"}
+        {"addr": "7bf6", "symbol": "OFFNC", "mode": "data", "comm": "Offence combat modifiers, 1 => half, 2 => no effect", "length": 10}
 
     ]
 }
