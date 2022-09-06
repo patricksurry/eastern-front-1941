@@ -1,97 +1,105 @@
-function addDir(pt, dir) {
-    let d = directions[dir];
-    return {lon: pt.lon + d.dlon, lat: pt.lat + d.dlat}
-}
-
-function maybeStepDir(pt, dir) {
-    let {lon: lon, lat: lat} = pt,
-        p2 = addDir(pt, dir),
-        legal = (
-            mapboard.at(p2).terrain != Terrain.impassable
-            && !(
-                (dir == Direction.north || dir == Direction.south)
-                ? blocked[0].find(d => d.lon == lon && d.lat == (dir == Direction.north ? lat : p2.lat))
-                : blocked[1].find(d => d.lon == (dir == Direction.west ? lon : p2.lon) && d.lat == lat)
-            ));
-    return legal ? p2: null;
-}
-
 function getUnitPath(u) {
-    let pt = {lon: u.lon, lat: u.lat},
-        pts = [pt];
+    let loc = Location.of(u),
+        path = [loc];
     u.orders.forEach(dir => {
-        let p = maybeStepDir(pt, dir);
-        if (!p) return;
-        pts.push(pt = p)
+        let dst = loc.neighbor(dir);
+        if (!dst) return;
+        path.push(loc = dst)
     });
-    return pts;
+    return path;
 }
 
 function addOrder(u, dir) {
-    let pts = getUnitPath(u),
-        pt = maybeStepDir(pts.pop(), dir);
-    if (pt) {
+    let path = getUnitPath(u),
+        dst = path.pop().neighbor(dir);
+    if (dst) {
         u.orders.push(dir);
     }
-    return pt;
+    return dst;
 }
 
 function resetOrders(u) {
     u.orders = [];
 }
 
-function nextMoveCost(u) {
-    if (u.orders.length == 0) return 255;
-    let pt = maybeStepDir(u, u.orders[0]),
-        t = terraintypes[mapboard.at(pt).terrain];
-    return t.move[u.armor][gameState.weather];
+function moveCost(u, dir) {
+    let dst = Location.of(u).neighbor(dir);
+    return dst
+        ? terraintypes[dst.terrain].movecost[u.armor][gameState.weather]
+        : 255;
+}
+
+function nextOrderCost(u) {
+    return u.orders.length
+        ? moveCost(u, u.orders[0])
+        : 255;
+}
+
+function reach(u) {
+    // find all squares accessible to u, ignoring zoc
+    let cost = 0,
+        start = Location.of(u),
+        locs = {[start.id]: 0};
+
+    while (cost < 32) {
+        Object.entries(locs).filter(([k,v]) => v == cost).forEach(([k,_]) => {
+            let src = Location.fromid(k);
+            src.put(u);
+            Object.keys(directions).forEach(i => {
+                let dst = src.neighbor(i);
+                if (!dst) return;
+                let curr = dst.id in locs ? locs[dst.id] : 255;
+                if (curr <= cost) return;
+                let c = cost + moveCost(u, i);
+                if (c <= 32 && c < curr) locs[dst.id] = c;
+            });
+        });
+        cost++;
+    }
+    start.put(u);
+    return locs;
 }
 
 function maybeMove(u) {
-    let pt = maybeStepDir(u, u.orders[0]),  // assumes legal
-        m = mapboard.at(pt),
-        m0 = mapboard.at(u),
+    let start = Location.of(u),
+        dest = start.neighbor(u.orders[0]),  // assumes legal
         enemy = Player.other(u.player);
 
-
-    if (m.unitid !== null) {
-        if (oob[m.unitid].player == u.player) {
+    if (dest.unitid != null) {
+        if (oob[dest.unitid].player == u.player) {
             u.tick += 2;
             return;
         } else {
             //TODO combat; and retreat clears orders?
+            console.log('TODO: battle!')
         }
-    } else if (zoneOfControl(enemy, u) >= 2 && zoneOfControl(enemy, pt) >= 2) {
+    } else if (zoneOfControl(enemy, start) >= 2 && zoneOfControl(enemy, dest) >= 2) {
         // moving between enemy ZOC M.ASM:5740
         u.tick += 2;
         return;
     }
 
     // move the unit
-    m0.unitid = null;
-    m.unitid = u.id;
-    u.lat = pt.lat;
-    u.lon = pt.lon;
+    start.unitid = null;
+    dest.unitid = u.id;
+    dest.put(u);
     u.orders.shift();
-    u.tick += nextMoveCost(u);
+    u.tick += nextOrderCost(u);
 }
 
-function zoneOfControl(player, pt) {
+function zoneOfControl(player, loc) {
     // evaluate player's zoc in square at pt
-    let m = mapboard.at(pt),
-        zoc = 0;
+    let zoc = 0;
     // same player in target square exerts 4, enemy negates zoc
-    if (m.unitid) {
-        if (oob[m.unitid].player != player) return zoc;
+    if (loc.unitid != null) {
+        if (oob[loc.unitid].player != player) return zoc;
         zoc += 4;
     }
     spiral1.forEach((d, i) => {
-        pt = addDir(pt, d);
-        if (!mapboard.valid(pt)) return;
-        m = mapboard.at(pt);
+        loc = loc.neighbor(d, true);
         // even steps in the spiral exert 2, odd steps exert 1
-        if (m.unitid && oob[m.unitid].player == player) zoc += (i % 2) ? 1: 2;
-    })
+        if (loc.unitid != null && oob[loc.unitid].player == player) zoc += (i % 2) ? 1: 2;
+    });
     return zoc;
 }
 
@@ -100,28 +108,27 @@ function traceSupply(u, weather) {
     const sinfo = players[u.player].supply,
         enemy = Player.other(u.player);
     let fail = 0,
-        pt = u,
+        loc = Location.of(u),
         dir = sinfo.home;
 
     if (sinfo.freeze && weather == Weather.snow) {
         // C.ASM:3620
-        if (randint(256) >= 74 + 4*(sinfo.home == Direction.west ? u.lon: mapboard.maxlon-u.lon)) {
+        if (randint(256) >= 74 + 4*(sinfo.home == Direction.west ? u.lon: maxlon-u.lon)) {
             return 0;
         }
     }
     while(fail < sinfo.maxfail[weather]) {
-        let q = addDir(pt, dir),
-            m = mapboard.at(q),
+        let dst = loc.neighbor(dir, true),
             cost = 0;
 
-        if (q.lon < 0 || q.lon >= mapboard.maxlon) {
+        if (dst.lon < 0 || dst.lon >= mapboard.maxlon) {
             return 1;
-        } else if (m.terrain == Terrain.impassable && (sinfo.sea == 0 || m.alt == 1)) {
+        } else if (dst.terrain == Terrain.impassable && (sinfo.sea == 0 || dst.alt == 1)) {
             cost = 1;
-        } else if (zoneOfControl(enemy, q) >= 2) {
+        } else if (zoneOfControl(enemy, dst) >= 2) {
             cost = 2;
         } else {
-            pt = q;
+            loc = dst;
         }
         if (cost) {
             fail += cost;

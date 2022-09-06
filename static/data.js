@@ -163,43 +163,43 @@ M.ASM:8600 PSXVAL .BYTE $E0,0,0,$33,$78,$D6,$10,$27,$40,0,1,15,6,41,0,1
     terraintypes = [
         {
             key: 'clear', color: '02',
-            offence: 0, defence: 0, move: [[ 6, 24, 10], [ 4, 30,  6]]
+            offence: 0, defence: 0, movecost: [[ 6, 24, 10], [ 4, 30,  6]]
         },
         {
             key: 'mountain_forest', color: '28', altcolor: 'D6',   // mtn + forest
-            offence: 0, defence: 1, move: [[12, 30, 16], [ 8, 30, 10]]
+            offence: 0, defence: 1, movecost: [[12, 30, 16], [ 8, 30, 10]]
         },
         {
             key: 'city', color: '0C', altcolor: '46',  // german + russian control
-            offence: 0, defence: 1, move: [[ 8, 24, 10], [ 6, 30,  8]]
+            offence: 0, defence: 1, movecost: [[ 8, 24, 10], [ 6, 30,  8]]
         },
         {
             key: 'frozen_swamp', color: '0C',
-            offence: 0, defence: 0, move: [[ 0,  0, 12], [ 0,  0,  8]]
+            offence: 0, defence: 0, movecost: [[ 0,  0, 12], [ 0,  0,  8]]
         },
         {
             key: 'frozen_river', color: '0C',
-            offence: 0, defence: 0, move: [[ 0,  0, 12], [ 0,  0,  8]]
+            offence: 0, defence: 0, movecost: [[ 0,  0, 12], [ 0,  0,  8]]
         },
         {
             key: 'swamp', color: '94',
-            offence: 0, defence: 0, move: [[18, 30, 24], [18, 30, 24]]
+            offence: 0, defence: 0, movecost: [[18, 30, 24], [18, 30, 24]]
         },
         {
             key: 'river', color: '94',
-            offence: -1, defence: -1, move: [[14, 30, 28], [13, 30, 28]]
+            offence: -1, defence: -1, movecost: [[14, 30, 28], [13, 30, 28]]
         },
         {
             key: 'coastline', color: '94',
-            offence: -1, defence: -1, move: [[ 8, 26, 12], [ 6, 30,  8]]
+            offence: -1, defence: -1, movecost: [[ 8, 26, 12], [ 6, 30,  8]]
         },
         {
             key: 'estuary', color: '94',
-            offence: 0, defence: 0, move: [[20, 28, 24], [16, 30, 20]],
+            offence: 0, defence: 0, movecost: [[20, 28, 24], [16, 30, 20]],
         },
         {
             key: 'impassable', color: '94', altcolor: '0C',  // sea + border
-            offence: 0, defence: 0, move: [[128, 128, 128], [128, 128, 128]]
+            offence: 0, defence: 0, movecost: [[128, 128, 128], [128, 128, 128]]
         }
     ],
     Terrain = enumFor(terraintypes),
@@ -289,7 +289,7 @@ M.ASM:8600 PSXVAL .BYTE $E0,0,0,$33,$78,$D6,$10,$27,$40,0,1,15,6,41,0,1
     mapboard = mapascii.map(
             (row, i) =>
             row.split('').map(
-                (c, j) => Object.assign({unitid: null}, mapencoding[i <= 25 ? 0: 1][c])
+                (c, j) => Object.assign({}, mapencoding[i <= 25 ? 0: 1][c])
             )
         ),
     // order-of-battle table with 159 units (55 german) comes from D.ASM:0x5400
@@ -485,23 +485,60 @@ M.ASM:8600 PSXVAL .BYTE $E0,0,0,$33,$78,$D6,$10,$27,$40,0,1,15,6,41,0,1
 
 Player.other = p => 1-p;
 
-mapboard.maxlon = mapboard[0].length-2;
-mapboard.maxlat = mapboard.length-2;
-mapboard.point = (r, c) => {return {lon: mapboard.maxlon-c, lat: mapboard.maxlat-r}};
-mapboard.row = pt => mapboard.maxlat - pt.lat;
-mapboard.col = pt => mapboard.maxlon - pt.lon;
-mapboard.at = pt => mapboard[mapboard.row(pt)][mapboard.col(pt)];
-mapboard.valid = pt => pt.lat >= 0 && pt.lat < mapboard.maxlat && pt.lon >= 0 && pt.lon < mapboard.maxlon;
-mapboard.forEach(
-    (row, i) => row.forEach(
-        (d, j) => {
-            Object.assign(d, mapboard.point(i, j))
-            if (d.terrain == Terrain.city) {
-                let city = cities.find(c => c.lon == d.lon && c.lat == d.lat);
-                if (city) d.alt = city.owner;
-            }
-        }
+const
+    maxlon = mapboard[0].length-2,
+    maxlat = mapboard.length-2;
+
+
+// the map is made up of locations, each with a lon and lat
+function Location(lon, lat, ...data) {
+    return Object.assign({
+            lon,
+            lat,
+            valid: lat >= 0 && lat < maxlat && lon >= 0 && lon < maxlon,
+            id:  (lon << 8) + lat,
+            row: maxlat - lat,
+            col: maxlon - lon,
+            put: Location.put,
+            neighbor: Location.neighbor,
+        }, ...data);
+}
+Location.of = d => {
+    let loc = Location(d.lon, d.lat);
+    return loc.valid ? mapboard[loc.row][loc.col]: loc;
+}
+Location.fromid = x => Location.of({lon: x >> 8, lat: x & 0xff});
+Location.put = function(d) { d.lon = this.lon; d.lat = this.lat; return d; }
+Location.neighbor = function(dir, skipcheck) {
+    let d = directions[dir],
+        lon = this.lon + d.dlon,
+        lat = this.lat + d.dlat,
+        loc = Location.of({lon, lat});
+
+    if (skipcheck) return loc;
+    if (!loc.valid) return null;
+
+    let legal = (
+            loc.terrain != Terrain.impassable
+            && !(
+                (dir == Direction.north || dir == Direction.south)
+                ? blocked[0].find(d => d.lon == this.lon && d.lat == (dir == Direction.north ? this.lat : loc.lat))
+                : blocked[1].find(d => d.lon == (dir == Direction.west ? this.lon : loc.lon) && d.lat == this.lat)
+            )
+        );
+    return legal ? loc: null;
+}
+
+mapboard = mapboard.map(
+    (row, i) => row.map(
+        (data, j) => Location(maxlon - j, maxlat - i, data, {unitid: null})
     )
 );
+
+cities.forEach(city => {
+    let loc = Location.of(city);
+    console.assert(loc.terrain == Terrain.city, `Expected city terrain for ${city}`);
+    loc.alt = city.owner;
+});
 
 const randint = n => Math.floor(Math.random()*n);

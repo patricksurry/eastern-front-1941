@@ -75,19 +75,26 @@
 .blink {
     animation: blink 0.6s ease-in infinite;
 }
-.chr-bg {
+.chr-bg, .chr-fg, .chr-dim {
     width: 8px;
     height: 8px;
+    position: absolute;
+    top: 0px;
+}
+.chr-bg {
     position: absolute;
     z-index: 0;
 }
 .chr-fg {
-    width: 8px;
-    height: 8px;
     -webkit-mask-image: url(/static/fontmap.png);
     -webkit-mask-size: 128px 136px;
     image-rendering: pixelated;
     color: #999; /* debugging */
+}
+.chr-dim {
+    background-color: rgba(0,0,0, 0.5);
+    visibility: hidden;
+    pointer-events: none;
 }
 .chr-unit {
     z-index: 2;
@@ -99,6 +106,8 @@
     width: 6px;
     height: 6px;
     padding: 0.5px;
+    pointer-events: none;
+
 }
 .chr-mstrng {
     position: absolute;

@@ -32,4 +32,9 @@ Atari memory map, e.g. RANDOM
 https://www.atariarchives.org/mapping/memorymap.php
 
 
-6502 disassembler https://github.com/Esshahn/pydisass6502
+6502 disassembler
+https://github.com/Esshahn/pydisass6502
+
+
+6502 simulator
+https://skilldrick.github.io/easy6502/

@@ -6,8 +6,7 @@ TODO
 - attack != units can't attack
 - showNewOrder: flash on illegal move
 - flash style for combat
-- keyhandler:  'x' toggle extras like labels
-    - something to toggle handicap - increase muster strength of all your units by 50% but halve score, self-modifies VBI to change color of text window
+- something to toggle handicap - increase muster strength of all your units by 50% but halve score, self-modifies VBI to change color of text window
 - update map after each tick with delay
 - swith maplabel colors to atari hexcolors
 - score in info window instead of console
@@ -24,12 +23,13 @@ var gameState = {
     turn: -1,       // 0-index turn counter
     icelat: 39,     // via M.ASM:8600 PSXVAL initial value is 0x27
     handicap: 0,    // whether the game is handicapped
-    zoom: 1,        // display zoom level (1 or 2)
+    zoom: false,    // display zoom on or off
+    extras: false,  // display extras like labels, health, zoc
     weather: null,
 }
 
 var activeunits = null,  // a list of active units for each player
-    fcsidx = null,  // current selected german unit
+    focusid = null,  // current focused unit id
     kreuze = null,  // d3 selection with the chr displaying the maltakreuze
     arrows = null;  // d3 selection of the four arrow chrs
 
@@ -50,83 +50,89 @@ function mapinfo(ev, m) {
     let clauses = [
         `lon ${m.lon}, lat ${m.lat}`,
         `${terraintypes[m.terrain].key}` + (m.alt ? "-alt": ""),
-        `ZoC: German ${zoneOfControl(Player.german, m)}, Russian ${zoneOfControl(Player.russian, m)}`,
+        // `ZoC: German ${zoneOfControl(Player.german, m)}, Russian ${zoneOfControl(Player.russian, m)}`,
     ]
-    if (m.unitid) {
+    if (m.unitid != null) {
         let u = oob[m.unitid];
         clauses.push(`${u.label} (${u.cstrng}/${u.mstrng})`);
-        clauses.push(`Supply: ${traceSupply(u, gameState.weather)}`);
+        // clauses.push(`Supply: ${traceSupply(u, gameState.weather)}`);
     }
     d3.select(this).attr('title', clauses.join('\n'));
 }
 
-function showUnitInfo(u) {
-    putlines('#info-window', [u.label, `COMBAT: ${u.cstrng}  MUSTER: ${u.mstrng}`]);
+function mapclick(ev, m) {
+    if (m.unitid == null || m.unitid == focusid) unfocusUnit();
+    else focusUnit(oob[m.unitid]);
 }
 
-function focusUnitById(id) {
+function focusUnit(u) {
     unfocusUnit();
-    let idx = activeunits[Player.german].findIndex(d => d.id == id);
-    if (idx >= 0) fcsidx = idx;
-    showFocusedUnit();
+    if (!u) return;
+
+    focusid = u.id;
+    showUnitInfo(u);
+    if (u.player == Player.german) {
+        showUnitPath(u);
+        d3.selectAll('.chr-fg')
+            .filter(d => d.unitid == u.id)
+            .classed('blink', true);
+    }
 }
 
 function focusUnitRelative(offset) {
-    unfocusUnit();
-    let n = activeunits[Player.german].length;
-    if (fcsidx === null) fcsidx = offset > 0 ? -1: 0;
-    fcsidx = (fcsidx + n + offset) % n;
-    showFocusedUnit();
-}
-
-function getFocusedUnit() {
-    return fcsidx === null ? null: activeunits[Player.german][fcsidx]
+    let german = activeunits[Player.german],
+        n = german.length,
+        i = focusid == null ? null: german.findIndex(u => u.id == focusid);
+    if (i == null || i < 0) i = offset > 0 ? -1: 0;
+    i = (i + n + offset) % n;
+    focusUnit(german[i]);
 }
 
 function unfocusUnit() {
+    focusid = null;
     hideUnitPath();
     d3.selectAll('.blink').classed('blink', false);
+    d3.selectAll('.chr-dim').style('visibility', 'hidden');
 }
 
-function showFocusedUnit() {
-    let u = getFocusedUnit()
-    if (!u) return;
+function getFocusedUnit() {
+    return focusid === null ? null: oob[focusid];
+}
 
-    showUnitInfo(u);
-    showUnitPath(u);
-    d3.selectAll('.chr-fg')
-        .filter(d => d.unitid == u.id)
-        .classed('blink', true);
+function showUnitInfo(u) {
+    putlines('#info-window', [u.label, `COMBAT: ${u.cstrng}  MUSTER: ${u.mstrng}`]);
+    let locs = reach(u);
+    d3.selectAll('.chr-dim').filter(d => !(d.id in locs)).style('visibility', 'visible');
 }
 
 function showUnitPath(u) {
-    let pts = getUnitPath(u),
-        pt = pts.pop();
+    let path = getUnitPath(u),
+        loc = path.pop();
     kreuze
-        .style('top', `${mapboard.row(pt)*8}px`)
-        .style('left', `${mapboard.col(pt)*8}px`)
+        .style('top', `${loc.row*8}px`)
+        .style('left', `${loc.col*8}px`)
         .style('visibility', 'visible')
         .node().scrollIntoView({block: "center", inline: "center"});
 
     arrows.style('visibility', 'hidden').interrupt();
-    if (!pts.length) return;
+    if (!path.length) return;
 
     let i = 0;
     function animateUnitPath() {
-        let p = pts[i],
+        let loc = path[i],
             dir = u.orders[i],
-            p2 = addDir(p, dir),
+            dest = loc.neighbor(dir),
             interrupted = false;
         arrows.filter((_, j) => j == dir)
-            .style('top', `${mapboard.row(p)*8}px`)
-            .style('left', `${mapboard.col(p)*8}px`)
+            .style('top', `${loc.row*8}px`)
+            .style('left', `${loc.col*8}px`)
         .transition()
             .delay(i ? 0: 250)
             .duration(500)
             .ease(d3.easeLinear)
             .style('visibility', 'visible')
-            .style('top', `${mapboard.row(p2)*8}px`)
-            .style('left', `${mapboard.col(p2)*8}px`)
+            .style('top', `${dest.row*8}px`)
+            .style('left', `${dest.col*8}px`)
         .transition()
             .duration(0)
             .style('visibility', 'hidden')
@@ -154,16 +160,7 @@ function showNewOrder(dir) {
     } else {
         let dest = addOrder(u, dir);
     }
-    showFocusedUnit();
-}
-
-function mapclick(ev, m) {
-    if (m.unitid === null) return;
-
-    const u = oob[m.unitid];
-
-    if (u.player == Player.german) focusUnitById(u.id);
-    else showUnitInfo(u);
+    focusUnit(u);
 }
 
 function toggleZoom() {
@@ -177,9 +174,14 @@ function toggleZoom() {
         elt = document.elementFromPoint(x*4, y*4);
     }
     // toggle zoom level, apply it, and re-center target eleemnt
-    gameState.zoom = gameState.zoom == 2 ? 1: 2;
-    d3.select('#map-window .container').classed('doubled', gameState.zoom == 2);
+    gameState.zoom = !gameState.zoom;
+    d3.select('#map-window .container').classed('doubled', gameState.zoom);
     elt.scrollIntoView({block: "center", inline: "center"})
+}
+
+function toggleExtras() {
+    gameState.extras = !gameState.extras;
+    d3.selectAll('.extra').style('visibility', gameState.extras ? 'visible': 'hidden')
 }
 
 function keyhandler(e) {
@@ -217,6 +219,10 @@ function keyhandler(e) {
             nextTurn();
             break;
 
+        case 'x':
+            toggleExtras();
+            break;
+
         case 'z':
             toggleZoom();
             break;
@@ -243,9 +249,10 @@ function start() {
         .data(cities)
       .join('div')
         .classed('label', true)
+        .classed('extra', true)
         .text(d => d.label)
-        .style('left', d => `${mapboard.col(d) * 8 + 4}px`)
-        .style('top', d => `${mapboard.row(d) * 8 - 4}px`)
+        .style('left', d => `${Location.of(d).col * 8 + 4}px`)
+        .style('top', d => `${Location.of(d).row * 8 - 4}px`)
         ;
 
     let chrs = putlines('#overlay', [[256], directions.map(d => d.icon)], '1A', null, d => d)
@@ -274,7 +281,7 @@ function nextTurn() {
     // process movement from prior turn
 
     // M.asm:4950 movement execution
-    oob.forEach(u => { u.tick = nextMoveCost(u) });
+    oob.forEach(u => { u.tick = nextOrderCost(u); });
 
     for (tick=0; tick<32; tick++) {
         // original code processes movement in reverse-oob order
@@ -286,11 +293,11 @@ function nextTurn() {
     fcsidx = null;
     unfocusUnit();
 
-    activeunits = players.map(
-        (_, i) => {
+    activeunits = Object.keys(players).map(
+        i => {
             let us = oob.filter(u => u.player == i);
             // M.ASM:3720  delay reinforcements scheduled for an occuplied square
-            us.filter(u => u.arrive == gameState.turn && mapboard.at(u).unitid != null)
+            us.filter(u => u.arrive == gameState.turn && Location.of(u).unitid != null)
                 .forEach(u => {u.arrive++});
             return us.filter(u => u.arrive <= gameState.turn)
                 // M.ASM:5070  recover combat strength
@@ -299,7 +306,7 @@ function nextTurn() {
         }
     );
 
-    activeunits.forEach(us => us.forEach(u => {mapboard.at(u).unitid = u.id}));
+    activeunits.forEach(us => us.forEach(u => {Location.of(u).unitid = u.id}));
 
     let dt = new Date('1941/06/15');
     dt.setDate(dt.getDate() + 7*gameState.turn);
@@ -325,14 +332,14 @@ function nextTurn() {
         if (minfo.rivers == 'freeze') {
             gameState.icelat = Math.max(1, oldlat - change);
             for (i=gameState.icelat; i<oldlat; i++)
-                mapboard[mapboard.row({lat: i})].forEach(d => {
+                mapboard[maxlat - i].forEach(d => {
                     if (d.terrain == Terrain.swamp) d.terrain = Terrain.frozen_swamp;
                     if (d.terrain == Terrain.river) d.terrain = Terrain.frozen_river;
                 });
         } else {
             gameState.icelat = Math.min(39, oldlat + change);
             for (i=oldlat; i<gameState.icelat; i++)
-                mapboard[mapboard.row({lat: i})].forEach(d => {
+                mapboard[maxlat - i].forEach(d => {
                     if (d.terrain == Terrain.frozen_swamp) d.terrain = Terrain.swamp;
                     if (d.terrain == Terrain.frozen_river) d.terrain = Terrain.river;
                 });
@@ -342,19 +349,25 @@ function nextTurn() {
     // update the tree color in place
     terraintypes[Terrain.mountain_forest].altcolor = minfo.trees;
 
-    putlines('#map', mapboard, mapfg, weatherdata[minfo.weather].earth, mapicon)
+    let chrs = putlines('#map', mapboard, mapfg, weatherdata[minfo.weather].earth, mapicon)
         .on('click', mapclick)
-        .on('mouseover', mapinfo)
-        .filter(d => d.unitid !== null)
+        .on('mouseover', mapinfo);
+
+    chrs.filter(d => d.unitid != null)
         .classed('chr-unit', true)
         .append('div')
         .classed('chr-overlay', true)
+        .classed('extra', true)
         .append('div')
         .classed('chr-mstrng', true)
         .style('width', d => (90*oob[d.unitid].mstrng/255) + '%')
         .append('div')
         .classed('chr-cstrng', true)
         .style('width', d => (100*oob[d.unitid].cstrng/oob[d.unitid].mstrng) + '%');
+
+    chrs.append('div')
+        .classed('chr-dim', true)
+        .classed('extra', true);
 
     console.log(JSON.stringify(gameState));
     console.log('Current score', score());
