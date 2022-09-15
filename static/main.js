@@ -35,8 +35,7 @@ var gameState = {
     help: false,     // whether help is showing
 }
 
-var activeunits = null,  // a list of active units for each player
-    focusid = null,  // current focused unit id
+var focusid = null,  // current focused unit id
     lastid = null,  // must recent focused unit id (= focusid or null)
     kreuze = null,  // d3 selection with the chr displaying the maltakreuze
     arrows = null;  // d3 selection of the four arrow chrs
@@ -77,10 +76,22 @@ function focusUnit(u) {
 }
 
 function focusUnitRelative(offset) {
-    let german = activeunits[Player.german],
-        n = german.length,
-        i = lastid == null ? null: german.findIndex(u => u.id == lastid);
-    if (i == null || i < 0) i = offset > 0 ? -1: 0;
+    // sort active germans descending by location id (right => left reading order)
+    let german = oob
+            .filter(u => u.player == Player.german && u.arrive <= gameState.turn)
+            .sort((a, b) => Location.of(b).id - Location.of(a).id),
+        n = german.length;
+    var i;
+    if (lastid) {
+        i = german.findIndex(u => u.id == lastid);
+        if (i < 0) {
+            // if last unit no longer active, find the nearest active unit
+            let locid = Location.of(oob[lastid]).id;
+            while (++i < german.length && Location.of(german[i]).id > locid) {/**/}
+        }
+    } else {
+        i = offset > 0 ? -1: 0;
+    }
     i = (i + n + offset) % n;
     focusUnit(german[i]);
 }
@@ -115,7 +126,7 @@ function showSelAt(sel, loc, duration) {
 function showUnitPath(u) {
     let path = u.path(),
         loc = path.pop();
-    showSelAt(kreuze, loc)
+    showSelAt(kreuze, loc, 0)
         .node().scrollIntoView({block: "center", inline: "center"});
 
     arrows.style('visibility', 'hidden').interrupt();
@@ -358,16 +369,7 @@ function nextTurn() {
     oob.filter(u => u.arrive == gameState.turn)
         .forEach(u => {if (Location.of(u).unitid != null) u.arrive++;});
 
-    //TODO get rid of active units, just search oob for focus, careful about hidden ones?
-    activeunits = Object.keys(players).map(
-        i => {
-            return oob
-                .filter(u => u.player == i && u.arrive <= gameState.turn)
-                // M.ASM:5070  recover combat strength
-                .map(u => {if (u.mstrng - u.cstrng >= 2) u.cstring += 1 + (rand256() & 0x1); return u;})
-                .sort((a, b) => ((b.lat - a.lat) << 8) + (b.lon - a.lon));
-        }
-    );
+    oob.filter(u => u.arrive <= gameState.turn).forEach(u => u.recover());
 
     // show newly arrived units
     d3.selectAll('#units .chr')
@@ -421,4 +423,3 @@ function nextTurn() {
     console.log(JSON.stringify(gameState));
     console.log('Current score', score());
 }
-

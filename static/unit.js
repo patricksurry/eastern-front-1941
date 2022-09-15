@@ -27,6 +27,7 @@ function Unit(corpsx, corpsy, mstrng, swap, arrive, corpt, corpno) {
         tryOrder: Unit.tryOrder,
         resolveCombat: Unit.resolveCombat,
         takeDamage: Unit.takeDamage,
+        recover: Unit.recover,
         traceSupply: Unit.traceSupply,
     });
     u.canAttack = u.type != 'FINNISH' ? 1: 0;
@@ -240,8 +241,10 @@ Unit.takeDamage = function(mdmg, cdmg, checkBreak, retreatDir) {
     // otherwise square still occupied (no break or all retreats blocked but defender remains)
     return 0;
 }
-
-
+Unit.recover = function() {
+    // M.ASM:5070  recover combat strength
+    if (this.mstrng - this.cstrng >= 2) this.cstring += 1 + (rand256() & 0x1);
+}
 Unit.traceSupply = function(weather) {
     // implement the supply check from C.ASM:3430, returns 0 if supplied, 1 if not
     const player = players[this.player],
