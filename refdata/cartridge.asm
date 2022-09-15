@@ -1012,7 +1012,7 @@ _A_2:       lda #$01                         ; a5c2 a901
             sta ORD2                         ; a5e1 85c3    
 JMPEISR:    jmp ENDISR                       ; a5e3 4c91a8  
 
-ORDERS:     lda ORDRDLY                      ; a5e6 a5ff    Delay to disambiguate double click?
+ORDERS:     lda ORDDLY                       ; a5e6 a5ff    Delay to disambiguate double click?
             bne JMPEISR                      ; a5e8 d0f9    
             lda STKFLG                       ; a5ea a5cc    STICK0 & 0xf ^ 0xf
             beq _ORDERS_1                    ; a5ec f00f    
@@ -1792,14 +1792,14 @@ SETLL:      lda CORPSX,x                     ; ab74 bdb12b  CORPSX/Y for X -> LA
             sta LAT                          ; ab7c 85b1    
             rts                              ; ab7e 60      
 
-CALCEXEC:   ldx ARMY                         ; ab7f a6ab    init calc EXEC,x for next order (was DINGO)
+CALCEXC:    ldx ARMY                         ; ab7f a6ab    init calc EXEC,x for next order (was DINGO)
             lda HMORDS,x                     ; ab81 bdd232  how many orders queued for each unit
-            bne CLCEXCORD                    ; ab84 d006    
+            bne CALCNXT                      ; ab84 d006    
             lda #$ff                         ; ab86 a9ff    
             sta EXEC,x                       ; ab88 9ddc30  unit execution times
             rts                              ; ab8b 60      
 
-CLCEXCORD:  jsr SETLL                        ; ab8c 2074ab  CORPSX/Y for X -> LAT, LON
+CALCNXT:    jsr SETLL                        ; ab8c 2074ab  CORPSX/Y for X -> LAT, LON
             jsr TERR                         ; ab8f 20e7aa  TRNCOD <- terrain chr @ LAT/LON, maybe under unit
             lda UNTCOD                       ; ab92 a5eb    
             sta UNTCD1                       ; ab94 85ec    
@@ -1812,9 +1812,9 @@ CLCEXCORD:  jsr SETLL                        ; ab8c 2074ab  CORPSX/Y for X -> LA
             and #$3f                         ; aba6 293f    
             ldx #$00                         ; aba8 a200    
             cmp #$3d                         ; abaa c93d    
-            beq _CLCEXCORD_1                 ; abac f002    
+            beq _CALCNXT_1                   ; abac f002    
             ldx #$0a                         ; abae a20a    
-_CLCEXCORD_1: txa                              ; abb0 8a      
+_CALCNXT_1: txa                              ; abb0 8a      
             ldx MONTH                        ; abb1 a690    
             clc                              ; abb3 18      
             adc SSNCOD,x                     ; abb4 7de09b  season codes
@@ -1824,28 +1824,28 @@ _CLCEXCORD_1: txa                              ; abb0 8a
             ldx ARMY                         ; abbd a6ab    
             ldy MVMODE,x                     ; abbf bcc734  (expert level only) standard/assault/forced march/entrench
             cpy #$02                         ; abc2 c002    
-            bne _CLCEXCORD_2                 ; abc4 d006    
+            bne _CALCNXT_2                   ; abc4 d006    
             lsr                              ; abc6 4a      
             clc                              ; abc7 18      
             adc #$02                         ; abc8 6902    
-            bne _CLCEXCORD_3                 ; abca d00a    
-_CLCEXCORD_2: cpy #$01                         ; abcc c001    
-            bne _CLCEXCORD_3                 ; abce d006    
+            bne _CALCNXT_3                   ; abca d00a    
+_CALCNXT_2: cpy #$01                         ; abcc c001    
+            bne _CALCNXT_3                   ; abce d006    
             sta TEMPR                        ; abd0 85ae    
             lsr                              ; abd2 4a      
             clc                              ; abd3 18      
             adc TEMPR                        ; abd4 65ae    
-_CLCEXCORD_3: clc                              ; abd6 18      
+_CALCNXT_3: clc                              ; abd6 18      
             adc TICK                         ; abd7 65ea    
             sta EXEC,x                       ; abd9 9ddc30  unit execution times
             lda TRNTYP                       ; abdc a5b4    
             cmp #$07                         ; abde c907    
-            bcc _CLCEXCORD_4                 ; abe0 900a    
+            bcc _CALCNXT_4                   ; abe0 900a    
             jsr CHKLEGAL                     ; abe2 20efaf  zflag clr if CORPSX/Y -> LAT/LON is legal
-            bne _CLCEXCORD_4                 ; abe5 d005    
+            bne _CALCNXT_4                   ; abe5 d005    
             lda #$ff                         ; abe7 a9ff    
             sta EXEC,x                       ; abe9 9ddc30  unit execution times
-_CLCEXCORD_4: rts                              ; abec 60      
+_CALCNXT_4: rts                              ; abec 60      
 
 ORD2LL:     lda WHORDS,x                     ; abed bd7933  Add unit X order to LAT/LON
             and #$03                         ; abf0 2903    
@@ -1910,11 +1910,11 @@ _SHOWERR_1: lda ERRMSG,x                     ; ac4b bd8e9e  table of error messa
             bne _SHOWERR_1                   ; ac58 d0f1    
             rts                              ; ac5a 60      
 
-DISTXY:     lda CORPSX,y                     ; ac5b b9b12b  Manhattan distance  between unit X and Y
+DISTXY:     lda CORPSX,y                     ; ac5b b9b12b  Manhattan distance between unit X and Y -> A
             sec                              ; ac5e 38      
             sbc CORPSX,x                     ; ac5f fdb12b  longitude of all units
             jsr ABSA                         ; ac62 2018b9  A -> abs(A)
-DLATXY:     sta TEMPR                        ; ac65 85ae    A + LAT diff between X and Y
+DLATXY:     sta TEMPR                        ; ac65 85ae    diff between X and Y -> A + LAT
             lda CORPSY,y                     ; ac67 b9582c  latitude of all units
             sec                              ; ac6a 38      
             sbc CORPSY,x                     ; ac6b fd582c  latitude of all units
@@ -1923,7 +1923,7 @@ DLATXY:     sta TEMPR                        ; ac65 85ae    A + LAT diff between
             adc TEMPR                        ; ac72 65ae    
             rts                              ; ac74 60      
 
-DSTXTARG:   lda CORPSX,x                     ; ac75 bdb12b  Distance unit X to TARGX/Y
+DSTXTARG:   lda CORPSX,x                     ; ac75 bdb12b  Distance unit X to TARGX/Y -> A
             sec                              ; ac78 38      
             sbc TARGX                        ; ac79 e5f4    square under consideration
             jsr ABSA                         ; ac7b 2018b9  A -> abs(A)
@@ -2644,7 +2644,7 @@ _THNKLP_4:  lda ARRIVE,y                     ; b20d b9a62d  arrival turns
             cmp TURN                         ; b210 c591    
             bcs _THNKLP_5                    ; b212 b018    
             lda #$00                         ; b214 a900    
-            jsr DLATXY                       ; b216 2065ac  A + LAT diff between X and Y
+            jsr DLATXY                       ; b216 2065ac  diff between X and Y -> A + LAT
             lsr                              ; b219 4a      
             sta TEMPR                        ; b21a 85ae    
             lda IFR-48,y                     ; b21c b92e36  
@@ -2725,7 +2725,7 @@ _DRLOOP_2:  sta TARGY                        ; b2b4 85f5
             lda DIR                          ; b2ba a5f2    
             bmi _DRLOOP_3                    ; b2bc 3010    
             sta WHORDS,x                     ; b2be 9d7933  what unit orders are (2 bits per order)
-            jsr CLCEXCORD                    ; b2c1 208cab  
+            jsr CALCNXT                      ; b2c1 208cab  
             ldy ARMY                         ; b2c4 a4ab    
             lda EXEC,y                       ; b2c6 b9dc30  unit execution times
             bpl _DRLOOP_3                    ; b2c9 1003    
@@ -2932,7 +2932,7 @@ _K_7:       lda ARRIVE,x                     ; b455 bda62d  arrival turns
             cmp TURN                         ; b458 c591    
             beq _K_8                         ; b45a f002    
             bcs _K_10                        ; b45c b00d    
-_K_8:       jsr DSTXTARG                     ; b45e 2075ac  Distance unit X to TARGX/Y
+_K_8:       jsr DSTXTARG                     ; b45e 2075ac  Distance unit X to TARGX/Y -> A
             bne _K_9                         ; b461 d002    
             stx CHRIS                        ; b463 86d9    midway counter
 _K_9:       cmp NBVAL                        ; b465 c5d0    another best value
@@ -3009,7 +3009,7 @@ _K_21:      lda ARRIVE,x                     ; b4e7 bda62d  arrival turns
             cmp TURN                         ; b4ea c591    
             beq _K_22                        ; b4ec f002    
             bcs _K_23                        ; b4ee b00d    
-_K_22:      jsr DSTXTARG                     ; b4f0 2075ac  Distance unit X to TARGX/Y
+_K_22:      jsr DSTXTARG                     ; b4f0 2075ac  Distance unit X to TARGX/Y -> A
             bne _K_23                        ; b4f3 d008    
             cpx ARMY                         ; b4f5 e4ab    
             beq _K_23                        ; b4f7 f004    
@@ -3019,7 +3019,7 @@ _K_23:      dex                              ; b4fd ca
             cpx #$30                         ; b4fe e030    
             bcs _K_21                        ; b500 b0e5    
 _K_24:      ldx ARMY                         ; b502 a6ab    
-            jsr DSTXTARG                     ; b504 2075ac  Distance unit X to TARGX/Y
+            jsr DSTXTARG                     ; b504 2075ac  Distance unit X to TARGX/Y -> A
             asl                              ; b507 0a      
             asl                              ; b508 0a      
             asl                              ; b509 0a      
@@ -3512,7 +3512,7 @@ START:      cld                              ; b920 d8      Main entry point
             lda #$00                         ; b921 a900    
             sta INITFLG                      ; b923 85cf    Set 0 -> #$ff after first init
             sta STARTDT                      ; b925 8593    Scenario start 1941/1942
-            sta ORDRDLY                      ; b927 85ff    Delay to disambiguate double click?
+            sta ORDDLY                       ; b927 85ff    Delay to disambiguate double click?
             tay                              ; b929 a8      
 _START_1:   sta TXTWDW,y                     ; b92a 991e3a  
             iny                              ; b92d c8      
@@ -3823,7 +3823,7 @@ NEWTRN:     inc TURN                         ; bba7 e691     !! referenced as bo
             sta SWAP,y                       ; bbb3 998331  terrain code underneath unit
             jsr SHOWDT                       ; bbb6 20c7bf  Show turn date in text window
             jsr SWITCH                       ; bbb9 2034a9  swap CORPS with terrain @ CHUNKX/Y via SWAP buffer
-            jsr DISTXY                       ; bbbc 205bac  Manhattan distance  between unit X and Y
+            jsr DISTXY                       ; bbbc 205bac  Manhattan distance between unit X and Y -> A
             jsr SWITCH                       ; bbbf 2034a9  swap CORPS with terrain @ CHUNKX/Y via SWAP buffer
             lda #$24                         ; bbc2 a924    
             sta MAPBASEH                     ; bbc4 859c    Contains high byte of map base address
@@ -4102,7 +4102,7 @@ _AB_12:     ldx #$07                         ; bde9 a207    Game over, advance t
 _AB_13:     lda #$00                         ; bdee a900    
             sta BUTMSK                       ; bdf0 8597    0 allows trigger, 1 prevents
             lda #$80                         ; bdf2 a980    
-            sta ORDRDLY                      ; bdf4 85ff    Delay to disambiguate double click?
+            sta ORDDLY                       ; bdf4 85ff    Delay to disambiguate double click?
             jsr KEYPRS                       ; bdf6 209fa9  A <- CONSOL flags (opt/sel/strt); prevent display sleep
             and #$01                         ; bdf9 2901    
             bne _AB_13                       ; bdfb d0f1    
@@ -4155,7 +4155,7 @@ _NXTTRN_4:  lda MVMODE,x                     ; be5a bdc734  (expert level only) 
             lsr CSTRNG,x                     ; be61 5e2b32  combat strengths
             bne _NXTTRN_5                    ; be64 d003    
             inc CSTRNG,x                     ; be66 fe2b32  combat strengths
-_NXTTRN_5:  jsr CALCEXEC                     ; be69 207fab  init calc EXEC,x for next order (was DINGO)
+_NXTTRN_5:  jsr CALCEXC                      ; be69 207fab  init calc EXEC,x for next order (was DINGO)
 _NXTTRN_6:  dex                              ; be6c ca      
             bne _NXTTRN_3                    ; be6d d0cb    
             ldx #$2f                         ; be6f a22f    
@@ -4262,7 +4262,7 @@ _AD_7:      jsr __F__                        ; bf4d 2071ae
             lda #$ff                         ; bf50 a9ff    
             sta EXEC,x                       ; bf52 9ddc30  unit execution times
             jsr DELORDR                      ; bf55 2071bf  remove order for unit x
-            jsr CALCEXEC                     ; bf58 207fab  init calc EXEC,x for next order (was DINGO)
+            jsr CALCEXC                      ; bf58 207fab  init calc EXEC,x for next order (was DINGO)
 _AD_8:      ldx ARMY                         ; bf5b a6ab    
             dex                              ; bf5d ca      
             beq _AD_9                        ; bf5e f003    

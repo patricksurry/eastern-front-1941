@@ -15,7 +15,7 @@ _THINK_1:   lda ARRIVE,y                     ; 470c b91b57  arrival turns
             adc CSTRNG,y                     ; 4716 79dd55  combat strengths
             sta TEMPR                        ; 4719 85c5    
             bcc _THINK_2                     ; 471b 9003    
-            inc TOTGS,x                      ; 471d fe9006  
+            inc TOTGS,x                      ; 471d fe9006  Index by 1 then 0 to acc high byte of Ger/Rus cstrng
 _THINK_2:   dey                              ; 4720 88      
             cpy #$37                         ; 4721 c037    
             bcs _THINK_1                     ; 4723 b0e7    
@@ -146,7 +146,7 @@ _DRLOOP_2:  sta TARGY                        ; 482d 8d3506
             lda DIR                          ; 4834 ad3306  
             bmi _DRLOOP_3                    ; 4837 3010    
             sta WHORDS,x                     ; 4839 9d145e  what unit orders are (2 bits per order)
-            jsr __S__                        ; 483c 20de72  
+            jsr CALCNXT                      ; 483c 20de72  
             ldy ARMY                         ; 483f a4c2    
             lda EXEC,y                       ; 4841 b9616d  unit execution times
             bpl _DRLOOP_3                    ; 4844 1003    
@@ -823,7 +823,7 @@ _COMBAT_4:  stx AUDC1 / POT1                 ; 4f10 8e01d2  W: Audio ch1 ctrl / 
             pla                              ; 4f28 68      
             sta SWAP,x                       ; 4f29 9d7c56  terrain code underneath unit
             jsr TERRTY                       ; 4f2c 206973  convert map chr in TRNCOD => TRNTYP, also y reg
-            ldx DEFNC,x                      ; 4f2f beb479  Defensive combat modifiers; 1 => half, 2 => no effect, 3 => double
+            ldx DEFNC,x                      ; 4f2f beb479  ?? Shouldn't this be DEFENC,y and CSTRNG,x
             lda CSTRNG,y                     ; 4f32 b9dd55  combat strengths
             lsr                              ; 4f35 4a      adjust for terrain, max 255
 _COMBAT_5:  dex                              ; 4f36 ca      
@@ -845,7 +845,7 @@ DOBATL:     cmp SKREST / RANDOM              ; 4f44 cd0ad2  evaluate defender's 
             bcs _DOBATL_2                    ; 4f58 b003    
 _DOBATL_1:  jmp DEAD                         ; 4f5a 4cab51  Score and remove unit, maybe disperse nearby
 
-_DOBATL_2:  jsr BRKCHK                       ; 4f5d 20ce51  Maybe break unit X, reset orders, suffer damange
+_DOBATL_2:  jsr BRKCHK                       ; 4f5d 20ce51  Maybe break unit X, reset orders, SEC on break
 ATAKR:      ldx ARMY                         ; 4f60 a6c2    evaluate attacker's strike
             lda CORPSX,x                     ; 4f62 bd0054  longitude of all units
             sta LON                          ; 4f65 85cb    
@@ -872,38 +872,38 @@ _ATAKR_1:   cmp SKREST / RANDOM              ; 4f7f cd0ad2  W: Reset serial port
 _ATAKR_2:   jsr DEAD                         ; 4f95 20ab51  Score and remove unit, maybe disperse nearby
 _ATAKR_3:   jmp ENDCOM                       ; 4f98 4c1c50  
 
-_ATAKR_4:   jsr BRKCHK                       ; 4f9b 20ce51  Maybe break unit X, reset orders, suffer damange
+_ATAKR_4:   jsr BRKCHK                       ; 4f9b 20ce51  Maybe break unit X, reset orders, SEC on break
             bcc _ATAKR_3                     ; 4f9e 90f8    
             ldy ARMY                         ; 4fa0 a4c2    
             lda WHORDS,y                     ; 4fa2 b9145e  what unit orders are (2 bits per order)
             and #$03                         ; 4fa5 2903    
             tay                              ; 4fa7 a8      
-            jsr RETRET                       ; 4fa8 202250  retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
+            jsr RETRET                       ; 4fa8 202250  check if unit X retreat dir Y is legal. SEC if lives else CLC;  zero set if retreat open, clear if blocked
             bcc VICCOM                       ; 4fab 9054    
-            beq _ATAKR_7                     ; 4fad f030    
+            beq DEFRTRT                      ; 4fad f030    
             ldy #$01                         ; 4faf a001    
             cpx #$37                         ; 4fb1 e037    
             bcs _ATAKR_5                     ; 4fb3 b002    
             ldy #$03                         ; 4fb5 a003    
-_ATAKR_5:   jsr RETRET                       ; 4fb7 202250  retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
+_ATAKR_5:   jsr RETRET                       ; 4fb7 202250  check if unit X retreat dir Y is legal. SEC if lives else CLC;  zero set if retreat open, clear if blocked
             bcc VICCOM                       ; 4fba 9045    
-            beq _ATAKR_7                     ; 4fbc f021    
+            beq DEFRTRT                      ; 4fbc f021    
             ldy #$02                         ; 4fbe a002    
-            jsr RETRET                       ; 4fc0 202250  retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
+            jsr RETRET                       ; 4fc0 202250  check if unit X retreat dir Y is legal. SEC if lives else CLC;  zero set if retreat open, clear if blocked
             bcc VICCOM                       ; 4fc3 903c    
-            beq _ATAKR_7                     ; 4fc5 f018    
+            beq DEFRTRT                      ; 4fc5 f018    
             ldy #$00                         ; 4fc7 a000    
-            jsr RETRET                       ; 4fc9 202250  retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
+            jsr RETRET                       ; 4fc9 202250  check if unit X retreat dir Y is legal. SEC if lives else CLC;  zero set if retreat open, clear if blocked
             bcc VICCOM                       ; 4fcc 9033    
-            beq _ATAKR_7                     ; 4fce f00f    
+            beq DEFRTRT                      ; 4fce f00f    
             ldy #$03                         ; 4fd0 a003    
             cpx #$37                         ; 4fd2 e037    
             bcs _ATAKR_6                     ; 4fd4 b002    
             ldy #$01                         ; 4fd6 a001    
-_ATAKR_6:   jsr RETRET                       ; 4fd8 202250  retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
+_ATAKR_6:   jsr RETRET                       ; 4fd8 202250  check if unit X retreat dir Y is legal. SEC if lives else CLC;  zero set if retreat open, clear if blocked
             bcc VICCOM                       ; 4fdb 9024    
             bne ENDCOM                       ; 4fdd d03d    
-_ATAKR_7:   stx CORPS                        ; 4fdf 86b4    Number of unit under window
+DEFRTRT:    stx CORPS                        ; 4fdf 86b4    retreat defender to validated square !! referenced as both code and data
             lda CORPSX,x                     ; 4fe1 bd0054  longitude of all units
             sta CHUNKX                       ; 4fe4 85be    Cursor coords (pixel frame)
             lda CORPSY,x                     ; 4fe6 bd9f54  latitude of all units
@@ -933,7 +933,7 @@ ENDCOM:     ldx ARMY                         ; 501c a6c2
             inc EXEC,x                       ; 501e fe616d  unit execution times
             rts                              ; 5021 60      
 
-RETRET:     lda CORPSX,x                     ; 5022 bd0054  retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
+RETRET:     lda CORPSX,x                     ; 5022 bd0054  check if unit X retreat dir Y is legal. SEC if lives else CLC;  zero set if retreat open, clear if blocked
             clc                              ; 5025 18      
             adc XINC,y                       ; 5026 79f27b  
             sta LON                          ; 5029 85cb    
@@ -947,9 +947,9 @@ RETRET:     lda CORPSX,x                     ; 5022 bd0054  retreat unit X prefe
             lda UNITNO                       ; 503c a5c3    
             bne _RETRET_4                    ; 503e d03d    
             lda TRNTYP                       ; 5040 a5cd    
-            cmp #$07                         ; 5042 c907    
+            cmp #$07                         ; 5042 c907    coastline, estuary => check illegal hex
             bcc _RETRET_3                    ; 5044 9027    
-            cmp #$09                         ; 5046 c909    
+            cmp #$09                         ; 5046 c909    Impassable, takes damage
             beq _RETRET_4                    ; 5048 f033    
             ldy #$15                         ; 504a a015    
 _RETRET_1:  lda LAT                          ; 504c a5ca    
@@ -1141,7 +1141,7 @@ DEAD:       lda #$00                         ; 51ab a900    Score and remove uni
             jsr SWITCH                       ; 51ca 20ef79  Swap map CHUNKX/Y with SWAP,x; x = CORPS, y = map offset
             rts                              ; 51cd 60      
 
-BRKCHK:     cpx #$37                         ; 51ce e037    Maybe break unit X, reset orders, suffer damange
+BRKCHK:     cpx #$37                         ; 51ce e037    Maybe break unit X, reset orders, SEC on break
             bcs _BRKCHK_1                    ; 51d0 b00e    
             lda CORPT,x                      ; 51d2 bdca58  codes for unit types
             and #$f0                         ; 51d5 29f0    
@@ -2026,24 +2026,24 @@ _FINI_1:    lda #$00                         ; 70b9 a900
             sta TICK                         ; 70d2 8d2e06  
             ldx #$9e                         ; 70d5 a29e    
 _FINI_2:    stx ARMY                         ; 70d7 86c2    
-            jsr CALCEXEC                     ; 70d9 20d172  init calc EXEC,x for next order (was DINGO)
+            jsr CALCEXC                      ; 70d9 20d172  init calc EXEC,x for next order (was DINGO)
             dex                              ; 70dc ca      
             bne _FINI_2                      ; 70dd d0f8    
 __O__:      ldx #$9e                         ; 70df a29e    
-__P__:      stx ARMY                         ; 70e1 86c2    
+MOVELOOP:   stx ARMY                         ; 70e1 86c2    
             lda MSTRNG,x                     ; 70e3 bd3e55  muster strengths
             sec                              ; 70e6 38      
             sbc CSTRNG,x                     ; 70e7 fddd55  combat strengths
             cmp #$02                         ; 70ea c902    
-            bcc _P_1                         ; 70ec 900b    
+            bcc _MOVELOOP_1                  ; 70ec 900b    
             inc CSTRNG,x                     ; 70ee fedd55  combat strengths
             cmp SKREST / RANDOM              ; 70f1 cd0ad2  W: Reset serial port status register / R: Random byte
-            bcc _P_1                         ; 70f4 9003    
+            bcc _MOVELOOP_1                  ; 70f4 9003    
             inc CSTRNG,x                     ; 70f6 fedd55  combat strengths
-_P_1:       lda EXEC,x                       ; 70f9 bd616d  unit execution times
-            bmi _P_4                         ; 70fc 3045    
+_MOVELOOP_1: lda EXEC,x                       ; 70f9 bd616d  unit execution times
+            bmi _TRJAM_1                     ; 70fc 3045    
             cmp TICK                         ; 70fe cd2e06  
-            bne _P_4                         ; 7101 d040    
+            bne _TRJAM_1                     ; 7101 d040    
             lda WHORDS,x                     ; 7103 bd145e  what unit orders are (2 bits per order)
             and #$03                         ; 7106 2903    
             tay                              ; 7108 a8      
@@ -2059,28 +2059,28 @@ _P_1:       lda EXEC,x                       ; 70f9 bd616d  unit execution times
             sta ACCHI                        ; 711d 85c8    
             jsr TERR                         ; 711f 204072  TRNCOD <- terrain chr @ LAT/LON, maybe under unit
             lda UNITNO                       ; 7122 a5c3    
-            beq _P_6                         ; 7124 f02a    
+            beq _DOMOVE_1                    ; 7124 f02a    
             cmp #$37                         ; 7126 c937    
-            bcc _P_2                         ; 7128 9008    
+            bcc _MOVELOOP_2                  ; 7128 9008    
             lda ARMY                         ; 712a a5c2    
             cmp #$37                         ; 712c c937    
-            bcs _P_3                         ; 712e b008    
-            bcc _P_5                         ; 7130 9014    
-_P_2:       lda ARMY                         ; 7132 a5c2    
+            bcs TRJAM                        ; 712e b008    
+            bcc DOCOMBAT                     ; 7130 9014    
+_MOVELOOP_2: lda ARMY                         ; 7132 a5c2    
             cmp #$37                         ; 7134 c937    
-            bcs _P_5                         ; 7136 b00e    
-_P_3:       ldx ARMY                         ; 7138 a6c2    
+            bcs DOCOMBAT                     ; 7136 b00e    
+TRJAM:      ldx ARMY                         ; 7138 a6c2    
             lda TICK                         ; 713a ad2e06  
             clc                              ; 713d 18      
             adc #$02                         ; 713e 6902    
             sta EXEC,x                       ; 7140 9d616d  unit execution times
-_P_4:       jmp __Q__                        ; 7143 4cd271  
+_TRJAM_1:   jmp MOVENXT                      ; 7143 4cd271  
 
-_P_5:       jsr COMBAT                       ; 7146 20d84e  
+DOCOMBAT:   jsr COMBAT                       ; 7146 20d84e  
             lda VICTRY                       ; 7149 ad9706  
-            beq _P_4                         ; 714c f0f5    
-            bne _P_7                         ; 714e d02e    
-_P_6:       ldx ARMY                         ; 7150 a6c2    
+            beq _TRJAM_1                     ; 714c f0f5    
+DOMOVE:     bne _DOMOVE_2                    ; 714e d02e    
+_DOMOVE_1:  ldx ARMY                         ; 7150 a6c2    
             stx CORPS                        ; 7152 86b4    Number of unit under window
             lda CORPSY,x                     ; 7154 bd9f54  latitude of all units
             sta CHUNKY                       ; 7157 85bf    
@@ -2095,12 +2095,12 @@ _P_6:       ldx ARMY                         ; 7150 a6c2
             sta LON                          ; 716b 85cb    
             lda ZOC                          ; 716d ad9406  
             cmp #$02                         ; 7170 c902    
-            bcc _P_7                         ; 7172 900a    
+            bcc _DOMOVE_2                    ; 7172 900a    
             jsr CHKZOC                       ; 7174 204051  
             lda ZOC                          ; 7177 ad9406  
             cmp #$02                         ; 717a c902    
-            bcs _P_3                         ; 717c b0ba    
-_P_7:       jsr SWITCH                       ; 717e 20ef79  Swap map CHUNKX/Y with SWAP,x; x = CORPS, y = map offset
+            bcs TRJAM                        ; 717c b0ba    
+_DOMOVE_2:  jsr SWITCH                       ; 717e 20ef79  Swap map CHUNKX/Y with SWAP,x; x = CORPS, y = map offset
             ldx CORPS                        ; 7181 a6b4    Number of unit under window
             lda LAT                          ; 7183 a5ca    
             sta CHUNKY                       ; 7185 85bf    
@@ -2113,39 +2113,39 @@ _P_7:       jsr SWITCH                       ; 717e 20ef79  Swap map CHUNKX/Y wi
             lda #$ff                         ; 7196 a9ff    
             sta EXEC,x                       ; 7198 9d616d  unit execution times
             dec HMORDS,x                     ; 719b de755d  how many orders queued for each unit
-            beq __Q__                        ; 719e f032    
+            beq MOVENXT                      ; 719e f032    
             lsr WHORDH,x                     ; 71a0 5eb35e  unit orders (high bits?)
             ror WHORDS,x                     ; 71a3 7e145e  what unit orders are (2 bits per order)
             lsr WHORDH,x                     ; 71a6 5eb35e  unit orders (high bits?)
             ror WHORDS,x                     ; 71a9 7e145e  what unit orders are (2 bits per order)
             ldy #$03                         ; 71ac a003    
-_P_8:       lda CORPSX,x                     ; 71ae bd0054  longitude of all units
+_DOMOVE_3:  lda CORPSX,x                     ; 71ae bd0054  longitude of all units
             cmp MOSCX,y                      ; 71b1 d9dc73  
-            bne _P_10                        ; 71b4 d013    
+            bne _DOMOVE_5                    ; 71b4 d013    
             lda CORPSY,x                     ; 71b6 bd9f54  latitude of all units
             cmp MOSCY,y                      ; 71b9 d9e073  
-            bne _P_10                        ; 71bc d00b    
+            bne _DOMOVE_5                    ; 71bc d00b    
             lda #$ff                         ; 71be a9ff    
             cpx #$37                         ; 71c0 e037    
-            bcc _P_9                         ; 71c2 9002    
+            bcc _DOMOVE_4                    ; 71c2 9002    
             lda #$00                         ; 71c4 a900    
-_P_9:       sta MOSCOW,y                     ; 71c6 99ea71  
-_P_10:      dey                              ; 71c9 88      
-            bpl _P_8                         ; 71ca 10e2    
-            jsr CALCEXEC                     ; 71cc 20d172  init calc EXEC,x for next order (was DINGO)
+_DOMOVE_4:  sta MOSCOW,y                     ; 71c6 99ea71  
+_DOMOVE_5:  dey                              ; 71c9 88      
+            bpl _DOMOVE_3                    ; 71ca 10e2    
+            jsr CALCEXC                      ; 71cc 20d172  init calc EXEC,x for next order (was DINGO)
             jsr STALL                        ; 71cf 200072  
-__Q__:      ldx ARMY                         ; 71d2 a6c2    
+MOVENXT:    ldx ARMY                         ; 71d2 a6c2    
             dex                              ; 71d4 ca      
-            beq _Q_1                         ; 71d5 f003    
-            jmp __P__                        ; 71d7 4ce170  
+            beq _MOVENXT_1                   ; 71d5 f003    
+            jmp MOVELOOP                     ; 71d7 4ce170  
 
-_Q_1:       inc TICK                         ; 71da ee2e06  
+_MOVENXT_1: inc TICK                         ; 71da ee2e06  
             lda TICK                         ; 71dd ad2e06  
             cmp #$20                         ; 71e0 c920    
-            beq _Q_2                         ; 71e2 f003    
+            beq _MOVENXT_2                   ; 71e2 f003    
             jmp __O__                        ; 71e4 4cdf70  
 
-_Q_2:       jmp NEWTRN                       ; 71e7 4c9a6e  
+_MOVENXT_2: jmp NEWTRN                       ; 71e7 4c9a6e  
 
 MOSCOW:
     !byte $00,$00,$00,$00,$22,$50,$a6,$c2,$ca,$f0,$03,$4c,$ff,$70,$ee,$2e   ; 71ea ...."P&BJp.L.pn.
@@ -2234,38 +2234,38 @@ LOOKUP:     lda TRNCOD                       ; 728b ad2b06  X, UNITNO <- unit @ 
             ldx #$37                         ; 7299 a237    
 _LOOKUP_1:  lda LAT                          ; 729b a5ca    
 _LOOKUP_2:  cmp CORPSY,x                     ; 729d dd9f54  latitude of all units
-            beq _R_1                         ; 72a0 f00a    
-__R__:      dex                              ; 72a2 ca      
+            beq MIGHTB                       ; 72a0 f00a    
+__P__:      dex                              ; 72a2 ca      
             bne _LOOKUP_2                    ; 72a3 d0f8    
             lda #$ff                         ; 72a5 a9ff    
             sta TXTWDW+128                   ; 72a7 8dd064  
-            bmi _R_3                         ; 72aa 301c    
-_R_1:       lda LON                          ; 72ac a5cb    
+            bmi MATCH                        ; 72aa 301c    
+MIGHTB:     lda LON                          ; 72ac a5cb    
             cmp CORPSX,x                     ; 72ae dd0054  longitude of all units
-            bne _R_2                         ; 72b1 d010    
+            bne _MIGHTB_1                    ; 72b1 d010    
             lda CSTRNG,x                     ; 72b3 bddd55  combat strengths
-            beq _R_2                         ; 72b6 f00b    
+            beq _MIGHTB_1                    ; 72b6 f00b    
             lda ARRIVE,x                     ; 72b8 bd1b57  arrival turns
-            bmi _R_2                         ; 72bb 3006    
+            bmi _MIGHTB_1                    ; 72bb 3006    
             cmp TURN                         ; 72bd c5c9    
-            bcc _R_3                         ; 72bf 9007    
-            beq _R_3                         ; 72c1 f005    
-_R_2:       lda LAT                          ; 72c3 a5ca    
-            jmp __R__                        ; 72c5 4ca272  
+            bcc MATCH                        ; 72bf 9007    
+            beq MATCH                        ; 72c1 f005    
+_MIGHTB_1:  lda LAT                          ; 72c3 a5ca    
+            jmp __P__                        ; 72c5 4ca272  
 
-_R_3:       stx UNITNO                       ; 72c8 86c3    
+MATCH:      stx UNITNO                       ; 72c8 86c3    
             lda SWAP,x                       ; 72ca bd7c56  terrain code underneath unit
             sta TRNCOD                       ; 72cd 8d2b06  
             rts                              ; 72d0 60      
 
-CALCEXEC:   ldx ARMY                         ; 72d1 a6c2    init calc EXEC,x for next order (was DINGO)
+CALCEXC:    ldx ARMY                         ; 72d1 a6c2    init calc EXEC,x for next order (was DINGO)
             lda HMORDS,x                     ; 72d3 bd755d  how many orders queued for each unit
-            bne __S__                        ; 72d6 d006    
+            bne CALCNXT                      ; 72d6 d006    
             lda #$ff                         ; 72d8 a9ff    
             sta EXEC,x                       ; 72da 9d616d  unit execution times
             rts                              ; 72dd 60      
 
-__S__:      lda CORPSX,x                     ; 72de bd0054  longitude of all units
+CALCNXT:    lda CORPSX,x                     ; 72de bd0054  longitude of all units
             sta LON                          ; 72e1 85cb    
             lda CORPSY,x                     ; 72e3 bd9f54  latitude of all units
             sta LAT                          ; 72e6 85ca    
@@ -2291,9 +2291,9 @@ __S__:      lda CORPSX,x                     ; 72de bd0054  longitude of all uni
             and #$3f                         ; 7316 293f    
             ldx #$00                         ; 7318 a200    
             cmp #$3d                         ; 731a c93d    
-            beq _S_1                         ; 731c f002    
+            beq _CALCNXT_1                   ; 731c f002    
             ldx #$0a                         ; 731e a20a    
-_S_1:       txa                              ; 7320 8a      
+_CALCNXT_1: txa                              ; 7320 8a      
             ldx MONTH                        ; 7321 ae0c06  
             clc                              ; 7324 18      
             adc SSNCOD,x                     ; 7325 7dc06c  season codes
@@ -2306,28 +2306,28 @@ _S_1:       txa                              ; 7320 8a
             sta EXEC,x                       ; 7334 9d616d  unit execution times
             lda TRNTYP                       ; 7337 a5cd    
             cmp #$07                         ; 7339 c907    
-            bcc _S_4                         ; 733b 902b    
+            bcc _CALCNXT_4                   ; 733b 902b    
             ldy #$15                         ; 733d a015    
-_S_2:       lda LAT                          ; 733f a5ca    
+_CALCNXT_2: lda LAT                          ; 733f a5ca    
             cmp BHY1,y                       ; 7341 d91f6d  
-            bne _S_3                         ; 7344 d01f    
+            bne _CALCNXT_3                   ; 7344 d01f    
             lda LON                          ; 7346 a5cb    
             cmp BHX1,y                       ; 7348 d9096d  intraversible square-pair coords
-            bne _S_3                         ; 734b d018    
+            bne _CALCNXT_3                   ; 734b d018    
             ldx ARMY                         ; 734d a6c2    
             lda CORPSX,x                     ; 734f bd0054  longitude of all units
             cmp BHX2,y                       ; 7352 d9356d  
-            bne _S_3                         ; 7355 d00e    
+            bne _CALCNXT_3                   ; 7355 d00e    
             lda CORPSY,x                     ; 7357 bd9f54  latitude of all units
             cmp BHY2,y                       ; 735a d94b6d  
-            bne _S_3                         ; 735d d006    
+            bne _CALCNXT_3                   ; 735d d006    
             lda #$ff                         ; 735f a9ff    
             sta EXEC,x                       ; 7361 9d616d  unit execution times
             rts                              ; 7364 60      
 
-_S_3:       dey                              ; 7365 88      
-            bpl _S_2                         ; 7366 10d7    
-_S_4:       rts                              ; 7368 60      
+_CALCNXT_3: dey                              ; 7365 88      
+            bpl _CALCNXT_2                   ; 7366 10d7    
+_CALCNXT_4: rts                              ; 7368 60      
 
 TERRTY:     ldy #$00                         ; 7369 a000    convert map chr in TRNCOD => TRNTYP, also y reg
             lda TRNCOD                       ; 736b ad2b06  
@@ -2635,26 +2635,26 @@ FBUTPS:     lda #$ff                         ; 75aa a9ff
             sta CHUNKY                       ; 75e9 85bf    
             ldx #$9e                         ; 75eb a29e    
 _FBUTPS_1:  cmp CORPSY,x                     ; 75ed dd9f54  latitude of all units
-            beq _T_1                         ; 75f0 f00c    
-__T__:      dex                              ; 75f2 ca      
+            beq _Q_1                         ; 75f0 f00c    
+__Q__:      dex                              ; 75f2 ca      
             bne _FBUTPS_1                    ; 75f3 d0f8    
             stx CORPS                        ; 75f5 86b4    Number of unit under window
             dex                              ; 75f7 ca      
             stx HITFLG                       ; 75f8 8e2706  
             jmp ENDISR                       ; 75fb 4c6f79  
 
-_T_1:       lda CHUNKX                       ; 75fe a5be    Cursor coords (pixel frame)
+_Q_1:       lda CHUNKX                       ; 75fe a5be    Cursor coords (pixel frame)
             cmp CORPSX,x                     ; 7600 dd0054  longitude of all units
-            bne _T_2                         ; 7603 d00b    
+            bne _Q_2                         ; 7603 d00b    
             lda ARRIVE,x                     ; 7605 bd1b57  arrival turns
-            bmi _T_2                         ; 7608 3006    
+            bmi _Q_2                         ; 7608 3006    
             cmp TURN                         ; 760a c5c9    
-            bcc _T_3                         ; 760c 9007    
-            beq _T_3                         ; 760e f005    
-_T_2:       lda CHUNKY                       ; 7610 a5bf    
-            jmp __T__                        ; 7612 4cf275  
+            bcc _Q_3                         ; 760c 9007    
+            beq _Q_3                         ; 760e f005    
+_Q_2:       lda CHUNKY                       ; 7610 a5bf    
+            jmp __Q__                        ; 7612 4cf275  
 
-_T_3:       lda #$00                         ; 7615 a900    
+_Q_3:       lda #$00                         ; 7615 a900    
             sta HITFLG                       ; 7617 8d2706  
             sta CH                           ; 761a 8dfc02  Internal hardware value for the last key pressed
             lda #$5c                         ; 761d a95c    
@@ -2678,9 +2678,9 @@ _T_3:       lda #$00                         ; 7615 a900
             lda #$1e                         ; 7644 a91e    
             ldx CORPS                        ; 7646 a6b4    Number of unit under window
             cpx #$37                         ; 7648 e037    
-            bcs _T_4                         ; 764a b002    
+            bcs _Q_4                         ; 764a b002    
             lda #$1d                         ; 764c a91d    
-_T_4:       jsr DWORDS                       ; 764e 20c079  
+_Q_4:       jsr DWORDS                       ; 764e 20c079  
             ldy #$38                         ; 7651 a038    
             lda #$1f                         ; 7653 a91f    
             jsr DWORDS                       ; 7655 20c079  
@@ -2709,11 +2709,11 @@ _T_4:       jsr DWORDS                       ; 764e 20c079
             jsr SWITCH                       ; 7684 20ef79  Swap map CHUNKX/Y with SWAP,x; x = CORPS, y = map offset
             lda CORPS                        ; 7687 a5b4    Number of unit under window
             cmp #$37                         ; 7689 c937    
-            bcc _T_5                         ; 768b 9007    
+            bcc _Q_5                         ; 768b 9007    
             lda #$ff                         ; 768d a9ff    
             sta HITFLG                       ; 768f 8d2706  
             bmi JMPEISR                      ; 7692 3043    
-_T_5:       lda #$01                         ; 7694 a901    
+_Q_5:       lda #$01                         ; 7694 a901    
             sta ORDCNT                       ; 7696 8d1b06  which order arrow is showing
             lda #$00                         ; 7699 a900    
             sta STPCNT                       ; 769b 8d1a06  which intermediate step arrow is on
@@ -2799,13 +2799,13 @@ _ORDERS_5:  tay                              ; 771e a8
             lsr                              ; 774c 4a      
             tax                              ; 774d aa      
             lda STICK1                       ; 774e ad2306  coded value of stick direction (0-3)
-__U__:      dey                              ; 7751 88      
-            bmi _U_1                         ; 7752 3005    
+__R__:      dey                              ; 7751 88      
+            bmi _R_1                         ; 7752 3005    
             asl                              ; 7754 0a      
             asl                              ; 7755 0a      
-            jmp __U__                        ; 7756 4c5177  
+            jmp __R__                        ; 7756 4c5177  
 
-_U_1:       ldy TEMP1                        ; 7759 a4bb    all purpose temp
+_R_1:       ldy TEMP1                        ; 7759 a4bb    all purpose temp
             eor ORD1,x                       ; 775b 5d1c06  orders record
             and MASKO,y                      ; 775e 39de5f  mask values for decoding orders
             eor ORD1,x                       ; 7761 5d1c06  orders record
@@ -2829,14 +2829,14 @@ _U_1:       ldy TEMP1                        ; 7759 a4bb    all purpose temp
             sta HPOSP2 / M2PF                ; 7792 8d02d0  W: h.pos of P2 / R: missile 2 to pf collision
             ldy KRZY                         ; 7795 ac2106  
             ldx #$00                         ; 7798 a200    
-_U_2:       lda MLTKRZ,x                     ; 779a bdf75f  maltakreuze shape
+_R_2:       lda MLTKRZ,x                     ; 779a bdf75f  maltakreuze shape
             cpy #$80                         ; 779d c080    
-            bcs _U_3                         ; 779f b003    
+            bcs _R_3                         ; 779f b003    
             sta PLYR2,y                      ; 77a1 990053  Player 2 sprite data
-_U_3:       iny                              ; 77a4 c8      
+_R_3:       iny                              ; 77a4 c8      
             inx                              ; 77a5 e8      
             cpx #$08                         ; 77a6 e008    
-            bne _U_2                         ; 77a8 d0f0    
+            bne _R_2                         ; 77a8 d0f0    
             beq _NOBUT_1                     ; 77aa f043    
 SQUAWK:     ldy #$69                         ; 77ac a069    
 _SQUAWK_1:  lda ERRMSG,x                     ; 77ae bd565f  table of error messages
@@ -3234,7 +3234,7 @@ DLISRV:     pha                              ; 7b00 48      DLI handler
             sta WSYNC                        ; 7b13 8d0ad4  Wait for horizontal synchronization
             stx CHBASE                       ; 7b16 8e09d4  Character base address
             sta COLPF0                       ; 7b19 8d16d0  Color and luminance of playfield 0
-            jmp __V__                        ; 7b1c 4cae7b  
+            jmp __S__                        ; 7b1c 4cae7b  
 
 _DLISRV_1:  cmp #$0f                         ; 7b1f c90f    
             bne _DLISRV_2                    ; 7b21 d019    
@@ -3248,7 +3248,7 @@ _DLISRV_1:  cmp #$0f                         ; 7b1f c90f
             sta WSYNC                        ; 7b30 8d0ad4  Wait for horizontal synchronization
             stx COLPF2                       ; 7b33 8e18d0  Color and luminance of playfield 2
             sta COLPF1                       ; 7b36 8d17d0  Color and luminance of playfield 1
-            jmp __V__                        ; 7b39 4cae7b  
+            jmp __S__                        ; 7b39 4cae7b  
 
 _DLISRV_2:  cmp #$01                         ; 7b3c c901    
             bne _DLISRV_3                    ; 7b3e d01f    
@@ -3264,7 +3264,7 @@ _DLISRV_2:  cmp #$01                         ; 7b3c c901
             stx COLPF0                       ; 7b54 8e16d0  Color and luminance of playfield 0
             lda #$60                         ; 7b57 a960    
             sta CHBASE                       ; 7b59 8d09d4  Character base address
-            jmp __V__                        ; 7b5c 4cae7b  
+            jmp __S__                        ; 7b5c 4cae7b  
 
 _DLISRV_3:  cmp #$03                         ; 7b5f c903    
             bne _DLISRV_4                    ; 7b61 d010    
@@ -3273,7 +3273,7 @@ _DLISRV_3:  cmp #$03                         ; 7b5f c903
             and DRKMSK                       ; 7b68 254e    Dark attract mask
             sta WSYNC                        ; 7b6a 8d0ad4  Wait for horizontal synchronization
             sta COLBK                        ; 7b6d 8d1ad0  Color and luminance of the background
-            jmp __V__                        ; 7b70 4cae7b  
+            jmp __S__                        ; 7b70 4cae7b  
 
 _DLISRV_4:  cmp #$0d                         ; 7b73 c90d    
             bne _TRADEMARK_1                 ; 7b75 d014    
@@ -3285,7 +3285,7 @@ TRADEMARK = $7b7a  ; self-modifying code?
             sta WSYNC                        ; 7b7f 8d0ad4  Wait for horizontal synchronization
             sta COLPF2                       ; 7b82 8d18d0  Color and luminance of playfield 2
             stx CHBASE                       ; 7b85 8e09d4  Character base address
-            jmp __V__                        ; 7b88 4cae7b  
+            jmp __S__                        ; 7b88 4cae7b  
 
 _TRADEMARK_1: cmp #$0e                         ; 7b8b c90e    
             bne _TRADEMARK_2                 ; 7b8d d00f    
@@ -3294,10 +3294,10 @@ _TRADEMARK_1: cmp #$0e                         ; 7b8b c90e
             and DRKMSK                       ; 7b93 254e    Dark attract mask
             sta WSYNC                        ; 7b95 8d0ad4  Wait for horizontal synchronization
             sta COLBK                        ; 7b98 8d1ad0  Color and luminance of the background
-            jmp __V__                        ; 7b9b 4cae7b  
+            jmp __S__                        ; 7b9b 4cae7b  
 
 _TRADEMARK_2: cmp #$10                         ; 7b9e c910    
-            bne __V__                        ; 7ba0 d00c    
+            bne __S__                        ; 7ba0 d00c    
             lda #$d4                         ; 7ba2 a9d4    
             eor COLRSH                       ; 7ba4 454f    Color shift mask
             and DRKMSK                       ; 7ba6 254e    Dark attract mask
@@ -3305,7 +3305,7 @@ _TRADEMARK_2: cmp #$10                         ; 7b9e c910
             pla                              ; 7ba9 68      
             nop                              ; 7baa ea      
             sta COLBK                        ; 7bab 8d1ad0  Color and luminance of the background
-__V__:      pla                              ; 7bae 68      
+__S__:      pla                              ; 7bae 68      
             tax                              ; 7baf aa      
             pla                              ; 7bb0 68      
             rti                              ; 7bb1 40      

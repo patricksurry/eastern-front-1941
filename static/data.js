@@ -1,3 +1,5 @@
+const rand256 = () => Math.floor(Math.random()*256);
+
 function enumFor(vs, key) {
     return Object.fromEntries(vs.map((v, i) => [v[key || 'key'], i]));
 }
@@ -10,9 +12,9 @@ const
     // see https://forums.atariage.com/topic/275027-joystick-value-logic/:
     directions = [
         {dlon: 0,  dlat: 1,  key: 'north', icon: 257},   // up    1110 => 0 - north
-        {dlon: -1, dlat: 0,  key: 'east', icon: 258},   // right 0111 => 1 - east
-        {dlon: 0,  dlat: -1, key: 'south', icon: 259},  // down  1101 => 2 - south
-        {dlon: 1,  dlat: 0,  key: 'west', icon: 260},   // left  1011 => 3 - west
+        {dlon: -1, dlat: 0,  key: 'east',  icon: 258},   // right 0111 => 1 - east
+        {dlon: 0,  dlat: -1, key: 'south', icon: 259},   // down  1101 => 2 - south
+        {dlon: 1,  dlat: 0,  key: 'west',  icon: 260},   // left  1011 => 3 - west
     ],
     Direction = enumFor(directions),
     spiral1 = [
@@ -38,7 +40,7 @@ const
             {lon: 14, lat: 7},
             {lon: 19, lat: 3}
         ],
-        // can't move lonwest from here (or east into here)
+        // can't move west from here (or east into here)
         [
             {lon: 35, lat: 33},
             {lon: 14, lat: 7},
@@ -47,87 +49,41 @@ const
     // D.ASM:2690 TRTAB
     // M.ASM:2690 season calcs
     weatherdata = [
-        {key: 'summer', earth: '10'},
-        {key: 'mud',    earth: '02'},
-        {key: 'snow',   earth: '0A'},
+        {key: 'dry',  earth: '10'},
+        {key: 'mud',  earth: '02'},
+        {key: 'snow', earth: '0A'},
     ],
     Weather = enumFor(weatherdata),
-    // combines D.asm:2690 TRTAB and 5430 SSNCOD
+    // combines D.asm:2690 TRTAB and 5430 SSNCOD, also annotated PDF p71 (labelled -63-)
     monthdata = [
         {label: "January",   trees: '12', weather: Weather.snow},
         {label: "February",  trees: '12', weather: Weather.snow},
         {label: "March",     trees: '12', weather: Weather.snow, rivers: "thaw"},
         {label: "April",     trees: 'D2', weather: Weather.mud},
-        {label: "May",       trees: 'D8', weather: Weather.summer},
-        {label: "June",      trees: 'D6', weather: Weather.summer},
-        {label: "July",      trees: 'C4', weather: Weather.summer},
-        {label: "August",    trees: 'D4', weather: Weather.summer},
-        {label: "September", trees: 'C2', weather: Weather.summer},
+        {label: "May",       trees: 'D8', weather: Weather.dry},
+        {label: "June",      trees: 'D6', weather: Weather.dry},
+        {label: "July",      trees: 'C4', weather: Weather.dry},
+        {label: "August",    trees: 'D4', weather: Weather.dry},
+        {label: "September", trees: 'C2', weather: Weather.dry},
         {label: "October",   trees: '12', weather: Weather.mud},
         {label: "November",  trees: '12', weather: Weather.snow, rivers: "freeze"},
         {label: "December",  trees: '12', weather: Weather.snow},
     ],
     Month = enumFor(monthdata, 'label'),
-/*
-
-SEASN1 - x40 unfrozen, x80 frozen
-SEASN2 - ff fall or 00 spring - to move ICELAT north or south
-SEASN3 - ff fall or 01 in spring
-EARTH - color of earth by season
-
-month 1 (jan)
-    SEASN1 = x80
-    SEASN2 = xff
-    SEASN3 = xff
-month 3 (mar):
-    => thaw swamp/rivers
-    ICELAT -= [7,14] incl]; clamp 1-39 incl
-    small bug? freeze chrs $0B - $29 (exclusive, seems like it could freeze Kerch straight?)
-month 4 (apr):
-    EARTH = 2
-    SEASN1 = x40
-    SEASN2 = 0
-    SEASN3 = 1
-month 5 (may):
-    EARTH = 0x10
-month 10 (oct):
-    EARTH = 2
-month 11 (nov):
-    EARTH = x0A
-    => freeze swamp/rivers
-
-
-M.ASM:8600 PSXVAL .BYTE $E0,0,0,$33,$78,$D6,$10,$27,$40,0,1,15,6,41,0,1
-
-0520 XPOSL *=*+5 Horizontal position of screen window [$E0,0,0,$33,$78]
-0530 TRCOLR *=*+1 [$D6]
-0540 EARTH *=*+1 [$10]
-0550 ICELAT *=*+1 [$27]
-0560 SEASN1 *=*+1 [$40]
-0570 SEASN2 *=*+1 [0]
-0580 SEASN3 *=*+1 [1]
-0590 DAY *=*+1  [15]  15/6/41 => 22/6/41 on first init
-0600 MONTH *=*+1 [6]
-0610 YEAR *=*+1 [41]
-0620 BUTFLG *=*+1 [0]
-0630 BUTMSK *=*+1 [1]
-
-
-*/
     players = [
         {
-            key: 'german',  unit: 'CORPS', color: '0C',
+            key: 'german',  unit: 'CORPS', color: '0C', homedir: Direction.west,
             supply: {
-                home: Direction.west, sea: 1, replacements: 0, maxfail: [24, 0, 16], freeze: 1,
+                sea: 1, replacements: 0, maxfail: [24, 0, 16], freeze: 1,
             }
         },
         {
-            key: 'russian', unit: 'ARMY',  color: '46',
+            key: 'russian', unit: 'ARMY',  color: '46', homedir: Direction.east,
             supply: {
-                home: Direction.east, sea: 0, replacements: 2, maxfail: [24, 24, 24], freeze: 0,
+                sea: 0, replacements: 2, maxfail: [24, 24, 24], freeze: 0,
             }
         },
-    ]
+    ],
     Player = enumFor(players),
     cities = [
 // M.ASM:8630 MPTS / MOSCX / MOSCY - special city victory points
@@ -199,7 +155,7 @@ M.ASM:8600 PSXVAL .BYTE $E0,0,0,$33,$78,$D6,$10,$27,$40,0,1,15,6,41,0,1
         },
         {
             key: 'impassable', color: '94', altcolor: '0C',  // sea + border
-            offence: 0, defence: 0, movecost: [[128, 128, 128], [128, 128, 128]]
+            offence: 0, defence: 0, movecost: [[0, 0, 0], [0, 0, 0]]
         }
     ],
     Terrain = enumFor(terraintypes),
@@ -286,17 +242,19 @@ M.ASM:8600 PSXVAL .BYTE $E0,0,0,$33,$78,$D6,$10,$27,$40,0,1,15,6,41,0,1
 ################################################
 `.split(/\n/).slice(1,-1),
     // decode the map into a 2-d array of rows x cols of  {lon: , lat:, icon:, terrain:, alt:}
-    mapboard = mapascii.map(
+    mapdata = mapascii.map(
             (row, i) =>
             row.split('').map(
                 (c, j) => Object.assign({}, mapencoding[i <= 25 ? 0: 1][c])
             )
         ),
+    maxlon = mapdata[0].length-2,
+    maxlat = mapdata.length-2,
     // order-of-battle table with 159 units (55 german) comes from D.ASM:0x5400
     // in the original game each column is stored separately,
     // we've transposed into a list of rows which we map to unit objects
-    oob = [
-        // [CORPSX, CORPSY, MSTRNG, SWAP, ARRIVE, CORPT, CORPNO
+    oobdata = [
+        // CORPSX, CORPSY, MSTRNG, SWAP, ARRIVE, CORPT, CORPNO
         // German
         [0, 0, 0, 0, 255, 0, 0],
         [40, 20, 203, 126, 0, 3, 24],
@@ -458,37 +416,7 @@ M.ASM:8600 PSXVAL .BYTE $E0,0,0,$33,$78,$D6,$10,$27,$40,0,1,15,6,41,0,1
         [21, 3, 94, 253, 4, 4, 3],
         [20, 3, 102, 253, 4, 4, 5],
         [19, 2, 98, 253, 4, 4, 6],
-    ].map((vs, i) => {
-        const types = ['', 'SS', 'FINNISH', 'RUMANIAN', 'ITALIAN', 'HUNGARAN', 'MOUNTAIN', 'GUARDS'],
-            variants = ['INFANTRY', 'TANK', 'CAVALRY', 'PANZER', 'MILITIA', 'SHOCK', 'PARATRP', 'PZRGRNDR'];
-        let u = {
-            id: i,
-            player: (vs[3] & 0x80) ? Player.russian : Player.german,  // german=0, russian=1; equiv i >= 55
-            lon: vs[0],
-            lat: vs[1],
-            mstrng: vs[2], cstrng: vs[2],
-            icon: vs[3] & 0x3f | 0x80,  // drop the color and address custom char pages
-            arrive: vs[4],
-            flags: vs[5],
-            type: types[vs[5] >> 4],
-            variant: variants[vs[5] & 0x0f],
-            armor: (vs[3] & 0x1) == 0 ? 1 : 0,        // inf is clr | 0x3d, armor is clr | 0x3e
-            unitno: vs[6],
-            orders: []      // WHORDRS, HMORDS
-        }
-        u.attack = u.type == 'FINNISH' ? 0: 1;  // FINNISH can't attack
-        u.static = u.variant == 'MILITIA' ? 1: 0;  // MILITIA can't move
-        u.label = [u.unitno, u.variant, u.type, players[u.player].unit].filter(Boolean).join(' ').trim();
-        return u;
-    });
-
-
-Player.other = p => 1-p;
-
-const
-    maxlon = mapboard[0].length-2,
-    maxlat = mapboard.length-2;
-
+    ];
 
 // the map is made up of locations, each with a lon and lat
 function Location(lon, lat, ...data) {
@@ -529,7 +457,23 @@ Location.neighbor = function(dir, skipcheck) {
     return legal ? loc: null;
 }
 
-mapboard = mapboard.map(
+function manhattanDistance(p, q) {
+    // calculate the taxicab metric between two locations
+    return Math.abs(p.lat - q.lat) + Math.abs(p.lon - q.lon);
+}
+
+function directionFrom(p, q) {
+    // calculate the major direction from p to q, with tie breaking so no direction is preferred
+    let dlat = (q.lat - p.lat),
+        dlon = (q.lon - p.lon);
+    if (!dlat && !dlon) return null;
+    let projections = directions
+        .map((d, i) => [d.dlon * dlon + d.dlat * dlat, i])
+        .sort(([a, i], [b, j]) => (b - a) || ((i - j + 4)%4) - 2);
+    return projections[0][1];
+}
+
+const mapboard = mapdata.map(
     (row, i) => row.map(
         (data, j) => Location(maxlon - j, maxlat - i, data, {unitid: null})
     )
@@ -540,5 +484,3 @@ cities.forEach(city => {
     console.assert(loc.terrain == Terrain.city, `Expected city terrain for ${city}`);
     loc.alt = city.owner;
 });
-
-const randint = n => Math.floor(Math.random()*n);

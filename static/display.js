@@ -3,14 +3,11 @@ function hexcolor(v) {
 }
 
 function setclr(sel, c) {
-    //TODO support sel as already d3 selection
+    //TODO support sel as existing d3 selection
     d3.selectAll(sel).style('background-color', hexcolor(c));
 }
 
-function atascii(c) {
-    let x = c.charCodeAt(0) % 128;
-    return (x >= 32 && x < 96) ? x - 32 : (x < 32 ? x + 48: x);
-}
+atascii = (c) => c.charCodeAt(0) & 0x7f;
 
 function maskpos(c) {
     return `${-(c%16)*8}px ${-Math.floor(c/16)*8}px`;
@@ -29,7 +26,7 @@ function putlines(win, lines, fg, bg, chrfn) {
         w.attr('data-bg-color', _ => bg);
         w.style('background-color', hexcolor(bg));
     }
-    w.selectAll('div.chr-bg').remove();  //TODO don't deal with enter/update yet
+    w.selectAll('div.chr').remove();  //TODO don't deal with enter/update yet
 
     let
         fgfn = typeof fg == 'function' ? fg : (_ => fg),
@@ -40,22 +37,24 @@ function putlines(win, lines, fg, bg, chrfn) {
                     .map((d, j) => [i, j, d])
                 )
             ),
-        chrs = w
-            .selectAll('div.chr-bg')
+        cells = w
+            .selectAll('div.chr')
             .data(data)
           .join('div')
-            .classed('chr-bg', true)
+            .classed('chr', true)
             .style('top', ([i, j, d]) => `${i*8}px`)
             .style('left', ([i, j, d]) => `${j*8}px`)
-            .style('background-color', bg ? hexcolor(bg) : null)
             .datum(([i, j, d]) => d);
-        chrs
-            .append('div')
+
+        cells.append('div')
+            .classed('chr-bg', true)
+            .style('background-color', bg ? hexcolor(bg) : null);
+        cells.append('div')
             .classed('chr-fg', true)
             .style('background-color', d => hexcolor(fgfn(d)))
             .style("-webkit-mask-position", d => maskpos(chrfn(d)));
 
-    return chrs;
+    return cells;
 }
 
 // I.ASM:2640 - time to move arrow

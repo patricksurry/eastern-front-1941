@@ -108,7 +108,11 @@ def readapxdisk(fname, outname):
 
 
 def _chunk(bytes, base, addr, n):
-    return bytes[addr-base:addr-base+n]
+    if isinstance(addr, str):
+        addr = int(addr, 16)
+    if isinstance(n, str):
+        n = int(n, 16)
+    return bytes[addr - base:addr - base + n]
 
 
 data = readapxdisk('APX20050.ATR', 'apxdump.dat')
@@ -120,7 +124,7 @@ symtab = json.load(open('apxdump.map.json'))
 
 base = int(symtab['startaddress'], 16)
 chunks = {
-    s['symbol']: _chunk(data, base, int(s['addr'], 16), int(s['length'], 16) )
+    s['symbol']: _chunk(data, base, s['addr'], s['length'])
     for s in symtab['entrypoints'] if 'length' in s
 }
 print(f"Read {len(chunks)} chunks for {', '.join(chunks.keys())}")

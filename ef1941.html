@@ -11,14 +11,19 @@
     <script src="/static/move.js"></script>
     <script src="/static/think.js"></script>
     <script src="/static/main.js"></script>
+    <script src="/static/tests.js"></script>
 
     <div id="screen">
         <div id="date-window" class="section"><div class='container doubled'></div></div>
         <div class="date-rule rule section"></div>
         <div id="map-window" class="section">
-            <div class='container'>
+            <div id="map-scroller" class='container'>
                 <div id="map"></div>
+                <div id="labels"></div>
+                <div id="units"></div>
                 <div id="overlay"></div>
+            </div>
+            <div id="help-window" class="container section">
             </div>
         </div>
         <div class="info-rule rule section"></div>
@@ -26,7 +31,6 @@
         <div class="err-rule rule section"></div>
         <div id="err-window" class="section"></div>
         <div class="err-rule rule section"></div>
-        </div>
     </div>
 
     <script type="text/javascript">

@@ -31,34 +31,47 @@
     height: 144px;
     overflow: scroll;
 }
+#help-window {
+    position:  absolute;
+    top: 0px;
+    z-index: 99;
+}
 #info-window {
     height:  16px;
 }
 #err-window {
     height: 8px;
 }
-#map, #overlay {
+#map-scroller {
     /* 48 x 41  8px sq cells*/
     width: 384px;
     height: 328px;
+    overflow: hidden;
 }
-#overlay {
+#map, #labels, #units, #overlay {
     position: absolute;
-    z-index: 3;
     top: 0px;
     left: 0px;
+}
+#labels {
+    z-index: 1;
+}
+#units {
+    z-index: 2;
+    pointer-events: none;
+}
+#overlay {
+    z-index: 4;
     pointer-events: none;
 }
 .label {
     position: absolute;
     font-family: verdana;
-    color: #ccc;  /*TODO now dynamic */
     font-size: 2pt;
     display: flex;
     justify-content: center;
     width: 0;
     white-space: nowrap;
-    z-index: 1;
 }
 @keyframes pulse {
   0% {-webkit-transform: scale(1.0); }
@@ -75,15 +88,11 @@
 .blink {
     animation: blink 0.6s ease-in infinite;
 }
-.chr-bg, .chr-fg, .chr-dim {
+.chr, .chr-bg, .chr-fg, .chr-dim {
     width: 8px;
     height: 8px;
     position: absolute;
     top: 0px;
-}
-.chr-bg {
-    position: absolute;
-    z-index: 0;
 }
 .chr-fg {
     -webkit-mask-image: url(/static/fontmap.png);
@@ -92,12 +101,10 @@
     color: #999; /* debugging */
 }
 .chr-dim {
-    background-color: rgba(0,0,0, 0.5);
-    visibility: hidden;
+    background-color: rgba(0,0,0);
+    opacity: 0;
     pointer-events: none;
-}
-.chr-unit {
-    z-index: 2;
+    z-index: 3;
 }
 .chr-overlay {
     position:  absolute;
@@ -106,8 +113,6 @@
     width: 6px;
     height: 6px;
     padding: 0.5px;
-    pointer-events: none;
-
 }
 .chr-mstrng {
     position: absolute;

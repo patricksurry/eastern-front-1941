@@ -1,4 +1,6 @@
 # From https://github.com/kenjennings/Atari-Font-To-Code/blob/master/E000.c
+# Wikipedia shows chars in more conventional order, which we'll also use
+# https://en.wikipedia.org/wiki/ATASCII
 
 atascii = bytes([
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,    # 0x00: SPACE  */
@@ -131,5 +133,6 @@ atascii = bytes([
     0x10, 0x18, 0x1c, 0x1e, 0x1c, 0x18, 0x10, 0x00,    # 0x7f: TAB    */
 ])
 
+atascii = atascii[0x200:0x300] + atascii[:0x200] + atascii[0x300:]
 open('atascii.dat', 'wb').write(atascii)
 print(len(atascii))
