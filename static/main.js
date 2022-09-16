@@ -1,32 +1,31 @@
 /*
 TODO
-- map update in place each turn, e.g. freezing rivers
-
 - opacity vs visibility so we can fade in/fade out reserves/daed; start reserves hidden in right spot
 
 - game end check after scoring turn 40 M.ASM:4780 with 'GAME OVER' message
 
 - showNewOrder: flash on illegal move
 
+- nextTurn: flash / error if still processing?
+
 - flash style for combat
 
 - toggle key for handicap - increase muster strength of all your units by 50% but halve score, self-modifies VBI to change color of text window
-
-- switch maplabel colors to atari hexcolors
 
 - score in info window instead of console
 
 - update title/hover on click (for supply and zoc)
 
-- add an 'active' flag or function for units to make oob filtering easier
-
 - hide units at correct position and remove the optional delay stuff, visibilty => opacity so can animate
 
 - implement AI
+
+- show ghost russians with orders on hover/click?
 */
 
 var gameState = {
-    turn: -1,       // 0-index turn counter
+    turn: -1,       // 0-based turn counter, -1 is pre-game
+    startDate: null,
     icelat: 39,     // via M.ASM:8600 PSXVAL initial value is 0x27
     handicap: 0,    // whether the game is handicapped
     zoom: false,    // display zoom on or off
@@ -78,7 +77,7 @@ function focusUnit(u) {
 function focusUnitRelative(offset) {
     // sort active germans descending by location id (right => left reading order)
     let german = oob
-            .filter(u => u.player == Player.german && u.arrive <= gameState.turn)
+            .filter(u => u.player == Player.german && u.isActive())
             .sort((a, b) => Location.of(b).id - Location.of(a).id),
         n = german.length;
     var i;
@@ -278,18 +277,10 @@ function start() {
 
     toggleHelp();
 
-//TODO
-/* weatherdata[minfo.weather].earth */
+    const unitfg = (d) => players[d.player].color,
+        icon = (d) => d.icon;
 
-    const mapfg = (d) => {
-            let ter = terraintypes[d.terrain];
-            return d.alt ? ter.altcolor : ter.color
-        },
-        unitfg = (d) => players[d.player].color,
-        icon = (d) => d.icon,
-        earth = weatherdata[monthdata[Month.September].weather].earth; //TODO
-
-    let chrs = putlines('#map', mapboard, mapfg, earth, icon);
+    let chrs = putlines('#map', mapboard, 'ff', '00', icon);
     chrs.selectAll('.chr-fg')
         .on('click', mapclick)
         .on('mouseover', mapinfo);
@@ -297,7 +288,7 @@ function start() {
         .classed('chr-dim', true)
         .classed('extra', true);
 
-    putlines('#units', [oob], unitfg, earth, icon)
+    putlines('#units', [oob], unitfg, '00', icon)
         .style('visibility', 'hidden')
         .each(function(u) {
             u.chr = d3.select(this);
@@ -337,13 +328,21 @@ function start() {
 
     document.addEventListener('keydown', keyhandler);
 
-    endTurn(0);
+    gameState.startDate = new Date('1941/06/22');
+    nextTurn();
 }
 
 function endTurn(delay) {
+    if (think.concluded) {
+        console.warn("still ending turn...")
+        return;
+    }
     // process movement from prior turn
     fcsidx = null;
     unfocusUnit();
+
+    // stop thinking and collect orders
+    conclude();
 
     // M.asm:4950 movement execution
     oob.forEach(u => u.scheduleOrder(true));
@@ -362,34 +361,29 @@ function endTurn(delay) {
 }
 
 function nextTurn() {
-    // start next turn
+    // start next turn, add a week to the date
     gameState.turn++;
+
+    let dt = new Date(gameState.startDate);
+    dt.setDate(dt.getDate() + 7 * gameState.turn);
+    let label = dt.toLocaleDateString("en-US", {year: 'numeric', month: 'long', day: 'numeric'});
+        minfo = monthdata[dt.getMonth()];  // note JS getMonth is 0-indexed
+
+    gameState.weather = minfo.weather;
+
+    // regroup, reinforce, recover...
+    oob.filter(u => u.isActive()).forEach(u => u.recover());
 
     // M.ASM:3720  delay reinforcements scheduled for an occuplied square
     oob.filter(u => u.arrive == gameState.turn)
         .forEach(u => {if (Location.of(u).unitid != null) u.arrive++;});
-
-    oob.filter(u => u.arrive <= gameState.turn).forEach(u => u.recover());
 
     // show newly arrived units
     d3.selectAll('#units .chr')
         .filter(u => u.arrive == gameState.turn)
         .each(function(u) { u.moveTo(Location.of(u)); });
 
-    let dt = new Date('1941/06/22');
-    dt.setDate(dt.getDate() + 7*gameState.turn);
-
-    let label = dt.toLocaleDateString("en-US", {year: 'numeric', month: 'long', day: 'numeric'});
-        minfo = monthdata[dt.getMonth()];  // note JS getMonth is 0-indexed
-
-    gameState.weather = minfo.weather;
-
     putlines('#date-window .container', [label], '6A', 'B0')
-
-    d3.selectAll('.label')
-        .style('color', minfo.weather == Weather.snow ? '#333': '#ccc');
-
-    //TODO update terrain in place
 
     if (minfo.rivers) {
         // => thaw swamp/rivers
@@ -418,6 +412,26 @@ function nextTurn() {
 
     // update the tree color in place
     terraintypes[Terrain.mountain_forest].altcolor = minfo.trees;
+
+    // apply current fg/bg colors to map and unit background
+    const mapfg = (d) => {
+            let ter = terraintypes[d.terrain];
+            return d.alt ? ter.altcolor : ter.color
+        },
+        earth = weatherdata[minfo.weather].earth;
+
+    d3.selectAll('#map .chr-bg, #units .chr-bg')
+        .style('background-color', hexcolor(earth));
+
+    d3.selectAll('#map .chr-fg')
+        .style('background-color', d => hexcolor(mapfg(d)))
+
+    // contrasting label colors
+    d3.selectAll('.label')
+        .style('color', minfo.weather == Weather.snow ? hexcolor('04'): hexcolor('08'));
+
+    // start thinking...
+    think();
 
     //TODO
     console.log(JSON.stringify(gameState));

@@ -1,2 +1,4 @@
 .DS_Store
 pydisass6502/
+**/__pycache__/
+refdata/*.stats

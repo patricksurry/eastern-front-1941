@@ -16,6 +16,7 @@ function Unit(corpsx, corpsy, mstrng, swap, arrive, corpt, corpno) {
         armor: (swap & 0x1) == 0 ? 1 : 0,        // inf is clr | 0x3d, armor is clr | 0x3e
         unitno: corpno,
         orders: [],      // WHORDRS, HMORDS
+        isActive: Unit.isActive,
         path: Unit.path,
         addOrder: Unit.addOrder,
         resetOrders: Unit.resetOrders,
@@ -36,6 +37,7 @@ function Unit(corpsx, corpsy, mstrng, swap, arrive, corpt, corpno) {
     return u;
 }
 Unit.id = 0;
+Unit.isActive = function() { return this.arrive <= gameState.turn && this.cstrng > 0; }
 Unit.path = function() {
     let loc = Location.of(this),
         path = [loc];
