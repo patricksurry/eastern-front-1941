@@ -25,8 +25,8 @@ var gameState = {
     icelat: 39,     // via M.ASM:8600 PSXVAL initial value is 0x27
     handicap: 0,    // whether the game is handicapped
     zoom: false,    // display zoom on or off
-    extras: true,  // display extras like labels, health, zoc
-    debug: true,
+    extras: true,   // display extras like labels, health, zoc
+    debug: false,   // whether to display debug info for Russian units
     weather: null,
     help: null,     // after init, has boolean indicating help hide/show state
 }

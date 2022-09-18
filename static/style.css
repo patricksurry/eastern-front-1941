@@ -108,7 +108,7 @@
     top: 0px;
 }
 .chr-fg {
-    -webkit-mask-image: url(/static/fontmap.png);
+    -webkit-mask-image: url(fontmap.png);
     -webkit-mask-size: 128px 136px;
     image-rendering: pixelated;
     color: #999; /* debugging */
