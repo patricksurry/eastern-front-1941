@@ -47,6 +47,7 @@ cities.forEach(city => {
     let loc = Location.of(city);
     console.assert(loc.terrain == Terrain.city, `Expected city terrain for ${city}`);
     loc.alt = city.owner;
+    loc.label = city.label.toUpperCase();
 });
 
 function manhattanDistance(p, q) {
@@ -54,15 +55,21 @@ function manhattanDistance(p, q) {
     return Math.abs(p.lat - q.lat) + Math.abs(p.lon - q.lon);
 }
 
-function directionFrom(p, q) {
-    // calculate the major direction from p to q, with tie breaking so no direction is preferred
+function _directionsFrom(p, q) {
+    // project all directions from p to q and rank them, ensuring tie breaking has no bias
     let dlat = (q.lat - p.lat),
         dlon = (q.lon - p.lon);
     if (!dlat && !dlon) return null;
-    let projections = directions
+    return directions
         .map((d, i) => [d.dlon * dlon + d.dlat * dlat, i])
+        // in case of tie, which will be neighbors, should the clockwise leader
         .sort(([a, i], [b, j]) => (b - a) || ((i - j + 4)%4) - 2);
-    return projections[0][1];
+}
+
+function directionFrom(p, q) {
+    // return the index of the winning direction
+    let projections = _directionsFrom(p, q);
+    return projections && projections[0][1];
 }
 
 function squareSpiral(center, diameter) {
@@ -87,4 +94,97 @@ function squareSpiral(center, diameter) {
         }
     }
     return locs;
+}
+
+function directPath(p, q, costs) {
+    /*
+    implements a variation of Bresenham's algorith to get direct path from p to q
+    returns the list of directions to step from p to q, along with the terrain cost
+    similar to the original path algorithm described in the APX notes
+
+    The straight line can be described by the equation A x + B y + C = 0 where
+    A = (y1 - y0), B = -(x1 - x0) and C = x1 y0 - x0 y1.  (Here x is lon, y is lat)
+    To follow the line most closely using grid point x*, y* we keep the error E = A x* + B y* + C
+    as close to zero as possible.
+    Taking a step in direction dx, dy will change E by A dx + B dy
+    so we just keep choosing the step that moves E back towards zero.
+    */
+
+    let loc = Location.of(p),
+        goal = Location.of(q);
+    if (loc.id == goal.id) return {cost: 0, orders: []};
+
+    const
+        A = q.lat - p.lat,
+        B = - (q.lon - p.lon),
+        C = q.lon * p.lat - q.lat * p.lon,
+        projections = _directionsFrom(p, q),
+        i = projections[0][1], j = projections[1][1], // best two directinoe
+        s = directions[i], t = directions[j],
+        ds = A * s.dlon + B * s.dlat,
+        dt = A * t.dlon + B * t.dlat;
+
+    let err = 0,
+        cost = 0,
+        orders = [],
+        k;
+
+    while (loc.id != goal.id) {
+        [k, de] = Math.abs(err + ds) < Math.abs(err + dt) ? [i, ds]: [j, dt];
+        err += de;
+        orders.push(k);
+        loc = loc.neighbor(k, true);
+        cost += costs ? costs[loc.terrain]: 1;
+    }
+
+    return {cost, orders}
+}
+
+function bestPath(p, q, costs) {
+    // implements A* shortest path, e.g. see https://www.redblobgames.com/pathfinding/a-star/introduction.html
+    // returns {cost: , orders: []} where cost is the movement cost (ticks), and orders is a seq of dir indices
+    // or null if goal is unreachable
+    const minCost = Math.min(...costs);
+    let src = Location.of(p),
+        goal = Location.of(q),
+        frontEst = {_: 0},              // estimated total cost via this square, _ is head
+        frontNext = {_: src.id},        // linked list with next best frontier square to check
+        dirTo = {[src.id]: null},       // direction index which arrived at keyed square
+        costTo = {[src.id]: 0};         // actual cost to get to keyed square
+
+    while (frontNext._) {
+        let next = frontNext._;
+        src = Location.fromid(next);
+        if (src.id == goal.id) break;
+        frontNext._ = frontNext[next];
+        frontEst._ = frontEst[next];
+        delete frontNext[next], frontEst[next]
+
+        directions.forEach((_, i) => {
+            let dst = src.neighbor(i);
+            if (!dst) return;
+            let cost = costTo[src.id] + costs[dst.terrain];
+            if (!(dst.id in costTo)) {  // with consistent estimate we always find best first
+                costTo[dst.id] = cost;
+                dirTo[dst.id] = i;
+                let est = cost + minCost * manhattanDistance(src, dst),
+                    at = '_';
+                while (frontNext[at] && frontEst[at] < est) at = frontNext[at];
+                next = frontNext[at];
+                frontNext[at] = dst.id;
+                frontNext[dst.id] = next;
+                frontEst[dst.id] = est;
+            }
+        });
+    }
+    if (src.id != goal.id) return null;
+
+    let orders = [];
+    while (true) {
+        let dir = dirTo[src.id];
+        if (dir == null) break;
+        orders.unshift(dir);
+        src = src.neighbor((dir + 2) % 4);
+    }
+    return {cost: costTo[goal.id], orders: orders}
 }

@@ -49,10 +49,20 @@ Unit.path = function() {
     return path;
 }
 Unit.addOrder = function(dir) {
-    if (!this.canMove) return null;
-    let path = this.path(),
+    let dst = null;
+    if (!this.canMove) {
+        errmsg("MILITIA UNITS CAN'T MOVE!");
+    } else if (this.orders.length == 8) {
+        errmsg("ONLY 8 ORDERS ARE ALLOWED!")
+    } else {
+        let path = this.path();
         dst = path.pop().neighbor(dir);
-    if (dst) this.orders.push(dir);
+        if (dst) {
+            this.orders.push(dir);
+        } else {
+            errmsg("IMPASSABLE!");
+        }
+    }
     return dst;
 }
 Unit.resetOrders = function() { this.orders = []; this.tick = 255;}
@@ -67,55 +77,12 @@ Unit.scheduleOrder = function(reset) {
     else this.tick = 255;
 }
 Unit.bestPath = function(goal) {
-    // implements A* shortest path, e.g. see https://www.redblobgames.com/pathfinding/a-star/introduction.html
-    // returns {cost: , orders: []} where cost is the movement cost (ticks), and orders is a seq of dir indices
-    // or null if goal is unreachable
-    const costs = terraintypes.map(t => t.movecost[this.armor][gameState.weather] || 255),
-        minCost = Math.min(...costs);
-    let src = Location.of(this),
-        frontEst = {_: 0},              // estimated total cost via this square, _ is head
-        frontNext = {_: src.id},        // linked list with next best frontier square to check
-        dirTo = {[src.id]: null},       // direction index which arrived at keyed square
-        costTo = {[src.id]: 0};         // actual cost to get to keyed square
-
-    while (frontNext._) {
-        let next = frontNext._;
-        src = Location.fromid(next);
-        if (src.id == goal.id) break;
-        frontNext._ = frontNext[next];
-        frontEst._ = frontEst[next];
-        delete frontNext[next], frontEst[next]
-
-        Object.values(Direction).forEach(i => {
-            let dst = src.neighbor(i);
-            if (!dst) return;
-            let cost = costTo[src.id] + costs[dst.terrain];
-            if (!(dst.id in costTo)) {  // with consistent estimate we always find best first
-                costTo[dst.id] = cost;
-                dirTo[dst.id] = i;
-                let est = cost + minCost * manhattanDistance(src, dst),
-                    at = '_';
-                while (frontNext[at] && frontEst[at] < est) at = frontNext[at];
-                next = frontNext[at];
-                frontNext[at] = dst.id;
-                frontNext[dst.id] = next;
-                frontEst[dst.id] = est;
-            }
-        });
-    }
-    if (src.id != goal.id) return null;
-
-    let orders = [];
-    while (true) {
-        let dir = dirTo[src.id];
-        if (dir == null) break;
-        orders.unshift(dir);
-        src = src.neighbor((dir + 2) % 4);
-    }
-    return {cost: costTo[goal.id], orders: orders}
+    const costs = terraintypes.map(t => t.movecost[this.armor][gameState.weather] || 255);
+    //TODO config directPath for comparison
+    return bestPath(Location.of(this), goal, costs);
 }
 Unit.reach = function(range) {
-    // find all squares accessible to unit, ignoring other units, zoc, within range
+    // find all squares accessible to unit within range, ignoring other units, zoc
     let cost = 0,
         start = Location.of(this),
         locs = {[start.id]: 0};
@@ -139,15 +106,15 @@ Unit.reach = function(range) {
     start.put(this);
     return locs;
 }
-Unit.moveTo = function(dst, duration) {
+Unit.moveTo = function(dst) {
     // move the unit
     Location.of(this).unitid = null;
     if (dst != null) {
         dst.unitid = this.id;
         dst.put(this);
-        this.show(duration);
+        this.show(250);
     } else {
-        this.hide(duration);
+        this.hide(250);
     }
 }
 Unit.tryOrder = function() {
@@ -173,8 +140,8 @@ Unit.tryOrder = function() {
         return;
     }
 
-    this.moveTo(dst);
     this.orders.shift();
+    this.moveTo(dst);
     this.scheduleOrder();
 }
 Unit.resolveCombat = function(opp) {
@@ -234,7 +201,7 @@ Unit.takeDamage = function(mdmg, cdmg, checkBreak, retreatDir) {
                 if (!dst || dst.unitid != null || zocBlocked(this.player, src, dst)) {
                     if (this.takeDamage(0, 5)) return 1;  // dead
                 } else {
-                    this.moveTo(dst, 100);
+                    this.moveTo(dst);
                     return 1;
                 }
             }

@@ -146,8 +146,6 @@
         {"addr": "4743", "comm": "Calc OFR by repeated subtraction of denom from numerator"},
         {"addr": "4752", "comm": "Loop through to calc Russian IFR"},
 
-        {"addr": "", "comm": ""},
-
         {"addr": "4771", "symbol": "MLOOP", "mode": "code", "comm": "outer loop for whole Russian army"},
         {"addr": "4773", "symbol": "ALOOP", "mode": "code", "comm": "Inner loop for individual russian units"},
         {"addr": "4812", "symbol": "DRLOOP", "mode": "code"},
@@ -155,8 +153,8 @@
         {"addr": "4b11", "symbol": "TOGSCN", "mode": "code"},
         {"addr": "4b2d", "symbol": "WRAPUP", "mode": "code"},
         {"addr": "4c23", "symbol": "CALIFR", "mode": "code", "comm": "determines individual force ratios IFRx in all four directions"},
-        {"addr": "4d30", "symbol": "ABSA", "mode": "code", "comm": "A => abs(A)"},
-        {"addr": "4d32", "symbol": "NEGA", "mode": "code", "comm": "A => -A"},
+        {"addr": "4d30", "symbol": "ABSA", "mode": "code", "comm": "A -> abs(A)"},
+        {"addr": "4d32", "symbol": "NEGA", "mode": "code", "comm": "A -> -A"},
 
         {"addr": "4d01", "symbol": "IRRN-55", "mode": "data"},
         {"addr": "4d69", "symbol": "IFRE-55", "mode": "data"},
@@ -182,7 +180,7 @@
         {"addr": "5001", "symbol": "VICCOM", "mode": "code"},
         {"addr": "501c", "symbol": "ENDCOM", "mode": "code"},
         {"addr": "5022", "symbol": "RETRET", "mode": "code", "comm": "check if unit X retreat dir Y is legal. SEC if lives else CLC;  zero set if retreat open, clear if blocked"},
-        {"addr": "5042", "comm": "coastline, estuary => check illegal hex"},
+        {"addr": "5042", "comm": "coastline, estuary -> check illegal hex"},
         {"addr": "5046", "comm": "Impassable, takes damage"},
         {"addr": "5091", "symbol": "SUPPLY", "mode": "code"},
         {"addr": "5140", "symbol": "CHKZOC", "mode": "code"},
@@ -270,7 +268,7 @@
         {"addr": "72d1", "symbol": "CALCEXC", "mode": "code", "comm": "init calc EXEC,x for next order (was DINGO)"},
         {"addr": "72de", "symbol": "CALCNXT", "mode": "code"},
 
-        {"addr": "7369", "symbol": "TERRTY", "mode": "code", "comm": "convert map chr in TRNCOD => TRNTYP, also y reg"},
+        {"addr": "7369", "symbol": "TERRTY", "mode": "code", "comm": "convert map chr in TRNCOD -> TRNTYP, also y reg"},
         {"addr": "73b6", "symbol": "ZPVAL", "mode": "data", "comm": "init for DLSTPT/2, MAP/2, CORPS, CURS{X|Y}/2"},
         {"addr": "73bf", "symbol": "PSXVAL", "mode": "data"},
         {"addr": "73cf", "symbol": "COLTAB", "mode": "data"},
@@ -295,7 +293,7 @@
         {"addr": "796f", "symbol": "ENDISR", "mode": "code"},
         {"addr": "799c", "symbol": "JSTP", "mode": "data", "comm": "Dirs to spiral around 5x5 square (incl 3x3 steps)"},
         {"addr": "79ac", "symbol": "JSTP+16", "mode": "data", "comm": "Dirs to spiral from loc around 3x3 (reverse order)"},
-        {"addr": "79b4", "symbol": "DEFNC", "mode": "data", "comm": "Defensive combat modifiers; 1 => half, 2 => no effect, 3 => double"},
+        {"addr": "79b4", "symbol": "DEFNC", "mode": "data", "comm": "Defensive combat modifiers; 1 -> half, 2 -> no effect, 3 -> double"},
         {"addr": "79c0", "symbol": "DWORDS", "mode": "code"},
         {"addr": "79da", "symbol": "DWORDSB", "mode": "code"},
         {"addr": "79ef", "symbol": "SWITCH", "mode": "code", "comm": "Swap map CHUNKX/Y with SWAP,x; x = CORPS, y = map offset"},
@@ -303,7 +301,7 @@
 
         {"addr": "7a35", "symbol": "CLRP1", "mode": "code"},
         {"addr": "7a4a", "symbol": "CLRP2", "mode": "code"},
-        {"addr": "7a5a", "symbol": "OBJX-55", "mode": "data"},
+        {"addr": "7a5a", "symbol": "OBJX-55", "mode": "data", "comm": "Russian objective (ghost army)"},
         {"addr": "7a5e", "symbol": "ERRCLR", "mode": "code"},
         {"addr": "7a74", "symbol": "BITTAB", "mode": "data"},
         {"addr": "7a78", "symbol": "ROTARR", "mode": "data"},
@@ -315,7 +313,7 @@
         {"addr": "7bd9", "symbol": "NDX", "mode": "data"},
         {"addr": "7bf1", "symbol": "YINC", "mode": "data", "comm": "note YINC/XINC overlap"},
         {"addr": "7bf2", "symbol": "XINC", "mode": "data"},
-        {"addr": "7bf6", "symbol": "OFFNC", "mode": "data", "comm": "Offence combat modifiers, 1 => half, 2 => no effect", "length": 10}
+        {"addr": "7bf6", "symbol": "OFFNC", "mode": "data", "comm": "Offence combat modifiers, 1 -> half, 2 -> no effect", "length": 10}
 
     ]
 }

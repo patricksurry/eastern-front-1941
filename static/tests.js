@@ -26,10 +26,28 @@ function assertThrows(callable, ...assertArgs) {
 
 console.group("unit tests begin");
 
+// Location to/from id
 const loc34 = Location(3, 4);
 assertEqual(Location.fromid(loc34.id).id, loc34.id, "Location.fromid round-trip failed");
 assertEqual(Location.of({lon: 3, lat: 4}).id, loc34.id, "Location.of failed");
 
+// Manhattan distance
+assertEqual(manhattanDistance({lon: 3, lat: 4}, {lon: 3, lat: 4}), 0, "Wrong manhattan distance");
+assertEqual(manhattanDistance({lon: 3, lat: 4}, {lon: 4, lat: 3}), 2, "Wrong manhattan distance");
+assertEqual(manhattanDistance({lon: 3, lat: 4}, {lon: 1, lat: 6}), 4, "Wrong manhattan distance");
+
+// direction tests
+assertEqual(directionFrom({lon: 3, lat: 4}, {lon: 3, lat: 4}), null, "Self direction is null");
+assertEqual(directionFrom({lon: 3, lat: 4}, {lon: 13, lat: 4}), Direction.west, "Wrong direction");
+assertEqual(directionFrom({lon: 3, lat: 4}, {lon: 0, lat: 3}), Direction.east, "Wrong direction");
+assertEqual(directionFrom({lon: 3, lat: 4}, {lon: 2, lat: 12}), Direction.north, "Wrong direction");
+assertEqual(directionFrom({lon: 3, lat: 4}, {lon: 3, lat: 0}), Direction.south, "Wrong direction");
+
+// path tests
+assertEqual(directPath({lon: 3, lat: 4}, {lon: 3, lat: 4}).cost, 0, "Nil path failure");
+assertEqual(directPath({lon: 3, lat: 4}, {lon: 0, lat: 3}).cost, 4, "Direct path length != manhattan distance");
+
+// Square spiral alg
 assertArrayLength(squareSpiral(loc34, 1), 1, "squareSpiral(1) should have one square");
 assertArrayLength(squareSpiral(loc34, 7), 49, "squareSpiral(7) should have 49 squares");
 
@@ -51,7 +69,7 @@ sq.forEach(loc => {
         if (loc.lon == lon && loc.lat == lat) loc.v = 1;
     })
 });
-let linepts = directions.map((dir, i) => linePoints(sortSquareFacing(p, 5, i, sq), 5));
+let linepts = directions.map((_, i) => linePoints(sortSquareFacing(p, 5, i, sq), 5, loc => loc.v));
 assertArrayEqual(linepts, [104, 162, 16, 146], "Unexpected linePoints()");
 
 const finn2 = oob[42];

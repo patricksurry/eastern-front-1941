@@ -1,12 +1,7 @@
 /*
 TODO
-- opacity vs visibility so we can fade in/fade out reserves/daed; start reserves hidden in right spot
 
 - game end check after scoring turn 40 M.ASM:4780 with 'GAME OVER' message
-
-- showNewOrder: flash on illegal move
-
-- nextTurn: flash / error if still processing?
 
 - flash style for combat
 
@@ -16,171 +11,54 @@ TODO
 
 - update title/hover on click (for supply and zoc)
 
-- hide units at correct position and remove the optional delay stuff, visibilty => opacity so can animate
-
 - implement AI
 
-- show ghost russians with orders on hover/click?
+- some indicator for zoc (both sides?) on click square
+
+- fogofwar option for enemy unit strength a la cartridge
 */
 
 var gameState = {
+    human: Player.german,
     turn: -1,       // 0-based turn counter, -1 is pre-game
     startDate: null,
     icelat: 39,     // via M.ASM:8600 PSXVAL initial value is 0x27
     handicap: 0,    // whether the game is handicapped
     zoom: false,    // display zoom on or off
-    extras: false,  // display extras like labels, health, zoc
+    extras: true,  // display extras like labels, health, zoc
+    debug: true,
     weather: null,
-    help: false,     // whether help is showing
+    help: null,     // after init, has boolean indicating help hide/show state
 }
 
-var focusid = null,  // current focused unit id
-    lastid = null,  // must recent focused unit id (= focusid or null)
-    kreuze = null,  // d3 selection with the chr displaying the maltakreuze
-    arrows = null;  // d3 selection of the four arrow chrs
-
 function mapinfo(ev, m) {
+    // maybe location describe?
     let clauses = [
-        `lon ${m.lon}, lat ${m.lat}`,
+        `[${m.id}] lon ${m.lon}, lat ${m.lat}`,
         `${terraintypes[m.terrain].key}` + (m.alt ? "-alt": ""),
         // `ZoC: German ${zoneOfControl(Player.german, m)}, Russian ${zoneOfControl(Player.russian, m)}`,
     ]
+    //TODO check debug, maybe this part should be self-describe?
     if (m.unitid != null) {
         let u = oob[m.unitid];
         clauses.push(`[${u.id}] ${u.label} (${u.cstrng}/${u.mstrng})`);
+        if (u.ifr) {
+            let s = directions.map((d, i) => `${d.key[0]}: ${u.ifrdir[i]}`).join(' ');
+            clauses.push(`ifr: ${u.ifr}; ${s}`);
+        }
         // clauses.push(`Supply: ${traceSupply(u, gameState.weather)}`);
     }
     d3.select(this).attr('title', clauses.join('\n'));
 }
 
 function mapclick(ev, m) {
+    errmsg();
     if (m.unitid == null || m.unitid == focusid) {
         unfocusUnit();
+        if (m.label) infomsg(centered(m.label));
     } else {
         focusUnit(oob[m.unitid]);
     }
-}
-
-function focusUnit(u) {
-    unfocusUnit();
-    if (!u) return;
-
-    focusid = u.id;
-    lastid = focusid;
-    showUnitInfo(u);
-    if (u.player == Player.german) {
-        showUnitPath(u);
-        u.chr.classed('blink', true);
-    }
-}
-
-function focusUnitRelative(offset) {
-    // sort active germans descending by location id (right => left reading order)
-    let german = oob
-            .filter(u => u.player == Player.german && u.isActive())
-            .sort((a, b) => Location.of(b).id - Location.of(a).id),
-        n = german.length;
-    var i;
-    if (lastid) {
-        i = german.findIndex(u => u.id == lastid);
-        if (i < 0) {
-            // if last unit no longer active, find the nearest active unit
-            let locid = Location.of(oob[lastid]).id;
-            while (++i < german.length && Location.of(german[i]).id > locid) {/**/}
-        }
-    } else {
-        i = offset > 0 ? -1: 0;
-    }
-    i = (i + n + offset) % n;
-    focusUnit(german[i]);
-}
-
-function unfocusUnit() {
-    focusid = null;
-    hideUnitPath();
-    d3.selectAll('.blink').classed('blink', false);
-    d3.selectAll('.chr-dim').style('opacity', 0);
-}
-
-function getFocusedUnit() {
-    return focusid === null ? null: oob[focusid];
-}
-
-function showUnitInfo(u) {
-    putlines('#info-window', [u.label, `COMBAT: ${u.cstrng}  MUSTER: ${u.mstrng}`]);
-    let locs = u.reach();
-    d3.selectAll('.chr-dim').filter(d => !(d.id in locs)).style('opacity', 0.5);
-}
-
-function showSelAt(sel, loc, duration) {
-    if (duration != 0) sel = sel.transition().duration(duration || 100);
-    return sel
-        .style('top', `${loc.row*8}px`)
-        .style('left', `${loc.col*8}px`)
-        .style('visibility', 'visible');
-
-        //TODO opacity 0/1?, add delay arg, e.g. showSelAt(sel, loc, 0), hideSel(), show...
-}
-
-function showUnitPath(u) {
-    let path = u.path(),
-        loc = path.pop();
-    showSelAt(kreuze, loc, 0)
-        .node().scrollIntoView({block: "center", inline: "center"});
-
-    arrows.style('visibility', 'hidden').interrupt();
-    if (!path.length) return;
-
-    let i = 0;
-    function animateUnitPath() {
-        let loc = path[i],
-            dir = u.orders[i],
-            dest = loc.neighbor(dir),
-            interrupted = false;
-        arrows.filter((_, j) => j == dir)
-            .style('top', `${loc.row*8}px`)
-            .style('left', `${loc.col*8}px`)
-        .transition()
-            .delay(i ? 0: 250)
-            .duration(500)
-            .ease(d3.easeLinear)
-            .style('visibility', 'visible')
-            .style('top', `${dest.row*8}px`)
-            .style('left', `${dest.col*8}px`)
-        .transition()
-            .duration(0)
-            .style('visibility', 'hidden')
-        .on("interrupt", () => { interrupted = true; })
-        .on("end", () => {
-            i = (i+1) % u.orders.length;
-            if (!interrupted) animateUnitPath();
-        });
-    }
-
-    animateUnitPath();
-}
-
-function hideUnitPath() {
-    kreuze.style('visibility', 'hidden');
-    arrows.style('visibility', 'hidden').interrupt();
-    d3.select('.blink').classed('blink', false);
-}
-
-function showNewOrder(dir) {
-    let u = getFocusedUnit();
-    if (!u) return;
-    if (dir == null) {
-        if (u.orders.length == 0) {
-            unfocusUnit();
-            return;
-        }
-        u.resetOrders();
-    } else if (dir == -1) {
-        u.orders.pop();
-    } else {
-        u.addOrder(dir);
-    }
-    focusUnit(u);
 }
 
 function toggleZoom() {
@@ -204,10 +82,17 @@ function toggleExtras() {
     d3.selectAll('.extra').style('visibility', gameState.extras ? 'visible': 'hidden')
 }
 
+function toggleDebug() {
+    gameState.debug = !gameState.debug;
+    d3.selectAll('.debug').style('visibility', gameState.debug ? 'visible': 'hidden')
+}
+
 function toggleHelp() {
     gameState.help = !gameState.help;
     d3.select('#help-window').style('display', gameState.help ? 'block': 'none');
     d3.select('#map-scroller').style('display', gameState.help ? 'none': 'block');
+
+    if (gameState.turn == -1 && !gameState.help) nextTurn();  // start the game
 }
 
 const keyboardCommands = {
@@ -222,8 +107,9 @@ const keyboardCommands = {
     Escape:     {action: showNewOrder, help: "Cancel: [Space], [Esc]"},
     " ":        {action: showNewOrder},
     End:        {action: endTurn, help: "Submit: [End], [Fn \x1f]"},
-    x:          {action: toggleExtras, help: "Toggle: e[x]tras, [z]oom, [?]help"},
-    z:          {action: toggleZoom},
+    z:          {action: toggleZoom, help: "Toggle: [z]oom, e[x]tras, debu[g]"},
+    x:          {action: toggleExtras},
+    g:          {action: toggleDebug},
     "?":        {action: toggleHelp},
     "/":        {action: toggleHelp},
 }
@@ -235,6 +121,7 @@ function keyhandler(e) {
         : (keyboardCommands[e.key] || keyboardCommands[e.key.toLowerCase()])
     );
     if (cmd) {
+        errmsg();
         cmd.action(...(cmd.args || []));
         e.preventDefault();     // eat event if handled
     }
@@ -244,10 +131,10 @@ const helpText = [].concat(
     [
         "",
         "",
-        "      Welcome to Chris Crawford's       ",
-        "          Eastern Front  1941           ",
+        centered("Welcome to Chris Crawford's"),
+        centered("Eastern Front  1941"),
         "",
-        "       Ported by Patrick Surry }        ",
+        centered("Ported by Patrick Surry }"),
         "",
     ],
     Object.values(keyboardCommands)
@@ -255,94 +142,56 @@ const helpText = [].concat(
         .map(d => "  " + d.help),
     [
         "",
-        "        Press any key to play!          ",
+        centered("[?] shows this help"),
+        "",
+        centered("Press any key to play!"),
     ]
-)
+);
 
+// main entry point
 function start() {
-    setclr('body', 'D4');
-    setclr('.date-rule', '1A');
-    setclr('.info-rule', '02');  // same as map
-    setclr('.err-rule', '8A');
+    // configure the scenario-based start date
+    gameState.startDate = new Date('1941/06/22');
 
-    putlines('#info-window', ['EASTERN FRONT 1941', 'COPYRIGHT 1981 CHRIS CRAWFORD'], '28', '22')
-    putlines('#err-window', ['PLEASE ENTER YOUR ORDERS NOW'], '22', '3A')
-    putlines('#help-window', helpText, '04', '0e')
+    setupDisplay(helpText, mapboard, oob);
+
+    // add a link on help page
+    d3.selectAll('#help-window .chr-fg')
         .filter(d => d == "}")
-        .select('.chr-fg')
         .style('background-color', hexcolor('94'))
         .on('click', () => window.open('https://github.com/patricksurry/eastern-front-1941'));
 
-    d3.select('#help-window').on('click', toggleHelp)
+    // set up a click handler to toggle help
+    d3.select('#help-window').on('click', toggleHelp);
 
-    toggleHelp();
-
-    const unitfg = (d) => players[d.player].color,
-        icon = (d) => d.icon;
-
-    let chrs = putlines('#map', mapboard, 'ff', '00', icon);
-    chrs.selectAll('.chr-fg')
+    // add map square click handlers
+    d3.selectAll('#map .chr-fg')
         .on('click', mapclick)
         .on('mouseover', mapinfo);
-    chrs.append('div')
-        .classed('chr-dim', true)
-        .classed('extra', true);
 
-    putlines('#units', [oob], unitfg, '00', icon)
-        .style('visibility', 'hidden')
-        .each(function(u) {
-            u.chr = d3.select(this);
-            u.show = function(duration) {
-                showSelAt(this.chr, Location.of(this), duration);
-                this.chr.select('.chr-mstrng').style('width', (90 * this.mstrng/255) + '%');
-                this.chr.select('.chr-cstrng').style('width', (100 * this.cstrng/this.mstrng) + '%');
-            };
-            u.hide = function(duration) {
-                //TODO opacity
-                this.chr.style('visibility', 'hidden');
-            };
-            showSelAt(u.chr, Location.of(u), 0).style('visibility', 'hidden');
-        })
-        .append('div')
-        .attr('class', 'chr-overlay extra')
-        .append('div')
-        .classed('chr-mstrng', true)
-        .append('div')
-        .classed('chr-cstrng', true)
+    putlines('#date-window', ["", centered("EASTERN FRONT 1941", 20)], '6A', 'B0')
 
-    d3.select('#labels')
-        .selectAll('div.label')
-        .data(cities)
-      .join('div')
-        .classed('label', true)
-        .classed('extra', true)
-        .text(d => d.label)
-        .style('left', d => `${Location.of(d).col * 8 + 4}px`)
-        .style('top', d => `${Location.of(d).row * 8 - 4}px`)
-        ;
+    infomsg(centered('COPYRIGHT 1982 ATARI'), centered('ALL RIGHTS RESERVED'));
 
-    chrs = putlines('#overlay', [[256], directions.map(d => d.icon)], '1A', null, d => d)
-        .style('visibility', 'hidden');
-    kreuze = chrs.filter(d => d == 256);
-    arrows = chrs.filter(d => d != 256);
+    // start the key handler
+    if (gameState.human != null) document.addEventListener('keydown', keyhandler);
 
-    document.addEventListener('keydown', keyhandler);
-
-    gameState.startDate = new Date('1941/06/22');
-    nextTurn();
+    // show the help page, which starts the game when dismissed the first time
+    toggleHelp();
 }
 
 function endTurn(delay) {
     if (think.concluded) {
-        console.warn("still ending turn...")
         return;
     }
     // process movement from prior turn
     fcsidx = null;
     unfocusUnit();
 
+    errmsg('EXECUTING MOVE');
+
     // stop thinking and collect orders
-    conclude();
+    Object.values(Player).forEach(player => { if (player != gameState.human) conclude(player) });
 
     // M.asm:4950 movement execution
     oob.forEach(u => u.scheduleOrder(true));
@@ -362,11 +211,12 @@ function endTurn(delay) {
 
 function nextTurn() {
     // start next turn, add a week to the date
+    errmsg('PLEASE ENTER YOUR ORDERS NOW');
     gameState.turn++;
 
     let dt = new Date(gameState.startDate);
     dt.setDate(dt.getDate() + 7 * gameState.turn);
-    let label = dt.toLocaleDateString("en-US", {year: 'numeric', month: 'long', day: 'numeric'});
+    let datelabel = dt.toLocaleDateString("en-US", {year: 'numeric', month: 'long', day: 'numeric'});
         minfo = monthdata[dt.getMonth()];  // note JS getMonth is 0-indexed
 
     gameState.weather = minfo.weather;
@@ -383,7 +233,7 @@ function nextTurn() {
         .filter(u => u.arrive == gameState.turn)
         .each(function(u) { u.moveTo(Location.of(u)); });
 
-    putlines('#date-window .container', [label], '6A', 'B0')
+    putlines('#date-window', ["", " " + datelabel])
 
     if (minfo.rivers) {
         // => thaw swamp/rivers
@@ -431,9 +281,8 @@ function nextTurn() {
         .style('color', minfo.weather == Weather.snow ? hexcolor('04'): hexcolor('08'));
 
     // start thinking...
-    think();
+    Object.values(Player).forEach(player => { if (player != gameState.human) think(player); });
 
     //TODO
-    console.log(JSON.stringify(gameState));
     console.log('Current score', score());
 }

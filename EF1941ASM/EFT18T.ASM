@@ -868,7 +868,7 @@
 8680 Z21 CMP #$09 no point in checking if he's too far
 8690 Z07 BCS Y48
 8700  LSR A
-8710  STA TEMPR this is half of range to unit
+8710  STA TEMPR this is half of range to unit -- unused?
 8720 ;
 8730 ;now select which IFR gets this German
 8740 ;

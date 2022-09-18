@@ -5,6 +5,23 @@ JS / CSS port of Chris Crawford's Eastern Front 1941
 this is a port of the published APX source code https://en-academic.com/dic.nsf/enwiki/1159488
 
 
+notes, fun discoveries
+
+- possible apx bugs
+
+- variable precision division sliding scale
+
+- cartridge chains
+    - level
+    - flieger
+    - fogofwar using code as seed
+    - run length coding for map
+    - attack even if defender wins first?
+    - division
+
+
+
+useful resources
 
 python ../pydisass6502/disass.py -i apxdump.dat -o apxdump.asm -e apxdump.map.json -c apxdump.stats -m ../pydisass6502/lib/atari-mapping.json
 
