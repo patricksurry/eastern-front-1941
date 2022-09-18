@@ -154,3 +154,6 @@
 .unit-path circle {
     stroke: none;
 }
+.debug {
+    visibility: hidden;
+}

@@ -30,6 +30,7 @@ function Unit(corpsx, corpsy, mstrng, swap, arrive, corpt, corpno) {
         takeDamage: Unit.takeDamage,
         recover: Unit.recover,
         traceSupply: Unit.traceSupply,
+        score: Unit.score,
     });
     u.canAttack = u.type != 'FINNISH' ? 1: 0;
     u.canMove = u.variant != 'MILITIA' ? 1: 0;
@@ -77,40 +78,18 @@ Unit.scheduleOrder = function(reset) {
     else this.tick = 255;
 }
 Unit.bestPath = function(goal) {
-    const costs = terraintypes.map(t => t.movecost[this.armor][gameState.weather] || 255);
     //TODO config directPath for comparison
-    return bestPath(Location.of(this), goal, costs);
+    return bestPath(Location.of(this), goal, moveCosts(this.armor, gameState.weather));
 }
 Unit.reach = function(range) {
-    // find all squares accessible to unit within range, ignoring other units, zoc
-    let cost = 0,
-        start = Location.of(this),
-        locs = {[start.id]: 0};
-
-    range = range || 32;
-    while (cost < range) {
-        Object.entries(locs).filter(([k,v]) => v == cost).forEach(([k,_]) => {
-            let src = Location.fromid(k);
-            src.put(this);
-            Object.values(Direction).forEach(i => {
-                let dst = src.neighbor(i);
-                if (!dst) return;
-                let curr = dst.id in locs ? locs[dst.id] : 255;
-                if (curr <= cost) return;
-                let c = cost + this.moveCost(i);
-                if (c <= range && c < curr) locs[dst.id] = c;
-            });
-        });
-        cost++;
-    }
-    start.put(this);
-    return locs;
+    return reach(this, range || 32, moveCosts(this.armor, gameState.weather));
 }
 Unit.moveTo = function(dst) {
     // move the unit
     Location.of(this).unitid = null;
     if (dst != null) {
         dst.unitid = this.id;
+        if (dst.cityid != null) cities[dst.cityid].owner = this.player;
         dst.put(this);
         this.show(250);
     } else {
@@ -250,7 +229,11 @@ Unit.traceSupply = function(weather) {
     }
     return 0;
 }
-//TODO supply penalty & replacements
+Unit.score = function() {
+    return (this.player == Player.german)
+        ? (maxlon + 2 - this.lon) * (this.mstrng >> 1)
+        : - this.lon * (this.cstrng >> 3);
+}
 
 
 const oob = oobdata.map(vs => Unit(...vs));

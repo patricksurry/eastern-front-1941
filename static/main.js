@@ -7,11 +7,7 @@ TODO
 
 - toggle key for handicap - increase muster strength of all your units by 50% but halve score, self-modifies VBI to change color of text window
 
-- score in info window instead of console
-
 - update title/hover on click (for supply and zoc)
-
-- implement AI
 
 - some indicator for zoc (both sides?) on click square
 
@@ -34,15 +30,17 @@ var gameState = {
 function mapinfo(ev, m) {
     // maybe location describe?
     let clauses = [
-        `[${m.id}] lon ${m.lon}, lat ${m.lat}`,
-        `${terraintypes[m.terrain].key}` + (m.alt ? "-alt": ""),
+        `[${m.id}] ${terraintypes[m.terrain].key}` + (m.alt ? "-alt": ""),
+        `lon ${m.lon}, lat ${m.lat}`,
         // `ZoC: German ${zoneOfControl(Player.german, m)}, Russian ${zoneOfControl(Player.russian, m)}`,
     ]
-    //TODO check debug, maybe this part should be self-describe?
+    //TODO check debug, maybe refactor as Unit.describe?
     if (m.unitid != null) {
         let u = oob[m.unitid];
-        clauses.push(`[${u.id}] ${u.label} (${u.cstrng}/${u.mstrng})`);
-        if (u.ifr) {
+        clauses.push(''),
+        clauses.push(`[${u.id}] ${u.mstrng} / ${u.cstrng}`);
+        clauses.push(`${u.label}`);
+        if (u.ifr && gameState.debug) {
             let s = directions.map((d, i) => `${d.key[0]}: ${u.ifrdir[i]}`).join(' ');
             clauses.push(`ifr: ${u.ifr}; ${s}`);
         }
@@ -55,7 +53,7 @@ function mapclick(ev, m) {
     errmsg();
     if (m.unitid == null || m.unitid == focusid) {
         unfocusUnit();
-        if (m.label) infomsg(centered(m.label));
+        if (m.cityid) infomsg(centered(cities[m.cityid].label.toUpperCase()));
     } else {
         focusUnit(oob[m.unitid]);
     }
@@ -264,9 +262,10 @@ function nextTurn() {
     terraintypes[Terrain.mountain_forest].altcolor = minfo.trees;
 
     // apply current fg/bg colors to map and unit background
-    const mapfg = (d) => {
-            let ter = terraintypes[d.terrain];
-            return d.alt ? ter.altcolor : ter.color
+    const mapfg = (loc) => {
+            let tinfo = terraintypes[loc.terrain],
+                alt = (loc.terrain == Terrain.city) ? cities[loc.cityid].owner : loc.alt;
+            return alt ? tinfo.altcolor : tinfo.color;
         },
         earth = weatherdata[minfo.weather].earth;
 

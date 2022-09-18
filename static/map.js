@@ -1,5 +1,6 @@
 // the map is made up of locations, each with a lon and lat
 function Location(lon, lat, ...data) {
+    if (!Number.isInteger(lon) || !Number.isInteger(lat)) throw("bad Location(lon: int, lat: int, ...data)")
     return Object.assign({
             lon,
             lat,
@@ -43,12 +44,16 @@ const mapboard = mapdata.map(
     )
 );
 
-cities.forEach(city => {
+cities.forEach((city, i) => {
     let loc = Location.of(city);
     console.assert(loc.terrain == Terrain.city, `Expected city terrain for ${city}`);
-    loc.alt = city.owner;
-    loc.label = city.label.toUpperCase();
+    loc.cityid = i;
 });
+
+function moveCosts(armor, weather) {
+    // return a table of movement costs based on armor/inf and weather
+    return terraintypes.map(t => t.movecost[armor][weather] || 255);
+}
 
 function manhattanDistance(p, q) {
     // calculate the taxicab metric between two locations
@@ -187,4 +192,27 @@ function bestPath(p, q, costs) {
         src = src.neighbor((dir + 2) % 4);
     }
     return {cost: costTo[goal.id], orders: orders}
+}
+
+function reach(src, range, costs) {
+    // find all squares accessible to unit within range, ignoring other units, zoc
+    let cost = 0,
+        start = Location.of(src),
+        locs = {[start.id]: 0};
+
+    while (cost < range) {
+        Object.entries(locs).filter(([k,v]) => v == cost).forEach(([k,_]) => {
+            let src = Location.fromid(k);
+            Object.values(Direction).forEach(i => {
+                let dst = src.neighbor(i);
+                if (!dst) return;
+                let curr = dst.id in locs ? locs[dst.id] : 255;
+                if (curr <= cost) return;
+                let c = cost + costs[dst.terrain];
+                if (c <= range && c < curr) locs[dst.id] = c;
+            });
+        });
+        cost++;
+    }
+    return locs;
 }

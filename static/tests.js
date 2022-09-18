@@ -26,6 +26,10 @@ function assertThrows(callable, ...assertArgs) {
 
 console.group("unit tests begin");
 
+// Location constructor
+assertEqual(Location(3, 4).id, Location.of({lon: 3, lat: 4}).id, "Location ids should match");
+assertThrows(() => Location({lon: 3, lat: 4}), "Invalid location should throw");
+
 // Location to/from id
 const loc34 = Location(3, 4);
 assertEqual(Location.fromid(loc34.id).id, loc34.id, "Location.fromid round-trip failed");
@@ -50,15 +54,16 @@ assertEqual(directPath({lon: 3, lat: 4}, {lon: 0, lat: 3}).cost, 4, "Direct path
 // Square spiral alg
 assertArrayLength(squareSpiral(loc34, 1), 1, "squareSpiral(1) should have one square");
 assertArrayLength(squareSpiral(loc34, 7), 49, "squareSpiral(7) should have 49 squares");
-
 assertThrows(() => squareSpiral(loc34, 2), "squareSpiral(2) should throw an error")
 
+// directionFrom tie-breaking
 let bydir = {0: 0, 1: 0, 2: 0, 3: 0, null: 0};
 squareSpiral(loc34, 7).forEach(loc => bydir[directionFrom(loc34, loc)] += 1);
 assertEqual(bydir[null], 1, "directionFrom(a, a) should return null");
 delete bydir[null];
 assertArrayEqual(Object.values(bydir), [12, 12, 12, 12], "directionFrom() should be equally distributed")
 
+// linePoints tests
 // set up the linepts position from the PDF diagram, and test from all directions
 let p = Location(102, 102),
     sq = squareSpiral(p, 5),
@@ -72,12 +77,21 @@ sq.forEach(loc => {
 let linepts = directions.map((_, i) => linePoints(sortSquareFacing(p, 5, i, sq), 5, loc => loc.v));
 assertArrayEqual(linepts, [104, 162, 16, 146], "Unexpected linePoints()");
 
+// bestPath test
 const finn2 = oob[42];
 assertArrayLength(finn2.bestPath(Location(36, 33)).orders, 10, "Unexpected bestPath() for 2 Finn Inf");
 
-//TODO
-gameState.weather = Weather.dry;
-assertArrayLength(Object.keys(finn2.reach()), 18, "Unexpected reach() for 2 Finn Inf")
+// reach test
+assertArrayLength(
+    Object.keys(reach(finn2, 32, moveCosts(finn2.armor, Weather.dry))), 18,
+    "Unexpected reach() for 2 Finn Inf"
+)
+
+// unit score tests
+assert
+    (oob.map(u => u.score() * (u.player == Player.german ? 1: -1)).every(s => s >= 0),
+    "Germans should be non-negative, and Russin non-positive"
+)
 
 console.info(`unit tests complete: ${pass} pass, ${fail} fail`)
 console.groupEnd();

@@ -2,21 +2,17 @@ function sum(xs) {
     return xs.reduce((s, x) => s + x, 0);
 }
 
+
 function score() {
     // M.asm:4050
-    let eastwest = sum(
-            oob.filter(u => u.isActive())
-            .map(u => u.player == Player.german
-                    ? (mapboard.maxlon + 2 - u.lon)*(u.mstrng >> 1)
-                    : - u.lon*(u.cstrng >> 3)
-            )
-        ),
+    let eastwest = sum(oob.filter(u => u.isActive()).map(u => u.score())),
         bonus = sum(
             cities.filter(c => c.owner == Player.german)
             .map(c => c.points || 0)
         ),
         score = (Math.max(eastwest, 0) >> 8) + bonus;
 
+    console.log('Scoring', eastwest, bonus, score);
     if (gameState.handicap) score >>= 1;
     return score;
 }
@@ -57,7 +53,7 @@ function think(player, train) {
         } else if (firstpass && (u.cstrng <= (u.mstrng >> 1) || u.ifrdir[pinfo.homedir] >= 16)) {
             // run home if hurting or blocked towards home
             //TODO could look for farthest legal square (valid & not impassable) 5, 4, ...
-            u.objective = Location({lon: u.lon + 5 * directions[pinfo.homedir].dlon, lat: u.lat});
+            u.objective = Location(u.lon + 5 * directions[pinfo.homedir].dlon, u.lat);
         } else {
             // find nearest best square
             let start = Location.of(u.objective),
@@ -82,7 +78,7 @@ function think(player, train) {
 
     think.delay *= 1.25;
 
-    console.log(`thought ${think.trainOfThought}.${think.depth} took ${Math.round(dt)}ms, waiting ${Math.round(think.delay)}ms`);
+    console.log(`thought ${think.trainOfThought[player]}.${think.depth} took ${Math.round(dt)}ms, waiting ${Math.round(think.delay)}ms`);
 
     //TODO backoff, perhaps based on change since last time?
     setTimeout(think, think.delay, player, think.trainOfThought[player]);
