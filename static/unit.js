@@ -91,9 +91,9 @@ Unit.moveTo = function(dst) {
         dst.unitid = this.id;
         if (dst.cityid != null) cities[dst.cityid].owner = this.player;
         dst.put(this);
-        this.show(250);
+        this.show(100);
     } else {
-        this.hide(250);
+        this.hide(100);
     }
 }
 Unit.tryOrder = function() {
@@ -124,12 +124,16 @@ Unit.tryOrder = function() {
     this.scheduleOrder();
 }
 Unit.resolveCombat = function(opp) {
-    if (!this.canAttack) return;
-
     // return 1 if target square is vacant
+    if (!this.canAttack) return 0;
+
+    this.flash(0, 70);
+    opp.flash(30, 70);
+
     let modifier = terraintypes[Location.of(opp).terrain].defence;
     if (opp.orders.length) modifier--;  // movement penalty
 
+    // opponent attacks
     let str = modifyStrength(opp.cstrng, modifier);
     if (str >= rand256()) this.takeDamage(1, 5);
 
@@ -230,9 +234,17 @@ Unit.traceSupply = function(weather) {
     return 0;
 }
 Unit.score = function() {
-    return (this.player == Player.german)
-        ? (maxlon + 2 - this.lon) * (this.mstrng >> 1)
-        : - this.lon * (this.cstrng >> 3);
+    let v = 0;
+    if (this.isActive()) {
+        // see M.ASM:4050
+        if (this.player == Player.german) {
+            // maxlon + 2 == #$30 per M.ASM:4110
+            v = (maxlon + 2 - this.lon) * (this.mstrng >> 1);
+        } else {
+            v = this.lon * (this.cstrng >> 3);
+        }
+    }
+    return v >> 8;
 }
 
 

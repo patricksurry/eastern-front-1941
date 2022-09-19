@@ -45,6 +45,7 @@ const mapboard = mapdata.map(
 );
 
 cities.forEach((city, i) => {
+    city.points ||= 0;
     let loc = Location.of(city);
     console.assert(loc.terrain == Terrain.city, `Expected city terrain for ${city}`);
     loc.cityid = i;

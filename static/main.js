@@ -3,8 +3,6 @@ TODO
 
 - game end check after scoring turn 40 M.ASM:4780 with 'GAME OVER' message
 
-- flash style for combat
-
 - toggle key for handicap - increase muster strength of all your units by 50% but halve score, self-modifies VBI to change color of text window
 
 - update title/hover on click (for supply and zoc)
@@ -178,7 +176,9 @@ function start() {
     toggleHelp();
 }
 
-function endTurn(delay) {
+function endTurn() {
+    const delay = 100;
+
     if (think.concluded) {
         return;
     }
@@ -199,7 +199,7 @@ function endTurn(delay) {
         // original code processes movement in reverse-oob order
         oob.filter(u => u.tick == tick).reverse().forEach(u => u.tryOrder());
         if (tick++ < 32) {
-            setTimeout(tickTock, delay != null ? delay: 100);
+            setTimeout(tickTock, delay);
         } else {
             nextTurn();
         }
@@ -209,8 +209,8 @@ function endTurn(delay) {
 
 function nextTurn() {
     // start next turn, add a week to the date
-    errmsg('PLEASE ENTER YOUR ORDERS NOW');
     gameState.turn++;
+    errmsg('PLEASE ENTER YOUR ORDERS NOW');
 
     let dt = new Date(gameState.startDate);
     dt.setDate(dt.getDate() + 7 * gameState.turn);
@@ -280,8 +280,5 @@ function nextTurn() {
         .style('color', minfo.weather == Weather.snow ? hexcolor('04'): hexcolor('08'));
 
     // start thinking...
-    Object.values(Player).forEach(player => { if (player != gameState.human) think(player); });
-
-    //TODO
-    console.log('Current score', score());
+    players.forEach((_, player) => { if (player != gameState.human) think(player); });
 }

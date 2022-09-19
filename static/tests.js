@@ -89,8 +89,8 @@ assertArrayLength(
 
 // unit score tests
 assert
-    (oob.map(u => u.score() * (u.player == Player.german ? 1: -1)).every(s => s >= 0),
-    "Germans should be non-negative, and Russin non-positive"
+    (oob.map(u => u.score()).every(s => s >= 0),
+    "Unit scores should be non-negative"
 )
 
 console.info(`unit tests complete: ${pass} pass, ${fail} fail`)

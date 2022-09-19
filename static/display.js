@@ -9,7 +9,7 @@ function centered(s, width) {
     return s.padStart((pad >> 1) + s.length).padEnd(width) ;
 }
 function errmsg(text) {
-    let s = score().toString().padStart(3).padEnd(4);
+    let s = score(gameState.human).toString().padStart(3).padEnd(4);
     s += centered(text || "", 36);
     putlines('#err-window', [s])
 };
@@ -85,6 +85,15 @@ function setupDisplay(help, mapchrs, units) {
                 let chr = this.chr;
                 if (duration) chr = chr.transition(duration);
                 chr.style('opacity', 0);
+            };
+            u.flash = function(delay, duration) {
+                let fg = this.chr.select('.chr-fg');
+                fg.transition()
+                    .delay(delay).duration(0)
+                    .style('-webkit-mask-position', maskpos(0xff))
+                  .transition()
+                    .delay(duration).duration(0)
+                    .style('-webkit-mask-position', maskpos(u.icon));
             };
             // pre-position at correct location
             u.show(); u.hide();

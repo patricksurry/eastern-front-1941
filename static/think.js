@@ -3,16 +3,12 @@ function sum(xs) {
 }
 
 
-function score() {
+function score(player) {
     // M.asm:4050
-    let eastwest = sum(oob.filter(u => u.isActive()).map(u => u.score())),
-        bonus = sum(
-            cities.filter(c => c.owner == Player.german)
-            .map(c => c.points || 0)
-        ),
-        score = (Math.max(eastwest, 0) >> 8) + bonus;
-
-    console.log('Scoring', eastwest, bonus, score);
+    let eastwest = sum(oob.map(u => u.score() * (u.player == player ? 1: -1))),
+        bonus = sum(cities.filter(c => c.owner == player).map(c => c.points)),
+        score = Math.max(0, eastwest) + bonus;
+    console.log(`score ${score} = max(0, ${eastwest}) + ${bonus}`);
     if (gameState.handicap) score >>= 1;
     return score;
 }
