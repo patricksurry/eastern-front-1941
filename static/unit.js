@@ -91,9 +91,9 @@ Unit.moveTo = function(dst) {
         dst.unitid = this.id;
         if (dst.cityid != null) cities[dst.cityid].owner = this.player;
         dst.put(this);
-        this.show(100);
+        this.show(true);
     } else {
-        this.hide(100);
+        this.hide(true);
     }
 }
 Unit.tryOrder = function() {
@@ -127,8 +127,8 @@ Unit.resolveCombat = function(opp) {
     // return 1 if target square is vacant
     if (!this.canAttack) return 0;
 
-    this.flash(0, 70);
-    opp.flash(30, 70);
+    this.flash(true);
+    opp.flash(false);
 
     let modifier = terraintypes[Location.of(opp).terrain].defence;
     if (opp.orders.length) modifier--;  // movement penalty
@@ -155,6 +155,7 @@ Unit.takeDamage = function(mdmg, cdmg, checkBreak, retreatDir) {
 
     // dead?
     if (this.cstrng <= 0) {
+        console.log(`${this.label} eliminated`)
         this.mstrng = 0;
         this.cstrng = 0;
         this.arrive = 255;
@@ -162,7 +163,7 @@ Unit.takeDamage = function(mdmg, cdmg, checkBreak, retreatDir) {
         this.moveTo(null);
         return 1;
     }
-    this.show();
+    this.show(); // update strength
 
     if (!checkBreak) return 0;
 

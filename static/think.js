@@ -8,7 +8,6 @@ function score(player) {
     let eastwest = sum(oob.map(u => u.score() * (u.player == player ? 1: -1))),
         bonus = sum(cities.filter(c => c.owner == player).map(c => c.points)),
         score = Math.max(0, eastwest) + bonus;
-    console.log(`score ${score} = max(0, ${eastwest}) + ${bonus}`);
     if (gameState.handicap) score >>= 1;
     return score;
 }
@@ -20,15 +19,13 @@ function think(player, train) {
         think.concluded = false;
     } else if (train != think.trainOfThought[player]) {
         // skip pre-scheduled old train of thought
-        console.log(`Skipped passing thought, train ${train}`);
+        console.debug(`Skipped passing thought, train ${train}`);
         return;
     }
     think.depth++;
 
-    //TODO start thinking
-    const t0 = performance.now();
-
-    const pinfo = players[player],
+    const t0 = performance.now(),
+        pinfo = players[player],
         firstpass = think.depth == 1,
         units = oob.filter(u => u.player == player && u.isActive());
 
@@ -36,7 +33,7 @@ function think(player, train) {
     var ofr = 0;  // only used in first pass
     if (firstpass) {
         ofr = calcForceRatios(player);
-        console.log('OFR:', ofr);
+        console.log('Overall force ratio (OFR) is', ofr);
         units.forEach(u => u.objective = Location.of(u));
     }
 
@@ -53,11 +50,11 @@ function think(player, train) {
         } else {
             // find nearest best square
             let start = Location.of(u.objective),
-                bestval = evalSquare(u, start);
+                bestval = evalLocation(u, start);
             directions.forEach((_, i) => {
                 let loc = start.neighbor(i);
                 if (!loc) return;
-                let sqval = evalSquare(u, loc);
+                let sqval = evalLocation(u, loc);
                 if (sqval > bestval) {
                     bestval = sqval;
                     u.objective = loc;
@@ -72,18 +69,17 @@ function think(player, train) {
     });
     const dt = performance.now() - t0;
 
-    think.delay *= 1.25;
+    think.delay *= 1.1;  // gradually back off thinking rate
 
-    console.log(`thought ${think.trainOfThought[player]}.${think.depth} took ${Math.round(dt)}ms, waiting ${Math.round(think.delay)}ms`);
+    console.debug(`thought ${think.trainOfThought[player]}-${think.depth} took ${Math.round(dt)}ms; waiting ${Math.round(think.delay)}ms`);
 
-    //TODO backoff, perhaps based on change since last time?
     setTimeout(think, think.delay, player, think.trainOfThought[player]);
 }
 think.trainOfThought = {[Player.german]: 0, [Player.russian]: 0};
 
 
 function conclude(player) {
-    console.log("Concluding...")
+    console.debug("Concluding...")
     think.trainOfThought[player]++;
     think.concluded = true;
 
@@ -91,8 +87,6 @@ function conclude(player) {
 }
 
 function calcForceRatios(player) {
-    // TODO create a ghostoob where we can modify position, flag as reinf
-
     let active = oob.filter(u => u.isActive()),
         friend = sum(active.filter(u => u.player == player).map(u => u.cstrng)),
         foe = sum(active.filter(u => u.player != player).map(u => u.cstrng)),
@@ -132,7 +126,7 @@ function findBeleaguered(u) {
     return best;
 }
 
-function evalSquare(u, loc) {
+function evalLocation(u, loc) {
     let ghosts = {},
         range = manhattanDistance(u, loc);
 

@@ -70,10 +70,10 @@ function setupDisplay(help, mapchrs, units) {
             // set up some callbacks for units to manage their state
             u.chr = d3.select(this);
             u.pathsvg = d3.selectAll('.unit-path').filter(v => v.id == u.id);
-            u.show = function(duration) {
+            u.show = function(animate) {
                 let chr = this.chr,
                     loc = Location.of(this);
-                if (duration) chr = chr.transition(duration);
+                if (animate) chr = chr.transition().duration(250);
                 chr.call(showAt, loc);
                 chr.select('.chr-mstrng').style('width', (90 * this.mstrng/255) + '%');
                 chr.select('.chr-cstrng').style('width', (100 * this.cstrng/this.mstrng) + '%');
@@ -81,19 +81,15 @@ function setupDisplay(help, mapchrs, units) {
                     .attr('transform', `translate(${loc.col + 0.5},${loc.row + 0.5}) scale(-1)`)
                     .html(pathSVG(this.orders));
             };
-            u.hide = function(duration) {
+            u.hide = function(animate) {
                 let chr = this.chr;
-                if (duration) chr = chr.transition(duration);
+                if (animate) chr = chr.transition().duration(250);
                 chr.style('opacity', 0);
             };
-            u.flash = function(delay, duration) {
-                let fg = this.chr.select('.chr-fg');
-                fg.transition()
-                    .delay(delay).duration(0)
-                    .style('-webkit-mask-position', maskpos(0xff))
-                  .transition()
-                    .delay(duration).duration(0)
-                    .style('-webkit-mask-position', maskpos(u.icon));
+            u.flash = function(reversed) {
+                this.chr.select('.chr-fg')
+                    .classed('flash', true)
+                    .style('animation-direction', reversed ? 'reverse': 'normal');
             };
             // pre-position at correct location
             u.show(); u.hide();
@@ -369,3 +365,6 @@ function showNewOrder(dir) {
     focusUnit(u);
 }
 
+function stopUnitsFlashing() {
+    d3.selectAll('#units .chr-fg').classed('flash', false);
+}

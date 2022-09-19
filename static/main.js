@@ -1,17 +1,3 @@
-/*
-TODO
-
-- game end check after scoring turn 40 M.ASM:4780 with 'GAME OVER' message
-
-- toggle key for handicap - increase muster strength of all your units by 50% but halve score, self-modifies VBI to change color of text window
-
-- update title/hover on click (for supply and zoc)
-
-- some indicator for zoc (both sides?) on click square
-
-- fogofwar option for enemy unit strength a la cartridge
-*/
-
 var gameState = {
     human: Player.german,
     turn: -1,       // 0-based turn counter, -1 is pre-game
@@ -177,7 +163,7 @@ function start() {
 }
 
 function endTurn() {
-    const delay = 100;
+    const delay = 250;
 
     if (think.concluded) {
         return;
@@ -197,12 +183,10 @@ function endTurn() {
     let tick = 0;
     function tickTock() {
         // original code processes movement in reverse-oob order
+        // could be interesting to randomize, or support a 'pause' order to handle traffic
+        stopUnitsFlashing();
         oob.filter(u => u.tick == tick).reverse().forEach(u => u.tryOrder());
-        if (tick++ < 32) {
-            setTimeout(tickTock, delay);
-        } else {
-            nextTurn();
-        }
+        setTimeout(tick++ < 32 ? tickTock: nextTurn, delay);
     }
     tickTock();
 }
@@ -212,6 +196,7 @@ function nextTurn() {
     gameState.turn++;
     // clear error, show score for this turn
     errmsg('PLEASE ENTER YOUR ORDERS NOW');
+    stopUnitsFlashing();
 
     let dt = new Date(gameState.startDate);
     dt.setDate(dt.getDate() + 7 * gameState.turn);

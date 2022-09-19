@@ -18,7 +18,7 @@ one of my earliest memories of video games, and first introduction to wargaming.
 friend I used to hang out with after school as a kid
 had an Atari 400 iirc, not to mention an actual pong bar table :exploding_head:
 
-Pitfall, Missile Command, Defender and a rogue-like game
+Pitfall, Missile Command, Defender and a rogue-like adventure game whose name I forget.
 
 fascinated to find that the source code existed, and thought would be fun
 to create a more accessible port
@@ -28,19 +28,27 @@ interactive wargame with AI opponent in 12K (a 16K cartridge with 4K to spare),
 and perhaps encourage others to experiment with AI improvements,
 an AI for the Germans or even fully computer play environment.
 
-
 tried to capture the spirit of the game (data, fonts, etc) without slavishly recreating (emulators can do that)
 same time tried to make the data and logic more explicit, e.g. most data structures like oob are still lists
 accessed by index, but often list items are wrapped as simple objects to give names to fields etc.
 
+bugs are my own
+
 hard to imagine debugging and tuning the AI in 6502 asm (tho mentions basic).  much more complexity than
 any assembler I've written.  respect
+
+hope it's a resource for others to learn, perhaps experiment with AI improvements
+
+fascinating simplicity of AI, no understanding of local tactics, ZoC etc
 
 also working on an annotated disassembly of the cartridge version to catalog differences
 and offer as options here. some minor things already incorporated.
 plenty of interesting stuff in there
 
 oddly enough still haven't played an emulated version (tho consulted numerous screenshots and videos)
+
+
+
 
 http://www.erasmatazz.com/library/source-code/index.html
 
@@ -62,19 +70,43 @@ extras
 - why 8 order limit (just 8 x 2 bits = 2 bytes)?
 - A* path finding
 
+- more efficient impassable hex check
+
 notes, fun discoveries
 
 - possible apx bugs
 
 - variable precision division sliding scale
 
-- cartridge chains
+- cartridge changes
     - level
-    - flieger units, difficulty levess (vs handicap)
+    - flieger units, difficulty levels (vs handicap)
     - fogofwar using code as seed
     - run length coding for map
     - attack even if defender wins first?
     - division
+
+
+
+TODO
+--
+
+- game end check after scoring turn 40 M.ASM:4780 with 'GAME OVER' message
+
+- toggle key for handicap - increase muster strength of all your units by 50% but halve score, self-modifies VBI to change color of text window
+
+- update title/hover on click (for supply and zoc)
+
+- some indicator for zoc (both sides?) on click square
+
+- fogofwar option for enemy unit strength a la cartridge
+
+- evalLocation could try isOccupied = p => ghosts[p.id] || !p.valid || p.terrain == Terrain.impassable
+    could also measure nbval with path-finder vs manhattan (general point)
+
+- try linePoints with only adj column penalties, distinguish impassable vs unit?
+
+- path finding gets blocked by militia eg. Kiev, consider impassable?  prob also poor near ZoC
 
 
 Useful resources

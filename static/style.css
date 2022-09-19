@@ -86,20 +86,19 @@
     width: 0;
     white-space: nowrap;
 }
-@keyframes pulse {
-  0% {-webkit-transform: scale(1.0); }
-  100% {-webkit-transform: scale(1.2); }
+@keyframes flash {
+  0% {-webkit-mask-image: none; }
+  100% {-webkit-mask-image: url(fontmap.png); }
 }
 @keyframes blink {
   0% {opacity: 1.0;}
   100% {opacity: 0.0;}
 }
-.pulse {
-  /* Giving Animation Function */
-    animation: pulse 1s ease-out infinite;
+.flash {
+    animation: flash 0.25s infinite;
 }
 .blink {
-    animation: blink 0.6s ease-in infinite;
+    animation: blink 0.5s ease-in infinite;
 }
 .chr, .chr-bg, .chr-fg, .chr-dim {
     width: 8px;
