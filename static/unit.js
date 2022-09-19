@@ -235,14 +235,12 @@ Unit.traceSupply = function(weather) {
 }
 Unit.score = function() {
     let v = 0;
-    if (this.isActive()) {
-        // see M.ASM:4050
-        if (this.player == Player.german) {
-            // maxlon + 2 == #$30 per M.ASM:4110
-            v = (maxlon + 2 - this.lon) * (this.mstrng >> 1);
-        } else {
-            v = this.lon * (this.cstrng >> 3);
-        }
+    // see M.ASM:4050 - note even inactive units are scored based on future arrival/strength
+    if (this.player == Player.german) {
+        // maxlon + 2 == #$30 per M.ASM:4110
+        v = (maxlon + 2 - this.lon) * (this.mstrng >> 1);
+    } else {
+        v = this.lon * (this.cstrng >> 3);
     }
     return v >> 8;
 }
@@ -281,39 +279,3 @@ function modifyStrength(strength, modifier) {
     }
     return strength;
 }
-
-
-/* combat C.ASM:1150
-
-no finnish attack (make this a generic unit flag)
-
-flashing red/white solid for defender, machine gun?
-
-defender cstrng + terrain modifier + moving penalty (max 255) => random256
-if hit, mstrng--, cstrng -=5
-dead?
-attacker break?  (no retreat)
-
-attacker cstrng + offence terrain modifier
-if hit, as above
-break => retreat
-
-retreat:  (check move legal C.ASM:2800)
-- same dir as attacker order (away from them)
-- then home dir (e/w)
-- then north  [could randomize these]
-- then south
-- then opp home dir (w/e)
-
-legal retreat?
-- square occupied?
-- legal move (excl blocked hexsides)
-- no zone of control >=2 in target
-- fail cstrng -=5
-
-
-inc tick (for next round/move)
-
-set victory flag (to consume order)
-
-*/
