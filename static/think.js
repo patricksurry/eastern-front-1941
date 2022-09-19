@@ -40,7 +40,7 @@ function think(player, train) {
         units.forEach(u => u.objective = Location.of(u));
     }
 
-    units.forEach(u => {
+    units.filter(u => u.canMove).forEach(u => {
         //TODO these first two checks don't seem to depend on ghost army so are fixed on first pass?
         if (firstpass && u.ifr == ofr >> 1) {
             // head to reinforce if no local threat since (Local + OFR) / 2 = OFR / 2
@@ -158,9 +158,9 @@ function evalSquare(u, loc) {
         );
     if (u.ifr >= 16 && nbval == 0) return 0;
 
-    sqval += u.ifr >= 16 ? u.ifr + nbval : (15 - u.ifr) + (9 - nbval);
-    sqval += terraintypes[loc.terrain].defence + 1;
-    sqval += dibs ? -32: 0;
+    nbval += terraintypes[loc.terrain].defence + 1;  // our 0 adj is equiv to his 1
+    sqval += u.ifr >= 16 ? u.ifr * nbval : 2 * (15 - u.ifr) * (9 - nbval);
+    if (dibs) sqval -= 32;
     sqval -= 1 << range;
     return sqval < 0 ? 0 : sqval;
 }

@@ -29,6 +29,13 @@ and perhaps encourage others to experiment with AI improvements,
 an AI for the Germans or even fully computer play environment.
 
 
+tried to capture the spirit of the game (data, fonts, etc) without slavishly recreating (emulators can do that)
+same time tried to make the data and logic more explicit, e.g. most data structures like oob are still lists
+accessed by index, but often list items are wrapped as simple objects to give names to fields etc.
+
+hard to imagine debugging and tuning the AI in 6502 asm (tho mentions basic).  much more complexity than
+any assembler I've written.  respect
+
 also working on an annotated disassembly of the cartridge version to catalog differences
 and offer as options here. some minor things already incorporated.
 plenty of interesting stuff in there
@@ -49,6 +56,11 @@ the cartridge user manual `eastern_front_atari_cartridge.pdf`
 
 
 extras
+
+- unit paths
+- unit reach
+- why 8 order limit (just 8 x 2 bits = 2 bytes)?
+- A* path finding
 
 notes, fun discoveries
 

@@ -210,6 +210,7 @@ function endTurn() {
 function nextTurn() {
     // start next turn, add a week to the date
     gameState.turn++;
+    // clear error, show score for this turn
     errmsg('PLEASE ENTER YOUR ORDERS NOW');
 
     let dt = new Date(gameState.startDate);
