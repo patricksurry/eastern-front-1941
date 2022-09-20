@@ -91,6 +91,8 @@ notes, fun discoveries
 TODO
 --
 
+- russian mstrng replacements in supply check
+
 - game end check after scoring turn 40 M.ASM:4780 with 'GAME OVER' message
 
 - toggle key for handicap - increase muster strength of all your units by 50% but halve score, self-modifies VBI to change color of text window

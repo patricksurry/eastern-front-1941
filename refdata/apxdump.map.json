@@ -127,7 +127,7 @@
         {"addr": "0681", "symbol": "YLOC", "mode": "data"},
         {"addr": "0682", "symbol": "TEMPX", "mode": "data"},
         {"addr": "0683", "symbol": "TEMPY", "mode": "data"},
-        {"addr": "0684", "symbol": "LV", "mode": "data", "comm": "?Source data seems to be save file name?"},
+        {"addr": "0684", "symbol": "LV", "mode": "data", "comm": "line value array"},
         {"addr": "0689", "symbol": "LPTS", "mode": "data", "comm": "line points: evaluating strength of the line"},
         {"addr": "068a", "symbol": "COLUM", "mode": "data"},
         {"addr": "068b", "symbol": "OCOLUM", "mode": "data"},
@@ -141,7 +141,7 @@
         {"addr": "0697", "symbol": "VICTRY", "mode": "data"},
         {"addr": "0698", "symbol": "IFR", "mode": "data", "comm": "Individual force ratio"},
 
-        {"addr": "4700", "symbol": "THINK" , "mode": "code", "comm": "Initialize.  NB call with A=0; X indexes TOTGS/TOTRS"},
+        {"addr": "4700", "symbol": "THINK" , "mode": "code", "comm": "Initialize AI.  NB call with A=0; X indexes TOTGS/TOTRS"},
         {"addr": "472b", "comm": "Calc TOTGS*16/TOTRS by right shift numerator until overflow then left shft denom"},
         {"addr": "4743", "comm": "Calc OFR by repeated subtraction of denom from numerator"},
         {"addr": "4752", "comm": "Loop through to calc Russian IFR"},
@@ -184,7 +184,7 @@
         {"addr": "5046", "comm": "Impassable, takes damage"},
         {"addr": "5091", "symbol": "SUPPLY", "mode": "code"},
         {"addr": "5140", "symbol": "CHKZOC", "mode": "code"},
-        {"addr": "51ab", "symbol": "DEAD", "mode": "code", "comm": "Score and remove unit, maybe disperse nearby"},
+        {"addr": "51ab", "symbol": "DEAD", "mode": "code", "comm": "Remove unit X"},
         {"addr": "51ce", "symbol": "BRKCHK", "mode": "code", "comm": "Maybe break unit X, reset orders, SEC on break"},
 
         {"addr": "51ff", "symbol": "PLYR0-1", "mode": "data"},
@@ -250,7 +250,7 @@
         {"addr": "6feb", "symbol": "ENDSSN", "mode": "code"},
 
         {"addr": "70b6", "symbol": "FINI", "mode": "code", "comm": "GAME OVER!"},
-        {"addr": "70e1", "symbol": "MOVELOOP", "mode": "code"},
+        {"addr": "70e1", "symbol": "MOVELP", "mode": "code"},
 
         {"addr": "7138", "symbol": "TRJAM", "mode": "code"},
         {"addr": "7146", "symbol": "DOCOMBAT", "mode": "code"},
@@ -308,7 +308,7 @@
         {"addr": "7a91", "symbol": "OBJX", "mode": "data", "length": 104},
 
         {"addr": "7b00", "symbol": "DLISRV", "mode": "code", "comm": "DLI handler"},
-        {"addr": "7b7a", "symbol": "TRADEMARK", "mode": "data", "comm": "'My trademark' ??"},
+        {"addr": "7b7a", "symbol": "TRDMRK", "mode": "data", "comm": "'My trademark' ??"},
         {"addr": "7bb2", "symbol": "DNUMBR", "mode": "code"},
         {"addr": "7bd9", "symbol": "NDX", "mode": "data"},
         {"addr": "7bf1", "symbol": "YINC", "mode": "data", "comm": "note YINC/XINC overlap"},

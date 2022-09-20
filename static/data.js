@@ -146,6 +146,7 @@ const
             offence: -1, defence: -1, movecost: [[14, 30, 28], [13, 30, 28]]
         },
         {
+            // strange that coastline acts like river but estuary doesn't?
             key: 'coastline', color: '94',
             offence: -1, defence: -1, movecost: [[ 8, 26, 12], [ 6, 30,  8]]
         },

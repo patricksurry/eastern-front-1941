@@ -116,7 +116,7 @@ function findBeleaguered(u) {
     oob.filter(v => v.isActive() && v.player == u.player)
         .forEach(v => {
             let d = manhattanDistance(u, v);
-            if (d <= 8) return;
+            if (d <= 8) return;  // APX code does weird bit 3 check
             let s = v.ifr - (d >> 3);
             if (s > score) {
                 score = s;
