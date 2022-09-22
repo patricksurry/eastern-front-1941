@@ -60,8 +60,11 @@
     left: 0px;
     pointer-events: none;
 }
-#map {
+#map .chr {
     pointer-events: auto;
+}
+.chr div {  /* reduce hit testing load by only checking parent .chr */
+    pointer-events: none;
 }
 #labels {
     z-index: 1;

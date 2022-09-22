@@ -163,7 +163,7 @@ Unit.takeDamage = function(mdmg, cdmg, checkBreak, retreatDir) {
         this.moveTo(null);
         return 1;
     }
-    this.show(); // update strength
+    this.showStats(); // update strength
 
     if (!checkBreak) return 0;
 

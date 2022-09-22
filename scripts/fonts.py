@@ -4,6 +4,40 @@ import numpy as np
 from PIL import Image
 
 
+def writefontpng(fonts, outfile, nc=16):
+    nr = len(fonts) // (8 * nc)
+
+    bitmap = np.unpackbits(
+        np.array([
+            [
+                fonts[(r * nc + c)*8 + i]
+                for c in range(nc)
+            ]
+            for r in range(nr) for i in range(8)
+        ], dtype=np.uint8),
+        axis=1,
+        bitorder='big',
+    )
+    #print(bitmap.shape)
+    #print(bitmap)
+    rgba = np.zeros(bitmap.shape + (4,), dtype='uint8')
+    rgba[:, :, :] = bitmap[:, :, np.newaxis]*255
+    im = Image.fromarray(rgba)
+    #im = Image.fromarray(bitmap*255)
+    im.save(outfile)  # base64 => url(data:image/png;base64,iVBORw...)
+    print(f'Wrote fonts png to {outfile}')
+    # im.show()
+
+
+# unused
+
+def dataurlblob(fonts):
+    # encode as base64 for inclusion via data-url
+    return b64encode(fonts)
+
+
+# more ununsed stuff for drawing ascii bitmaps
+
 BITFLAGS = list(reversed([1 << i for i in range(8)]))
 
 
@@ -33,45 +67,6 @@ def showascii(fonts):
         print(sep)
     return chrs
 
-
-"""
->>> np.unpackbits(np.array(list(b'\xff\xff'), dtype=np.uint8))
-array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], dtype=uint8)
->>> np.unpackbits(np.array([[255, 255], [129, 129]], dtype=np.uint8))
-array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
-       0, 1, 1, 0, 0, 0, 0, 0, 0, 1], dtype=uint8)
->>> np.unpackbits(np.array([[255, 255], [129, 129]], dtype=np.uint8), axis=1)
-array([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-       [1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1]], dtype=uint8)
-"""
-
-
-def writefontpng(fonts, outfile, nc=16):
-    nr = len(fonts) // (8 * nc)
-
-    bitmap = np.unpackbits(
-        np.array([
-            [
-                fonts[(r * nc + c)*8 + i]
-                for c in range(nc)
-            ]
-            for r in range(nr) for i in range(8)
-        ], dtype=np.uint8),
-        axis=1,
-        bitorder='big',
-    )
-    #print(bitmap.shape)
-    #print(bitmap)
-    rgba = np.zeros(bitmap.shape + (4,), dtype='uint8')
-    rgba[:, :, :] = bitmap[:, :, np.newaxis]*255
-    im = Image.fromarray(rgba)
-    #im = Image.fromarray(bitmap*255)
-    im.save(outfile)  # base64 => url(data:image/png;base64,iVBORw...)
-    print(f'Wrote fonts png to {outfile}')
-    # im.show()
-
-
-# print(b64encode(fonts))  # if we want to include as data-url
 
 def asciimapposter(chrs, data, rows, cols, row_mid, outfile):
     sep = '\n' + ('-'*(cols*9+1)) + '\n'

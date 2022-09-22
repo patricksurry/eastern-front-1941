@@ -1,7 +1,5 @@
 var focusid = null,  // current focused unit id
-    lastid = null,   // must recent focused unit id (= focusid or null)
-    kreuze = null,   // d3 selection with the chr displaying the maltakreuze
-    arrows = null;   // d3 selection of the four arrow chrs
+    lastid = null;   // must recent focused unit id (= focusid or null)
 
 function centered(s, width) {
     width ||= 40;
@@ -31,7 +29,7 @@ function setupDisplay(help, mapchrs, units) {
     putlines('#err-window', [''], '22', '3A');
 
     // draw the map characters with a semi-transparent dimming layer which we can hide/show
-    putlines('#map', mapchrs, 'ff', '00', icon)
+    putlines('#map', mapchrs, 'ff', '00', icon, m => `map-${m.id}`)
         .append('div')
         .classed('chr-dim', true)
         .classed('extra', true);
@@ -55,42 +53,49 @@ function setupDisplay(help, mapchrs, units) {
         .selectAll('.unit-path')
         .data(units)
       .join('g')
+        .attr('id', u => `path-${u.id}`)
         .classed('unit-path', true)
         .classed('extra', true)
         .classed('debug', u => u.player != gameState.human)
         .attr('style', u => {
-            const c = hexcolor(unitcolor(u));
+            const c = anticColor(unitcolor(u));
             return `stroke: ${c}; fill: ${c};`
         });
 
     // draw all of the units
-    putlines('#units', [units], unitcolor, '00', icon)
+    putlines('#units', [units], unitcolor, '00', icon, u => `unit-${u.id}`)
         .style('opacity', 0)
         .each(function(u) {
-            // set up some callbacks for units to manage their state
-            u.chr = d3.select(this);
-            u.pathsvg = d3.selectAll('.unit-path').filter(v => v.id == u.id);
+            // set up some callbacks for units to manage their display state
             u.show = function(animate) {
-                let chr = this.chr,
-                    loc = Location.of(this);
-                if (animate) chr = chr.transition().duration(250);
+                let chr = d3.select(`#unit-${this.id}`),
+                    loc = Location.of(this),
+                    path = d3.select(`#path-${this.id}`);
+                if (animate) chr = chr.transition().duration(250).ease(d3.easeLinear);
                 chr.call(showAt, loc);
+                path.attr('transform', `translate(${loc.col + 0.5},${loc.row + 0.5}) scale(-1)`)
+                    .html(pathSVG(this.orders));
+                this.showStats();
+            };
+            u.showStats = function() {
+                const chr = d3.select(`#unit-${this.id}`);
                 chr.select('.chr-mstrng').style('width', (90 * this.mstrng/255) + '%');
                 chr.select('.chr-cstrng').style('width', (100 * this.cstrng/this.mstrng) + '%');
-                this.pathsvg
-                    .attr('transform', `translate(${loc.col + 0.5},${loc.row + 0.5}) scale(-1)`)
-                    .html(pathSVG(this.orders));
-            };
+            }
             u.hide = function(animate) {
-                let chr = this.chr;
+                let chr = d3.select(`#unit-${this.id}`);
                 if (animate) chr = chr.transition().duration(250);
                 chr.style('opacity', 0);
             };
             u.flash = function(reversed) {
-                this.chr.select('.chr-fg')
+                const chr = d3.select(`#unit-${this.id}`);
+                chr.select('.chr-fg')
                     .classed('flash', true)
                     .style('animation-direction', reversed ? 'reverse': 'normal');
             };
+            u.blink = function() {
+                d3.select(`#unit-${this.id}`).classed('blink', true);
+            }
             // pre-position at correct location
             u.show(); u.hide();
         })
@@ -102,19 +107,30 @@ function setupDisplay(help, mapchrs, units) {
         .classed('chr-cstrng', true);
 
     // put arrows and kreuze in layer for path animation
-    chrs = putlines('#arrows', [[256], directions.map(icon)], '1A', null, d => d)
+    chrs = putlines('#arrows', [[256], directions.map(icon)], '1A', null, c => c, (d,i) => i == 0 ? 'kreuze': `arrow-${i-1}`)
         .style('opacity', 0);
-    kreuze = chrs.filter(d => d == 256);
-    arrows = chrs.filter(d => d != 256);
 }
 
-function hexcolor(v) {
-    return colormap[Math.floor(parseInt(v, 16)/2)];
+function repaintMap(fg, bg, labels) {
+    // apply current fg/bg colors to map and unit background
+    d3.selectAll('#map .chr-bg, #units .chr-bg')
+        .style('background-color', anticColor(bg));
+
+    d3.selectAll('#map .chr-fg')
+        .style('background-color', d => anticColor(fg(d)))
+
+    // contrasting label colors
+    d3.selectAll('.label')
+        .style('color', anticColor(labels));
+}
+
+function anticColor(v) {
+    return anticPaletteRGB[Math.floor(parseInt(v, 16)/2)];
 }
 
 function setclr(sel, c) {
     //TODO support sel as existing d3 selection
-    d3.selectAll(sel).style('background-color', hexcolor(c));
+    d3.selectAll(sel).style('background-color', anticColor(c));
 }
 
 atascii = (c) => c.charCodeAt(0) & 0x7f;
@@ -123,7 +139,7 @@ function maskpos(c) {
     return `${-(c%16)*8}px ${-Math.floor(c/16)*8}px`;
 }
 
-function putlines(win, lines, fg, bg, chrfn) {
+function putlines(win, lines, fg, bg, chrfn, idfn) {
     // fg color can be a function of the data element, bg should be a constant
     const w = d3.select(win);
 
@@ -134,7 +150,7 @@ function putlines(win, lines, fg, bg, chrfn) {
     w.attr('data-fg-color', _ => fg);
     if (bg) {
         w.attr('data-bg-color', _ => bg);
-        w.style('background-color', hexcolor(bg));
+        w.style('background-color', anticColor(bg));
     }
     w.selectAll('div.chr').remove();  //TODO don't deal with enter/update yet
 
@@ -146,25 +162,28 @@ function putlines(win, lines, fg, bg, chrfn) {
                 (typeof(ds) == 'string' ? ds.split(''): ds)
                     .map((d, j) => [i, j, d])
                 )
-            ),
-        cells = w
-            .selectAll('div.chr')
-            .data(data)
-          .join('div')
-            .classed('chr', true)
-            .style('top', ([i, j, d]) => `${i*8}px`)
-            .style('left', ([i, j, d]) => `${j*8}px`)
-            .datum(([i, j, d]) => d);
+            );
 
-        cells.append('div')
-            .classed('chr-bg', true)
-            .style('background-color', bg ? hexcolor(bg) : null);
-        cells.append('div')
-            .classed('chr-fg', true)
-            .style('background-color', d => hexcolor(fgfn(d)))
-            .style("-webkit-mask-position", d => maskpos(chrfn(d)));
+    let chrs= w
+        .selectAll('div.chr')
+        .data(data)
+      .join('div')
+        .classed('chr', true)
+        .style('top', ([i, j, d]) => `${i*8}px`)
+        .style('left', ([i, j, d]) => `${j*8}px`)
+        .datum(([i, j, d]) => d);
 
-    return cells;
+    if (idfn) chrs.attr('id', idfn);
+
+    chrs.append('div')
+        .classed('chr-bg', true)
+        .style('background-color', bg ? anticColor(bg) : null);
+    chrs.append('div')
+        .classed('chr-fg', true)
+        .style('background-color', d => anticColor(fgfn(d)))
+        .style("-webkit-mask-position", d => maskpos(chrfn(d)));
+
+    return chrs;
 }
 
 // I.ASM:2640 - time to move arrow
@@ -180,7 +199,7 @@ d3.select('#screen')
     .selectAll('span')
     .data(colors)
   .join('span')
-    .style('background-color', hexcolor)
+    .style('background-color', anticColor)
     .style('color', '#666')
     .text(d => d);
 */
@@ -222,7 +241,7 @@ function focusUnit(u) {
 
     if (u.player == gameState.human) {
         animateUnitPath(u);
-        u.chr.classed('blink', true);
+        u.blink();
     }
 }
 
@@ -250,7 +269,7 @@ function focusUnitRelative(offset) {
 function unfocusUnit() {
     infomsg();
     focusid = null;
-    hideUnitPath();
+    d3.selectAll('#arrows .chr').interrupt().style('opacity', 0);
     d3.selectAll('.blink').classed('blink', false);
     d3.selectAll('.chr-dim').style('opacity', 0);
 }
@@ -304,12 +323,13 @@ function animateUnitPath(u) {
     let path = u.path(),
         loc = path.pop();
 
-    kreuze
+    d3.selectAll('#arrows .chr').interrupt().style('opacity', 0);
+
+    d3.select('#kreuze')
         .call(showAt, loc)
         .node()
         .scrollIntoView({block: "center", inline: "center"});
 
-    arrows.style('opacity', 0).interrupt();
     if (!path.length) return;
 
     let i = 0;
@@ -318,7 +338,7 @@ function animateUnitPath(u) {
             dir = u.orders[i],
             dst = loc.neighbor(dir),
             interrupted = false;
-        arrows.filter((_, j) => j == dir)
+        d3.select(`#arrow-${dir}`)
             .call(showAt, loc)
         .transition()
             .delay(i ? 0: 250)
@@ -330,18 +350,12 @@ function animateUnitPath(u) {
             .style('opacity', 0)
         .on("interrupt", () => { interrupted = true; })
         .on("end", () => {
-            i = (i+1) % u.orders.length;
+            i = (i+1) % path.length;
             if (!interrupted) animateStep();
         });
     }
 
     animateStep();
-}
-
-function hideUnitPath() {
-    kreuze.style('opacity', 0);
-    arrows.style('opacity', 0).interrupt();
-    d3.select('.blink').classed('blink', false);
 }
 
 function showNewOrder(dir) {
@@ -366,5 +380,5 @@ function showNewOrder(dir) {
 }
 
 function stopUnitsFlashing() {
-    d3.selectAll('#units .chr-fg').classed('flash', false);
+    d3.selectAll('#units .chr-fg.flash').classed('flash', false);
 }

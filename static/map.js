@@ -51,6 +51,35 @@ cities.forEach((city, i) => {
     loc.cityid = i;
 });
 
+function mapForegroundColor(loc) {
+    // return the antic fg color for a given location
+    let tinfo = terraintypes[loc.terrain],
+        alt = (loc.terrain == Terrain.city) ? cities[loc.cityid].owner : loc.alt;
+    return alt ? tinfo.altcolor : tinfo.color;
+}
+
+function moveIceLine(w) {
+    // move ice by freeze/thaw rivers and swamps, where w is Water.freeze or Water.thaw
+    // ICELAT -= [7,14] incl]; clamp 1-39 incl
+    // small bug in APX code? freeze chrs $0B - $29 (exclusive, seems like it could freeze Kerch straight?)
+    let state = waterstate[w],
+        other = waterstate[1-w],
+        oldlat = gameState.icelat,
+        dlat = directions[state.dir].dlat,
+        change = (rand256() & 0x8) + 7;
+
+    gameState.icelat = Math.min(maxlat, Math.max(1, oldlat + dlat * change));
+
+    let skip = (w == Water.freeze) ? oldlat: gameState.icelat;  // for freeze skip old line, for thaw skip new new
+    for (i = oldlat; i != gameState.icelat + dlat; i += dlat) {
+        if (i == skip) continue;
+        mapboard[maxlat - i].forEach(d => {
+            let k = other.terrain.indexOf(d.terrain);
+            if (k != -1) d.terrain = state.terrain[k];
+        });
+    }
+}
+
 function moveCosts(armor, weather) {
     // return a table of movement costs based on armor/inf and weather
     return terraintypes.map(t => t.movecost[armor][weather] || 255);

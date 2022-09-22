@@ -2332,27 +2332,27 @@ _CALCNXT_4: rts                              ; 7368 60
 TERRTY:     ldy #$00                         ; 7369 a000    convert map chr in TRNCOD -> TRNTYP, also y reg
             lda TRNCOD                       ; 736b ad2b06  
             beq DONE                         ; 736e f043
-            cmp #$7f                         ; 7370 c97f    border?
+            cmp #$7f                         ; 7370 c97f    border
             bne _TERRTY_1                    ; 7372 d004    
             ldy #$09                         ; 7374 a009    
             bne DONE                         ; 7376 d03b
 _TERRTY_1:  iny                              ; 7378 c8      
-            cmp #$07                         ; 7379 c907    mountain?
+            cmp #$07                         ; 7379 c907    mountain
             bcc DONE                         ; 737b 9036
             iny                              ; 737d c8      
-            cmp #$4b                         ; 737e c94b    city?
+            cmp #$4b                         ; 737e c94b    city (mask two hi bits to read font table index)
             bcc DONE                         ; 7380 9031
             iny                              ; 7382 c8      
-            cmp #$4f                         ; 7383 c94f    frozen swamp?
+            cmp #$4f                         ; 7383 c94f    frozen swamp
             bcc DONE                         ; 7385 902c
             iny                              ; 7387 c8      
-            cmp #$69                         ; 7388 c969    frozen river?
+            cmp #$69                         ; 7388 c969    frozen river
             bcc DONE                         ; 738a 9027
             iny                              ; 738c c8      
-            cmp #$8f                         ; 738d c98f    swamp?
+            cmp #$8f                         ; 738d c98f    swamp
             bcc DONE                         ; 738f 9022
             iny                              ; 7391 c8      
-            cmp #$a4                         ; 7392 c9a4    river?
+            cmp #$a4                         ; 7392 c9a4    river
             bcc DONE                         ; 7394 901d
             ldx LAT                          ; 7396 a6ca    
             cpx #$0e                         ; 7398 e00e    
@@ -2360,14 +2360,14 @@ _TERRTY_1:  iny                              ; 7378 c8
             cmp #$a9                         ; 739c c9a9    
             bcc DONE                         ; 739e 9013
 _TERRTY_2:  iny                              ; 73a0 c8      
-            cmp #$ba                         ; 73a1 c9ba    coastline?
+            cmp #$ba                         ; 73a1 c9ba    coastline
             bcc DONE                         ; 73a3 900e
             cpx #$0e                         ; 73a5 e00e    
             bcc _TERRTY_3                    ; 73a7 9004    
             cmp #$bb                         ; 73a9 c9bb    
             bcc DONE                         ; 73ab 9006
 _TERRTY_3:  iny                              ; 73ad c8      
-            cmp #$bd                         ; 73ae c9bd    estuary?
+            cmp #$bd                         ; 73ae c9bd    estuary
             bcc DONE                         ; 73b0 9001
             iny                              ; 73b2 c8      
 DONE:       sty TRNTYP                       ; 73b3 84cd

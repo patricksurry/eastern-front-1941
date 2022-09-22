@@ -209,7 +209,7 @@
         {"addr": "9000", "symbol": "FONTDATA", "mode": "data", "length": "0x400"},
         {"addr": "9100", "symbol": "FONTDATA+256", "mode": "data"},
 
-        {"addr": "9400", "symbol": "MAPRLE_2400", "mode": "data"},
+        {"addr": "9400", "symbol": "MAPRLE_2400", "mode": "data", "length": "33a"},
 
         {"addr": "973a", "symbol": "CORPSX_2bb1", "mode": "data", "length": 167, "comm": "total $a7 = 167 units"},
         {"addr": "97e1", "symbol": "CORPSY_2c58", "mode": "data", "length": 167},
@@ -236,13 +236,13 @@
         {"addr": "9bc1", "symbol": "CITYOWN_reloc", "mode": "data"},
         {"addr": "9bd1", "symbol": "STKTAB", "mode": "data", "comm": "joystick decoding table"},
         {"addr": "9be0", "symbol": "SSNCOD", "mode": "data", "comm": "season codes"},
-        {"addr": "9bed", "symbol": "TRNTAB", "mode": "data", "comm": "terrain cost tables"},
+        {"addr": "9bed", "symbol": "TRNTAB", "mode": "data", "comm": "terrain cost tables", "length": 60},
 
         {"addr": "9c29", "symbol": "BHX1", "mode": "data", "comm": "intraversible square-pair coords"},
         {"addr": "9c3f", "symbol": "BHY1", "mode": "data"},
         {"addr": "9c55", "symbol": "BHX2", "mode": "data"},
         {"addr": "9c6b", "symbol": "BHY2", "mode": "data"},
-        {"addr": "9c81", "symbol": "WORDS", "mode": "data", "comm": "various words for messages"},
+        {"addr": "9c81", "symbol": "WORDS", "mode": "data", "comm": "various words for messages", "length": "ca"},
 
         {"addr": "9d4b", "symbol": "WRDSOFST", "mode": "data"},
         {"addr": "9d67", "symbol": "MONTHS", "mode": "data"},
@@ -277,8 +277,8 @@
         {"addr": "a0ac", "symbol": "CITYPTS", "mode": "data", "comm": "Points earned for city control"},
         {"addr": "a0bf", "symbol": "CITYLAT", "mode": "data"},
         {"addr": "a0d2", "symbol": "CITYLON", "mode": "data"},
-        {"addr": "a0e5", "symbol": "MLTKRZ", "mode": "data", "comm": "maltakreuze shape"},
-        {"addr": "a0ed", "symbol": "ARRTAB", "mode": "data", "comm": "arrow shapes; last byte overlaps"},
+        {"addr": "a0e5", "symbol": "MLTKRZ", "mode": "data", "comm": "maltakreuze shape", "length": 8},
+        {"addr": "a0ed", "symbol": "ARRTAB", "mode": "data", "comm": "arrow shapes; last byte overlaps", "length": 32},
 
         {"addr": "a10d", "symbol": "CRSRIMG", "mode": "data", "comm": "The square window cursor managed as p/m 1"},
         {"addr": "a11b", "symbol": "SND1CTL", "mode": "data"},

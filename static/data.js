@@ -1,3 +1,4 @@
+// Atari had a memory location that could be read for a byte of random noise
 const rand256 = () => Math.floor(Math.random()*256);
 
 function enumFor(vs, key) {
@@ -7,7 +8,24 @@ function enumFor(vs, key) {
 const
     // Antic NTSC palette via https://en.wikipedia.org/wiki/List_of_video_game_console_palettes#NTSC
     // 128 colors indexed via high 7 bits, e.g. 0x00 and 0x01 refer to the first entry
-    colormap = ["#000000",  "#404040",  "#6c6c6c",  "#909090",  "#b0b0b0",  "#c8c8c8",  "#dcdcdc",  "#ececec",  "#444400",  "#646410",  "#848424",  "#a0a034",  "#b8b840",  "#d0d050",  "#e8e85c",  "#fcfc68",  "#702800",  "#844414",  "#985c28",  "#ac783c",  "#bc8c4c",  "#cca05c",  "#dcb468",  "#ecc878",  "#841800",  "#983418",  "#ac5030",  "#c06848",  "#d0805c",  "#e09470",  "#eca880",  "#fcbc94",  "#880000",  "#9c2020",  "#b03c3c",  "#c05858",  "#d07070",  "#e08888",  "#eca0a0",  "#fcb4b4",  "#78005c",  "#8c2074",  "#a03c88",  "#b0589c",  "#c070b0",  "#d084c0",  "#dc9cd0",  "#ecb0e0",  "#480078",  "#602090",  "#783ca4",  "#8c58b8",  "#a070cc",  "#b484dc",  "#c49cec",  "#d4b0fc",  "#140084",  "#302098",  "#4c3cac",  "#6858c0",  "#7c70d0",  "#9488e0",  "#a8a0ec",  "#bcb4fc",  "#000088",  "#1c209c",  "#3840b0",  "#505cc0",  "#6874d0",  "#7c8ce0",  "#90a4ec",  "#a4b8fc",  "#00187c",  "#1c3890",  "#3854a8",  "#5070bc",  "#6888cc",  "#7c9cdc",  "#90b4ec",  "#a4c8fc",  "#002c5c",  "#1c4c78",  "#386890",  "#5084ac",  "#689cc0",  "#7cb4d4",  "#90cce8",  "#a4e0fc",  "#003c2c",  "#1c5c48",  "#387c64",  "#509c80",  "#68b494",  "#7cd0ac",  "#90e4c0",  "#a4fcd4",  "#003c00",  "#205c20",  "#407c40",  "#5c9c5c",  "#74b474",  "#8cd08c",  "#a4e4a4",  "#b8fcb8",  "#143800",  "#345c1c",  "#507c38",  "#6c9850",  "#84b468",  "#9ccc7c",  "#b4e490",  "#c8fca4",  "#2c3000",  "#4c501c",  "#687034",  "#848c4c",  "#9ca864",  "#b4c078",  "#ccd488",  "#e0ec9c",  "#442800",  "#644818",  "#846830",  "#a08444",  "#b89c58",  "#d0b46c",  "#e8cc7c",  "#fce08c"],
+    anticPaletteRGB = [
+        "#000000",  "#404040",  "#6c6c6c",  "#909090",  "#b0b0b0",  "#c8c8c8",  "#dcdcdc",  "#ececec",
+        "#444400",  "#646410",  "#848424",  "#a0a034",  "#b8b840",  "#d0d050",  "#e8e85c",  "#fcfc68",
+        "#702800",  "#844414",  "#985c28",  "#ac783c",  "#bc8c4c",  "#cca05c",  "#dcb468",  "#ecc878",
+        "#841800",  "#983418",  "#ac5030",  "#c06848",  "#d0805c",  "#e09470",  "#eca880",  "#fcbc94",
+        "#880000",  "#9c2020",  "#b03c3c",  "#c05858",  "#d07070",  "#e08888",  "#eca0a0",  "#fcb4b4",
+        "#78005c",  "#8c2074",  "#a03c88",  "#b0589c",  "#c070b0",  "#d084c0",  "#dc9cd0",  "#ecb0e0",
+        "#480078",  "#602090",  "#783ca4",  "#8c58b8",  "#a070cc",  "#b484dc",  "#c49cec",  "#d4b0fc",
+        "#140084",  "#302098",  "#4c3cac",  "#6858c0",  "#7c70d0",  "#9488e0",  "#a8a0ec",  "#bcb4fc",
+        "#000088",  "#1c209c",  "#3840b0",  "#505cc0",  "#6874d0",  "#7c8ce0",  "#90a4ec",  "#a4b8fc",
+        "#00187c",  "#1c3890",  "#3854a8",  "#5070bc",  "#6888cc",  "#7c9cdc",  "#90b4ec",  "#a4c8fc",
+        "#002c5c",  "#1c4c78",  "#386890",  "#5084ac",  "#689cc0",  "#7cb4d4",  "#90cce8",  "#a4e0fc",
+        "#003c2c",  "#1c5c48",  "#387c64",  "#509c80",  "#68b494",  "#7cd0ac",  "#90e4c0",  "#a4fcd4",
+        "#003c00",  "#205c20",  "#407c40",  "#5c9c5c",  "#74b474",  "#8cd08c",  "#a4e4a4",  "#b8fcb8",
+        "#143800",  "#345c1c",  "#507c38",  "#6c9850",  "#84b468",  "#9ccc7c",  "#b4e490",  "#c8fca4",
+        "#2c3000",  "#4c501c",  "#687034",  "#848c4c",  "#9ca864",  "#b4c078",  "#ccd488",  "#e0ec9c",
+        "#442800",  "#644818",  "#846830",  "#a08444",  "#b89c58",  "#d0b46c",  "#e8cc7c",  "#fce08c"
+    ],
     // mimic logic from STKTABlon looking for zeroed pins
     // see https://forums.atariage.com/topic/275027-joystick-value-logic/:
     directions = [
@@ -46,30 +64,6 @@ const
             {lon: 14, lat: 7},
         ]
     ],
-    // D.ASM:2690 TRTAB
-    // M.ASM:2690 season calcs
-    weatherdata = [
-        {key: 'dry',  earth: '10'},
-        {key: 'mud',  earth: '02'},
-        {key: 'snow', earth: '0A'},
-    ],
-    Weather = enumFor(weatherdata),
-    // combines D.asm:2690 TRTAB and 5430 SSNCOD, also annotated PDF p71 (labelled -63-)
-    monthdata = [
-        {label: "January",   trees: '12', weather: Weather.snow},
-        {label: "February",  trees: '12', weather: Weather.snow},
-        {label: "March",     trees: '12', weather: Weather.snow, rivers: "thaw"},
-        {label: "April",     trees: 'D2', weather: Weather.mud},
-        {label: "May",       trees: 'D8', weather: Weather.dry},
-        {label: "June",      trees: 'D6', weather: Weather.dry},
-        {label: "July",      trees: 'C4', weather: Weather.dry},
-        {label: "August",    trees: 'D4', weather: Weather.dry},
-        {label: "September", trees: 'C2', weather: Weather.dry},
-        {label: "October",   trees: '12', weather: Weather.mud},
-        {label: "November",  trees: '12', weather: Weather.snow, rivers: "freeze"},
-        {label: "December",  trees: '12', weather: Weather.snow},
-    ],
-    Month = enumFor(monthdata, 'label'),
     players = [
         {
             key: 'german',  unit: 'CORPS', color: '0C', homedir: Direction.west,
@@ -160,6 +154,35 @@ const
         }
     ],
     Terrain = enumFor(terraintypes),
+    // D.ASM:2690 TRTAB
+    // M.ASM:2690 season calcs
+    weatherdata = [
+        {key: 'dry',  earth: '10'},
+        {key: 'mud',  earth: '02'},
+        {key: 'snow', earth: '0A'},
+    ],
+    Weather = enumFor(weatherdata),
+    waterstate = [
+        {key: 'freeze', dir: Direction.south, terrain: [Terrain.frozen_swamp, Terrain.frozen_river]},
+        {key: 'thaw',   dir: Direction.north, terrain: [Terrain.swamp, Terrain.river]},
+    ],
+    Water = enumFor(waterstate),
+    // combines D.asm:2690 TRTAB and 5430 SSNCOD, also annotated PDF p71 (labelled -63-)
+    monthdata = [
+        {label: "January",   trees: '12', weather: Weather.snow},
+        {label: "February",  trees: '12', weather: Weather.snow},
+        {label: "March",     trees: '12', weather: Weather.snow, water: Water.thaw},
+        {label: "April",     trees: 'D2', weather: Weather.mud},
+        {label: "May",       trees: 'D8', weather: Weather.dry},
+        {label: "June",      trees: 'D6', weather: Weather.dry},
+        {label: "July",      trees: 'C4', weather: Weather.dry},
+        {label: "August",    trees: 'D4', weather: Weather.dry},
+        {label: "September", trees: 'C2', weather: Weather.dry},
+        {label: "October",   trees: '12', weather: Weather.mud},
+        {label: "November",  trees: '12', weather: Weather.snow, water: Water.freeze},
+        {label: "December",  trees: '12', weather: Weather.snow},
+    ],
+    Month = enumFor(monthdata, 'label'),
     /*
     The game map is represented as binary data using one byte per square at offset 0x6500
     the original encoding uses the high two bits to select the foreground color
@@ -169,10 +192,11 @@ const
     Since not all bit patterns are used (the high two bits are nearly redundant),
     we can store exactly the same raw binary data using a custom base64(ish) encoding
     (for north and south) and then represent the map with a human-readable string.
+
+    North and south parts of map are encoded from 6-bit hex to ascii
+    with pipe-delimited blocks of chrs for consecutive terrain types
     */
     mapencoding = [
-        // north and south parts of map are encoded from 6-bit hex to ascii
-        // with pipe-delimited blocks of chrs for consecutive terrain types
         ' |123456|@*0$|||,.;:|abcdefghijklmnopqrstuvwxyz|ABCDEFGHIJKLMNOPQR|{}??|~#',
         ' |123456|@*0$|||,.;:|abcdefghijklmnopqrst|ABCDEFGHIJKLMNOPQRSTUVW|{}<??|~#'
     ].map((enc, i) => {
@@ -241,9 +265,9 @@ const
 #               OJ~~~~~~~GSMI~~~~~~GCS542361621#
 #               B~~~~~~~~~FJ~~~~~~~~~FDES123433#
 ################################################
-`.split(/\n/).slice(1,-1),
+`,
     // decode the map into a 2-d array of rows x cols of  {lon: , lat:, icon:, terrain:, alt:}
-    mapdata = mapascii.map(
+    mapdata = mapascii.split(/\n/).slice(1,-1).map(
             (row, i) =>
             row.split('').map(
                 (c, j) => Object.assign({}, mapencoding[i <= 25 ? 0: 1][c])

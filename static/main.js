@@ -137,17 +137,18 @@ function start() {
 
     setupDisplay(helpText, mapboard, oob);
 
-    // add a link on help page
-    d3.selectAll('#help-window .chr-fg')
+    // for amusement add a hyperlink on help page
+    d3.selectAll('#help-window .chr')
         .filter(d => d == "}")
-        .style('background-color', hexcolor('94'))
-        .on('click', () => window.open('https://github.com/patricksurry/eastern-front-1941'));
+        .on('click', () => window.open('https://github.com/patricksurry/eastern-front-1941'))
+        .select('.chr-fg')
+        .style('background-color', anticColor('94'));
 
     // set up a click handler to toggle help
     d3.select('#help-window').on('click', toggleHelp);
 
     // add map square click handlers
-    d3.selectAll('#map .chr-fg')
+    d3.selectAll('#map .chr')
         .on('click', mapclick)
         .on('mouseover', mapinfo);
 
@@ -186,9 +187,10 @@ function endTurn() {
         // could be interesting to randomize, or support a 'pause' order to handle traffic
         stopUnitsFlashing();
         oob.filter(u => u.tick == tick).reverse().forEach(u => u.tryOrder());
+        //TODO should this be ++tick or <= 32?
         setTimeout(tick++ < 32 ? tickTock: nextTurn, delay);
     }
-    tickTock();
+    tickTock();  // loop via setTimeout then land in nextTurn
 }
 
 function nextTurn() {
@@ -198,72 +200,36 @@ function nextTurn() {
     errmsg('PLEASE ENTER YOUR ORDERS NOW');
     stopUnitsFlashing();
 
-    let dt = new Date(gameState.startDate);
-    dt.setDate(dt.getDate() + 7 * gameState.turn);
-    let datelabel = dt.toLocaleDateString("en-US", {year: 'numeric', month: 'long', day: 'numeric'});
-        minfo = monthdata[dt.getMonth()];  // note JS getMonth is 0-indexed
-
-    gameState.weather = minfo.weather;
-
     // regroup, reinforce, recover...
     oob.filter(u => u.isActive()).forEach(u => u.recover());
 
     // M.ASM:3720  delay reinforcements scheduled for an occuplied square
     oob.filter(u => u.arrive == gameState.turn)
-        .forEach(u => {if (Location.of(u).unitid != null) u.arrive++;});
+        .forEach(u => {
+            const loc = Location.of(u);
+            if (loc.unitid != null) {
+                u.arrive++;
+            } else {
+                u.moveTo(loc);   // reveal unit and link to the map square
+            }
+        });
 
-    // show newly arrived units
-    d3.selectAll('#units .chr')
-        .filter(u => u.arrive == gameState.turn)
-        .each(function(u) { u.moveTo(Location.of(u)); });
+    let dt = new Date(gameState.startDate);
+    dt.setDate(dt.getDate() + 7 * gameState.turn);
+    let datelabel = dt.toLocaleDateString("en-US", {year: 'numeric', month: 'long', day: 'numeric'});
+        minfo = monthdata[dt.getMonth()];  // note JS getMonth is 0-indexed
 
     putlines('#date-window', ["", " " + datelabel])
 
-    if (minfo.rivers) {
-        // => thaw swamp/rivers
-        // ICELAT -= [7,14] incl]; clamp 1-39 incl
-        // small bug? freeze chrs $0B - $29 (exclusive, seems like it could freeze Kerch straight?)
+    gameState.weather = minfo.weather;
 
-        let oldlat = gameState.icelat,
-            change = (rand256() & 0x8) + 7;
+    if (minfo.water != null) moveIceLine(minfo.water);
 
-        if (minfo.rivers == 'freeze') {
-            gameState.icelat = Math.max(1, oldlat - change);
-            for (i=gameState.icelat; i<oldlat; i++)
-                mapboard[maxlat - i].forEach(d => {
-                    if (d.terrain == Terrain.swamp) d.terrain = Terrain.frozen_swamp;
-                    if (d.terrain == Terrain.river) d.terrain = Terrain.frozen_river;
-                });
-        } else {
-            gameState.icelat = Math.min(39, oldlat + change);
-            for (i=oldlat; i<gameState.icelat; i++)
-                mapboard[maxlat - i].forEach(d => {
-                    if (d.terrain == Terrain.frozen_swamp) d.terrain = Terrain.swamp;
-                    if (d.terrain == Terrain.frozen_river) d.terrain = Terrain.river;
-                });
-        }
-    }
-
-    // update the tree color in place
+    // update the tree color in place in the terrain data :grimace:
     terraintypes[Terrain.mountain_forest].altcolor = minfo.trees;
 
-    // apply current fg/bg colors to map and unit background
-    const mapfg = (loc) => {
-            let tinfo = terraintypes[loc.terrain],
-                alt = (loc.terrain == Terrain.city) ? cities[loc.cityid].owner : loc.alt;
-            return alt ? tinfo.altcolor : tinfo.color;
-        },
-        earth = weatherdata[minfo.weather].earth;
-
-    d3.selectAll('#map .chr-bg, #units .chr-bg')
-        .style('background-color', hexcolor(earth));
-
-    d3.selectAll('#map .chr-fg')
-        .style('background-color', d => hexcolor(mapfg(d)))
-
-    // contrasting label colors
-    d3.selectAll('.label')
-        .style('color', minfo.weather == Weather.snow ? hexcolor('04'): hexcolor('08'));
+    // paint the current map colors
+    repaintMap(mapForegroundColor, weatherdata[minfo.weather].earth, minfo.weather == Weather.snow ? '04': '08');
 
     // start thinking...
     players.forEach((_, player) => { if (player != gameState.human) think(player); });

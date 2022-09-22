@@ -684,59 +684,59 @@ MSTRNG42_2cff:
 VBISRV:     lda RTCLOK2                      ; a344 a514    vertical blank interrupt service !! referenced as both code and data
             and #$1f                         ; a346 291f    
             bne _VBISRV_1                    ; a348 d008    
-            lda CHACT                        ; a34a adf302  Character Mode Register
+            lda CHACT                        ; a34a adf302  . Character Mode Register
             eor #$02                         ; a34d 4902    
-            sta CHACT                        ; a34f 8df302  Character Mode Register
-_VBISRV_1:  lda GRAFP3 / TRIG0               ; a352 ad10d0  W: gfx shape for P3 / R: joystick 0 trigger (0=press)
-            ora BUTMSK                       ; a355 0597    0 allows trigger, 1 prevents
+            sta CHACT                        ; a34f 8df302  . Character Mode Register
+_VBISRV_1:  lda GRAFP3 / TRIG0               ; a352 ad10d0  . W: gfx shape for P3 / R: joystick 0 trigger (0=press)
+            ora BUTMSK                       ; a355 0597    . 0 allows trigger, 1 prevents
             beq _VBISRV_7                    ; a357 f04e    
             lda BUTFLG                       ; a359 a596    
             bne _VBISRV_2                    ; a35b d003    
             jmp NOBUT                        ; a35d 4c12a7  
 
 _VBISRV_2:  lda #$3a                         ; a360 a93a    
-            sta PCOLR0                       ; a362 8dc002  Color of player 0 and missile 0, shadows $D012
+            sta PCOLR0                       ; a362 8dc002  . Color of player 0 and missile 0, shadows $D012
             lda #$00                         ; a365 a900    
             sta BUTFLG                       ; a367 8596    
             sta KRZFLG                       ; a369 85cb    
-            sta AUDC1 / POT1                 ; a36b 8d01d2  W: Audio ch1 ctrl / R: paddle 1
-            ldy LEVEL                        ; a36e a492    Level learner/beginner/intermediate/advanced/expert
+            sta AUDC1 / POT1                 ; a36b 8d01d2  . W: Audio ch1 ctrl / R: paddle 1
+            ldy LEVEL                        ; a36e a492    . Level learner/beginner/intermediate/advanced/expert
             cpy #$04                         ; a370 c004    
             bne _VBISRV_3                    ; a372 d002    
-            sta NOBTCNT                      ; a374 85f6    Count VBI cycles since button press for expert level dbl-click move mode
+            sta NOBTCNT                      ; a374 85f6    . Count VBI cycles since button press for expert level dbl-click move mode
 _VBISRV_3:  ldx #$52                         ; a376 a252    
 _VBISRV_4:  sta TXTWDW+8,x                   ; a378 9d263a  
             dex                              ; a37b ca      
             bpl _VBISRV_4                    ; a37c 10fa    
-            jsr CLRTXT                       ; a37e 20b8a9  Clear TXTWDW + 106-137
+            jsr CLRTXT                       ; a37e 20b8a9  . Clear TXTWDW + 106-137
             ldx #$2f                         ; a381 a22f    
-_VBISRV_5:  lda GREEN,x                      ; a383 bd7a30  Flag newly arrived German reinforcements
+_VBISRV_5:  lda GREEN,x                      ; a383 bd7a30  . Flag newly arrived German reinforcements
             bne _VBISRV_6                    ; a386 d006    
             dex                              ; a388 ca      
             bne _VBISRV_5                    ; a389 d0f8    
-            sta TXTWDW+139                   ; a38b 8da93a  end of TXTWDW - 5
+            sta TXTWDW+139                   ; a38b 8da93a  . end of TXTWDW - 5
 _VBISRV_6:  lda #$08                         ; a38e a908    
-            sta DELAY                        ; a390 85b8    accel delay on scrolling
+            sta DELAY                        ; a390 85b8    . accel delay on scrolling
             clc                              ; a392 18      
-            adc RTCLOK2                      ; a393 6514    One tick per VBI (60/sec)
-            sta TIMSCL                       ; a395 85b9    frame to scroll in
-            jsr SWITCH                       ; a397 2034a9  swap CORPS with terrain @ CHUNKX/Y via SWAP buffer
+            adc RTCLOK2                      ; a393 6514    . One tick per VBI (60/sec)
+            sta TIMSCL                       ; a395 85b9    . frame to scroll in
+            jsr SWITCH                       ; a397 2034a9  . swap CORPS with terrain @ CHUNKX/Y via SWAP buffer
             lda #$00                         ; a39a a900    
-            sta CORPS                        ; a39c 85a1    Number of unit under window
+            sta CORPS                        ; a39c 85a1    . Number of unit under window
             jsr CLRP1                        ; a39e 2078a9  
             jsr CLRP2                        ; a3a1 208ca9  
             jmp ENDISR                       ; a3a4 4c91a8  
 
-_VBISRV_7:  sta ATRACT                       ; a3a7 854d    Attract mode timer and flag
-            lda STICK0                       ; a3a9 ad7802  The value of joystick 0
+_VBISRV_7:  sta ATRACT                       ; a3a7 854d    . Attract mode timer and flag
+            lda STICK0                       ; a3a9 ad7802  . The value of joystick 0
             and #$0f                         ; a3ac 290f    
             eor #$0f                         ; a3ae 490f    
             beq _VBISRV_8                    ; a3b0 f003    
             jmp ORDERS                       ; a3b2 4ce6a5  
 
-_VBISRV_8:  sta DBTIMR                       ; a3b5 85c8    joystick debounce timer
-            sta AUDC1 / POT1                 ; a3b7 8d01d2  W: Audio ch1 ctrl / R: paddle 1
-            sta STKFLG                       ; a3ba 85cc    STICK0 & 0xf ^ 0xf
+_VBISRV_8:  sta DBTIMR                       ; a3b5 85c8    . joystick debounce timer
+            sta AUDC1 / POT1                 ; a3b7 8d01d2  . W: Audio ch1 ctrl / R: paddle 1
+            sta STKFLG                       ; a3ba 85cc    . STICK0 & 0xf ^ 0xf
             lda BUTFLG                       ; a3bc a596    
             bne _VBISRV_9                    ; a3be d003    
             jmp FBUTPS                       ; a3c0 4c93a4  
@@ -746,39 +746,39 @@ _VBISRV_9:  jsr __C__                        ; a3c3 20aea9
             beq _VBISRV_11                   ; a3c8 f003    
 _VBISRV_10: jmp ENDISR                       ; a3ca 4c91a8  
 
-_VBISRV_11: lda NOBTCNT                      ; a3cd a5f6    Count VBI cycles since button press for expert level dbl-click move mode
+_VBISRV_11: lda NOBTCNT                      ; a3cd a5f6    . Count VBI cycles since button press for expert level dbl-click move mode
             cmp #$1e                         ; a3cf c91e    
             bcc _VBISRV_10                   ; a3d1 90f7    
-            lda CH                           ; a3d3 adfc02  Internal hardware value for the last key pressed
+            lda CH                           ; a3d3 adfc02  . Internal hardware value for the last key pressed
             cmp #$21                         ; a3d6 c921    
             bne _VBISRV_12                   ; a3d8 d024    
-            ldx CORPS                        ; a3da a6a1    Number of unit under window
+            ldx CORPS                        ; a3da a6a1    . Number of unit under window
             cpx #$30                         ; a3dc e030    
             bcs _VBISRV_12                   ; a3de b01e    
             lda #$00                         ; a3e0 a900    
-            sta CH                           ; a3e2 8dfc02  Internal hardware value for the last key pressed
-            sta HMORDS,x                     ; a3e5 9dd232  how many orders queued for each unit
-            sta HOWMNY                       ; a3e8 85c5    how many orders for unit under cursor
-            sta STPCNT                       ; a3ea 85c0    which intermediate step arrow is on
+            sta CH                           ; a3e2 8dfc02  . Internal hardware value for the last key pressed
+            sta HMORDS,x                     ; a3e5 9dd232  . how many orders queued for each unit
+            sta HOWMNY                       ; a3e8 85c5    . how many orders for unit under cursor
+            sta STPCNT                       ; a3ea 85c0    . which intermediate step arrow is on
             lda #$01                         ; a3ec a901    
-            sta ORDCNT                       ; a3ee 85c1    which order arrow is showing
+            sta ORDCNT                       ; a3ee 85c1    . which order arrow is showing
             jsr CLRP1                        ; a3f0 2078a9  
             jsr CLRP2                        ; a3f3 208ca9  
-            lda BASEX                        ; a3f6 a5bc    start pos of arrow (player frame)
-            sta STEPX                        ; a3f8 85be    intermediate pos of arrow
+            lda BASEX                        ; a3f6 a5bc    . start pos of arrow (player frame)
+            sta STEPX                        ; a3f8 85be    . intermediate pos of arrow
             lda BASEY                        ; a3fa a5bd    
             sta STEPY                        ; a3fc 85bf    
-_VBISRV_12: lda RTCLOK2                      ; a3fe a514    One tick per VBI (60/sec)
+_VBISRV_12: lda RTCLOK2                      ; a3fe a514    . One tick per VBI (60/sec)
             and #$03                         ; a400 2903    
             beq _VBISRV_13                   ; a402 f003    
             jmp ENDISR                       ; a404 4c91a8  
 
-_VBISRV_13: ldy HOWMNY                       ; a407 a4c5    how many orders for unit under cursor
+_VBISRV_13: ldy HOWMNY                       ; a407 a4c5    . how many orders for unit under cursor
             bne _VBISRV_14                   ; a409 d003    
             jmp PURSE                        ; a40b 4c76a4  
 
 _VBISRV_14: jsr CLRP1                        ; a40e 2078a9  
-            lda ORDCNT                       ; a411 a5c1    which order arrow is showing
+            lda ORDCNT                       ; a411 a5c1    . which order arrow is showing
             ldx #$00                         ; a413 a200    
             cmp #$05                         ; a415 c905    
             bcc _VBISRV_15                   ; a417 9001    
@@ -786,7 +786,7 @@ _VBISRV_14: jsr CLRP1                        ; a40e 2078a9
 _VBISRV_15: and #$03                         ; a41a 2903    
             tay                              ; a41c a8      
             lda BITTAB,y                     ; a41d b937a0  
-            and ORD1,x                       ; a420 35c2    orders record
+            and ORD1,x                       ; a420 35c2    . orders record
             dey                              ; a422 88      
             bpl _VBISRV_16                   ; a423 1002    
             ldy #$03                         ; a425 a003    
@@ -795,79 +795,79 @@ _VBISRV_17: lsr                              ; a429 4a
             lsr                              ; a42a 4a      
             dey                              ; a42b 88      
             bne _VBISRV_17                   ; a42c d0fb    
-_VBISRV_18: sta ARRNDX                       ; a42e 85c4    arrow index
+_VBISRV_18: sta ARRNDX                       ; a42e 85c4    . arrow index
             asl                              ; a430 0a      
             asl                              ; a431 0a      
             asl                              ; a432 0a      
             tax                              ; a433 aa      
             ldy STEPY                        ; a434 a4bf    
-_VBISRV_19: lda ARRTAB,x                     ; a436 bdeda0  arrow shapes; last byte overlaps
+_VBISRV_19: lda ARRTAB,x                     ; a436 bdeda0  . arrow shapes; last byte overlaps
             cpy #$80                         ; a439 c080    
             bcs _VBISRV_20                   ; a43b b003    
-            sta PLYR1,y                      ; a43d 998022  Player 1 sprite data
+            sta PLYR1,y                      ; a43d 998022  . Player 1 sprite data
 _VBISRV_20: inx                              ; a440 e8      
             iny                              ; a441 c8      
             txa                              ; a442 8a      
             and #$07                         ; a443 2907    
             bne _VBISRV_19                   ; a445 d0ef    
-            lda STEPX                        ; a447 a5be    intermediate pos of arrow
-            sta HPOSP1 / M1PF                ; a449 8d01d0  W: h.pos of P1 / R: missile 1 to pf collision
-            ldx ARRNDX                       ; a44c a6c4    arrow index
-            lda STEPX                        ; a44e a5be    intermediate pos of arrow
+            lda STEPX                        ; a447 a5be    . intermediate pos of arrow
+            sta HPOSP1 / M1PF                ; a449 8d01d0  . W: h.pos of P1 / R: missile 1 to pf collision
+            ldx ARRNDX                       ; a44c a6c4    . arrow index
+            lda STEPX                        ; a44e a5be    . intermediate pos of arrow
             clc                              ; a450 18      
-            adc XADD,x                       ; a451 7d3da0  offsets for moving arrow
-            sta STEPX                        ; a454 85be    intermediate pos of arrow
+            adc XADD,x                       ; a451 7d3da0  . offsets for moving arrow
+            sta STEPX                        ; a454 85be    . intermediate pos of arrow
             lda STEPY                        ; a456 a5bf    
             clc                              ; a458 18      
             adc YADD,x                       ; a459 7d3ca0  
             sta STEPY                        ; a45c 85bf    
-            inc STPCNT                       ; a45e e6c0    which intermediate step arrow is on
-            lda STPCNT                       ; a460 a5c0    which intermediate step arrow is on
+            inc STPCNT                       ; a45e e6c0    . which intermediate step arrow is on
+            lda STPCNT                       ; a460 a5c0    . which intermediate step arrow is on
             and #$07                         ; a462 2907    
             bne _PURSE_1                     ; a464 d02a    
-            sta STPCNT                       ; a466 85c0    which intermediate step arrow is on
-            inc ORDCNT                       ; a468 e6c1    which order arrow is showing
-            lda ORDCNT                       ; a46a a5c1    which order arrow is showing
-            cmp HOWMNY                       ; a46c c5c5    how many orders for unit under cursor
+            sta STPCNT                       ; a466 85c0    . which intermediate step arrow is on
+            inc ORDCNT                       ; a468 e6c1    . which order arrow is showing
+            lda ORDCNT                       ; a46a a5c1    . which order arrow is showing
+            cmp HOWMNY                       ; a46c c5c5    . how many orders for unit under cursor
             bcc _PURSE_1                     ; a46e 9020    
             beq _PURSE_1                     ; a470 f01e    
             lda #$01                         ; a472 a901    
-            sta ORDCNT                       ; a474 85c1    which order arrow is showing
+            sta ORDCNT                       ; a474 85c1    . which order arrow is showing
 PURSE:      ldy STEPY                        ; a476 a4bf    
             lda #$ff                         ; a478 a9ff    
             sta KRZFLG                       ; a47a 85cb    
-            lda STEPX                        ; a47c a5be    intermediate pos of arrow
+            lda STEPX                        ; a47c a5be    . intermediate pos of arrow
             sec                              ; a47e 38      
             sbc #$01                         ; a47f e901    
             tax                              ; a481 aa      
-            jsr SHOWKRZ                      ; a482 2004a9  X/Y -> KRZX/Y and show sprite
+            jsr SHOWKRZ                      ; a482 2004a9  . X/Y -> KRZX/Y and show sprite
             jsr CLRP1                        ; a485 2078a9  
-            lda BASEX                        ; a488 a5bc    start pos of arrow (player frame)
-            sta STEPX                        ; a48a 85be    intermediate pos of arrow
+            lda BASEX                        ; a488 a5bc    . start pos of arrow (player frame)
+            sta STEPX                        ; a48a 85be    . intermediate pos of arrow
             lda BASEY                        ; a48c a5bd    
             sta STEPY                        ; a48e 85bf    
 _PURSE_1:   jmp ENDISR                       ; a490 4c91a8  
 
 FBUTPS:     lda #$ff                         ; a493 a9ff    
             sta BUTFLG                       ; a495 8596    
-            jsr CURS2CH                      ; a497 20baa8  set CHUNKX/Y from CURSX/Y, also shift CURS -> TXL/TYL
+            jsr CURS2CH                      ; a497 20baa8  . set CHUNKX/Y from CURSX/Y, also shift CURS -> TXL/TYL
             ldx #$12                         ; a49a a212    
 _FBUTPS_1:  cmp CITYLON,x                    ; a49c ddd2a0  
             beq _FBUTPSA_1                   ; a49f f005    
 FBUTPSA:    dex                              ; a4a1 ca      
             bpl _FBUTPS_1                    ; a4a2 10f8    
             bmi _FBUTPSA_5                   ; a4a4 302a    
-_FBUTPSA_1: lda CHUNKX                       ; a4a6 a5a7    Cursor coords (pixel frame)
+_FBUTPSA_1: lda CHUNKX                       ; a4a6 a5a7    . Cursor coords (pixel frame)
             cmp CITYLAT,x                    ; a4a8 ddbfa0  
             beq _FBUTPSA_2                   ; a4ab f005    
             lda CHUNKY                       ; a4ad a5a8    
             jmp FBUTPSA                      ; a4af 4ca1a4  
 
-_FBUTPSA_2: jsr CLRTXT                       ; a4b2 20b8a9  Clear TXTWDW + 106-137
+_FBUTPSA_2: jsr CLRTXT                       ; a4b2 20b8a9  . Clear TXTWDW + 106-137
             ldy CTYOFST,x                    ; a4b5 bc0ea0  
             ldx #$74                         ; a4b8 a274    
             sec                              ; a4ba 38      
-_FBUTPSA_3: lda CITIES,y                     ; a4bb b98c9f  high-bit terminated strings
+_FBUTPSA_3: lda CITIES,y                     ; a4bb b98c9f  . high-bit terminated strings
             sbc #$20                         ; a4be e920    
             bpl _FBUTPSA_4                   ; a4c0 1007    
             and #$7f                         ; a4c2 297f    
@@ -877,8 +877,8 @@ _FBUTPSA_4: sta TXTWDW,x                     ; a4c9 9d1e3a
             iny                              ; a4cc c8      
             inx                              ; a4cd e8      
             bne _FBUTPSA_3                   ; a4ce d0eb    
-_FBUTPSA_5: jsr GETCHXY                      ; a4d0 2048a9  Get map @ CHUNKX/Y -> A, SRCPTR -> row off, col offset -> Y
-            sty MAPOFF                       ; a4d3 84fe    (SRCPTR) offset to CHUNKX/Y char
+_FBUTPSA_5: jsr GETCHXY                      ; a4d0 2048a9  . Get map @ CHUNKX/Y -> A, SRCPTR -> row off, col offset -> Y
+            sty MAPOFF                       ; a4d3 84fe    . (SRCPTR) offset to CHUNKX/Y char
             ldx #$00                         ; a4d5 a200    
             and #$3f                         ; a4d7 293f    
             cmp #$3c                         ; a4d9 c93c    
@@ -890,19 +890,19 @@ _FBUTPSA_5: jsr GETCHXY                      ; a4d0 2048a9  Get map @ CHUNKX/Y -
             bmi _FBUTPSA_6                   ; a4e5 3002    
             ldx #$2f                         ; a4e7 a22f    
 _FBUTPSA_6: lda CHUNKY                       ; a4e9 a5a8    
-_FBUTPSA_7: cmp CORPSY,x                     ; a4eb dd582c  latitude of all units
+_FBUTPSA_7: cmp CORPSY,x                     ; a4eb dd582c  . latitude of all units
             beq _FBUTPSB_2                   ; a4ee f00b    
 FBUTPSB:    dex                              ; a4f0 ca      
             bne _FBUTPSA_7                   ; a4f1 d0f8    
-_FBUTPSB_1: stx CORPS                        ; a4f3 86a1    Number of unit under window
+_FBUTPSB_1: stx CORPS                        ; a4f3 86a1    . Number of unit under window
             dex                              ; a4f5 ca      
             stx HITFLG                       ; a4f6 86cd    
             jmp ENDISR                       ; a4f8 4c91a8  
 
-_FBUTPSB_2: lda CHUNKX                       ; a4fb a5a7    Cursor coords (pixel frame)
-            cmp CORPSX,x                     ; a4fd ddb12b  longitude of all units
+_FBUTPSB_2: lda CHUNKX                       ; a4fb a5a7    . Cursor coords (pixel frame)
+            cmp CORPSX,x                     ; a4fd ddb12b  . longitude of all units
             bne _FBUTPSB_3                   ; a500 d00b    
-            lda ARRIVE,x                     ; a502 bda62d  arrival turns
+            lda ARRIVE,x                     ; a502 bda62d  . arrival turns
             bmi _FBUTPSB_3                   ; a505 3006    
             cmp TURN                         ; a507 c591    
             bcc _FBUTPSB_4                   ; a509 9007    
@@ -912,79 +912,79 @@ _FBUTPSB_3: lda CHUNKY                       ; a50d a5a8
 
 _FBUTPSB_4: lda #$00                         ; a512 a900    
             sta HITFLG                       ; a514 85cd    
-            sta CH                           ; a516 8dfc02  Internal hardware value for the last key pressed
+            sta CH                           ; a516 8dfc02  . Internal hardware value for the last key pressed
             lda #$46                         ; a519 a946    
             cpx #$30                         ; a51b e030    
             bcs _FBUTPSB_5                   ; a51d b002    
             lda #$0e                         ; a51f a90e    
-_FBUTPSB_5: sta PCOLR0                       ; a521 8dc002  Color of player 0 and missile 0, shadows $D012
-            stx CORPS                        ; a524 86a1    Number of unit under window
+_FBUTPSB_5: sta PCOLR0                       ; a521 8dc002  . Color of player 0 and missile 0, shadows $D012
+            stx CORPS                        ; a524 86a1    . Number of unit under window
             ldy #$09                         ; a526 a009    
-            lda CORPNO,x                     ; a528 bdf42e  unit ID numbers
-            jsr DNUMBER                      ; a52b 20a3aa  Show A as base10 number in TXTWDW
+            lda CORPNO,x                     ; a528 bdf42e  . unit ID numbers
+            jsr DNUMBER                      ; a52b 20a3aa  . Show A as base10 number in TXTWDW
             iny                              ; a52e c8      
-            ldx CORPS                        ; a52f a6a1    Number of unit under window
-            lda CORPT,x                      ; a531 bd4d2e  codes for unit types
+            ldx CORPS                        ; a52f a6a1    . Number of unit under window
+            lda CORPT,x                      ; a531 bd4d2e  . codes for unit types
             pha                              ; a534 48      
             and #$70                         ; a535 2970    
             lsr                              ; a537 4a      
             lsr                              ; a538 4a      
             lsr                              ; a539 4a      
             lsr                              ; a53a 4a      
-            jsr SHOWWRD                      ; a53b 201ea9  Add word A to TXTWDW + Y
+            jsr SHOWWRD                      ; a53b 201ea9  . Add word A to TXTWDW + Y
             pla                              ; a53e 68      
             and #$07                         ; a53f 2907    
             ora #$08                         ; a541 0908    
-            jsr SHOWWRD                      ; a543 201ea9  Add word A to TXTWDW + Y
+            jsr SHOWWRD                      ; a543 201ea9  . Add word A to TXTWDW + Y
             ldx #$06                         ; a546 a206    
-            lda CORPS                        ; a548 a5a1    Number of unit under window
+            lda CORPS                        ; a548 a5a1    . Number of unit under window
             cmp #$30                         ; a54a c930    
             bcs _FBUTPSB_6                   ; a54c b002    
             ldx #$01                         ; a54e a201    
-_FBUTPSB_6: jsr SHOWWRDX                     ; a550 201fa9  Add word X to TXTWDW + Y
-            lda LEVEL                        ; a553 a592    Level learner/beginner/intermediate/advanced/expert
+_FBUTPSB_6: jsr SHOWWRDX                     ; a550 201fa9  . Add word X to TXTWDW + Y
+            lda LEVEL                        ; a553 a592    . Level learner/beginner/intermediate/advanced/expert
             cmp #$04                         ; a555 c904    
             bne _FBUTPSB_7                   ; a557 d014    
-            ldx CORPS                        ; a559 a6a1    Number of unit under window
-            lda MVMODE,x                     ; a55b bdc734  (expert level only) standard/assault/forced march/entrench
+            ldx CORPS                        ; a559 a6a1    . Number of unit under window
+            lda MVMODE,x                     ; a55b bdc734  . (expert level only) standard/assault/forced march/entrench
             clc                              ; a55e 18      
             adc #$15                         ; a55f 6915    
             ldy #$24                         ; a561 a024    
-            jsr SHOWWRD                      ; a563 201ea9  Add word A to TXTWDW + Y
+            jsr SHOWWRD                      ; a563 201ea9  . Add word A to TXTWDW + Y
             ldy #$56                         ; a566 a056    
             ldx #$19                         ; a568 a219    
-            jsr SHOWWRDX                     ; a56a 201fa9  Add word X to TXTWDW + Y
+            jsr SHOWWRDX                     ; a56a 201fa9  . Add word X to TXTWDW + Y
 _FBUTPSB_7: ldy #$39                         ; a56d a039    
             ldx #$0a                         ; a56f a20a    
-            jsr SHOWWRDX                     ; a571 201fa9  Add word X to TXTWDW + Y
+            jsr SHOWWRDX                     ; a571 201fa9  . Add word X to TXTWDW + Y
             dey                              ; a574 88      
             lda #$1a                         ; a575 a91a    
             sta TXTWDW,y                     ; a577 991e3a  
             iny                              ; a57a c8      
             iny                              ; a57b c8      
-            ldx CORPS                        ; a57c a6a1    Number of unit under window
-            lda MSTRNG,x                     ; a57e bdff2c  muster strengths
-            jsr SHOWSTR                      ; a581 2075aa  Show unit X strength A, with Russian fog of war
+            ldx CORPS                        ; a57c a6a1    . Number of unit under window
+            lda MSTRNG,x                     ; a57e bdff2c  . muster strengths
+            jsr SHOWSTR                      ; a581 2075aa  . Show unit X strength A, with Russian fog of war
             iny                              ; a584 c8      
             iny                              ; a585 c8      
             ldx #$0f                         ; a586 a20f    
-            jsr SHOWWRDX                     ; a588 201fa9  Add word X to TXTWDW + Y
+            jsr SHOWWRDX                     ; a588 201fa9  . Add word X to TXTWDW + Y
             dey                              ; a58b 88      
             lda #$1a                         ; a58c a91a    
             sta TXTWDW,y                     ; a58e 991e3a  
             iny                              ; a591 c8      
             iny                              ; a592 c8      
-            ldx CORPS                        ; a593 a6a1    Number of unit under window
-            lda CSTRNG,x                     ; a595 bd2b32  combat strengths
-            jsr SHOWSTR                      ; a598 2075aa  Show unit X strength A, with Russian fog of war
-            ldy MAPOFF                       ; a59b a4fe    (SRCPTR) offset to CHUNKX/Y char
-            jsr SWITCHY                      ; a59d 2037a9  Switch CORPS with map,Y via SWAP
+            ldx CORPS                        ; a593 a6a1    . Number of unit under window
+            lda CSTRNG,x                     ; a595 bd2b32  . combat strengths
+            jsr SHOWSTR                      ; a598 2075aa  . Show unit X strength A, with Russian fog of war
+            ldy MAPOFF                       ; a59b a4fe    . (SRCPTR) offset to CHUNKX/Y char
+            jsr SWITCHY                      ; a59d 2037a9  . Switch CORPS with map,Y via SWAP
             cpx #$30                         ; a5a0 e030    
             bcc _FBUTPSB_8                   ; a5a2 9006    
             lda #$ff                         ; a5a4 a9ff    
             sta HITFLG                       ; a5a6 85cd    
             bmi JMPEISR                      ; a5a8 3039    
-_FBUTPSB_8: lda NOBTCNT                      ; a5aa a5f6    Count VBI cycles since button press for expert level dbl-click move mode
+_FBUTPSB_8: lda NOBTCNT                      ; a5aa a5f6    . Count VBI cycles since button press for expert level dbl-click move mode
             cmp #$1e                         ; a5ac c91e    
             bcs _A_2                         ; a5ae b012    
 __A__:      ldy #$24                         ; a5b0 a024    
@@ -997,33 +997,33 @@ _A_1:       lda TXTWDW,y                     ; a5b2 b91e3a
             jmp ENDISR                       ; a5bf 4c91a8  
 
 _A_2:       lda #$01                         ; a5c2 a901    
-            sta ORDCNT                       ; a5c4 85c1    which order arrow is showing
+            sta ORDCNT                       ; a5c4 85c1    . which order arrow is showing
             lda #$1e                         ; a5c6 a91e    
             sta $fd                          ; a5c8 85fd    
             lda #$00                         ; a5ca a900    
-            sta STPCNT                       ; a5cc 85c0    which intermediate step arrow is on
-            sta GREEN,x                      ; a5ce 9d7a30  Flag newly arrived German reinforcements
-            jsr SETARRXY                     ; a5d1 20e7a8  Set arrow BASEX/Y, STEPX/Y from TXL, TYL
-            lda HMORDS,x                     ; a5d4 bdd232  how many orders queued for each unit
-            sta HOWMNY                       ; a5d7 85c5    how many orders for unit under cursor
-            lda WHORDS,x                     ; a5d9 bd7933  what unit orders are (2 bits per order)
-            sta ORD1                         ; a5dc 85c2    orders record
-            lda WHORDH,x                     ; a5de bd2034  unit orders (high bits)
+            sta STPCNT                       ; a5cc 85c0    . which intermediate step arrow is on
+            sta GREEN,x                      ; a5ce 9d7a30  . Flag newly arrived German reinforcements
+            jsr SETARRXY                     ; a5d1 20e7a8  . Set arrow BASEX/Y, STEPX/Y from TXL, TYL
+            lda HMORDS,x                     ; a5d4 bdd232  . how many orders queued for each unit
+            sta HOWMNY                       ; a5d7 85c5    . how many orders for unit under cursor
+            lda WHORDS,x                     ; a5d9 bd7933  . what unit orders are (2 bits per order)
+            sta ORD1                         ; a5dc 85c2    . orders record
+            lda WHORDH,x                     ; a5de bd2034  . unit orders (high bits)
             sta ORD2                         ; a5e1 85c3    
 JMPEISR:    jmp ENDISR                       ; a5e3 4c91a8  
 
-ORDERS:     lda ORDDLY                       ; a5e6 a5ff    Delay to disambiguate double click?
+ORDERS:     lda ORDDLY                       ; a5e6 a5ff    . Delay to disambiguate double click?
             bne JMPEISR                      ; a5e8 d0f9    
-            lda STKFLG                       ; a5ea a5cc    STICK0 & 0xf ^ 0xf
+            lda STKFLG                       ; a5ea a5cc    . STICK0 & 0xf ^ 0xf
             beq _ORDERS_1                    ; a5ec f00f    
             dec $fd                          ; a5ee c6fd    
             bpl JMPEISR                      ; a5f0 10f1    
             lda #$00                         ; a5f2 a900    
-            sta STKFLG                       ; a5f4 85cc    STICK0 & 0xf ^ 0xf
-            sta AUDC1 / POT1                 ; a5f6 8d01d2  W: Audio ch1 ctrl / R: paddle 1
+            sta STKFLG                       ; a5f4 85cc    . STICK0 & 0xf ^ 0xf
+            sta AUDC1 / POT1                 ; a5f6 8d01d2  . W: Audio ch1 ctrl / R: paddle 1
             lda #$04                         ; a5f9 a904    
             sta $fd                          ; a5fb 85fd    
-_ORDERS_1:  ldx CORPS                        ; a5fd a6a1    Number of unit under window
+_ORDERS_1:  ldx CORPS                        ; a5fd a6a1    . Number of unit under window
             bne _ORDERS_2                    ; a5ff d005    
             ldx #$05                         ; a601 a205    
             jmp SQUAWK                       ; a603 4cffa6  
@@ -1033,10 +1033,10 @@ _ORDERS_2:  cpx #$30                         ; a606 e030
             ldx #$00                         ; a60a a200    
             jmp SQUAWK                       ; a60c 4cffa6  
 
-_ORDERS_3:  lda NOBTCNT                      ; a60f a5f6    Count VBI cycles since button press for expert level dbl-click move mode
+_ORDERS_3:  lda NOBTCNT                      ; a60f a5f6    . Count VBI cycles since button press for expert level dbl-click move mode
             cmp #$1e                         ; a611 c91e    
             bcs _ORDERS_6                    ; a613 b049    
-            ldy STICK0                       ; a615 ac7802  The value of joystick 0
+            ldy STICK0                       ; a615 ac7802  . The value of joystick 0
             lda STKTAB,y                     ; a618 b9d19b  Get move mode
             bmi _ORDERS_11                   ; a61b 3079    
             cpx #$2b                         ; a61d e02b    Fliegerkorps?
@@ -1049,21 +1049,21 @@ _ORDERS_3:  lda NOBTCNT                      ; a60f a5f6    Count VBI cycles sin
             jmp SQUAWK                       ; a62b 4cffa6  
 
 _ORDERS_4:  tay                              ; a62e a8      
-            lda BEEPTB,y                     ; a62f b92ea0  table of beep tones
+            lda BEEPTB,y                     ; a62f b92ea0  . table of beep tones
             asl                              ; a632 0a      
-            sta AUDF1 / POT0                 ; a633 8d00d2  W: Audio ch1 freq / R: paddle 0
+            sta AUDF1 / POT0                 ; a633 8d00d2  . W: Audio ch1 freq / R: paddle 0
             lda #$a8                         ; a636 a9a8    
-            sta AUDC1 / POT1                 ; a638 8d01d2  W: Audio ch1 ctrl / R: paddle 1
+            sta AUDC1 / POT1                 ; a638 8d01d2  . W: Audio ch1 ctrl / R: paddle 1
             cpy #$03                         ; a63b c003    
             bne _ORDERS_5                    ; a63d d005    
             lda #$00                         ; a63f a900    
-            sta HMORDS,x                     ; a641 9dd232  how many orders queued for each unit
+            sta HMORDS,x                     ; a641 9dd232  . how many orders queued for each unit
 _ORDERS_5:  tya                              ; a644 98      
-            sta MVMODE,x                     ; a645 9dc734  (expert level only) standard/assault/forced march/entrench
+            sta MVMODE,x                     ; a645 9dc734  . (expert level only) standard/assault/forced march/entrench
             clc                              ; a648 18      
             adc #$15                         ; a649 6915    
             ldy #$24                         ; a64b a024    
-            jsr SHOWWRD                      ; a64d 201ea9  Add word A to TXTWDW + Y
+            jsr SHOWWRD                      ; a64d 201ea9  . Add word A to TXTWDW + Y
             sta TXTWDW,y                     ; a650 991e3a  
             iny                              ; a653 c8      
             sta TXTWDW,y                     ; a654 991e3a  
@@ -1071,13 +1071,13 @@ _ORDERS_5:  tya                              ; a644 98
             sta TXTWDW,y                     ; a658 991e3a  
             jmp __A__                        ; a65b 4cb0a5  
 
-_ORDERS_6:  lda MVMODE,x                     ; a65e bdc734  (expert level only) standard/assault/forced march/entrench
+_ORDERS_6:  lda MVMODE,x                     ; a65e bdc734  . (expert level only) standard/assault/forced march/entrench
             cmp #$03                         ; a661 c903    
             bne _ORDERS_7                    ; a663 d005    
             ldx #$06                         ; a665 a206    
             jmp SQUAWK                       ; a667 4cffa6  
 
-_ORDERS_7:  lda HMORDS,x                     ; a66a bdd232  how many orders queued for each unit
+_ORDERS_7:  lda HMORDS,x                     ; a66a bdd232  . how many orders queued for each unit
             cmp #$08                         ; a66d c908    
             bcc _ORDERS_8                    ; a66f 9005    
             ldx #$01                         ; a671 a201    
@@ -1088,115 +1088,115 @@ _ORDERS_8:  lda KRZFLG                       ; a676 a5cb
             ldx #$02                         ; a67a a202    
             jmp SQUAWK                       ; a67c 4cffa6  
 
-_ORDERS_9:  inc DBTIMR                       ; a67f e6c8    joystick debounce timer
-            lda DBTIMR                       ; a681 a5c8    joystick debounce timer
+_ORDERS_9:  inc DBTIMR                       ; a67f e6c8    . joystick debounce timer
+            lda DBTIMR                       ; a681 a5c8    . joystick debounce timer
             cmp #$10                         ; a683 c910    
             bcs _ORDERS_10                   ; a685 b003    
             jmp ENDISR                       ; a687 4c91a8  
 
 _ORDERS_10: lda #$00                         ; a68a a900    
-            sta DBTIMR                       ; a68c 85c8    joystick debounce timer
-            ldy STICK0                       ; a68e ac7802  The value of joystick 0
-            lda STKTAB,y                     ; a691 b9d19b  joystick decoding table
+            sta DBTIMR                       ; a68c 85c8    . joystick debounce timer
+            ldy STICK0                       ; a68e ac7802  . The value of joystick 0
+            lda STKTAB,y                     ; a691 b9d19b  . joystick decoding table
             bpl _ORDERS_12                   ; a694 1005    
 _ORDERS_11: ldx #$03                         ; a696 a203    
             jmp SQUAWK                       ; a698 4cffa6  
 
 _ORDERS_12: tay                              ; a69b a8      
-            sta STICK1                       ; a69c 85c9    coded value of stick direction (0-3)
-            lda BEEPTB,y                     ; a69e b92ea0  table of beep tones
-            sta AUDF1 / POT0                 ; a6a1 8d00d2  W: Audio ch1 freq / R: paddle 0
+            sta STICK1                       ; a69c 85c9    . coded value of stick direction (0-3)
+            lda BEEPTB,y                     ; a69e b92ea0  . table of beep tones
+            sta AUDF1 / POT0                 ; a6a1 8d00d2  . W: Audio ch1 freq / R: paddle 0
             lda #$a8                         ; a6a4 a9a8    
-            sta AUDC1 / POT1                 ; a6a6 8d01d2  W: Audio ch1 ctrl / R: paddle 1
+            sta AUDC1 / POT1                 ; a6a6 8d01d2  . W: Audio ch1 ctrl / R: paddle 1
             lda #$ff                         ; a6a9 a9ff    
-            sta STKFLG                       ; a6ab 85cc    STICK0 & 0xf ^ 0xf
-            inc HMORDS,x                     ; a6ad fed232  how many orders queued for each unit
-            lda HMORDS,x                     ; a6b0 bdd232  how many orders queued for each unit
-            sta HOWMNY                       ; a6b3 85c5    how many orders for unit under cursor
+            sta STKFLG                       ; a6ab 85cc    . STICK0 & 0xf ^ 0xf
+            inc HMORDS,x                     ; a6ad fed232  . how many orders queued for each unit
+            lda HMORDS,x                     ; a6b0 bdd232  . how many orders queued for each unit
+            sta HOWMNY                       ; a6b3 85c5    . how many orders for unit under cursor
             sec                              ; a6b5 38      
             sbc #$01                         ; a6b6 e901    
             and #$03                         ; a6b8 2903    
             tay                              ; a6ba a8      
-            sty TEMP1                        ; a6bb 84a4    all purpose temp
-            lda HMORDS,x                     ; a6bd bdd232  how many orders queued for each unit
+            sty TEMP1                        ; a6bb 84a4    . all purpose temp
+            lda HMORDS,x                     ; a6bd bdd232  . how many orders queued for each unit
             sec                              ; a6c0 38      
             sbc #$01                         ; a6c1 e901    
             lsr                              ; a6c3 4a      
             lsr                              ; a6c4 4a      
             tax                              ; a6c5 aa      
-            lda STICK1                       ; a6c6 a5c9    coded value of stick direction (0-3)
+            lda STICK1                       ; a6c6 a5c9    . coded value of stick direction (0-3)
 __B__:      dey                              ; a6c8 88      
             bmi _B_1                         ; a6c9 3005    
             asl                              ; a6cb 0a      
             asl                              ; a6cc 0a      
             jmp __B__                        ; a6cd 4cc8a6  
 
-_B_1:       ldy TEMP1                        ; a6d0 a4a4    all purpose temp
-            eor ORD1,x                       ; a6d2 55c2    orders record
-            and MASKO,y                      ; a6d4 3938a0  mask values for decoding orders
-            eor ORD1,x                       ; a6d7 55c2    orders record
-            sta ORD1,x                       ; a6d9 95c2    orders record
-            lda ORD1                         ; a6db a5c2    orders record
-            ldx CORPS                        ; a6dd a6a1    Number of unit under window
-            sta WHORDS,x                     ; a6df 9d7933  what unit orders are (2 bits per order)
+_B_1:       ldy TEMP1                        ; a6d0 a4a4    . all purpose temp
+            eor ORD1,x                       ; a6d2 55c2    . orders record
+            and MASKO,y                      ; a6d4 3938a0  . mask values for decoding orders
+            eor ORD1,x                       ; a6d7 55c2    . orders record
+            sta ORD1,x                       ; a6d9 95c2    . orders record
+            lda ORD1                         ; a6db a5c2    . orders record
+            ldx CORPS                        ; a6dd a6a1    . Number of unit under window
+            sta WHORDS,x                     ; a6df 9d7933  . what unit orders are (2 bits per order)
             lda ORD2                         ; a6e2 a5c3    
-            sta WHORDH,x                     ; a6e4 9d2034  unit orders (high bits)
+            sta WHORDH,x                     ; a6e4 9d2034  . unit orders (high bits)
             jsr CLRP2                        ; a6e7 208ca9  
-            ldx STICK1                       ; a6ea a6c9    coded value of stick direction (0-3)
+            ldx STICK1                       ; a6ea a6c9    . coded value of stick direction (0-3)
             lda KRZY                         ; a6ec a5c7    
             clc                              ; a6ee 18      
             adc YOFF,x                       ; a6ef 7d32a0  
             tay                              ; a6f2 a8      
-            lda KRZX                         ; a6f3 a5c6    maltakreuze coords (player frame)
+            lda KRZX                         ; a6f3 a5c6    . maltakreuze coords (player frame)
             clc                              ; a6f5 18      
-            adc XOFF,x                       ; a6f6 7d33a0  offsets for moving maltakreuze
+            adc XOFF,x                       ; a6f6 7d33a0  . offsets for moving maltakreuze
             tax                              ; a6f9 aa      
-            jsr SHOWKRZ                      ; a6fa 2004a9  X/Y -> KRZX/Y and show sprite
+            jsr SHOWKRZ                      ; a6fa 2004a9  . X/Y -> KRZX/Y and show sprite
             beq _NOBUT_2                     ; a6fd f035    
-SQUAWK:     jsr SHOWERR                      ; a6ff 2042ac  Show ERRMSG X at TXTWDW+110
+SQUAWK:     jsr SHOWERR                      ; a6ff 2042ac  . Show ERRMSG X at TXTWDW+110
             lda #$66                         ; a702 a966    
-            sta AUDC1 / POT1                 ; a704 8d01d2  W: Audio ch1 ctrl / R: paddle 1
+            sta AUDC1 / POT1                 ; a704 8d01d2  . W: Audio ch1 ctrl / R: paddle 1
             lda #$50                         ; a707 a950    
-            sta AUDF1 / POT0                 ; a709 8d00d2  W: Audio ch1 freq / R: paddle 0
+            sta AUDF1 / POT0                 ; a709 8d00d2  . W: Audio ch1 freq / R: paddle 0
             lda #$ff                         ; a70c a9ff    
             sta ERRFLG                       ; a70e 85ca    
             bmi _NOBUT_2                     ; a710 3022    
-NOBUT:      inc NOBTCNT                      ; a712 e6f6    Count VBI cycles since button press for expert level dbl-click move mode
+NOBUT:      inc NOBTCNT                      ; a712 e6f6    . Count VBI cycles since button press for expert level dbl-click move mode
             bne _NOBUT_1                     ; a714 d002    
-            dec NOBTCNT                      ; a716 c6f6    Count VBI cycles since button press for expert level dbl-click move mode
-_NOBUT_1:   sta DBTIMR                       ; a718 85c8    joystick debounce timer
-            lda STICK0                       ; a71a ad7802  The value of joystick 0
+            dec NOBTCNT                      ; a716 c6f6    . Count VBI cycles since button press for expert level dbl-click move mode
+_NOBUT_1:   sta DBTIMR                       ; a718 85c8    . joystick debounce timer
+            lda STICK0                       ; a71a ad7802  . The value of joystick 0
             and #$0f                         ; a71d 290f    
             eor #$0f                         ; a71f 490f    
             bne _NOBUT_3                     ; a721 d014    
-            sta AUDC1 / POT1                 ; a723 8d01d2  W: Audio ch1 ctrl / R: paddle 1
-            sta STKFLG                       ; a726 85cc    STICK0 & 0xf ^ 0xf
+            sta AUDC1 / POT1                 ; a723 8d01d2  . W: Audio ch1 ctrl / R: paddle 1
+            sta STKFLG                       ; a726 85cc    . STICK0 & 0xf ^ 0xf
             lda #$08                         ; a728 a908    
-            sta DELAY                        ; a72a 85b8    accel delay on scrolling
+            sta DELAY                        ; a72a 85b8    . accel delay on scrolling
             clc                              ; a72c 18      
-            adc RTCLOK2                      ; a72d 6514    One tick per VBI (60/sec)
-            sta TIMSCL                       ; a72f 85b9    frame to scroll in
+            adc RTCLOK2                      ; a72d 6514    . One tick per VBI (60/sec)
+            sta TIMSCL                       ; a72f 85b9    . frame to scroll in
             jsr __C__                        ; a731 20aea9  
 _NOBUT_2:   jmp ENDISR                       ; a734 4c91a8  
 
 _NOBUT_3:   lda #$00                         ; a737 a900    
-            sta ATRACT                       ; a739 854d    Attract mode timer and flag
-            lda TIMSCL                       ; a73b a5b9    frame to scroll in
-            cmp RTCLOK2                      ; a73d c514    One tick per VBI (60/sec)
+            sta ATRACT                       ; a739 854d    . Attract mode timer and flag
+            lda TIMSCL                       ; a73b a5b9    . frame to scroll in
+            cmp RTCLOK2                      ; a73d c514    . One tick per VBI (60/sec)
             bne _NOBUT_2                     ; a73f d0f3    
-            lda DELAY                        ; a741 a5b8    accel delay on scrolling
+            lda DELAY                        ; a741 a5b8    . accel delay on scrolling
             cmp #$01                         ; a743 c901    
             beq _NOBUT_4                     ; a745 f005    
             sec                              ; a747 38      
             sbc #$01                         ; a748 e901    
-            sta DELAY                        ; a74a 85b8    accel delay on scrolling
+            sta DELAY                        ; a74a 85b8    . accel delay on scrolling
 _NOBUT_4:   clc                              ; a74c 18      
-            adc RTCLOK2                      ; a74d 6514    One tick per VBI (60/sec)
-            sta TIMSCL                       ; a74f 85b9    frame to scroll in
+            adc RTCLOK2                      ; a74d 6514    . One tick per VBI (60/sec)
+            sta TIMSCL                       ; a74f 85b9    . frame to scroll in
             lda #$00                         ; a751 a900    
-            sta OFFLO                        ; a753 85a2    How far to offset new LMS value
+            sta OFFLO                        ; a753 85a2    . How far to offset new LMS value
             sta OFFHI                        ; a755 85a3    
-            lda STICK0                       ; a757 ad7802  The value of joystick 0
+            lda STICK0                       ; a757 ad7802  . The value of joystick 0
             pha                              ; a75a 48      
             and #$08                         ; a75b 2908    
             bne _NOBUT_8                     ; a75d d02f    
@@ -1209,20 +1209,20 @@ _NOBUT_5:   sec                              ; a767 38
             sta CURSXL                       ; a76a 8582    
             bcs _NOBUT_6                     ; a76c b002    
             dec CURSXH                       ; a76e c683    
-_NOBUT_6:   lda SHPOS0                       ; a770 a588    shadows player 0 position
+_NOBUT_6:   lda SHPOS0                       ; a770 a588    . shadows player 0 position
             cmp #$ba                         ; a772 c9ba    
             beq _NOBUT_7                     ; a774 f009    
             adc #$01                         ; a776 6901    
-            sta SHPOS0                       ; a778 8588    shadows player 0 position
-            sta HPOSP0 / M0PF                ; a77a 8d00d0  W: h.pos of P0 / R: missile 0 to pf collision
+            sta SHPOS0                       ; a778 8588    . shadows player 0 position
+            sta HPOSP0 / M0PF                ; a77a 8d00d0  . W: h.pos of P0 / R: missile 0 to pf collision
             bne _NOBUT_12                    ; a77d d047    
-_NOBUT_7:   dec XPOSL                        ; a77f c686    Horiz pos of upper left of screen window
-            lda XPOSL                        ; a781 a586    Horiz pos of upper left of screen window
+_NOBUT_7:   dec XPOSL                        ; a77f c686    . Horiz pos of upper left of screen window
+            lda XPOSL                        ; a781 a586    . Horiz pos of upper left of screen window
             and #$07                         ; a783 2907    
-            sta HSCROL                       ; a785 8d04d4  Horizontal scroll enable
+            sta HSCROL                       ; a785 8d04d4  . Horizontal scroll enable
             cmp #$07                         ; a788 c907    
             bne _NOBUT_12                    ; a78a d03a    
-            inc OFFLO                        ; a78c e6a2    How far to offset new LMS value
+            inc OFFLO                        ; a78c e6a2    . How far to offset new LMS value
 _NOBUT_8:   pla                              ; a78e 68      
             pha                              ; a78f 48      
             and #$04                         ; a790 2904    
@@ -1237,123 +1237,123 @@ _NOBUT_9:   clc                              ; a79e 18
             sta CURSXL                       ; a7a1 8582    
             bcc _NOBUT_10                    ; a7a3 9002    
             inc CURSXH                       ; a7a5 e683    
-_NOBUT_10:  lda SHPOS0                       ; a7a7 a588    shadows player 0 position
+_NOBUT_10:  lda SHPOS0                       ; a7a7 a588    . shadows player 0 position
             cmp #$36                         ; a7a9 c936    
             beq _NOBUT_11                    ; a7ab f00a    
             sec                              ; a7ad 38      
             sbc #$01                         ; a7ae e901    
-            sta SHPOS0                       ; a7b0 8588    shadows player 0 position
-            sta HPOSP0 / M0PF                ; a7b2 8d00d0  W: h.pos of P0 / R: missile 0 to pf collision
+            sta SHPOS0                       ; a7b0 8588    . shadows player 0 position
+            sta HPOSP0 / M0PF                ; a7b2 8d00d0  . W: h.pos of P0 / R: missile 0 to pf collision
             bne _NOBUT_12                    ; a7b5 d00f    
-_NOBUT_11:  inc XPOSL                        ; a7b7 e686    Horiz pos of upper left of screen window
-            lda XPOSL                        ; a7b9 a586    Horiz pos of upper left of screen window
+_NOBUT_11:  inc XPOSL                        ; a7b7 e686    . Horiz pos of upper left of screen window
+            lda XPOSL                        ; a7b9 a586    . Horiz pos of upper left of screen window
             and #$07                         ; a7bb 2907    
-            sta HSCROL                       ; a7bd 8d04d4  Horizontal scroll enable
+            sta HSCROL                       ; a7bd 8d04d4  . Horizontal scroll enable
             bne _NOBUT_12                    ; a7c0 d004    
-            dec OFFLO                        ; a7c2 c6a2    How far to offset new LMS value
+            dec OFFLO                        ; a7c2 c6a2    . How far to offset new LMS value
             dec OFFHI                        ; a7c4 c6a3    
 _NOBUT_12:  pla                              ; a7c6 68      
             lsr                              ; a7c7 4a      
             pha                              ; a7c8 48      
             bcs _NOBUT_19                    ; a7c9 b055    
-            lda CURSYL                       ; a7cb a584    Cursor coords on screen (map frame)
+            lda CURSYL                       ; a7cb a584    . Cursor coords on screen (map frame)
             cmp #$5e                         ; a7cd c95e    
             bne _NOBUT_13                    ; a7cf d006    
             ldx CURSYH                       ; a7d1 a685    
             cpx #$02                         ; a7d3 e002    
             beq _NOBUT_19                    ; a7d5 f049    
-_NOBUT_13:  inc CURSYL                       ; a7d7 e684    Cursor coords on screen (map frame)
+_NOBUT_13:  inc CURSYL                       ; a7d7 e684    . Cursor coords on screen (map frame)
             bne _NOBUT_14                    ; a7d9 d002    
             inc CURSYH                       ; a7db e685    
-_NOBUT_14:  ldx SCY                          ; a7dd a687    vert pos of cursor (player frame)
+_NOBUT_14:  ldx SCY                          ; a7dd a687    . vert pos of cursor (player frame)
             cpx #$1b                         ; a7df e01b    
             beq _NOBUT_17                    ; a7e1 f01c    
-            inc CURSYL                       ; a7e3 e684    Cursor coords on screen (map frame)
+            inc CURSYL                       ; a7e3 e684    . Cursor coords on screen (map frame)
             bne _NOBUT_15                    ; a7e5 d002    
             inc CURSYH                       ; a7e7 e685    
 _NOBUT_15:  dex                              ; a7e9 ca      
-            stx SCY                          ; a7ea 8687    vert pos of cursor (player frame)
+            stx SCY                          ; a7ea 8687    . vert pos of cursor (player frame)
             txa                              ; a7ec 8a      
             clc                              ; a7ed 18      
             adc #$12                         ; a7ee 6912    
-            sta TEMP1                        ; a7f0 85a4    all purpose temp
-_NOBUT_16:  lda PLYR0,x                      ; a7f2 bd0022  Player 0 sprite data
+            sta TEMP1                        ; a7f0 85a4    . all purpose temp
+_NOBUT_16:  lda PLYR0,x                      ; a7f2 bd0022  . Player 0 sprite data
             sta PLYR0-1,x                    ; a7f5 9dff21  
             inx                              ; a7f8 e8      
-            cpx TEMP1                        ; a7f9 e4a4    all purpose temp
+            cpx TEMP1                        ; a7f9 e4a4    . all purpose temp
             bne _NOBUT_16                    ; a7fb d0f5    
             beq _NOBUT_19                    ; a7fd f021    
-_NOBUT_17:  lda YPOSL                        ; a7ff a594    Vert pos of upper left of screen window
+_NOBUT_17:  lda YPOSL                        ; a7ff a594    . Vert pos of upper left of screen window
             sec                              ; a801 38      
             sbc #$01                         ; a802 e901    
             bcs _NOBUT_18                    ; a804 b002    
             dec YPOSH                        ; a806 c695    
-_NOBUT_18:  sta YPOSL                        ; a808 8594    Vert pos of upper left of screen window
+_NOBUT_18:  sta YPOSL                        ; a808 8594    . Vert pos of upper left of screen window
             and #$0f                         ; a80a 290f    
-            sta VSCROL                       ; a80c 8d05d4  Vertical scroll enable
+            sta VSCROL                       ; a80c 8d05d4  . Vertical scroll enable
             cmp #$0f                         ; a80f c90f    
             bne _NOBUT_19                    ; a811 d00d    
-            lda OFFLO                        ; a813 a5a2    How far to offset new LMS value
+            lda OFFLO                        ; a813 a5a2    . How far to offset new LMS value
             sec                              ; a815 38      
             sbc #$30                         ; a816 e930    
-            sta OFFLO                        ; a818 85a2    How far to offset new LMS value
+            sta OFFLO                        ; a818 85a2    . How far to offset new LMS value
             lda OFFHI                        ; a81a a5a3    
             sbc #$00                         ; a81c e900    
             sta OFFHI                        ; a81e 85a3    
 _NOBUT_19:  pla                              ; a820 68      
             lsr                              ; a821 4a      
             bcs _NOBUT_26                    ; a822 b057    
-            lda CURSYL                       ; a824 a584    Cursor coords on screen (map frame)
+            lda CURSYL                       ; a824 a584    . Cursor coords on screen (map frame)
             cmp #$02                         ; a826 c902    
             bne _NOBUT_20                    ; a828 d004    
             ldx CURSYH                       ; a82a a685    
             beq _NOBUT_26                    ; a82c f04d    
 _NOBUT_20:  sec                              ; a82e 38      
             sbc #$01                         ; a82f e901    
-            sta CURSYL                       ; a831 8584    Cursor coords on screen (map frame)
+            sta CURSYL                       ; a831 8584    . Cursor coords on screen (map frame)
             bcs _NOBUT_21                    ; a833 b002    
             dec CURSYH                       ; a835 c685    
-_NOBUT_21:  ldx SCY                          ; a837 a687    vert pos of cursor (player frame)
+_NOBUT_21:  ldx SCY                          ; a837 a687    . vert pos of cursor (player frame)
             cpx #$4e                         ; a839 e04e    
             beq _NOBUT_24                    ; a83b f022    
             sec                              ; a83d 38      
             sbc #$01                         ; a83e e901    
-            sta CURSYL                       ; a840 8584    Cursor coords on screen (map frame)
+            sta CURSYL                       ; a840 8584    . Cursor coords on screen (map frame)
             bcs _NOBUT_22                    ; a842 b002    
             dec CURSYH                       ; a844 c685    
 _NOBUT_22:  inx                              ; a846 e8      
-            stx SCY                          ; a847 8687    vert pos of cursor (player frame)
+            stx SCY                          ; a847 8687    . vert pos of cursor (player frame)
             txa                              ; a849 8a      
             clc                              ; a84a 18      
             adc #$12                         ; a84b 6912    
             dex                              ; a84d ca      
             dex                              ; a84e ca      
-            stx TEMP1                        ; a84f 86a4    all purpose temp
+            stx TEMP1                        ; a84f 86a4    . all purpose temp
             tax                              ; a851 aa      
 _NOBUT_23:  lda PLYR0-1,x                    ; a852 bdff21  
-            sta PLYR0,x                      ; a855 9d0022  Player 0 sprite data
+            sta PLYR0,x                      ; a855 9d0022  . Player 0 sprite data
             dex                              ; a858 ca      
-            cpx TEMP1                        ; a859 e4a4    all purpose temp
+            cpx TEMP1                        ; a859 e4a4    . all purpose temp
             bne _NOBUT_23                    ; a85b d0f5    
             beq _NOBUT_26                    ; a85d f01c    
-_NOBUT_24:  inc YPOSL                        ; a85f e694    Vert pos of upper left of screen window
-            lda YPOSL                        ; a861 a594    Vert pos of upper left of screen window
+_NOBUT_24:  inc YPOSL                        ; a85f e694    . Vert pos of upper left of screen window
+            lda YPOSL                        ; a861 a594    . Vert pos of upper left of screen window
             bne _NOBUT_25                    ; a863 d002    
             inc YPOSH                        ; a865 e695    
 _NOBUT_25:  and #$0f                         ; a867 290f    
-            sta VSCROL                       ; a869 8d05d4  Vertical scroll enable
+            sta VSCROL                       ; a869 8d05d4  . Vertical scroll enable
             bne _NOBUT_26                    ; a86c d00d    
-            lda OFFLO                        ; a86e a5a2    How far to offset new LMS value
+            lda OFFLO                        ; a86e a5a2    . How far to offset new LMS value
             clc                              ; a870 18      
             adc #$30                         ; a871 6930    
-            sta OFFLO                        ; a873 85a2    How far to offset new LMS value
+            sta OFFLO                        ; a873 85a2    . How far to offset new LMS value
             lda OFFHI                        ; a875 a5a3    
             adc #$00                         ; a877 6900    
             sta OFFHI                        ; a879 85a3    
 _NOBUT_26:  ldy #$09                         ; a87b a009    
 _NOBUT_27:  lda ($80),y                      ; a87d b180    
             clc                              ; a87f 18      
-            adc OFFLO                        ; a880 65a2    How far to offset new LMS value
+            adc OFFLO                        ; a880 65a2    . How far to offset new LMS value
             sta ($80),y                      ; a882 9180    
             iny                              ; a884 c8      
             lda ($80),y                      ; a885 b180    
@@ -1365,7 +1365,7 @@ _NOBUT_27:  lda ($80),y                      ; a87d b180
             bne _NOBUT_27                    ; a88f d0ec    
 ENDISR:     lda YPOSH                        ; a891 a595    
             lsr                              ; a893 4a      
-            lda YPOSL                        ; a894 a594    Vert pos of upper left of screen window
+            lda YPOSL                        ; a894 a594    . Vert pos of upper left of screen window
             ror                              ; a896 6a      
             lsr                              ; a897 4a      
             lsr                              ; a898 4a      
@@ -1378,28 +1378,28 @@ _ENDISR_1:  cmp #$1a                         ; a8a2 c91a
             bcc _ENDISR_2                    ; a8a4 9004    
             lda #$02                         ; a8a6 a902    
             bpl _ENDISR_3                    ; a8a8 1007    
-_ENDISR_2:  sta TEMP1                        ; a8aa 85a4    all purpose temp
+_ENDISR_2:  sta TEMP1                        ; a8aa 85a4    . all purpose temp
             lda #$1d                         ; a8ac a91d    
             sec                              ; a8ae 38      
-            sbc TEMP1                        ; a8af e5a4    all purpose temp
-_ENDISR_3:  sta CNT1                         ; a8b1 85a5    DLI counter
+            sbc TEMP1                        ; a8af e5a4    . all purpose temp
+_ENDISR_3:  sta CNT1                         ; a8b1 85a5    . DLI counter
             lda #$00                         ; a8b3 a900    
-            sta CNT2                         ; a8b5 85a6    DLI counter for moveable map DLI
-            jmp XITVBV                       ; a8b7 4c62e4  Exit from the VBLANK routine
+            sta CNT2                         ; a8b5 85a6    . DLI counter for moveable map DLI
+            jmp XITVBV                       ; a8b7 4c62e4  . Exit from the VBLANK routine
 
 CURS2CH:    lda CURSXL                       ; a8ba a582    set CHUNKX/Y from CURSX/Y, also shift CURS -> TXL/TYL
             clc                              ; a8bc 18      
             adc #$06                         ; a8bd 6906    
-            sta TXL                          ; a8bf 85ce    temp values -- slightly shifted
+            sta TXL                          ; a8bf 85ce    . temp values -- slightly shifted
             lda CURSXH                       ; a8c1 a583    
             adc #$00                         ; a8c3 6900    
             lsr                              ; a8c5 4a      
-            lda TXL                          ; a8c6 a5ce    temp values -- slightly shifted
+            lda TXL                          ; a8c6 a5ce    . temp values -- slightly shifted
             ror                              ; a8c8 6a      
             lsr                              ; a8c9 4a      
             lsr                              ; a8ca 4a      
             sta CHUNKX                       ; a8cb 85a7    ? (CURSX + 6)/8
-            lda CURSYL                       ; a8cd a584    Cursor coords on screen (map frame)
+            lda CURSYL                       ; a8cd a584    . Cursor coords on screen (map frame)
             clc                              ; a8cf 18      
             adc #$09                         ; a8d0 6909    
             sta TYL                          ; a8d2 85b6    
@@ -1423,28 +1423,28 @@ SETARRXY:   lda TXL                          ; a8e7 a5ce    Set arrow BASEX/Y, S
             and #$07                         ; a8e9 2907    
             clc                              ; a8eb 18      
             adc #$01                         ; a8ec 6901    
-            adc SHPOS0                       ; a8ee 6588    shadows player 0 position
-            sta BASEX                        ; a8f0 85bc    start pos of arrow (player frame)
-            sta STEPX                        ; a8f2 85be    intermediate pos of arrow
+            adc SHPOS0                       ; a8ee 6588    . shadows player 0 position
+            sta BASEX                        ; a8f0 85bc    . start pos of arrow (player frame)
+            sta STEPX                        ; a8f2 85be    . intermediate pos of arrow
             lda TYL                          ; a8f4 a5b6    
             and #$0f                         ; a8f6 290f    
             lsr                              ; a8f8 4a      
             sec                              ; a8f9 38      
             sbc #$01                         ; a8fa e901    
             clc                              ; a8fc 18      
-            adc SCY                          ; a8fd 6587    vert pos of cursor (player frame)
+            adc SCY                          ; a8fd 6587    . vert pos of cursor (player frame)
             sta BASEY                        ; a8ff 85bd    
             sta STEPY                        ; a901 85bf    
             rts                              ; a903 60      
 
 SHOWKRZ:    stx HPOSP2 / M2PF                ; a904 8e02d0  X/Y -> KRZX/Y and show sprite
-            stx KRZX                         ; a907 86c6    maltakreuze coords (player frame)
+            stx KRZX                         ; a907 86c6    . maltakreuze coords (player frame)
             sty KRZY                         ; a909 84c7    
             ldx #$00                         ; a90b a200    
-_SHOWKRZ_1: lda MLTKRZ,x                     ; a90d bde5a0  maltakreuze shape
+_SHOWKRZ_1: lda MLTKRZ,x                     ; a90d bde5a0  . maltakreuze shape
             cpy #$80                         ; a910 c080    
             bcs _SHOWKRZ_2                   ; a912 b003    
-            sta PLYR2,y                      ; a914 990023  Player 2 sprite data
+            sta PLYR2,y                      ; a914 990023  . Player 2 sprite data
 _SHOWKRZ_2: iny                              ; a917 c8      
             inx                              ; a918 e8      
             cpx #$08                         ; a919 e008    
@@ -1455,7 +1455,7 @@ SHOWWRD:    tax                              ; a91e aa      Add word A to TXTWDW
 SHOWWRDX:   lda WRDSOFST,x                   ; a91f bd4b9d  Add word X to TXTWDW + Y
             tax                              ; a922 aa      
             sec                              ; a923 38      
-_SHOWWRDX_1: lda WORDS,x                      ; a924 bd819c  various words for messages
+_SHOWWRDX_1: lda WORDS,x                      ; a924 bd819c  . various words for messages
             sbc #$20                         ; a927 e920    
             sta TXTWDW,y                     ; a929 991e3a  
             beq _SHOWWRDX_2                  ; a92c f004    
@@ -1467,13 +1467,13 @@ _SHOWWRDX_2: iny                              ; a932 c8
 
 SWITCH:     jsr GETCHXY                      ; a934 2048a9  swap CORPS with terrain @ CHUNKX/Y via SWAP buffer
 SWITCHY:    lda (SRCPTRL),y                  ; a937 b19f    Switch CORPS with map,Y via SWAP
-            ldx CORPS                        ; a939 a6a1    Number of unit under window
+            ldx CORPS                        ; a939 a6a1    . Number of unit under window
             beq _SWITCHY_1                   ; a93b f00a    
             pha                              ; a93d 48      
-            lda SWAP,x                       ; a93e bd8331  terrain code underneath unit
+            lda SWAP,x                       ; a93e bd8331  . terrain code underneath unit
             sta (SRCPTRL),y                  ; a941 919f    
             pla                              ; a943 68      
-            sta SWAP,x                       ; a944 9d8331  terrain code underneath unit
+            sta SWAP,x                       ; a944 9d8331  . terrain code underneath unit
 _SWITCHY_1: rts                              ; a947 60      
 
 GETCHXY:    lda #$00                         ; a948 a900    Get map @ CHUNKX/Y -> A, SRCPTR -> row off, col offset -> Y
@@ -1487,21 +1487,21 @@ GETCHXY:    lda #$00                         ; a948 a900    Get map @ CHUNKX/Y -
             rol SRCPTRH                      ; a954 26a0    
             asl                              ; a956 0a      
             rol SRCPTRH                      ; a957 26a0    
-            sta TEMPLO                       ; a959 85ba    temp word
+            sta TEMPLO                       ; a959 85ba    . temp word
             ldx SRCPTRH                      ; a95b a6a0    
             stx TEMPHI                       ; a95d 86bb    
             asl                              ; a95f 0a      
             rol SRCPTRH                      ; a960 26a0    
             clc                              ; a962 18      
-            adc TEMPLO                       ; a963 65ba    temp word
+            adc TEMPLO                       ; a963 65ba    . temp word
             sta SRCPTRL                      ; a965 859f    
             lda SRCPTRH                      ; a967 a5a0    
             adc TEMPHI                       ; a969 65bb    
-            adc MAPBASEH                     ; a96b 659c    Contains high byte of map base address
+            adc MAPBASEH                     ; a96b 659c    . Contains high byte of map base address
             sta SRCPTRH                      ; a96d 85a0    
             lda #$2e                         ; a96f a92e    
             sec                              ; a971 38      
-            sbc CHUNKX                       ; a972 e5a7    Cursor coords (pixel frame)
+            sbc CHUNKX                       ; a972 e5a7    . Cursor coords (pixel frame)
             tay                              ; a974 a8      
             lda (SRCPTRL),y                  ; a975 b19f    
             rts                              ; a977 60      
@@ -1512,7 +1512,7 @@ CLRP1:      lda #$00                         ; a978 a900
             tax                              ; a97d aa      
 _CLRP1_1:   cpy #$80                         ; a97e c080    
             bcs _CLRP1_2                     ; a980 b003    
-            sta PLYR1,y                      ; a982 998022  Player 1 sprite data
+            sta PLYR1,y                      ; a982 998022  . Player 1 sprite data
 _CLRP1_2:   iny                              ; a985 c8      
             inx                              ; a986 e8      
             cpx #$0b                         ; a987 e00b    
@@ -1524,7 +1524,7 @@ CLRP2:      lda #$00                         ; a98c a900
             tax                              ; a990 aa      
 _CLRP2_1:   cpy #$80                         ; a991 c080    
             bcs _CLRP2_2                     ; a993 b003    
-            sta PLYR2,y                      ; a995 990023  Player 2 sprite data
+            sta PLYR2,y                      ; a995 990023  . Player 2 sprite data
 _CLRP2_2:   iny                              ; a998 c8      
             inx                              ; a999 e8      
             cpx #$0a                         ; a99a e00a    
@@ -1532,16 +1532,16 @@ _CLRP2_2:   iny                              ; a998 c8
             rts                              ; a99e 60      
 
 KEYPRS:     lda #$08                         ; a99f a908    A <- CONSOL flags (opt/sel/strt); prevent display sleep
-            sta CONSOL                       ; a9a1 8d1fd0  Check for OPTION/SELECT/START press (not RESET)
-            lda CONSOL                       ; a9a4 ad1fd0  Check for OPTION/SELECT/START press (not RESET)
+            sta CONSOL                       ; a9a1 8d1fd0  . Check for OPTION/SELECT/START press (not RESET)
+            lda CONSOL                       ; a9a4 ad1fd0  . Check for OPTION/SELECT/START press (not RESET)
             cmp #$07                         ; a9a7 c907    
             beq _KEYPRS_1                    ; a9a9 f002    
-            sta ATRACT                       ; a9ab 854d    Attract mode timer and flag
+            sta ATRACT                       ; a9ab 854d    . Attract mode timer and flag
 _KEYPRS_1:  rts                              ; a9ad 60      
 
 __C__:      lda ERRFLG                       ; a9ae a5ca    
             bpl _C_1                         ; a9b0 1005    
-            jsr CLRTXT                       ; a9b2 20b8a9  Clear TXTWDW + 106-137
+            jsr CLRTXT                       ; a9b2 20b8a9  . Clear TXTWDW + 106-137
             sta ERRFLG                       ; a9b5 85ca    
 _C_1:       rts                              ; a9b7 60      
 
@@ -1556,87 +1556,87 @@ _CLRTXT_1:  sta TXTWDW,y                     ; a9bc 991e3a
 DLISRV:     pha                              ; a9c5 48      DLI handler
             txa                              ; a9c6 8a      
             pha                              ; a9c7 48      
-            inc CNT2                         ; a9c8 e6a6    DLI counter for moveable map DLI
-            lda CNT2                         ; a9ca a5a6    DLI counter for moveable map DLI
-            cmp CNT1                         ; a9cc c5a5    DLI counter
+            inc CNT2                         ; a9c8 e6a6    . DLI counter for moveable map DLI
+            lda CNT2                         ; a9ca a5a6    . DLI counter for moveable map DLI
+            cmp CNT1                         ; a9cc c5a5    . DLI counter
             bne _DLISRV_1                    ; a9ce d014    
             ldx #$92                         ; a9d0 a292    
             lda #$28                         ; a9d2 a928    
-            eor COLRSH                       ; a9d4 454f    Color shift mask
-            and DRKMSK                       ; a9d6 254e    Dark attract mask
-            sta WSYNC                        ; a9d8 8d0ad4  Wait for horizontal synchronization
-            stx CHBASE                       ; a9db 8e09d4  Character base address
-            sta COLPF0                       ; a9de 8d16d0  Color and luminance of playfield 0
+            eor COLRSH                       ; a9d4 454f    . Color shift mask
+            and DRKMSK                       ; a9d6 254e    . Dark attract mask
+            sta WSYNC                        ; a9d8 8d0ad4  . Wait for horizontal synchronization
+            stx CHBASE                       ; a9db 8e09d4  . Character base address
+            sta COLPF0                       ; a9de 8d16d0  . Color and luminance of playfield 0
             jmp DLISRVX                      ; a9e1 4c71aa  
 
 _DLISRV_1:  cmp #$0f                         ; a9e4 c90f    
             bne _DLISRV_2                    ; a9e6 d019    
             lda #$3a                         ; a9e8 a93a    
-            eor COLRSH                       ; a9ea 454f    Color shift mask
-            and DRKMSK                       ; a9ec 254e    Dark attract mask
+            eor COLRSH                       ; a9ea 454f    . Color shift mask
+            and DRKMSK                       ; a9ec 254e    . Dark attract mask
             tax                              ; a9ee aa      
             lda #$00                         ; a9ef a900    
-            eor COLRSH                       ; a9f1 454f    Color shift mask
-            and DRKMSK                       ; a9f3 254e    Dark attract mask
-            sta WSYNC                        ; a9f5 8d0ad4  Wait for horizontal synchronization
-            stx COLPF2                       ; a9f8 8e18d0  Color and luminance of playfield 2
-            sta COLPF1                       ; a9fb 8d17d0  Color and luminance of playfield 1
+            eor COLRSH                       ; a9f1 454f    . Color shift mask
+            and DRKMSK                       ; a9f3 254e    . Dark attract mask
+            sta WSYNC                        ; a9f5 8d0ad4  . Wait for horizontal synchronization
+            stx COLPF2                       ; a9f8 8e18d0  . Color and luminance of playfield 2
+            sta COLPF1                       ; a9fb 8d17d0  . Color and luminance of playfield 1
             jmp DLISRVX                      ; a9fe 4c71aa  
 
 _DLISRV_2:  cmp #$01                         ; aa01 c901    
             bne _DLISRV_3                    ; aa03 d01e    
-            lda TRCOLR                       ; aa05 a589    
-            eor COLRSH                       ; aa07 454f    Color shift mask
-            and DRKMSK                       ; aa09 254e    Dark attract mask
+            lda TRCOLR                       ; aa05 a589    green tree color
+            eor COLRSH                       ; aa07 454f    . Color shift mask
+            and DRKMSK                       ; aa09 254e    . Dark attract mask
             tax                              ; aa0b aa      
-            lda #$1a                         ; aa0c a91a    
-            eor COLRSH                       ; aa0e 454f    Color shift mask
-            and DRKMSK                       ; aa10 254e    Dark attract mask
-            sta WSYNC                        ; aa12 8d0ad4  Wait for horizontal synchronization
-            sta COLBK                        ; aa15 8d1ad0  Color and luminance of the background
-            stx COLPF0                       ; aa18 8e16d0  Color and luminance of playfield 0
+            lda #$1a                         ; aa0c a91a    yellow band at top of map
+            eor COLRSH                       ; aa0e 454f    . Color shift mask
+            and DRKMSK                       ; aa10 254e    . Dark attract mask
+            sta WSYNC                        ; aa12 8d0ad4  . Wait for horizontal synchronization
+            sta COLBK                        ; aa15 8d1ad0  . Color and luminance of the background
+            stx COLPF0                       ; aa18 8e16d0  . Color and luminance of playfield 0
             lda #$90                         ; aa1b a990    
-            sta CHBASE                       ; aa1d 8d09d4  Character base address
+            sta CHBASE                       ; aa1d 8d09d4  . Character base address
             jmp DLISRVX                      ; aa20 4c71aa  
 
 _DLISRV_3:  cmp #$03                         ; aa23 c903    
             bne _DLISRV_4                    ; aa25 d00f    
-            lda EARTH                        ; aa27 a58a    
-            eor COLRSH                       ; aa29 454f    Color shift mask
-            and DRKMSK                       ; aa2b 254e    Dark attract mask
-            sta WSYNC                        ; aa2d 8d0ad4  Wait for horizontal synchronization
-            sta COLBK                        ; aa30 8d1ad0  Color and luminance of the background
+            lda EARTH                        ; aa27 a58a    top of map
+            eor COLRSH                       ; aa29 454f    . Color shift mask
+            and DRKMSK                       ; aa2b 254e    . Dark attract mask
+            sta WSYNC                        ; aa2d 8d0ad4  . Wait for horizontal synchronization
+            sta COLBK                        ; aa30 8d1ad0  . Color and luminance of the background
             jmp DLISRVX                      ; aa33 4c71aa  
 
 _DLISRV_4:  cmp #$0d                         ; aa36 c90d    
             bne _DLISRV_5                    ; aa38 d014    
-            ldx #$e0                         ; aa3a a2e0    
+            ldx #$e0                         ; aa3a a2e0    bottom of map
             lda #$22                         ; aa3c a922    
-            eor COLRSH                       ; aa3e 454f    Color shift mask
-            and DRKMSK                       ; aa40 254e    Dark attract mask
-            sta WSYNC                        ; aa42 8d0ad4  Wait for horizontal synchronization
-            sta COLPF2                       ; aa45 8d18d0  Color and luminance of playfield 2
-            stx CHBASE                       ; aa48 8e09d4  Character base address
+            eor COLRSH                       ; aa3e 454f    . Color shift mask
+            and DRKMSK                       ; aa40 254e    . Dark attract mask
+            sta WSYNC                        ; aa42 8d0ad4  . Wait for horizontal synchronization
+            sta COLPF2                       ; aa45 8d18d0  . Color and luminance of playfield 2
+            stx CHBASE                       ; aa48 8e09d4  . Character base address
             jmp DLISRVX                      ; aa4b 4c71aa  
 
 _DLISRV_5:  cmp #$0e                         ; aa4e c90e    
             bne _DLISRV_6                    ; aa50 d00f    
-            lda #$8a                         ; aa52 a98a    
-            eor COLRSH                       ; aa54 454f    Color shift mask
-            and DRKMSK                       ; aa56 254e    Dark attract mask
-            sta WSYNC                        ; aa58 8d0ad4  Wait for horizontal synchronization
-            sta COLBK                        ; aa5b 8d1ad0  Color and luminance of the background
+            lda #$8a                         ; aa52 a98a    bright blue strip
+            eor COLRSH                       ; aa54 454f    . Color shift mask
+            and DRKMSK                       ; aa56 254e    . Dark attract mask
+            sta WSYNC                        ; aa58 8d0ad4  . Wait for horizontal synchronization
+            sta COLBK                        ; aa5b 8d1ad0  . Color and luminance of the background
             jmp DLISRVX                      ; aa5e 4c71aa  
 
 _DLISRV_6:  cmp #$10                         ; aa61 c910    
             bne DLISRVX                      ; aa63 d00c    
-            lda #$d4                         ; aa65 a9d4    
-            eor COLRSH                       ; aa67 454f    Color shift mask
-            and DRKMSK                       ; aa69 254e    Dark attract mask
+            lda #$d4                         ; aa65 a9d4    green bottom
+            eor COLRSH                       ; aa67 454f    . Color shift mask
+            and DRKMSK                       ; aa69 254e    . Dark attract mask
             pha                              ; aa6b 48      
             pla                              ; aa6c 68      
             nop                              ; aa6d ea      
-            sta COLBK                        ; aa6e 8d1ad0  Color and luminance of the background
+            sta COLBK                        ; aa6e 8d1ad0  . Color and luminance of the background
 DLISRVX:    pla                              ; aa71 68      
             tax                              ; aa72 aa      
             pla                              ; aa73 68      
@@ -1645,16 +1645,16 @@ DLISRVX:    pla                              ; aa71 68
 SHOWSTR:    cpx #$30                         ; aa75 e030    Show unit X strength A, with Russian fog of war
             bcc DNUMBER                      ; aa77 902a    
             sta TEMPZ                        ; aa79 85f3    Save actual Russian strength
-            lda FOGGY-48,x                   ; aa7b bd8638  Fog of war masks Russian unit strength
+            lda FOGGY-48,x                   ; aa7b bd8638  . Fog of war masks Russian unit strength
             eor #$ff                         ; aa7e 49ff    Foggy 0 bits will get randomized
-            sta TEMP1                        ; aa80 85a4    all purpose temp
+            sta TEMP1                        ; aa80 85a4    . all purpose temp
             lda VBISRV,x                     ; aa82 bd44a3  Read code bytes for randomness...
             eor TURN                         ; aa85 4591    
             and TEMP1                        ; aa87 25a4    Randomize the 0 bits
             ldx #$ff                         ; aa89 a2ff    
-            lsr TEMP1                        ; aa8b 46a4    all purpose temp
+            lsr TEMP1                        ; aa8b 46a4    . all purpose temp
             sec                              ; aa8d 38      
-            sbc TEMP1                        ; aa8e e5a4    all purpose temp
+            sbc TEMP1                        ; aa8e e5a4    . all purpose temp
             bcs _SHOWSTR_1                   ; aa90 b002    
             ldx #$01                         ; aa92 a201    
 _SHOWSTR_1: clc                              ; aa94 18      
@@ -1704,8 +1704,8 @@ _D_5:       pla                              ; aad5 68
 
 DLY500:     lda #$1e                         ; aadd a91e    Wait 500ms, cf. STALL
 DELAYA:     clc                              ; aadf 18      Wait A/60 seconds
-            adc RTCLOK2                      ; aae0 6514    One tick per VBI (60/sec)
-_DELAYA_1:  cmp RTCLOK2                      ; aae2 c514    One tick per VBI (60/sec)
+            adc RTCLOK2                      ; aae0 6514    . One tick per VBI (60/sec)
+_DELAYA_1:  cmp RTCLOK2                      ; aae2 c514    . One tick per VBI (60/sec)
             bne _DELAYA_1                    ; aae4 d0fc    
             rts                              ; aae6 60      
 
@@ -1761,7 +1761,7 @@ LOOKUP:     lda TRNCOD                       ; ab31 a5e7    X, UNITNO <- unit @ 
             bne _LOOKUP_1                    ; ab3b d002    
             ldx #$2f                         ; ab3d a22f    
 _LOOKUP_1:  lda LAT                          ; ab3f a5b1    
-_LOOKUP_2:  cmp CORPSY,x                     ; ab41 dd582c  latitude of all units
+_LOOKUP_2:  cmp CORPSY,x                     ; ab41 dd582c  . latitude of all units
             beq _E_1                         ; ab44 f00a    
 __E__:      dex                              ; ab46 ca      
             bne _LOOKUP_2                    ; ab47 d0f8    
@@ -1769,11 +1769,11 @@ __E__:      dex                              ; ab46 ca
             sta TXTWDW+128                   ; ab4b 8d9e3a  
             bmi _E_3                         ; ab4e 301c    
 _E_1:       lda LON                          ; ab50 a5b2    
-            cmp CORPSX,x                     ; ab52 ddb12b  longitude of all units
+            cmp CORPSX,x                     ; ab52 ddb12b  . longitude of all units
             bne _E_2                         ; ab55 d010    
-            lda CSTRNG,x                     ; ab57 bd2b32  combat strengths
+            lda CSTRNG,x                     ; ab57 bd2b32  . combat strengths
             beq _E_2                         ; ab5a f00b    
-            lda ARRIVE,x                     ; ab5c bda62d  arrival turns
+            lda ARRIVE,x                     ; ab5c bda62d  . arrival turns
             bmi _E_2                         ; ab5f 3006    
             cmp TURN                         ; ab61 c591    
             bcc _E_3                         ; ab63 9007    
@@ -1782,32 +1782,32 @@ _E_2:       lda LAT                          ; ab67 a5b1
             jmp __E__                        ; ab69 4c46ab  
 
 _E_3:       stx UNITNO                       ; ab6c 86ac    
-            lda SWAP,x                       ; ab6e bd8331  terrain code underneath unit
+            lda SWAP,x                       ; ab6e bd8331  . terrain code underneath unit
             sta TRNCOD                       ; ab71 85e7    
             rts                              ; ab73 60      
 
 SETLL:      lda CORPSX,x                     ; ab74 bdb12b  CORPSX/Y for X -> LAT, LON
             sta LON                          ; ab77 85b2    
-            lda CORPSY,x                     ; ab79 bd582c  latitude of all units
+            lda CORPSY,x                     ; ab79 bd582c  . latitude of all units
             sta LAT                          ; ab7c 85b1    
             rts                              ; ab7e 60      
 
 CALCEXC:    ldx ARMY                         ; ab7f a6ab    init calc EXEC,x for next order (was DINGO)
-            lda HMORDS,x                     ; ab81 bdd232  how many orders queued for each unit
+            lda HMORDS,x                     ; ab81 bdd232  . how many orders queued for each unit
             bne CALCNXT                      ; ab84 d006    
             lda #$ff                         ; ab86 a9ff    
-            sta EXEC,x                       ; ab88 9ddc30  unit execution times
+            sta EXEC,x                       ; ab88 9ddc30  . unit execution times
             rts                              ; ab8b 60      
 
-CALCNXT:    jsr SETLL                        ; ab8c 2074ab  CORPSX/Y for X -> LAT, LON
-            jsr TERR                         ; ab8f 20e7aa  TRNCOD <- terrain chr @ LAT/LON, maybe under unit
+CALCNXT:    jsr SETLL                        ; ab8c 2074ab  . CORPSX/Y for X -> LAT, LON
+            jsr TERR                         ; ab8f 20e7aa  . TRNCOD <- terrain chr @ LAT/LON, maybe under unit
             lda UNTCOD                       ; ab92 a5eb    
             sta UNTCD1                       ; ab94 85ec    
             ldx ARMY                         ; ab96 a6ab    
-            jsr SETLL                        ; ab98 2074ab  CORPSX/Y for X -> LAT, LON
-            jsr ORD2LL                       ; ab9b 20edab  Add unit X order to LAT/LON
-            jsr TERR                         ; ab9e 20e7aa  TRNCOD <- terrain chr @ LAT/LON, maybe under unit
-            jsr TERRTY                       ; aba1 20c8b8  convert map chr in TRNCOD -> TRNTYP and y, LAT -> x
+            jsr SETLL                        ; ab98 2074ab  . CORPSX/Y for X -> LAT, LON
+            jsr ORD2LL                       ; ab9b 20edab  . Add unit X order to LAT/LON
+            jsr TERR                         ; ab9e 20e7aa  . TRNCOD <- terrain chr @ LAT/LON, maybe under unit
+            jsr TERRTY                       ; aba1 20c8b8  . convert map chr in TRNCOD -> TRNTYP and y, LAT -> x
             lda UNTCD1                       ; aba4 a5ec    
             and #$3f                         ; aba6 293f    
             ldx #$00                         ; aba8 a200    
@@ -1817,12 +1817,12 @@ CALCNXT:    jsr SETLL                        ; ab8c 2074ab  CORPSX/Y for X -> LA
 _CALCNXT_1: txa                              ; abb0 8a      
             ldx MONTH                        ; abb1 a690    
             clc                              ; abb3 18      
-            adc SSNCOD,x                     ; abb4 7de09b  season codes
+            adc SSNCOD,x                     ; abb4 7de09b  . season codes
             adc TRNTYP                       ; abb7 65b4    
             tax                              ; abb9 aa      
-            lda TRNTAB,x                     ; abba bded9b  terrain cost tables
+            lda TRNTAB,x                     ; abba bded9b  . terrain cost tables
             ldx ARMY                         ; abbd a6ab    
-            ldy MVMODE,x                     ; abbf bcc734  (expert level only) standard/assault/forced march/entrench
+            ldy MVMODE,x                     ; abbf bcc734  . (expert level only) standard/assault/forced march/entrench
             cpy #$02                         ; abc2 c002    
             bne _CALCNXT_2                   ; abc4 d006    
             lsr                              ; abc6 4a      
@@ -1837,14 +1837,14 @@ _CALCNXT_2: cpy #$01                         ; abcc c001
             adc TEMPR                        ; abd4 65ae    
 _CALCNXT_3: clc                              ; abd6 18      
             adc TICK                         ; abd7 65ea    
-            sta EXEC,x                       ; abd9 9ddc30  unit execution times
+            sta EXEC,x                       ; abd9 9ddc30  . unit execution times
             lda TRNTYP                       ; abdc a5b4    
             cmp #$07                         ; abde c907    
             bcc _CALCNXT_4                   ; abe0 900a    
-            jsr CHKLEGAL                     ; abe2 20efaf  zflag clr if CORPSX/Y -> LAT/LON is legal
+            jsr CHKLEGAL                     ; abe2 20efaf  . zflag clr if CORPSX/Y -> LAT/LON is legal
             bne _CALCNXT_4                   ; abe5 d005    
             lda #$ff                         ; abe7 a9ff    
-            sta EXEC,x                       ; abe9 9ddc30  unit execution times
+            sta EXEC,x                       ; abe9 9ddc30  . unit execution times
 _CALCNXT_4: rts                              ; abec 60      
 
 ORD2LL:     lda WHORDS,x                     ; abed bd7933  Add unit X order to LAT/LON
@@ -1856,24 +1856,24 @@ DY2LL:      lda LON                          ; abf3 a5b2    Adds dir idx Y to LA
             sta LON                          ; abf9 85b2    
             lda LAT                          ; abfb a5b1    
             clc                              ; abfd 18      
-            adc YINC,y                       ; abfe 793ea0  note YINC/XINC overlap
+            adc YINC,y                       ; abfe 793ea0  . note YINC/XINC overlap
             sta LAT                          ; ac01 85b1    
             rts                              ; ac03 60      
 
 DIVIDE:     ldy #$08                         ; ac04 a008    DIVIDL <- DIVIDH+L / DIVISR note any / 0 = 255
-_DIVIDE_1:  asl DIVIDL                       ; ac06 06f7    Lo byte of dividend, replaced with quotient
-            rol DIVIDH                       ; ac08 26f8    Hi byte of dividend
+_DIVIDE_1:  asl DIVIDL                       ; ac06 06f7    . Lo byte of dividend, replaced with quotient
+            rol DIVIDH                       ; ac08 26f8    . Hi byte of dividend
             bcc _DIVIDE_2                    ; ac0a 9007    
-            lda DIVIDH                       ; ac0c a5f8    Hi byte of dividend
-            sbc DIVISR                       ; ac0e e5f9    Divisor
+            lda DIVIDH                       ; ac0c a5f8    . Hi byte of dividend
+            sbc DIVISR                       ; ac0e e5f9    . Divisor
             jmp DIVNXT                       ; ac10 4c1aac  
 
-_DIVIDE_2:  lda DIVIDH                       ; ac13 a5f8    Hi byte of dividend
+_DIVIDE_2:  lda DIVIDH                       ; ac13 a5f8    . Hi byte of dividend
             sec                              ; ac15 38      
-            sbc DIVISR                       ; ac16 e5f9    Divisor
+            sbc DIVISR                       ; ac16 e5f9    . Divisor
             bcc _DIVNXT_1                    ; ac18 9004    
-DIVNXT:     sta DIVIDH                       ; ac1a 85f8    Hi byte of dividend
-            inc DIVIDL                       ; ac1c e6f7    Lo byte of dividend, replaced with quotient
+DIVNXT:     sta DIVIDH                       ; ac1a 85f8    . Hi byte of dividend
+            inc DIVIDL                       ; ac1c e6f7    . Lo byte of dividend, replaced with quotient
 _DIVNXT_1:  dey                              ; ac1e 88      
             bne _DIVIDE_1                    ; ac1f d0e5    
             rts                              ; ac21 60      
@@ -1890,17 +1890,17 @@ _SQVALSBC_1: sta SQVAL                        ; ac2d 85b5
 DEBOUNCE:   jsr KEYPRS                       ; ac30 209fa9  wait for button inactivity !! referenced as both code and data
             cmp #$07                         ; ac33 c907    
             bne DEBOUNCE                     ; ac35 d0f9    
-            jsr DLY500                       ; ac37 20ddaa  Wait 500ms, cf. STALL
-_DEBOUNCE_1: jsr KEYPRS                       ; ac3a 209fa9  A <- CONSOL flags (opt/sel/strt); prevent display sleep
+            jsr DLY500                       ; ac37 20ddaa  . Wait 500ms, cf. STALL
+_DEBOUNCE_1: jsr KEYPRS                       ; ac3a 209fa9  . A <- CONSOL flags (opt/sel/strt); prevent display sleep
             cmp #$07                         ; ac3d c907    
             bne _DEBOUNCE_1                  ; ac3f d0f9    
             rts                              ; ac41 60      
 
 SHOWERR:    jsr CLRTXT                       ; ac42 20b8a9  Show ERRMSG X at TXTWDW+110
-            lda ERROFST,x                    ; ac45 bd829f  10 offsets into ERRMSG
+            lda ERROFST,x                    ; ac45 bd829f  . 10 offsets into ERRMSG
             tax                              ; ac48 aa      
             ldy #$6e                         ; ac49 a06e    
-_SHOWERR_1: lda ERRMSG,x                     ; ac4b bd8e9e  table of error messages
+_SHOWERR_1: lda ERRMSG,x                     ; ac4b bd8e9e  . table of error messages
             sec                              ; ac4e 38      
             sbc #$20                         ; ac4f e920    
             sta TXTWDW,y                     ; ac51 991e3a  
@@ -1912,35 +1912,35 @@ _SHOWERR_1: lda ERRMSG,x                     ; ac4b bd8e9e  table of error messa
 
 DISTXY:     lda CORPSX,y                     ; ac5b b9b12b  Manhattan distance between unit X and Y -> A
             sec                              ; ac5e 38      
-            sbc CORPSX,x                     ; ac5f fdb12b  longitude of all units
-            jsr ABSA                         ; ac62 2018b9  A -> abs(A)
+            sbc CORPSX,x                     ; ac5f fdb12b  . longitude of all units
+            jsr ABSA                         ; ac62 2018b9  . A -> abs(A)
 DLATXY:     sta TEMPR                        ; ac65 85ae    diff between X and Y -> A + LAT
-            lda CORPSY,y                     ; ac67 b9582c  latitude of all units
+            lda CORPSY,y                     ; ac67 b9582c  . latitude of all units
             sec                              ; ac6a 38      
-            sbc CORPSY,x                     ; ac6b fd582c  latitude of all units
-            jsr ABSA                         ; ac6e 2018b9  A -> abs(A)
+            sbc CORPSY,x                     ; ac6b fd582c  . latitude of all units
+            jsr ABSA                         ; ac6e 2018b9  . A -> abs(A)
             clc                              ; ac71 18      
             adc TEMPR                        ; ac72 65ae    
             rts                              ; ac74 60      
 
 DSTXTARG:   lda CORPSX,x                     ; ac75 bdb12b  Distance unit X to TARGX/Y -> A
             sec                              ; ac78 38      
-            sbc TARGX                        ; ac79 e5f4    square under consideration
-            jsr ABSA                         ; ac7b 2018b9  A -> abs(A)
+            sbc TARGX                        ; ac79 e5f4    . square under consideration
+            jsr ABSA                         ; ac7b 2018b9  . A -> abs(A)
             sta TEMPR                        ; ac7e 85ae    
-            lda CORPSY,x                     ; ac80 bd582c  latitude of all units
+            lda CORPSY,x                     ; ac80 bd582c  . latitude of all units
             sec                              ; ac83 38      
             sbc TARGY                        ; ac84 e5f5    
-            jsr ABSA                         ; ac86 2018b9  A -> abs(A)
+            jsr ABSA                         ; ac86 2018b9  . A -> abs(A)
             clc                              ; ac89 18      
             adc TEMPR                        ; ac8a 65ae    
             rts                              ; ac8c 60      
 
 TXTMSG:     jsr CLRTXT                       ; ac8d 20b8a9  Display TXTTBL msg X
-            ldy TXTLOC,x                     ; ac90 bc869e  Show TXTMSG,x at TXTWDW + TXTLOC,x
+            ldy TXTLOC,x                     ; ac90 bc869e  . Show TXTMSG,x at TXTWDW + TXTLOC,x
             lda TXTOFST,x                    ; ac93 bd7e9e  
             tax                              ; ac96 aa      
-_TXTMSG_1:  lda TXTTBL,x                     ; ac97 bdca9d  more text
+_TXTMSG_1:  lda TXTTBL,x                     ; ac97 bdca9d  . more text
             sec                              ; ac9a 38      
             sbc #$20                         ; ac9b e920    
             cmp #$01                         ; ac9d c901    
@@ -1950,9 +1950,9 @@ _TXTMSG_1:  lda TXTTBL,x                     ; ac97 bdca9d  more text
             inx                              ; aca5 e8      
             bne _TXTMSG_1                    ; aca6 d0ef    
 SETCHXY:    stx CORPS                        ; aca8 86a1    X -> CORPS, CORPSX/Y -> CHUNKX/Y
-            lda CORPSX,x                     ; acaa bdb12b  longitude of all units
-            sta CHUNKX                       ; acad 85a7    Cursor coords (pixel frame)
-            lda CORPSY,x                     ; acaf bd582c  latitude of all units
+            lda CORPSX,x                     ; acaa bdb12b  . longitude of all units
+            sta CHUNKX                       ; acad 85a7    . Cursor coords (pixel frame)
+            lda CORPSY,x                     ; acaf bd582c  . latitude of all units
             sta CHUNKY                       ; acb2 85a8    
 _SETCHXY_1: rts                              ; acb4 60      
 
@@ -1965,51 +1965,51 @@ COMBAT:     sta DEFNDR                       ; acb5 85ad
             bne _COMBAT_2                    ; acc1 d001    
 _COMBAT_1:  rts                              ; acc3 60      
 
-_COMBAT_2:  jsr FLGRBRK                      ; acc4 2028ae  Fliegerkorps break and suffer 75% loss
+_COMBAT_2:  jsr FLGRBRK                      ; acc4 2028ae  . Fliegerkorps break and suffer 75% loss
             ldx DEFNDR                       ; acc7 a6ad    
-            lda SWAP,x                       ; acc9 bd8331  terrain code underneath unit
+            lda SWAP,x                       ; acc9 bd8331  . terrain code underneath unit
             pha                              ; accc 48      
             lda #$ff                         ; accd a9ff    
             cpx #$30                         ; accf e030    
             bcs _COMBAT_3                    ; acd1 b002    
             lda #$7f                         ; acd3 a97f    
-_COMBAT_3:  sta SWAP,x                       ; acd5 9d8331  terrain code underneath unit
-            jsr SETSWTCH                     ; acd8 2081bf  SETCHYX and SWITCH
+_COMBAT_3:  sta SWAP,x                       ; acd5 9d8331  . terrain code underneath unit
+            jsr SETSWTCH                     ; acd8 2081bf  . SETCHYX and SWITCH
             ldx ARMY                         ; acdb a6ab    
-            jsr SETCHXY                      ; acdd 20a8ac  X -> CORPS, CORPSX/Y -> CHUNKX/Y
-            jsr SCRNPOS                      ; ace0 20ecae  CORPS -> SCRNX/Y; 0,0 if offscreen
+            jsr SETCHXY                      ; acdd 20a8ac  . X -> CORPS, CORPSX/Y -> CHUNKX/Y
+            jsr SCRNPOS                      ; ace0 20ecae  . CORPS -> SCRNX/Y; 0,0 if offscreen
             lda #$3c                         ; ace3 a93c    
-            sta PCOLR1                       ; ace5 8dc102  Color of player 1 and missile 1, shadows $D013
+            sta PCOLR1                       ; ace5 8dc102  . Color of player 1 and missile 1, shadows $D013
             ldx #$08                         ; ace8 a208    
-_COMBAT_4:  lda DIAMOND,x                    ; acea bd3fa1  Diamond shape used for PLYR1
-            sta CHRBUF,x                     ; aced 9d5f30  Eight bytes of bitmap character data
+_COMBAT_4:  lda DIAMOND,x                    ; acea bd3fa1  . Diamond shape used for PLYR1
+            sta CHRBUF,x                     ; aced 9d5f30  . Eight bytes of bitmap character data
             lda SND2CTL,x                    ; acf0 bd2da1  
-            sta AUDCTL,x                     ; acf3 9d7130  Nine bytes of audio control data
+            sta AUDCTL,x                     ; acf3 9d7130  . Nine bytes of audio control data
             lda SND2FRQ,x                    ; acf6 bd36a1  
-            sta AUDFRQ,x                     ; acf9 9d6830  Nine bytes of audio freq data
+            sta AUDFRQ,x                     ; acf9 9d6830  . Nine bytes of audio freq data
             dex                              ; acfc ca      
             bpl _COMBAT_4                    ; acfd 10eb    
             jsr __G__                        ; acff 2076af  
             ldx DEFNDR                       ; ad02 a6ad    
-            jsr SETSWTCH                     ; ad04 2081bf  SETCHYX and SWITCH
+            jsr SETSWTCH                     ; ad04 2081bf  . SETCHYX and SWITCH
             pla                              ; ad07 68      
-            sta SWAP,x                       ; ad08 9d8331  terrain code underneath unit
-            jsr FLGRBRK                      ; ad0b 2028ae  Fliegerkorps break and suffer 75% loss
-            jsr TERRTY                       ; ad0e 20c8b8  convert map chr in TRNCOD -> TRNTYP and y, LAT -> x
+            sta SWAP,x                       ; ad08 9d8331  . terrain code underneath unit
+            jsr FLGRBRK                      ; ad0b 2028ae  . Fliegerkorps break and suffer 75% loss
+            jsr TERRTY                       ; ad0e 20c8b8  . convert map chr in TRNCOD -> TRNTYP and y, LAT -> x
             ldx DEFNC,x                      ; ad11 be71a0  Bug?  should be DEFNC,y ??
-            lda LEVEL                        ; ad14 a592    Level learner/beginner/intermediate/advanced/expert
+            lda LEVEL                        ; ad14 a592    . Level learner/beginner/intermediate/advanced/expert
             cmp #$04                         ; ad16 c904    
             bne _COMBAT_5                    ; ad18 d001    
             inx                              ; ad1a e8      Double defense in expert mode
 _COMBAT_5:  ldy DEFNDR                       ; ad1b a4ad    
-            lda CSTRNG,y                     ; ad1d b92b32  combat strengths
+            lda CSTRNG,y                     ; ad1d b92b32  . combat strengths
             lsr                              ; ad20 4a      
 _COMBAT_6:  dex                              ; ad21 ca      
             beq _COMBAT_7                    ; ad22 f005    
             rol                              ; ad24 2a      
             bcc _COMBAT_6                    ; ad25 90fa    
             lda #$ff                         ; ad27 a9ff    
-_COMBAT_7:  ldx HMORDS,x                     ; ad29 bed232  how many orders queued for each unit
+_COMBAT_7:  ldx HMORDS,x                     ; ad29 bed232  . how many orders queued for each unit
             beq _COMBAT_8                    ; ad2c f001    
             lsr                              ; ad2e 4a      
 _COMBAT_8:  ldx MVMODE,x                     ; ad2f bec734  Bug?  X now set to HMORDS not unit ??
@@ -2019,74 +2019,74 @@ _COMBAT_8:  ldx MVMODE,x                     ; ad2f bec734  Bug?  X now set to H
             bcs _DOBATL_1                    ; ad37 b00e    
 _COMBAT_9:  cpy #$30                         ; ad39 c030    
             bcs DOBATL                       ; ad3b b005    
-            adc CSTRMOD,y                    ; ad3d 79ab30  German unit CSTR adjustment
+            adc CSTRMOD,y                    ; ad3d 79ab30  . German unit CSTR adjustment
             bcs _DOBATL_1                    ; ad40 b005    
 DOBATL:     cmp SKREST / RANDOM              ; ad42 cd0ad2  evaluate defender's strike
             bcc ATAKR                        ; ad45 9010    
 _DOBATL_1:  ldx ARMY                         ; ad47 a6ab    
-            jsr DEALDMG                      ; ad49 2041ae  X takes damage during ARMY attack, carry clear if dies else set
+            jsr DEALDMG                      ; ad49 2041ae  . X takes damage during ARMY attack, carry clear if dies else set
             bcs _DOBATL_2                    ; ad4c b001    
             rts                              ; ad4e 60      
 
-_DOBATL_2:  jsr BRKCHK                       ; ad4f 205ab1  Maybe break unit X, reset orders, suffer damange
+_DOBATL_2:  jsr BRKCHK                       ; ad4f 205ab1  . Maybe break unit X, reset orders, suffer damange
             bcc ATAKR                        ; ad52 9003    
             jmp ENDCOM                       ; ad54 4cdfad  
 
 ATAKR:      ldx ARMY                         ; ad57 a6ab    evaluate attacker's strike
-            jsr SETLL                        ; ad59 2074ab  CORPSX/Y for X -> LAT, LON
-            jsr TERR                         ; ad5c 20e7aa  TRNCOD <- terrain chr @ LAT/LON, maybe under unit
-            jsr TERRTY                       ; ad5f 20c8b8  convert map chr in TRNCOD -> TRNTYP and y, LAT -> x
-            lda OFFNC,y                      ; ad62 b968a0  Offence combat modifiers, 1 -> half, 2 -> no effect
+            jsr SETLL                        ; ad59 2074ab  . CORPSX/Y for X -> LAT, LON
+            jsr TERR                         ; ad5c 20e7aa  . TRNCOD <- terrain chr @ LAT/LON, maybe under unit
+            jsr TERRTY                       ; ad5f 20c8b8  . convert map chr in TRNCOD -> TRNTYP and y, LAT -> x
+            lda OFFNC,y                      ; ad62 b968a0  . Offence combat modifiers, 1 -> half, 2 -> no effect
             tay                              ; ad65 a8      
             ldx ARMY                         ; ad66 a6ab    
-            lda CSTRNG,x                     ; ad68 bd2b32  combat strengths
+            lda CSTRNG,x                     ; ad68 bd2b32  . combat strengths
             dey                              ; ad6b 88      
             beq _ATAKR_1                     ; ad6c f001    
             lsr                              ; ad6e 4a      
 _ATAKR_1:   cpx #$30                         ; ad6f e030    
             bcs _ATAKR_2                     ; ad71 b005    
-            adc CSTRMOD,x                    ; ad73 7dab30  German unit CSTR adjustment
+            adc CSTRMOD,x                    ; ad73 7dab30  . German unit CSTR adjustment
             bcs _ATAKR_3                     ; ad76 b005    
-_ATAKR_2:   cmp SKREST / RANDOM              ; ad78 cd0ad2  W: Reset serial port status register / R: Random byte
+_ATAKR_2:   cmp SKREST / RANDOM              ; ad78 cd0ad2  . W: Reset serial port status register / R: Random byte
             bcc ENDCOM                       ; ad7b 9062    
 _ATAKR_3:   ldx DEFNDR                       ; ad7d a6ad    
-            jsr DEALDMG                      ; ad7f 2041ae  X takes damage during ARMY attack, carry clear if dies else set
+            jsr DEALDMG                      ; ad7f 2041ae  . X takes damage during ARMY attack, carry clear if dies else set
             bcc VICCOM                       ; ad82 904a    
-            jsr BRKCHK                       ; ad84 205ab1  Maybe break unit X, reset orders, suffer damange
+            jsr BRKCHK                       ; ad84 205ab1  . Maybe break unit X, reset orders, suffer damange
             bcc ENDCOM                       ; ad87 9056    
             ldy ARMY                         ; ad89 a4ab    
-            lda WHORDS,y                     ; ad8b b97933  what unit orders are (2 bits per order)
+            lda WHORDS,y                     ; ad8b b97933  . what unit orders are (2 bits per order)
             and #$03                         ; ad8e 2903    
             tay                              ; ad90 a8      
-            jsr RETRET                       ; ad91 20e5ad  retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
+            jsr RETRET                       ; ad91 20e5ad  . retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
             bcc VICCOM                       ; ad94 9038    
             beq _ATAKR_6                     ; ad96 f030    
             ldy #$01                         ; ad98 a001    
             cpx #$30                         ; ad9a e030    
             bcs _ATAKR_4                     ; ad9c b002    
             ldy #$03                         ; ad9e a003    
-_ATAKR_4:   jsr RETRET                       ; ada0 20e5ad  retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
+_ATAKR_4:   jsr RETRET                       ; ada0 20e5ad  . retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
             bcc VICCOM                       ; ada3 9029    
             beq _ATAKR_6                     ; ada5 f021    
             ldy #$02                         ; ada7 a002    
-            jsr RETRET                       ; ada9 20e5ad  retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
+            jsr RETRET                       ; ada9 20e5ad  . retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
             bcc VICCOM                       ; adac 9020    
             beq _ATAKR_6                     ; adae f018    
             ldy #$00                         ; adb0 a000    
-            jsr RETRET                       ; adb2 20e5ad  retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
+            jsr RETRET                       ; adb2 20e5ad  . retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
             bcc VICCOM                       ; adb5 9017    
             beq _ATAKR_6                     ; adb7 f00f    
             ldy #$03                         ; adb9 a003    
             cpx #$30                         ; adbb e030    
             bcs _ATAKR_5                     ; adbd b002    
             ldy #$01                         ; adbf a001    
-_ATAKR_5:   jsr RETRET                       ; adc1 20e5ad  retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
+_ATAKR_5:   jsr RETRET                       ; adc1 20e5ad  . retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
             bcc VICCOM                       ; adc4 9008    
             bne ENDCOM                       ; adc6 d017    
-_ATAKR_6:   jsr SETCHXY                      ; adc8 20a8ac  X -> CORPS, CORPSX/Y -> CHUNKX/Y
+_ATAKR_6:   jsr SETCHXY                      ; adc8 20a8ac  . X -> CORPS, CORPSX/Y -> CHUNKX/Y
             jsr __F__                        ; adcb 2071ae  
 VICCOM:     ldx ARMY                         ; adce a6ab    
-            jsr SETCHXY                      ; add0 20a8ac  X -> CORPS, CORPSX/Y -> CHUNKX/Y
+            jsr SETCHXY                      ; add0 20a8ac  . X -> CORPS, CORPSX/Y -> CHUNKX/Y
             lda ACCLO                        ; add3 a5af    
             sta LON                          ; add5 85b2    
             lda ACCHI                        ; add7 a5b0    
@@ -2094,14 +2094,14 @@ VICCOM:     ldx ARMY                         ; adce a6ab
             lda #$ff                         ; addb a9ff    
             sta VICTRY                       ; addd 85ee    
 ENDCOM:     ldx ARMY                         ; addf a6ab    
-            inc EXEC,x                       ; ade1 fedc30  unit execution times
+            inc EXEC,x                       ; ade1 fedc30  . unit execution times
             rts                              ; ade4 60      
 
 RETRET:     sty DIR                          ; ade5 84f2    retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
-            jsr SETLL                        ; ade7 2074ab  CORPSX/Y for X -> LAT, LON
-            jsr DY2LL                        ; adea 20f3ab  Adds dir idx Y to LAT/LON
-            jsr TERR                         ; aded 20e7aa  TRNCOD <- terrain chr @ LAT/LON, maybe under unit
-            jsr TERRTY                       ; adf0 20c8b8  convert map chr in TRNCOD -> TRNTYP and y, LAT -> x
+            jsr SETLL                        ; ade7 2074ab  . CORPSX/Y for X -> LAT, LON
+            jsr DY2LL                        ; adea 20f3ab  . Adds dir idx Y to LAT/LON
+            jsr TERR                         ; aded 20e7aa  . TRNCOD <- terrain chr @ LAT/LON, maybe under unit
+            jsr TERRTY                       ; adf0 20c8b8  . convert map chr in TRNCOD -> TRNTYP and y, LAT -> x
             ldx DEFNDR                       ; adf3 a6ad    
             lda UNITNO                       ; adf5 a5ac    
             bne _RETRET_4                    ; adf7 d029    
@@ -2110,7 +2110,7 @@ RETRET:     sty DIR                          ; ade5 84f2    retreat unit X prefe
             bcc _RETRET_1                    ; adfd 9009    
             cmp #$09                         ; adff c909    
             beq _RETRET_4                    ; ae01 f01f    
-            jsr CHKLEGAL                     ; ae03 20efaf  zflag clr if CORPSX/Y -> LAT/LON is legal
+            jsr CHKLEGAL                     ; ae03 20efaf  . zflag clr if CORPSX/Y -> LAT/LON is legal
             beq _RETRET_4                    ; ae06 f01a    
 _RETRET_1:  jsr CHKZOC                       ; ae08 20a4b0  
             ldx DEFNDR                       ; ae0b a6ad    
@@ -2122,28 +2122,28 @@ _RETRET_1:  jsr CHKZOC                       ; ae08 20a4b0
             cpx #$30                         ; ae17 e030    
             bcc _RETRET_3                    ; ae19 9005    
 _RETRET_2:  lda #$00                         ; ae1b a900    
-            sta MVMODE,x                     ; ae1d 9dc734  (expert level only) standard/assault/forced march/entrench
+            sta MVMODE,x                     ; ae1d 9dc734  . (expert level only) standard/assault/forced march/entrench
 _RETRET_3:  sec                              ; ae20 38      
             rts                              ; ae21 60      
 
-_RETRET_4:  ldy LEVEL                        ; ae22 a492    Level learner/beginner/intermediate/advanced/expert
-            jsr ZOCDMG                       ; ae24 205fae  Deal CSTRDMG to units blocked by ZOC
+_RETRET_4:  ldy LEVEL                        ; ae22 a492    . Level learner/beginner/intermediate/advanced/expert
+            jsr ZOCDMG                       ; ae24 205fae  . Deal CSTRDMG to units blocked by ZOC
             rts                              ; ae27 60      
 
 FLGRBRK:    cpx #$30                         ; ae28 e030    Fliegerkorps break and suffer 75% loss
             bcs _FLGRBRK_1                   ; ae2a b014    
             cpx #$2b                         ; ae2c e02b    
             bcc _FLGRBRK_1                   ; ae2e 9010    
-            lsr CSTRNG,x                     ; ae30 5e2b32  combat strengths
-            lsr CSTRNG,x                     ; ae33 5e2b32  combat strengths
+            lsr CSTRNG,x                     ; ae30 5e2b32  . combat strengths
+            lsr CSTRNG,x                     ; ae33 5e2b32  . combat strengths
             lda #$00                         ; ae36 a900    
-            sta HMORDS,x                     ; ae38 9dd232  how many orders queued for each unit
+            sta HMORDS,x                     ; ae38 9dd232  . how many orders queued for each unit
             lda #$ff                         ; ae3b a9ff    
-            sta EXEC,x                       ; ae3d 9ddc30  unit execution times
+            sta EXEC,x                       ; ae3d 9ddc30  . unit execution times
 _FLGRBRK_1: rts                              ; ae40 60      
 
 DEALDMG:    ldy ARMY                         ; ae41 a4ab    X takes damage during ARMY attack, carry clear if dies else set
-            lda MVMODE,y                     ; ae43 b9c734  (expert level only) standard/assault/forced march/entrench
+            lda MVMODE,y                     ; ae43 b9c734  . (expert level only) standard/assault/forced march/entrench
             cmp #$01                         ; ae46 c901    
             bne _DEALDMG_1                   ; ae48 d009    
             ldy #$00                         ; ae4a a000    
@@ -2151,80 +2151,80 @@ DEALDMG:    ldy ARMY                         ; ae41 a4ab    X takes damage durin
             beq _DEALDMG_2                   ; ae4e f005    
             iny                              ; ae50 c8      
             bne _DEALDMG_2                   ; ae51 d002    
-_DEALDMG_1: ldy LEVEL                        ; ae53 a492    Level learner/beginner/intermediate/advanced/expert
-_DEALDMG_2: lda MSTRNG,x                     ; ae55 bdff2c  muster strengths
+_DEALDMG_1: ldy LEVEL                        ; ae53 a492    . Level learner/beginner/intermediate/advanced/expert
+_DEALDMG_2: lda MSTRNG,x                     ; ae55 bdff2c  . muster strengths
             sec                              ; ae58 38      
-            sbc MSTRDMG,y                    ; ae59 f9f92f  muster strength damage by level
-            sta MSTRNG,x                     ; ae5c 9dff2c  muster strengths
+            sbc MSTRDMG,y                    ; ae59 f9f92f  . muster strength damage by level
+            sta MSTRNG,x                     ; ae5c 9dff2c  . muster strengths
 ZOCDMG:     lda CSTRNG,x                     ; ae5f bd2b32  Deal CSTRDMG to units blocked by ZOC
             sec                              ; ae62 38      
-            sbc CSTRDMG,y                    ; ae63 f9fe2f  combat strength damage by level
-            sta CSTRNG,x                     ; ae66 9d2b32  combat strengths
+            sbc CSTRDMG,y                    ; ae63 f9fe2f  . combat strength damage by level
+            sta CSTRNG,x                     ; ae66 9d2b32  . combat strengths
             beq _ZOCDMG_1                    ; ae69 f002    
             bcs _ZOCDMG_2                    ; ae6b b003    
-_ZOCDMG_1:  jsr DEAD                         ; ae6d 2002b1  Score and remove unit, maybe disperse nearby
+_ZOCDMG_1:  jsr DEAD                         ; ae6d 2002b1  . Score and remove unit, maybe disperse nearby
 _ZOCDMG_2:  rts                              ; ae70 60      
 
-__F__:      jsr SWITCH                       ; ae71 2034a9  swap CORPS with terrain @ CHUNKX/Y via SWAP buffer
-            jsr SCRNPOS                      ; ae74 20ecae  CORPS -> SCRNX/Y; 0,0 if offscreen
+__F__:      jsr SWITCH                       ; ae71 2034a9  . swap CORPS with terrain @ CHUNKX/Y via SWAP buffer
+            jsr SCRNPOS                      ; ae74 20ecae  . CORPS -> SCRNX/Y; 0,0 if offscreen
             beq _F_3                         ; ae77 f02f    
             ldy #$46                         ; ae79 a046    
             cpx #$30                         ; ae7b e030    
             bcs _F_1                         ; ae7d b002    
             ldy #$0c                         ; ae7f a00c    
-_F_1:       sty PCOLR1                       ; ae81 8cc102  Color of player 1 and missile 1, shadows $D013
+_F_1:       sty PCOLR1                       ; ae81 8cc102  . Color of player 1 and missile 1, shadows $D013
             ldy #$00                         ; ae84 a000    
-            lda SWAP,x                       ; ae86 bd8331  terrain code underneath unit
+            lda SWAP,x                       ; ae86 bd8331  . terrain code underneath unit
             asl                              ; ae89 0a      
             asl                              ; ae8a 0a      
             asl                              ; ae8b 0a      
             tax                              ; ae8c aa      
 _F_2:       lda FONTDATA+256,x               ; ae8d bd0091  
-            sta CHRBUF,y                     ; ae90 995f30  Eight bytes of bitmap character data
+            sta CHRBUF,y                     ; ae90 995f30  . Eight bytes of bitmap character data
             lda SND1FRQ,y                    ; ae93 b924a1  
-            sta AUDFRQ,y                     ; ae96 996830  Nine bytes of audio freq data
+            sta AUDFRQ,y                     ; ae96 996830  . Nine bytes of audio freq data
             lda SND1CTL,y                    ; ae99 b91ba1  
-            sta AUDCTL,y                     ; ae9c 997130  Nine bytes of audio control data
+            sta AUDCTL,y                     ; ae9c 997130  . Nine bytes of audio control data
             inx                              ; ae9f e8      
             iny                              ; aea0 c8      
             cpy #$09                         ; aea1 c009    
             bne _F_2                         ; aea3 d0e8    
             jsr __G__                        ; aea5 2076af  
-_F_3:       ldx CORPS                        ; aea8 a6a1    Number of unit under window
+_F_3:       ldx CORPS                        ; aea8 a6a1    . Number of unit under window
             lda LAT                          ; aeaa a5b1    
-            sta CORPSY,x                     ; aeac 9d582c  latitude of all units
+            sta CORPSY,x                     ; aeac 9d582c  . latitude of all units
             sta CHUNKY                       ; aeaf 85a8    
             lda LON                          ; aeb1 a5b2    
-            sta CORPSX,x                     ; aeb3 9db12b  longitude of all units
-            sta CHUNKX                       ; aeb6 85a7    Cursor coords (pixel frame)
-            jsr SWITCH                       ; aeb8 2034a9  swap CORPS with terrain @ CHUNKX/Y via SWAP buffer
+            sta CORPSX,x                     ; aeb3 9db12b  . longitude of all units
+            sta CHUNKX                       ; aeb6 85a7    . Cursor coords (pixel frame)
+            jsr SWITCH                       ; aeb8 2034a9  . swap CORPS with terrain @ CHUNKX/Y via SWAP buffer
             ldy #$11                         ; aebb a011    
-_F_4:       lda CORPSX,x                     ; aebd bdb12b  longitude of all units
+_F_4:       lda CORPSX,x                     ; aebd bdb12b  . longitude of all units
             cmp CITYLAT,y                    ; aec0 d9bfa0  
             bne _F_6                         ; aec3 d023    
-            lda CORPSY,x                     ; aec5 bd582c  latitude of all units
+            lda CORPSY,x                     ; aec5 bd582c  . latitude of all units
             cmp CITYLON,y                    ; aec8 d9d2a0  
             bne _F_6                         ; aecb d01b    
             lda #$ff                         ; aecd a9ff    
             cpx #$30                         ; aecf e030    
             bcc _F_5                         ; aed1 9002    
             lda #$00                         ; aed3 a900    
-_F_5:       sta CITYOWN,y                    ; aed5 99c63a  city ownership
+_F_5:       sta CITYOWN,y                    ; aed5 99c63a  . city ownership
             and #$80                         ; aed8 2980    
             eor #$80                         ; aeda 4980    
             sta TEMPR                        ; aedc 85ae    
-            lda SWAP,x                       ; aede bd8331  terrain code underneath unit
+            lda SWAP,x                       ; aede bd8331  . terrain code underneath unit
             and #$7f                         ; aee1 297f    
             ora TEMPR                        ; aee3 05ae    
-            sta SWAP,x                       ; aee5 9d8331  terrain code underneath unit
+            sta SWAP,x                       ; aee5 9d8331  . terrain code underneath unit
 _F_6:       dey                              ; aee8 88      
             bpl _F_4                         ; aee9 10d2    
             rts                              ; aeeb 60      
 
 SCRNPOS:    jsr CURS2CH                      ; aeec 20baa8  CORPS -> SCRNX/Y; 0,0 if offscreen
-            jsr SETARRXY                     ; aeef 20e7a8  Set arrow BASEX/Y, STEPX/Y from TXL, TYL
-            ldx CORPS                        ; aef2 a6a1    Number of unit under window
-            lda BASEX                        ; aef4 a5bc    start pos of arrow (player frame)
+            jsr SETARRXY                     ; aeef 20e7a8  . Set arrow BASEX/Y, STEPX/Y from TXL, TYL
+            ldx CORPS                        ; aef2 a6a1    . Number of unit under window
+            lda BASEX                        ; aef4 a5bc    . start pos of arrow (player frame)
             sec                              ; aef6 38      
             sbc #$d0                         ; aef7 e9d0    
             lsr                              ; aef9 4a      
@@ -2232,20 +2232,20 @@ SCRNPOS:    jsr CURS2CH                      ; aeec 20baa8  CORPS -> SCRNX/Y; 0,
             lsr                              ; aefb 4a      
             ora #$e0                         ; aefc 09e0    
             clc                              ; aefe 18      
-            adc CHUNKX                       ; aeff 65a7    Cursor coords (pixel frame)
+            adc CHUNKX                       ; aeff 65a7    . Cursor coords (pixel frame)
             bcc _SCRNPOS_1                   ; af01 9007    
-            cmp CORPSX,x                     ; af03 ddb12b  longitude of all units
+            cmp CORPSX,x                     ; af03 ddb12b  . longitude of all units
             beq _SCRNPOS_1                   ; af06 f002    
             bcs _SCRNPOS_3                   ; af08 b065    
-_SCRNPOS_1: lda BASEX                        ; af0a a5bc    start pos of arrow (player frame)
+_SCRNPOS_1: lda BASEX                        ; af0a a5bc    . start pos of arrow (player frame)
             sec                              ; af0c 38      
             sbc #$28                         ; af0d e928    
             lsr                              ; af0f 4a      
             lsr                              ; af10 4a      
             lsr                              ; af11 4a      
             clc                              ; af12 18      
-            adc CHUNKX                       ; af13 65a7    Cursor coords (pixel frame)
-            cmp CORPSX,x                     ; af15 ddb12b  longitude of all units
+            adc CHUNKX                       ; af13 65a7    . Cursor coords (pixel frame)
+            cmp CORPSX,x                     ; af15 ddb12b  . longitude of all units
             bcc _SCRNPOS_3                   ; af18 9055    
             lda BASEY                        ; af1a a5bd    
             sec                              ; af1c 38      
@@ -2257,7 +2257,7 @@ _SCRNPOS_1: lda BASEX                        ; af0a a5bc    start pos of arrow (
             clc                              ; af24 18      
             adc CHUNKY                       ; af25 65a8    
             bcc _SCRNPOS_2                   ; af27 9007    
-            cmp CORPSY,x                     ; af29 dd582c  latitude of all units
+            cmp CORPSY,x                     ; af29 dd582c  . latitude of all units
             beq _SCRNPOS_2                   ; af2c f002    
             bcs _SCRNPOS_3                   ; af2e b03f    
 _SCRNPOS_2: lda BASEY                        ; af30 a5bd    
@@ -2268,25 +2268,25 @@ _SCRNPOS_2: lda BASEY                        ; af30 a5bd
             lsr                              ; af37 4a      
             clc                              ; af38 18      
             adc CHUNKY                       ; af39 65a8    
-            cmp CORPSY,x                     ; af3b dd582c  latitude of all units
+            cmp CORPSY,x                     ; af3b dd582c  . latitude of all units
             bcc _SCRNPOS_3                   ; af3e 902f    
-            lda CHUNKX                       ; af40 a5a7    Cursor coords (pixel frame)
+            lda CHUNKX                       ; af40 a5a7    . Cursor coords (pixel frame)
             sec                              ; af42 38      
-            sbc CORPSX,x                     ; af43 fdb12b  longitude of all units
+            sbc CORPSX,x                     ; af43 fdb12b  . longitude of all units
             asl                              ; af46 0a      
             asl                              ; af47 0a      
             asl                              ; af48 0a      
             clc                              ; af49 18      
-            adc BASEX                        ; af4a 65bc    start pos of arrow (player frame)
+            adc BASEX                        ; af4a 65bc    . start pos of arrow (player frame)
             cmp #$e6                         ; af4c c9e6    
             bcs _SCRNPOS_3                   ; af4e b01f    
             cmp #$20                         ; af50 c920    
             bcc _SCRNPOS_3                   ; af52 901b    
-            sta SCRNX                        ; af54 85fc    X screen offset of CORPS, 0 if offscreen
-            dec SCRNX                        ; af56 c6fc    X screen offset of CORPS, 0 if offscreen
+            sta SCRNX                        ; af54 85fc    . X screen offset of CORPS, 0 if offscreen
+            dec SCRNX                        ; af56 c6fc    . X screen offset of CORPS, 0 if offscreen
             lda CHUNKY                       ; af58 a5a8    
             sec                              ; af5a 38      
-            sbc CORPSY,x                     ; af5b fd582c  latitude of all units
+            sbc CORPSY,x                     ; af5b fd582c  . latitude of all units
             asl                              ; af5e 0a      
             asl                              ; af5f 0a      
             asl                              ; af60 0a      
@@ -2296,12 +2296,12 @@ _SCRNPOS_2: lda BASEY                        ; af30 a5bd
             bcs _SCRNPOS_3                   ; af66 b007    
             cmp #$0d                         ; af68 c90d    
             bcc _SCRNPOS_3                   ; af6a 9003    
-            sta SCRNY                        ; af6c 85fb    Y screen offset of CORPS, 0 if offscreen
+            sta SCRNY                        ; af6c 85fb    . Y screen offset of CORPS, 0 if offscreen
             rts                              ; af6e 60      
 
 _SCRNPOS_3: lda #$00                         ; af6f a900    
-            sta SCRNY                        ; af71 85fb    Y screen offset of CORPS, 0 if offscreen
-            sta SCRNX                        ; af73 85fc    X screen offset of CORPS, 0 if offscreen
+            sta SCRNY                        ; af71 85fb    . Y screen offset of CORPS, 0 if offscreen
+            sta SCRNX                        ; af73 85fc    . X screen offset of CORPS, 0 if offscreen
             rts                              ; af75 60      
 
 __G__:      ldx #$ff                         ; af76 a2ff    
@@ -2310,58 +2310,58 @@ __G__:      ldx #$ff                         ; af76 a2ff
 __H__:      ldy DIR                          ; af7c a4f2    
 _H_1:       dex                              ; af7e ca      
             bmi _H_2                         ; af7f 3012    
-            lda SCRNY                        ; af81 a5fb    Y screen offset of CORPS, 0 if offscreen
+            lda SCRNY                        ; af81 a5fb    . Y screen offset of CORPS, 0 if offscreen
             clc                              ; af83 18      
             adc YADD,y                       ; af84 793ca0  
-            sta SCRNY                        ; af87 85fb    Y screen offset of CORPS, 0 if offscreen
-            lda SCRNX                        ; af89 a5fc    X screen offset of CORPS, 0 if offscreen
+            sta SCRNY                        ; af87 85fb    . Y screen offset of CORPS, 0 if offscreen
+            lda SCRNX                        ; af89 a5fc    . X screen offset of CORPS, 0 if offscreen
             clc                              ; af8b 18      
-            adc XADD,y                       ; af8c 793da0  offsets for moving arrow
-            sta SCRNX                        ; af8f 85fc    X screen offset of CORPS, 0 if offscreen
+            adc XADD,y                       ; af8c 793da0  . offsets for moving arrow
+            sta SCRNX                        ; af8f 85fc    . X screen offset of CORPS, 0 if offscreen
             bne _H_1                         ; af91 d0eb    
 _H_2:       inx                              ; af93 e8      
-            lda YPOSL                        ; af94 a594    Vert pos of upper left of screen window
+            lda YPOSL                        ; af94 a594    . Vert pos of upper left of screen window
             lsr                              ; af96 4a      
             bcc _H_3                         ; af97 9004    
             ldx #$20                         ; af99 a220    
-            dec SCRNY                        ; af9b c6fb    Y screen offset of CORPS, 0 if offscreen
-_H_3:       stx VDELAY                       ; af9d 8e1cd0  Vertical delay register
+            dec SCRNY                        ; af9b c6fb    . Y screen offset of CORPS, 0 if offscreen
+_H_3:       stx VDELAY                       ; af9d 8e1cd0  . Vertical delay register
             ldx #$00                         ; afa0 a200    
-            ldy SCRNY                        ; afa2 a4fb    Y screen offset of CORPS, 0 if offscreen
+            ldy SCRNY                        ; afa2 a4fb    . Y screen offset of CORPS, 0 if offscreen
 _H_4:       cpy #$16                         ; afa4 c016    
             bcc _H_5                         ; afa6 900a    
             cpy #$5f                         ; afa8 c05f    
             bcs _H_5                         ; afaa b006    
-            lda CHRBUF,x                     ; afac bd5f30  Eight bytes of bitmap character data
-            sta PLYR1,y                      ; afaf 998022  Player 1 sprite data
+            lda CHRBUF,x                     ; afac bd5f30  . Eight bytes of bitmap character data
+            sta PLYR1,y                      ; afaf 998022  . Player 1 sprite data
 _H_5:       iny                              ; afb2 c8      
             inx                              ; afb3 e8      
             cpx #$08                         ; afb4 e008    
             bne _H_4                         ; afb6 d0ec    
-            lda SCRNX                        ; afb8 a5fc    X screen offset of CORPS, 0 if offscreen
-            sta HPOSP1 / M1PF                ; afba 8d01d0  W: h.pos of P1 / R: missile 1 to pf collision
+            lda SCRNX                        ; afb8 a5fc    . X screen offset of CORPS, 0 if offscreen
+            sta HPOSP1 / M1PF                ; afba 8d01d0  . W: h.pos of P1 / R: missile 1 to pf collision
 _H_6:       lda #$01                         ; afbd a901    
-            jsr DELAYA                       ; afbf 20dfaa  Wait A/60 seconds
+            jsr DELAYA                       ; afbf 20dfaa  . Wait A/60 seconds
             lda #$00                         ; afc2 a900    
             ldx #$09                         ; afc4 a209    
-            ldy SCRNY                        ; afc6 a4fb    Y screen offset of CORPS, 0 if offscreen
-_H_7:       sta PLYR1,y                      ; afc8 998022  Player 1 sprite data
+            ldy SCRNY                        ; afc6 a4fb    . Y screen offset of CORPS, 0 if offscreen
+_H_7:       sta PLYR1,y                      ; afc8 998022  . Player 1 sprite data
             iny                              ; afcb c8      
             dex                              ; afcc ca      
             bpl _H_7                         ; afcd 10f9    
-            jsr SCRNPOS                      ; afcf 20ecae  CORPS -> SCRNX/Y; 0,0 if offscreen
+            jsr SCRNPOS                      ; afcf 20ecae  . CORPS -> SCRNX/Y; 0,0 if offscreen
             inc TEMPZ                        ; afd2 e6f3    
             ldx TEMPZ                        ; afd4 a6f3    
             cpx #$09                         ; afd6 e009    
             beq _H_8                         ; afd8 f00f    
-            lda AUDFRQ,x                     ; afda bd6830  Nine bytes of audio freq data
-            sta AUDF1 / POT0                 ; afdd 8d00d2  W: Audio ch1 freq / R: paddle 0
-            lda AUDCTL,x                     ; afe0 bd7130  Nine bytes of audio control data
-            sta AUDC1 / POT1                 ; afe3 8d01d2  W: Audio ch1 ctrl / R: paddle 1
+            lda AUDFRQ,x                     ; afda bd6830  . Nine bytes of audio freq data
+            sta AUDF1 / POT0                 ; afdd 8d00d2  . W: Audio ch1 freq / R: paddle 0
+            lda AUDCTL,x                     ; afe0 bd7130  . Nine bytes of audio control data
+            sta AUDC1 / POT1                 ; afe3 8d01d2  . W: Audio ch1 ctrl / R: paddle 1
             jmp __H__                        ; afe6 4c7caf  
 
 _H_8:       lda #$dc                         ; afe9 a9dc    
-            sta PCOLR1                       ; afeb 8dc102  Color of player 1 and missile 1, shadows $D013
+            sta PCOLR1                       ; afeb 8dc102  . Color of player 1 and missile 1, shadows $D013
             rts                              ; afee 60      
 
 CHKLEGAL:   ldy #$15                         ; afef a015    zflag clr if CORPSX/Y -> LAT/LON is legal
@@ -2369,19 +2369,19 @@ _CHKLEGAL_1: lda LAT                          ; aff1 a5b1
             cmp BHY1,y                       ; aff3 d93f9c  
             bne _CHKLEGAL_2                  ; aff6 d017    
             lda LON                          ; aff8 a5b2    
-            cmp BHX1,y                       ; affa d9299c  intraversible square-pair coords
+            cmp BHX1,y                       ; affa d9299c  . intraversible square-pair coords
             bne _CHKLEGAL_2                  ; affd d010    
-            lda CORPSX,x                     ; afff bdb12b  longitude of all units
+            lda CORPSX,x                     ; afff bdb12b  . longitude of all units
             cmp BHX2,y                       ; b002 d9559c  
             bne _CHKLEGAL_2                  ; b005 d008    
-            lda CORPSY,x                     ; b007 bd582c  latitude of all units
+            lda CORPSY,x                     ; b007 bd582c  . latitude of all units
             cmp BHY2,y                       ; b00a d96b9c  
             beq _CHKLEGAL_3                  ; b00d f003    
 _CHKLEGAL_2: dey                              ; b00f 88      
             bpl _CHKLEGAL_1                  ; b010 10df    
 _CHKLEGAL_3: rts                              ; b012 60      
 
-SUPPLY:     lda ARRIVE,x                     ; b013 bda62d  arrival turns
+SUPPLY:     lda ARRIVE,x                     ; b013 bda62d  . arrival turns
             cmp TURN                         ; b016 c591    
             beq _SUPPLY_1                    ; b018 f003    
             bcc _SUPPLY_1                    ; b01a 9001    
@@ -2394,11 +2394,11 @@ _SUPPLY_1:  cpx #$30                         ; b01d e030
             beq _SUPPLY_8                    ; b025 f05b    
             cpy #$0a                         ; b027 c00a    
             bne _SUPPLY_2                    ; b029 d00e    
-            lda CORPSX,x                     ; b02b bdb12b  longitude of all units
+            lda CORPSX,x                     ; b02b bdb12b  . longitude of all units
             asl                              ; b02e 0a      
             asl                              ; b02f 0a      
             adc #$4a                         ; b030 694a    
-            cmp SKREST / RANDOM              ; b032 cd0ad2  W: Reset serial port status register / R: Random byte
+            cmp SKREST / RANDOM              ; b032 cd0ad2  . W: Reset serial port status register / R: Random byte
             bcc _SUPPLY_8                    ; b035 904b    
             lda #$10                         ; b037 a910    
 _SUPPLY_2:  ldy #$01                         ; b039 a001    
@@ -2406,41 +2406,41 @@ _SUPPLY_2:  ldy #$01                         ; b039 a001
             bcs _SUPPLY_3                    ; b03d b002    
             ldy #$03                         ; b03f a003    
 _SUPPLY_3:  sty HOMEDR                       ; b041 84ef    
-            jsr SETLL                        ; b043 2074ab  CORPSX/Y for X -> LAT, LON
+            jsr SETLL                        ; b043 2074ab  . CORPSX/Y for X -> LAT, LON
             lda #$00                         ; b046 a900    
-            sta RFR                          ; b048 85b3    Russian force ratio: local Russian strength
+            sta RFR                          ; b048 85b3    . Russian force ratio: local Russian strength
 _SUPPLY_4:  lda LON                          ; b04a a5b2    
-            sta SQX                          ; b04c 85e1    adj sq; also COLUM
+            sta SQX                          ; b04c 85e1    . adj sq; also COLUM
             lda LAT                          ; b04e a5b1    
-            sta SQY                          ; b050 85e2    adj sq; also OCOLUM
-_SUPPLY_5:  lda SQX                          ; b052 a5e1    adj sq; also COLUM
+            sta SQY                          ; b050 85e2    . adj sq; also OCOLUM
+_SUPPLY_5:  lda SQX                          ; b052 a5e1    . adj sq; also COLUM
             clc                              ; b054 18      
             adc XINC,y                       ; b055 793fa0  
             sta LON                          ; b058 85b2    
-            lda SQY                          ; b05a a5e2    adj sq; also OCOLUM
+            lda SQY                          ; b05a a5e2    . adj sq; also OCOLUM
             clc                              ; b05c 18      
-            adc YINC,y                       ; b05d 793ea0  note YINC/XINC overlap
+            adc YINC,y                       ; b05d 793ea0  . note YINC/XINC overlap
             sta LAT                          ; b060 85b1    
             jsr CHKZOC                       ; b062 20a4b0  
             cpx #$30                         ; b065 e030    
             bcc _SUPPLY_6                    ; b067 9009    
-            jsr TERRB                        ; b069 20edaa  TRNCOD <- chr @ LAT/LON, zero set if it's a unit
+            jsr TERRB                        ; b069 20edaa  . TRNCOD <- chr @ LAT/LON, zero set if it's a unit
             lda TRNCOD                       ; b06c a5e7    
             cmp #$bf                         ; b06e c9bf    
             beq _SUPPLY_7                    ; b070 f008    
 _SUPPLY_6:  lda ZOC                          ; b072 a5ed    
             cmp #$02                         ; b074 c902    
             bcc _SUPPLY_10                   ; b076 901a    
-            inc RFR                          ; b078 e6b3    Russian force ratio: local Russian strength
-_SUPPLY_7:  inc RFR                          ; b07a e6b3    Russian force ratio: local Russian strength
-            lda RFR                          ; b07c a5b3    Russian force ratio: local Russian strength
+            inc RFR                          ; b078 e6b3    . Russian force ratio: local Russian strength
+_SUPPLY_7:  inc RFR                          ; b07a e6b3    . Russian force ratio: local Russian strength
+            lda RFR                          ; b07c a5b3    . Russian force ratio: local Russian strength
             cmp #$18                         ; b07e c918    
             bcc _SUPPLY_9                    ; b080 9008    
-_SUPPLY_8:  lsr CSTRNG,x                     ; b082 5e2b32  combat strengths
+_SUPPLY_8:  lsr CSTRNG,x                     ; b082 5e2b32  . combat strengths
             bne _SUPPLY_11                   ; b085 d017    
-            jmp DEAD                         ; b087 4c02b1  Score and remove unit, maybe disperse nearby
+            jmp DEAD                         ; b087 4c02b1  . Score and remove unit, maybe disperse nearby
 
-_SUPPLY_9:  lda SKREST / RANDOM              ; b08a ad0ad2  W: Reset serial port status register / R: Random byte
+_SUPPLY_9:  lda SKREST / RANDOM              ; b08a ad0ad2  . W: Reset serial port status register / R: Random byte
             and #$02                         ; b08d 2902    
             tay                              ; b08f a8      
             bpl _SUPPLY_5                    ; b090 10c0    
@@ -2463,16 +2463,16 @@ CHKZOC:     lda #$00                         ; b0a4 a900
             bcs _CHKZOC_1                    ; b0ac b002    
             lda #$c0                         ; b0ae a9c0    
 _CHKZOC_1:  sta TEMPR                        ; b0b0 85ae    
-            jsr TERRB                        ; b0b2 20edaa  TRNCOD <- chr @ LAT/LON, zero set if it's a unit
+            jsr TERRB                        ; b0b2 20edaa  . TRNCOD <- chr @ LAT/LON, zero set if it's a unit
             bne _CHKZOC_4                    ; b0b5 d01c    
             lda TRNCOD                       ; b0b7 a5e7    
             and #$c0                         ; b0b9 29c0    
             cmp TEMPR                        ; b0bb c5ae    
             beq _CHKZOC_3                    ; b0bd f00f    
-            lda CORPSX,x                     ; b0bf bdb12b  longitude of all units
+            lda CORPSX,x                     ; b0bf bdb12b  . longitude of all units
             cmp LON                          ; b0c2 c5b2    
             bne _CHKZOC_2                    ; b0c4 d007    
-            lda CORPSY,x                     ; b0c6 bd582c  latitude of all units
+            lda CORPSY,x                     ; b0c6 bd582c  . latitude of all units
             cmp LAT                          ; b0c9 c5b1    
             beq _CHKZOC_4                    ; b0cb f006    
 _CHKZOC_2:  rts                              ; b0cd 60      
@@ -2481,13 +2481,13 @@ _CHKZOC_3:  lda #$02                         ; b0ce a902
             sta ZOC                          ; b0d0 85ed    
             rts                              ; b0d2 60      
 
-_CHKZOC_4:  lda LEVEL                        ; b0d3 a592    Level learner/beginner/intermediate/advanced/expert
+_CHKZOC_4:  lda LEVEL                        ; b0d3 a592    . Level learner/beginner/intermediate/advanced/expert
             cmp #$02                         ; b0d5 c902    
             bcc _CHKZOC_2                    ; b0d7 90f4    
             ldx #$07                         ; b0d9 a207    
-_CHKZOC_5:  ldy JSTP+16,x                    ; b0db bc60a0  Dirs to spiral from loc around 3x3 (reverse order)
-            jsr DY2LL                        ; b0de 20f3ab  Adds dir idx Y to LAT/LON
-            jsr TERRB                        ; b0e1 20edaa  TRNCOD <- chr @ LAT/LON, zero set if it's a unit
+_CHKZOC_5:  ldy JSTP+16,x                    ; b0db bc60a0  . Dirs to spiral from loc around 3x3 (reverse order)
+            jsr DY2LL                        ; b0de 20f3ab  . Adds dir idx Y to LAT/LON
+            jsr TERRB                        ; b0e1 20edaa  . TRNCOD <- chr @ LAT/LON, zero set if it's a unit
             bne _CHKZOC_6                    ; b0e4 d012    
             lda TRNCOD                       ; b0e6 a5e7    
             and #$c0                         ; b0e8 29c0    
@@ -2509,10 +2509,10 @@ _CHKZOC_6:  dex                              ; b0f8 ca
 DEAD:       jsr SETSWTCH                     ; b102 2081bf  Score and remove unit, maybe disperse nearby
             stx TEMPHI                       ; b105 86bb    
             ldy #$03                         ; b107 a003    
-_DEAD_1:    sty TEMPLO                       ; b109 84ba    temp word
-            jsr SETLL                        ; b10b 2074ab  CORPSX/Y for X -> LAT, LON
-            jsr DY2LL                        ; b10e 20f3ab  Adds dir idx Y to LAT/LON
-            jsr TERR                         ; b111 20e7aa  TRNCOD <- terrain chr @ LAT/LON, maybe under unit
+_DEAD_1:    sty TEMPLO                       ; b109 84ba    . temp word
+            jsr SETLL                        ; b10b 2074ab  . CORPSX/Y for X -> LAT, LON
+            jsr DY2LL                        ; b10e 20f3ab  . Adds dir idx Y to LAT/LON
+            jsr TERR                         ; b111 20e7aa  . TRNCOD <- terrain chr @ LAT/LON, maybe under unit
             ldx TEMPHI                       ; b114 a6bb    
             ldy UNITNO                       ; b116 a4ac    
             beq _DEAD_3                      ; b118 f00e    
@@ -2523,7 +2523,7 @@ _DEAD_1:    sty TEMPLO                       ; b109 84ba    temp word
             bcc _DEAD_3                      ; b122 9004    
 _DEAD_2:    cpy #$30                         ; b124 c030    
             bcc _DEAD_4                      ; b126 9007    
-_DEAD_3:    ldy TEMPLO                       ; b128 a4ba    temp word
+_DEAD_3:    ldy TEMPLO                       ; b128 a4ba    . temp word
             dey                              ; b12a 88      
             bpl _DEAD_1                      ; b12b 10dc    
             bmi _DEAD_6                      ; b12d 3012    
@@ -2531,48 +2531,48 @@ _DEAD_4:    lda MSTRNG,x                     ; b12f bdff2c  Contribute 1/4 MSTRN
             lsr                              ; b132 4a      
             lsr                              ; b133 4a      
             clc                              ; b134 18      
-            adc MSTRNG,y                     ; b135 79ff2c  muster strengths
+            adc MSTRNG,y                     ; b135 79ff2c  . muster strengths
             bcc _DEAD_5                      ; b138 9002    
             lda #$ff                         ; b13a a9ff    
-_DEAD_5:    sta MSTRNG,y                     ; b13c 99ff2c  muster strengths
+_DEAD_5:    sta MSTRNG,y                     ; b13c 99ff2c  . muster strengths
             bne _DEAD_3                      ; b13f d0e7    
 _DEAD_6:    lda #$00                         ; b141 a900    
-            sta MSTRNG,x                     ; b143 9dff2c  muster strengths
-            sta CSTRNG,x                     ; b146 9d2b32  combat strengths
-            sta HMORDS,x                     ; b149 9dd232  how many orders queued for each unit
+            sta MSTRNG,x                     ; b143 9dff2c  . muster strengths
+            sta CSTRNG,x                     ; b146 9d2b32  . combat strengths
+            sta HMORDS,x                     ; b149 9dd232  . how many orders queued for each unit
             lda #$ff                         ; b14c a9ff    
-            sta EXEC,x                       ; b14e 9ddc30  unit execution times
+            sta EXEC,x                       ; b14e 9ddc30  . unit execution times
             lda TURN                         ; b151 a591    
             clc                              ; b153 18      
             adc #$80                         ; b154 6980    
-            sta ARRIVE,x                     ; b156 9da62d  arrival turns
+            sta ARRIVE,x                     ; b156 9da62d  . arrival turns
             rts                              ; b159 60      
 
 BRKCHK:     ldy LEVEL                        ; b15a a492    Maybe break unit X, reset orders, suffer damange
             cpy #$02                         ; b15c c002    
             bcs _BRKCHK_1                    ; b15e b008    
-            lda MSTRNG,x                     ; b160 bdff2c  muster strengths
+            lda MSTRNG,x                     ; b160 bdff2c  . muster strengths
             lsr                              ; b163 4a      
             lsr                              ; b164 4a      
             jmp __I__                        ; b165 4c98b1  
 
 _BRKCHK_1:  cpx #$30                         ; b168 e030    
             bcs _BRKCHK_2                    ; b16a b00d    
-            lda CORPT,x                      ; b16c bd4d2e  codes for unit types
+            lda CORPT,x                      ; b16c bd4d2e  . codes for unit types
             and #$f0                         ; b16f 29f0    
             bne _BRKCHK_2                    ; b171 d006    
-            lda MSTRNG,x                     ; b173 bdff2c  muster strengths
+            lda MSTRNG,x                     ; b173 bdff2c  . muster strengths
             lsr                              ; b176 4a      
             bpl _BRKCHK_3                    ; b177 100e    
-_BRKCHK_2:  lda MSTRNG,x                     ; b179 bdff2c  muster strengths
+_BRKCHK_2:  lda MSTRNG,x                     ; b179 bdff2c  . muster strengths
             lsr                              ; b17c 4a      
             lsr                              ; b17d 4a      
             lsr                              ; b17e 4a      
             sta TEMPR                        ; b17f 85ae    
-            lda MSTRNG,x                     ; b181 bdff2c  muster strengths
+            lda MSTRNG,x                     ; b181 bdff2c  . muster strengths
             sec                              ; b184 38      
             sbc TEMPR                        ; b185 e5ae    
-_BRKCHK_3:  ldy MVMODE,x                     ; b187 bcc734  (expert level only) standard/assault/forced march/entrench
+_BRKCHK_3:  ldy MVMODE,x                     ; b187 bcc734  . (expert level only) standard/assault/forced march/entrench
             beq __I__                        ; b18a f00c    
             cpy #$02                         ; b18c c002    
             bne _BRKCHK_4                    ; b18e d007    
@@ -2581,12 +2581,12 @@ _BRKCHK_3:  ldy MVMODE,x                     ; b187 bcc734  (expert level only) 
             lda #$ff                         ; b193 a9ff    
             bcs __I__                        ; b195 b001    
 _BRKCHK_4:  lsr                              ; b197 4a      
-__I__:      cmp CSTRNG,x                     ; b198 dd2b32  combat strengths
+__I__:      cmp CSTRNG,x                     ; b198 dd2b32  . combat strengths
             bcc _I_1                         ; b19b 900a    
             lda #$ff                         ; b19d a9ff    
-            sta EXEC,x                       ; b19f 9ddc30  unit execution times
+            sta EXEC,x                       ; b19f 9ddc30  . unit execution times
             lda #$00                         ; b1a2 a900    
-            sta HMORDS,x                     ; b1a4 9dd232  how many orders queued for each unit
+            sta HMORDS,x                     ; b1a4 9dd232  . how many orders queued for each unit
 _I_1:       rts                              ; b1a7 60      
 
 RPTBYTE:  ; byte x1yz vvvv (y+z>0) -> repeat byte xy * (vvvv + 1) 
@@ -2604,100 +2604,100 @@ STMAPYINCP: sta (MAPPTRL),y                  ; b1b3 91a9
 _STMAPYINCP_1: rts                              ; b1bb 60      
 
 THINK:      lda #$ff                         ; b1bc a9ff    
-            sta SDIR                         ; b1be 85d5    smaller dir / key mask
+            sta SDIR                         ; b1be 85d5    . smaller dir / key mask
             ldx #$a6                         ; b1c0 a2a6    
 _THINK_1:   stx ARMY                         ; b1c2 86ab    
-            lda ARRIVE,x                     ; b1c4 bda62d  arrival turns
+            lda ARRIVE,x                     ; b1c4 bda62d  . arrival turns
             cmp TURN                         ; b1c7 c591    
             bcs _THINK_2                     ; b1c9 b00f    
             jsr CALIFR                       ; b1cb 20c3b7  
-            lda CORPSX,x                     ; b1ce bdb12b  longitude of all units
+            lda CORPSX,x                     ; b1ce bdb12b  . longitude of all units
             sta OBJX-48,x                    ; b1d1 9d3e35  
-            lda CORPSY,x                     ; b1d4 bd582c  latitude of all units
+            lda CORPSY,x                     ; b1d4 bd582c  . latitude of all units
             sta OBJY-48,x                    ; b1d7 9db635  
 _THINK_2:   dex                              ; b1da ca      
             cpx #$30                         ; b1db e030    
             bcs _THINK_1                     ; b1dd b0e3    
 RETHNK:     ldx #$a6                         ; b1df a2a6    
 THNKLP:     stx ARMY                         ; b1e1 86ab    
-            lda ARRIVE,x                     ; b1e3 bda62d  arrival turns
+            lda ARRIVE,x                     ; b1e3 bda62d  . arrival turns
             cmp TURN                         ; b1e6 c591    
             bcc _THNKLP_2                    ; b1e8 9003    
 _THNKLP_1:  jmp TOGSCN                       ; b1ea 4c41b5  
 
-_THNKLP_2:  lda CORPT,x                      ; b1ed bd4d2e  codes for unit types
+_THNKLP_2:  lda CORPT,x                      ; b1ed bd4d2e  . codes for unit types
             cmp #$81                         ; b1f0 c981    
             beq _THNKLP_1                    ; b1f2 f0f6    
             lda BSTVALS-48,x                 ; b1f4 bdfe38  
             cmp #$06                         ; b1f7 c906    
             bcc _THNKLP_7                    ; b1f9 9053    
-            lda OFR                          ; b1fb a5e5    Overall force ratio
+            lda OFR                          ; b1fb a5e5    . Overall force ratio
             lsr                              ; b1fd 4a      
-            sta BSTVAL                       ; b1fe 85f0    best value, was BVAL
-            lda LEVEL                        ; b200 a592    Level learner/beginner/intermediate/advanced/expert
+            sta BSTVAL                       ; b1fe 85f0    . best value, was BVAL
+            lda LEVEL                        ; b200 a592    . Level learner/beginner/intermediate/advanced/expert
             cmp #$04                         ; b202 c904    
             bne _THNKLP_3                    ; b204 d005    
             lda #$02                         ; b206 a902    
-            sta MVMODE,x                     ; b208 9dc734  (expert level only) standard/assault/forced march/entrench
+            sta MVMODE,x                     ; b208 9dc734  . (expert level only) standard/assault/forced march/entrench
 _THNKLP_3:  ldy #$a6                         ; b20b a0a6    
-_THNKLP_4:  lda ARRIVE,y                     ; b20d b9a62d  arrival turns
+_THNKLP_4:  lda ARRIVE,y                     ; b20d b9a62d  . arrival turns
             cmp TURN                         ; b210 c591    
             bcs _THNKLP_5                    ; b212 b018    
             lda #$00                         ; b214 a900    
-            jsr DLATXY                       ; b216 2065ac  diff between X and Y -> A + LAT
+            jsr DLATXY                       ; b216 2065ac  . diff between X and Y -> A + LAT
             lsr                              ; b219 4a      
             sta TEMPR                        ; b21a 85ae    
             lda IFR-48,y                     ; b21c b92e36  
             sec                              ; b21f 38      
             sbc TEMPR                        ; b220 e5ae    
             bcc _THNKLP_5                    ; b222 9008    
-            cmp BSTVAL                       ; b224 c5f0    best value, was BVAL
+            cmp BSTVAL                       ; b224 c5f0    . best value, was BVAL
             bcc _THNKLP_5                    ; b226 9004    
-            sta BSTVAL                       ; b228 85f0    best value, was BVAL
-            sty BSTIDX                       ; b22a 84f1    best index, was BONE
+            sta BSTVAL                       ; b228 85f0    . best value, was BVAL
+            sty BSTIDX                       ; b22a 84f1    . best index, was BONE
 _THNKLP_5:  dey                              ; b22c 88      
             cpy #$30                         ; b22d c030    
             bcs _THNKLP_4                    ; b22f b0dc    
-            lda OFR                          ; b231 a5e5    Overall force ratio
+            lda OFR                          ; b231 a5e5    . Overall force ratio
             lsr                              ; b233 4a      
-            cmp BSTVAL                       ; b234 c5f0    best value, was BVAL
+            cmp BSTVAL                       ; b234 c5f0    . best value, was BVAL
             bne _THNKLP_6                    ; b236 d005    
             lda BSTIDXS-48,x                 ; b238 bd7639  
-            sta BSTIDX                       ; b23b 85f1    best index, was BONE
-_THNKLP_6:  ldy BSTIDX                       ; b23d a4f1    best index, was BONE
-            lda CORPSX,y                     ; b23f b9b12b  longitude of all units
+            sta BSTIDX                       ; b23b 85f1    . best index, was BONE
+_THNKLP_6:  ldy BSTIDX                       ; b23d a4f1    . best index, was BONE
+            lda CORPSX,y                     ; b23f b9b12b  . longitude of all units
             sta OBJX-48,x                    ; b242 9d3e35  
-            lda CORPSY,y                     ; b245 b9582c  latitude of all units
+            lda CORPSY,y                     ; b245 b9582c  . latitude of all units
             sta OBJY-48,x                    ; b248 9db635  
             jmp TOGSCN                       ; b24b 4c41b5  
 
 _THNKLP_7:  lda #$ff                         ; b24e a9ff    
             sta DIR                          ; b250 85f2    
-            sta BSTIDX                       ; b252 85f1    best index, was BONE
+            sta BSTIDX                       ; b252 85f1    . best index, was BONE
             lda #$00                         ; b254 a900    
-            sta BSTVAL                       ; b256 85f0    best value, was BVAL
-            lda MSTRNG,x                     ; b258 bdff2c  muster strengths
+            sta BSTVAL                       ; b256 85f0    . best value, was BVAL
+            lda MSTRNG,x                     ; b258 bdff2c  . muster strengths
             lsr                              ; b25b 4a      
-            cmp CSTRNG,x                     ; b25c dd2b32  combat strengths
+            cmp CSTRNG,x                     ; b25c dd2b32  . combat strengths
             bcc _THNKLP_8                    ; b25f 901a    
-            lda LEVEL                        ; b261 a592    Level learner/beginner/intermediate/advanced/expert
+            lda LEVEL                        ; b261 a592    . Level learner/beginner/intermediate/advanced/expert
             cmp #$04                         ; b263 c904    
             bcc _THNKLP_9                    ; b265 901e    
-            jsr SETLL                        ; b267 2074ab  CORPSX/Y for X -> LAT, LON
+            jsr SETLL                        ; b267 2074ab  . CORPSX/Y for X -> LAT, LON
             jsr CHKZOC                       ; b26a 20a4b0  
             lda ZOC                          ; b26d a5ed    
             cmp #$02                         ; b26f c902    
             bcc _THNKLP_9                    ; b271 9012    
             lda #$03                         ; b273 a903    
-            sta MVMODE,x                     ; b275 9dc734  (expert level only) standard/assault/forced march/entrench
+            sta MVMODE,x                     ; b275 9dc734  . (expert level only) standard/assault/forced march/entrench
             jmp TOGSCN                       ; b278 4c41b5  
 
 _THNKLP_8:  lda IFRE-48,x                    ; b27b bd1e37  
             asl                              ; b27e 0a      
-            adc OFR                          ; b27f 65e5    Overall force ratio
+            adc OFR                          ; b27f 65e5    . Overall force ratio
             cmp #$30                         ; b281 c930    
             bcc DRLOOP                       ; b283 9010    
-_THNKLP_9:  lda CORPSX,x                     ; b285 bdb12b  longitude of all units
+_THNKLP_9:  lda CORPSX,x                     ; b285 bdb12b  . longitude of all units
             sec                              ; b288 38      
             sbc #$05                         ; b289 e905    
             bcs _THNKLP_10                   ; b28b b002    
@@ -2705,42 +2705,42 @@ _THNKLP_9:  lda CORPSX,x                     ; b285 bdb12b  longitude of all uni
 _THNKLP_10: sta OBJX-48,x                    ; b28f 9d3e35  
             jmp TOGSCN                       ; b292 4c41b5  
 
-DRLOOP:     jsr KEYPRS                       ; b295 209fa9  A <- CONSOL flags (opt/sel/strt); prevent display sleep
-            and SDIR                         ; b298 25d5    smaller dir / key mask
-            sta SDIR                         ; b29a 85d5    smaller dir / key mask
+DRLOOP:     jsr KEYPRS                       ; b295 209fa9  . A <- CONSOL flags (opt/sel/strt); prevent display sleep
+            and SDIR                         ; b298 25d5    . smaller dir / key mask
+            sta SDIR                         ; b29a 85d5    . smaller dir / key mask
             lda OBJX-48,x                    ; b29c bd3e35  
             ldy DIR                          ; b29f a4f2    
             bmi _DRLOOP_1                    ; b2a1 3004    
             clc                              ; b2a3 18      
             adc XINC,y                       ; b2a4 793fa0  
-_DRLOOP_1:  sta TARGX                        ; b2a7 85f4    square under consideration
+_DRLOOP_1:  sta TARGX                        ; b2a7 85f4    . square under consideration
             lda OBJY-48,x                    ; b2a9 bdb635  
             ldy DIR                          ; b2ac a4f2    
             bmi _DRLOOP_2                    ; b2ae 3004    
             clc                              ; b2b0 18      
-            adc YINC,y                       ; b2b1 793ea0  note YINC/XINC overlap
+            adc YINC,y                       ; b2b1 793ea0  . note YINC/XINC overlap
 _DRLOOP_2:  sta TARGY                        ; b2b4 85f5    
             lda #$00                         ; b2b6 a900    
             sta SQVAL                        ; b2b8 85b5    
             lda DIR                          ; b2ba a5f2    
             bmi _DRLOOP_3                    ; b2bc 3010    
-            sta WHORDS,x                     ; b2be 9d7933  what unit orders are (2 bits per order)
+            sta WHORDS,x                     ; b2be 9d7933  . what unit orders are (2 bits per order)
             jsr CALCNXT                      ; b2c1 208cab  
             ldy ARMY                         ; b2c4 a4ab    
-            lda EXEC,y                       ; b2c6 b9dc30  unit execution times
+            lda EXEC,y                       ; b2c6 b9dc30  . unit execution times
             bpl _DRLOOP_3                    ; b2c9 1003    
             jmp EVALSQ                       ; b2cb 4c0db5  
 
-_DRLOOP_3:  lda TARGX                        ; b2ce a5f4    square under consideration
+_DRLOOP_3:  lda TARGX                        ; b2ce a5f4    . square under consideration
             sta LON                          ; b2d0 85b2    
             lda TARGY                        ; b2d2 a5f5    
             sta LAT                          ; b2d4 85b1    
             ldy #$17                         ; b2d6 a017    
 _DRLOOP_4:  sty TEMPR                        ; b2d8 84ae    
-            lda JSTP,y                       ; b2da b950a0  Dirs to spiral around 5x5 square (incl 3x3 steps)
-            jsr DA2LL                        ; b2dd 20f2ab  Adds dir idx A to LAT/LON
+            lda JSTP,y                       ; b2da b950a0  . Dirs to spiral around 5x5 square (incl 3x3 steps)
+            jsr DA2LL                        ; b2dd 20f2ab  . Adds dir idx A to LAT/LON
             ldx #$a6                         ; b2e0 a2a6    
-_DRLOOP_5:  lda ARRIVE,x                     ; b2e2 bda62d  arrival turns
+_DRLOOP_5:  lda ARRIVE,x                     ; b2e2 bda62d  . arrival turns
             cmp TURN                         ; b2e5 c591    
             beq _DRLOOP_6                    ; b2e7 f002    
             bcs _DRLOOP_7                    ; b2e9 b017    
@@ -2752,7 +2752,7 @@ _DRLOOP_6:  lda OBJX-48,x                    ; b2eb bd3e35
             bne _DRLOOP_7                    ; b2f7 d009    
             cpx ARMY                         ; b2f9 e4ab    
             beq _DRLOOP_8                    ; b2fb f00a    
-            lda MSTRNG,x                     ; b2fd bdff2c  muster strengths
+            lda MSTRNG,x                     ; b2fd bdff2c  . muster strengths
             bne _DRLOOP_9                    ; b300 d007    
 _DRLOOP_7:  dex                              ; b302 ca      
             cpx #$30                         ; b303 e030    
@@ -2764,12 +2764,12 @@ _DRLOOP_9:  ldy TEMPR                        ; b309 a4ae
             dey                              ; b311 88      
             bpl _DRLOOP_4                    ; b312 10c4    
             ldx ARMY                         ; b314 a6ab    
-            lda MSTRNG,x                     ; b316 bdff2c  muster strengths
+            lda MSTRNG,x                     ; b316 bdff2c  . muster strengths
             sta LINARR+12                    ; b319 8d5230  
             lda #$00                         ; b31c a900    
             sta ACCLO                        ; b31e 85af    
             sta ACCHI                        ; b320 85b0    
-            sta SECDIR                       ; b322 85dc    secondary direction
+            sta SECDIR                       ; b322 85dc    . secondary direction
 __J__:      ldx #$00                         ; b324 a200    
             stx TEMPR                        ; b326 86ae    
 _J_1:       ldy #$00                         ; b328 a000    
@@ -2781,7 +2781,7 @@ _J_2:       lda LINARR,x                     ; b32a bd4630
             bne _J_2                         ; b333 d0f5    
 _J_3:       ldx TEMPR                        ; b335 a6ae    
             tya                              ; b337 98      
-            sta LV,x                         ; b338 9d2830  ?Source data seems to be save file name?
+            sta LV,x                         ; b338 9d2830  . ?Source data seems to be save file name?
             inx                              ; b33b e8      
             stx TEMPR                        ; b33c 86ae    
             cpx #$01                         ; b33e e001    
@@ -2802,7 +2802,7 @@ _J_6:       cpx #$04                         ; b356 e004
             bne _J_1                         ; b35c d0ca    
 _J_7:       lda #$00                         ; b35e a900    
             ldy #$04                         ; b360 a004    
-_J_8:       ldx LV,x                         ; b362 be2830  ?Source data seems to be save file name?
+_J_8:       ldx LV,x                         ; b362 be2830  . ?Source data seems to be save file name?
             cpx #$05                         ; b365 e005    
             beq _J_9                         ; b367 f003    
             clc                              ; b369 18      
@@ -2819,9 +2819,9 @@ _J_9:       dey                              ; b36c 88
             bne _J_10                        ; b381 d003    
             clc                              ; b383 18      
             adc #$30                         ; b384 6930    
-_J_10:      sta LPTS                         ; b386 85e3    line points: evaluating strength of the line
+_J_10:      sta LPTS                         ; b386 85e3    . line points: evaluating strength of the line
             ldx #$00                         ; b388 a200    
-_J_11:      lda LV,x                         ; b38a bd2830  ?Source data seems to be save file name?
+_J_11:      lda LV,x                         ; b38a bd2830  . ?Source data seems to be save file name?
             cmp #$04                         ; b38d c904    
             bcs _J_13                        ; b38f b01d    
             sta TEMPR                        ; b391 85ae    
@@ -2835,24 +2835,24 @@ _J_11:      lda LV,x                         ; b38a bd2830  ?Source data seems t
             iny                              ; b39d c8      
             lda LINARR,y                     ; b39e b94630  
             beq _J_13                        ; b3a1 f00b    
-            lda LPTS                         ; b3a3 a5e3    line points: evaluating strength of the line
+            lda LPTS                         ; b3a3 a5e3    . line points: evaluating strength of the line
             sec                              ; b3a5 38      
             sbc #$20                         ; b3a6 e920    
             bcs _J_12                        ; b3a8 b002    
             lda #$00                         ; b3aa a900    
-_J_12:      sta LPTS                         ; b3ac 85e3    line points: evaluating strength of the line
+_J_12:      sta LPTS                         ; b3ac 85e3    . line points: evaluating strength of the line
 _J_13:      inx                              ; b3ae e8      
             cpx #$05                         ; b3af e005    
             bne _J_11                        ; b3b1 d0d7    
             ldy #$00                         ; b3b3 a000    
-_J_14:      sty SQY                          ; b3b5 84e2    adj sq; also OCOLUM
+_J_14:      sty SQY                          ; b3b5 84e2    . adj sq; also OCOLUM
             ldx #$00                         ; b3b7 a200    
-_J_15:      stx SQX                          ; b3b9 86e1    adj sq; also COLUM
-            cpx SQY                          ; b3bb e4e2    adj sq; also OCOLUM
+_J_15:      stx SQX                          ; b3b9 86e1    . adj sq; also COLUM
+            cpx SQY                          ; b3bb e4e2    . adj sq; also OCOLUM
             beq _J_18                        ; b3bd f01f    
-            lda LV,x                         ; b3bf bd2830  ?Source data seems to be save file name?
+            lda LV,x                         ; b3bf bd2830  . ?Source data seems to be save file name?
             sec                              ; b3c2 38      
-            sbc LV,y                         ; b3c3 f92830  ?Source data seems to be save file name?
+            sbc LV,y                         ; b3c3 f92830  . ?Source data seems to be save file name?
             beq _J_18                        ; b3c6 f016    
             bmi _J_18                        ; b3c8 3014    
             tax                              ; b3ca aa      
@@ -2861,13 +2861,13 @@ _J_16:      asl                              ; b3cd 0a
             dex                              ; b3ce ca      
             bne _J_16                        ; b3cf d0fc    
             sta TEMPR                        ; b3d1 85ae    
-            lda LPTS                         ; b3d3 a5e3    line points: evaluating strength of the line
+            lda LPTS                         ; b3d3 a5e3    . line points: evaluating strength of the line
             sec                              ; b3d5 38      
             sbc TEMPR                        ; b3d6 e5ae    
             bcs _J_17                        ; b3d8 b002    
             lda #$00                         ; b3da a900    
-_J_17:      sta LPTS                         ; b3dc 85e3    line points: evaluating strength of the line
-_J_18:      ldx SQX                          ; b3de a6e1    adj sq; also COLUM
+_J_17:      sta LPTS                         ; b3dc 85e3    . line points: evaluating strength of the line
+_J_18:      ldx SQX                          ; b3de a6e1    . adj sq; also COLUM
             inx                              ; b3e0 e8      
             cpx #$05                         ; b3e1 e005    
             bne _J_15                        ; b3e3 d0d4    
@@ -2875,7 +2875,7 @@ _J_18:      ldx SQX                          ; b3de a6e1    adj sq; also COLUM
             cpy #$05                         ; b3e6 c005    
             bne _J_14                        ; b3e8 d0cb    
             ldx ARMY                         ; b3ea a6ab    
-            ldy SECDIR                       ; b3ec a4dc    secondary direction
+            ldy SECDIR                       ; b3ec a4dc    . secondary direction
             bne _J_19                        ; b3ee d006    
             lda IFRN-48,x                    ; b3f0 bda636  
             jmp __K__                        ; b3f3 4c0db4  
@@ -2892,7 +2892,7 @@ _J_20:      cpy #$02                         ; b400 c002
 
 _J_21:      lda IFRW-48,x                    ; b40a bd0e38  
 __K__:      sta TEMPR                        ; b40d 85ae    
-            ldx LPTS                         ; b40f a6e3    line points: evaluating strength of the line
+            ldx LPTS                         ; b40f a6e3    . line points: evaluating strength of the line
             beq _K_3                         ; b411 f013    
             lda ACCLO                        ; b413 a5af    
             clc                              ; b415 18      
@@ -2908,7 +2908,7 @@ _K_2:       dex                              ; b423 ca
 _K_3:       iny                              ; b426 c8      
             cpy #$04                         ; b427 c004    
             beq _K_6                         ; b429 f01e    
-            sty SECDIR                       ; b42b 84dc    secondary direction
+            sty SECDIR                       ; b42b 84dc    . secondary direction
             ldx #$18                         ; b42d a218    
 _K_4:       lda LINARR,x                     ; b42f bd4630  
             sta BAKARR,x                     ; b432 9d2d30  
@@ -2926,18 +2926,18 @@ _K_6:       lda ACCHI                        ; b449 a5b0
             sta SQVAL                        ; b44b 85b5    
             ldx #$2f                         ; b44d a22f    
             lda #$ff                         ; b44f a9ff    
-            sta NBVAL                        ; b451 85d0    another best value
-            sta CHRIS                        ; b453 85d9    midway counter
-_K_7:       lda ARRIVE,x                     ; b455 bda62d  arrival turns
+            sta NBVAL                        ; b451 85d0    . another best value
+            sta CHRIS                        ; b453 85d9    . midway counter
+_K_7:       lda ARRIVE,x                     ; b455 bda62d  . arrival turns
             cmp TURN                         ; b458 c591    
             beq _K_8                         ; b45a f002    
             bcs _K_10                        ; b45c b00d    
-_K_8:       jsr DSTXTARG                     ; b45e 2075ac  Distance unit X to TARGX/Y -> A
+_K_8:       jsr DSTXTARG                     ; b45e 2075ac  . Distance unit X to TARGX/Y -> A
             bne _K_9                         ; b461 d002    
-            stx CHRIS                        ; b463 86d9    midway counter
-_K_9:       cmp NBVAL                        ; b465 c5d0    another best value
+            stx CHRIS                        ; b463 86d9    . midway counter
+_K_9:       cmp NBVAL                        ; b465 c5d0    . another best value
             bcs _K_10                        ; b467 b002    
-            sta NBVAL                        ; b469 85d0    another best value
+            sta NBVAL                        ; b469 85d0    . another best value
 _K_10:      dex                              ; b46b ca      
             bpl _K_7                         ; b46c 10e7    
             ldx ARMY                         ; b46e a6ab    
@@ -2949,27 +2949,27 @@ _K_10:      dex                              ; b46b ca
             bcc _K_11                        ; b47a 900e    
             asl                              ; b47c 0a      
             sta TEMPR                        ; b47d 85ae    
-            ldy NBVAL                        ; b47f a4d0    another best value
+            ldy NBVAL                        ; b47f a4d0    . another best value
             beq _K_12                        ; b481 f01a    
             lda #$06                         ; b483 a906    
             sec                              ; b485 38      
-            sbc NBVAL                        ; b486 e5d0    another best value
-            sta NBVAL                        ; b488 85d0    another best value
-_K_11:      ldy NBVAL                        ; b48a a4d0    another best value
+            sbc NBVAL                        ; b486 e5d0    . another best value
+            sta NBVAL                        ; b488 85d0    . another best value
+_K_11:      ldy NBVAL                        ; b48a a4d0    . another best value
             bne _K_14                        ; b48c d015    
-            ldx CHRIS                        ; b48e a6d9    midway counter
+            ldx CHRIS                        ; b48e a6d9    . midway counter
             cpx #$2b                         ; b490 e02b    
             bcs _K_12                        ; b492 b009    
-            lda MSTRNG,x                     ; b494 bdff2c  muster strengths
+            lda MSTRNG,x                     ; b494 bdff2c  . muster strengths
             lsr                              ; b497 4a      
-            cmp CSTRNG,x                     ; b498 dd2b32  combat strengths
+            cmp CSTRNG,x                     ; b498 dd2b32  . combat strengths
             bcc _K_13                        ; b49b 9001    
 _K_12:      dey                              ; b49d 88      
 _K_13:      sty SQVAL                        ; b49e 84b5    
             jmp EVALSQ                       ; b4a0 4c0db5  
 
 _K_14:      ldy TRNTYP                       ; b4a3 a4b4    
-            lda DEFNC,y                      ; b4a5 b971a0  Defensive combat modifiers; 1 -> half, 2 -> no effect, 3 -> double
+            lda DEFNC,y                      ; b4a5 b971a0  . Defensive combat modifiers; 1 -> half, 2 -> no effect, 3 -> double
             cpy #$02                         ; b4a8 c002    
             bne _K_16                        ; b4aa d016    
             ldy TRNCOD                       ; b4ac a4e7    
@@ -2988,7 +2988,7 @@ _K_16:      asl                              ; b4c2 0a
             clc                              ; b4c3 18      
             adc TEMPR                        ; b4c4 65ae    
             sta TEMPR                        ; b4c6 85ae    
-            ldy NBVAL                        ; b4c8 a4d0    another best value
+            ldy NBVAL                        ; b4c8 a4d0    . another best value
             lda #$00                         ; b4ca a900    
             clc                              ; b4cc 18      
 _K_17:      adc TEMPR                        ; b4cd 65ae    
@@ -3005,11 +3005,11 @@ _K_20:      sta SQVAL                        ; b4df 85b5
             ldy DIR                          ; b4e1 a4f2    
             bmi _K_24                        ; b4e3 301d    
             ldx #$a6                         ; b4e5 a2a6    
-_K_21:      lda ARRIVE,x                     ; b4e7 bda62d  arrival turns
+_K_21:      lda ARRIVE,x                     ; b4e7 bda62d  . arrival turns
             cmp TURN                         ; b4ea c591    
             beq _K_22                        ; b4ec f002    
             bcs _K_23                        ; b4ee b00d    
-_K_22:      jsr DSTXTARG                     ; b4f0 2075ac  Distance unit X to TARGX/Y -> A
+_K_22:      jsr DSTXTARG                     ; b4f0 2075ac  . Distance unit X to TARGX/Y -> A
             bne _K_23                        ; b4f3 d008    
             cpx ARMY                         ; b4f5 e4ab    
             beq _K_23                        ; b4f7 f004    
@@ -3019,18 +3019,18 @@ _K_23:      dex                              ; b4fd ca
             cpx #$30                         ; b4fe e030    
             bcs _K_21                        ; b500 b0e5    
 _K_24:      ldx ARMY                         ; b502 a6ab    
-            jsr DSTXTARG                     ; b504 2075ac  Distance unit X to TARGX/Y -> A
+            jsr DSTXTARG                     ; b504 2075ac  . Distance unit X to TARGX/Y -> A
             asl                              ; b507 0a      
             asl                              ; b508 0a      
             asl                              ; b509 0a      
-            jsr SQVALSBC                     ; b50a 2022ac  A -> MAX(SQVAL - A, 0)
+            jsr SQVALSBC                     ; b50a 2022ac  . A -> MAX(SQVAL - A, 0)
 EVALSQ:     ldy DIR                          ; b50d a4f2    
             ldx ARMY                         ; b50f a6ab    
             lda SQVAL                        ; b511 a5b5    
-            cmp BSTVAL                       ; b513 c5f0    best value, was BVAL
+            cmp BSTVAL                       ; b513 c5f0    . best value, was BVAL
             bcc _EVALSQ_1                    ; b515 9004    
-            sta BSTVAL                       ; b517 85f0    best value, was BVAL
-            sty BSTIDX                       ; b519 84f1    best index, was BONE
+            sta BSTVAL                       ; b517 85f0    . best value, was BVAL
+            sty BSTIDX                       ; b519 84f1    . best index, was BONE
 _EVALSQ_1:  iny                              ; b51b c8      
             cpy #$04                         ; b51c c004    
             beq _EVALSQ_2                    ; b51e f005    
@@ -3038,21 +3038,21 @@ _EVALSQ_1:  iny                              ; b51b c8
             jmp DRLOOP                       ; b522 4c95b2  
 
 _EVALSQ_2:  lda OBJX-48,x                    ; b525 bd3e35  
-            ldy BSTIDX                       ; b528 a4f1    best index, was BONE
+            ldy BSTIDX                       ; b528 a4f1    . best index, was BONE
             bmi _EVALSQ_3                    ; b52a 3004    
             clc                              ; b52c 18      
             adc XINC,y                       ; b52d 793fa0  
 _EVALSQ_3:  sta OBJX-48,x                    ; b530 9d3e35  
             lda OBJY-48,x                    ; b533 bdb635  
-            ldy BSTIDX                       ; b536 a4f1    best index, was BONE
+            ldy BSTIDX                       ; b536 a4f1    . best index, was BONE
             bmi _EVALSQ_4                    ; b538 3004    
             clc                              ; b53a 18      
-            adc YINC,y                       ; b53b 793ea0  note YINC/XINC overlap
+            adc YINC,y                       ; b53b 793ea0  . note YINC/XINC overlap
 _EVALSQ_4:  sta OBJY-48,x                    ; b53e 9db635  
-TOGSCN:     lda GRAFP3 / TRIG0               ; b541 ad10d0  W: gfx shape for P3 / R: joystick 0 trigger (0=press)
+TOGSCN:     lda GRAFP3 / TRIG0               ; b541 ad10d0  . W: gfx shape for P3 / R: joystick 0 trigger (0=press)
             beq _TOGSCN_3                    ; b544 f026    
-            jsr KEYPRS                       ; b546 209fa9  A <- CONSOL flags (opt/sel/strt); prevent display sleep
-            and SDIR                         ; b549 25d5    smaller dir / key mask
+            jsr KEYPRS                       ; b546 209fa9  . A <- CONSOL flags (opt/sel/strt); prevent display sleep
+            and SDIR                         ; b549 25d5    . smaller dir / key mask
             and #$04                         ; b54b 2904    
             bne _TOGSCN_3                    ; b54d d01d    
             ldx #$1e                         ; b54f a21e    Reset pg0 via $2f9b -> $80-$9e
@@ -3066,113 +3066,113 @@ _TOGSCN_1:  lda $80,x                        ; b551 b580
             lda TEMPZ                        ; b560 a5f3    
             bmi _TOGSCN_2                    ; b562 3003    
             jsr __Q__                        ; b564 208fb7  
-_TOGSCN_2:  lda SHPOS0                       ; b567 a588    shadows player 0 position
-            sta HPOSP0 / M0PF                ; b569 8d00d0  W: h.pos of P0 / R: missile 0 to pf collision
-_TOGSCN_3:  jsr KEYPRS                       ; b56c 209fa9  A <- CONSOL flags (opt/sel/strt); prevent display sleep
-            and SDIR                         ; b56f 25d5    smaller dir / key mask
+_TOGSCN_2:  lda SHPOS0                       ; b567 a588    . shadows player 0 position
+            sta HPOSP0 / M0PF                ; b569 8d00d0  . W: h.pos of P0 / R: missile 0 to pf collision
+_TOGSCN_3:  jsr KEYPRS                       ; b56c 209fa9  . A <- CONSOL flags (opt/sel/strt); prevent display sleep
+            and SDIR                         ; b56f 25d5    . smaller dir / key mask
             and #$01                         ; b571 2901    
             bne _TOGSCN_4                    ; b573 d00b    
-            lda THUNK                        ; b575 a5fa    Non-zero after AI first pass
+            lda THUNK                        ; b575 a5fa    . Non-zero after AI first pass
             bne WRAPUP                       ; b577 d027    
             ldx #$08                         ; b579 a208    
-            stx SORRY                        ; b57b 86b7    Showed sorry; clear when ready
-            jsr SHOWERR                      ; b57d 2042ac  Show ERRMSG X at TXTWDW+110
+            stx SORRY                        ; b57b 86b7    . Showed sorry; clear when ready
+            jsr SHOWERR                      ; b57d 2042ac  . Show ERRMSG X at TXTWDW+110
 _TOGSCN_4:  lda #$ff                         ; b580 a9ff    
-            sta SDIR                         ; b582 85d5    smaller dir / key mask
+            sta SDIR                         ; b582 85d5    . smaller dir / key mask
             ldx ARMY                         ; b584 a6ab    
             dex                              ; b586 ca      
             cpx #$30                         ; b587 e030    
             bcc _TOGSCN_5                    ; b589 9003    
             jmp THNKLP                       ; b58b 4ce1b1  
 
-_TOGSCN_5:  stx THUNK                        ; b58e 86fa    Non-zero after AI first pass
-            lda SORRY                        ; b590 a5b7    Showed sorry; clear when ready
+_TOGSCN_5:  stx THUNK                        ; b58e 86fa    . Non-zero after AI first pass
+            lda SORRY                        ; b590 a5b7    . Showed sorry; clear when ready
             beq _TOGSCN_6                    ; b592 f009    
             lda #$00                         ; b594 a900    
-            sta SORRY                        ; b596 85b7    Showed sorry; clear when ready
+            sta SORRY                        ; b596 85b7    . Showed sorry; clear when ready
             ldx #$09                         ; b598 a209    
-            jsr SHOWERR                      ; b59a 2042ac  Show ERRMSG X at TXTWDW+110
+            jsr SHOWERR                      ; b59a 2042ac  . Show ERRMSG X at TXTWDW+110
 _TOGSCN_6:  jmp RETHNK                       ; b59d 4cdfb1  
 
 WRAPUP:     ldx #$a6                         ; b5a0 a2a6    
 __L__:      stx ARMY                         ; b5a2 86ab    
-            lda ARRIVE,x                     ; b5a4 bda62d  arrival turns
+            lda ARRIVE,x                     ; b5a4 bda62d  . arrival turns
             cmp TURN                         ; b5a7 c591    
             bcc _L_1                         ; b5a9 9003    
             jmp __O__                        ; b5ab 4c76b6  
 
 _L_1:       lda OBJX-48,x                    ; b5ae bd3e35  
-            cmp CORPSX,x                     ; b5b1 ddb12b  longitude of all units
+            cmp CORPSX,x                     ; b5b1 ddb12b  . longitude of all units
             bne _L_2                         ; b5b4 d013    
-            lda CORPSY,x                     ; b5b6 bd582c  latitude of all units
+            lda CORPSY,x                     ; b5b6 bd582c  . latitude of all units
             cmp OBJY-48,x                    ; b5b9 ddb635  
             bne _L_2                         ; b5bc d00b    
-            lda LEVEL                        ; b5be a592    Level learner/beginner/intermediate/advanced/expert
+            lda LEVEL                        ; b5be a592    . Level learner/beginner/intermediate/advanced/expert
             cmp #$04                         ; b5c0 c904    
             bne _L_2                         ; b5c2 d005    
             lda #$03                         ; b5c4 a903    
-            sta MVMODE,x                     ; b5c6 9dc734  (expert level only) standard/assault/forced march/entrench
+            sta MVMODE,x                     ; b5c6 9dc734  . (expert level only) standard/assault/forced march/entrench
 _L_2:       lda OBJX-48,x                    ; b5c9 bd3e35  
             ldy #$03                         ; b5cc a003    
             sec                              ; b5ce 38      
-            sbc CORPSX,x                     ; b5cf fdb12b  longitude of all units
+            sbc CORPSX,x                     ; b5cf fdb12b  . longitude of all units
             bpl _L_3                         ; b5d2 1005    
             ldy #$01                         ; b5d4 a001    
-            jsr NEGA                         ; b5d6 201ab9  A -> -A
-_L_3:       sty HDIR                         ; b5d9 84d3    horiz dir
-            sta HRNGE                        ; b5db 85d6    horiz range
+            jsr NEGA                         ; b5d6 201ab9  . A -> -A
+_L_3:       sty HDIR                         ; b5d9 84d3    . horiz dir
+            sta HRNGE                        ; b5db 85d6    . horiz range
             ldy #$00                         ; b5dd a000    
             lda OBJY-48,x                    ; b5df bdb635  
             sec                              ; b5e2 38      
-            sbc CORPSY,x                     ; b5e3 fd582c  latitude of all units
+            sbc CORPSY,x                     ; b5e3 fd582c  . latitude of all units
             bpl _L_4                         ; b5e6 1005    
             ldy #$02                         ; b5e8 a002    
-            jsr NEGA                         ; b5ea 201ab9  A -> -A
-_L_4:       cmp HRNGE                        ; b5ed c5d6    horiz range
+            jsr NEGA                         ; b5ea 201ab9  . A -> -A
+_L_4:       cmp HRNGE                        ; b5ed c5d6    . horiz range
             bcc _L_5                         ; b5ef 900f    
-            sta LRNGE                        ; b5f1 85d7    larger range
-            lda HRNGE                        ; b5f3 a5d6    horiz range
-            sta SRNGE                        ; b5f5 85d8    smaller range
-            lda HDIR                         ; b5f7 a5d3    horiz dir
-            sta SDIR                         ; b5f9 85d5    smaller dir / key mask
-            sty LDIR                         ; b5fb 84d4    larger dir
+            sta LRNGE                        ; b5f1 85d7    . larger range
+            lda HRNGE                        ; b5f3 a5d6    . horiz range
+            sta SRNGE                        ; b5f5 85d8    . smaller range
+            lda HDIR                         ; b5f7 a5d3    . horiz dir
+            sta SDIR                         ; b5f9 85d5    . smaller dir / key mask
+            sty LDIR                         ; b5fb 84d4    . larger dir
             jmp __M__                        ; b5fd 4c0cb6  
 
-_L_5:       sta SRNGE                        ; b600 85d8    smaller range
-            sty SDIR                         ; b602 84d5    smaller dir / key mask
-            lda HRNGE                        ; b604 a5d6    horiz range
-            sta LRNGE                        ; b606 85d7    larger range
-            ldy HDIR                         ; b608 a4d3    horiz dir
-            sty LDIR                         ; b60a 84d4    larger dir
+_L_5:       sta SRNGE                        ; b600 85d8    . smaller range
+            sty SDIR                         ; b602 84d5    . smaller dir / key mask
+            lda HRNGE                        ; b604 a5d6    . horiz range
+            sta LRNGE                        ; b606 85d7    . larger range
+            ldy HDIR                         ; b608 a4d3    . horiz dir
+            sty LDIR                         ; b60a 84d4    . larger dir
 __M__:      lda #$00                         ; b60c a900    
-            sta RCNT                         ; b60e 85db    counter for Russian orders
-            sta RORD1                        ; b610 85d1    Russian orders
+            sta RCNT                         ; b60e 85db    . counter for Russian orders
+            sta RORD1                        ; b610 85d1    . Russian orders
             sta RORD2                        ; b612 85d2    
-            lda LRNGE                        ; b614 a5d7    larger range
+            lda LRNGE                        ; b614 a5d7    . larger range
             clc                              ; b616 18      
-            adc SRNGE                        ; b617 65d8    smaller range
+            adc SRNGE                        ; b617 65d8    . smaller range
             sta RANGE                        ; b619 85da    
             beq _N_2                         ; b61b f048    
-            lda LRNGE                        ; b61d a5d7    larger range
+            lda LRNGE                        ; b61d a5d7    . larger range
             lsr                              ; b61f 4a      
-            sta CHRIS                        ; b620 85d9    midway counter
-_M_1:       lda CHRIS                        ; b622 a5d9    midway counter
+            sta CHRIS                        ; b620 85d9    . midway counter
+_M_1:       lda CHRIS                        ; b622 a5d9    . midway counter
             clc                              ; b624 18      
-            adc SRNGE                        ; b625 65d8    smaller range
-            sta CHRIS                        ; b627 85d9    midway counter
+            adc SRNGE                        ; b625 65d8    . smaller range
+            sta CHRIS                        ; b627 85d9    . midway counter
             sec                              ; b629 38      
             sbc RANGE                        ; b62a e5da    
             bcs _M_2                         ; b62c b004    
-            lda LDIR                         ; b62e a5d4    larger dir
+            lda LDIR                         ; b62e a5d4    . larger dir
             bcc _M_3                         ; b630 9004    
-_M_2:       sta CHRIS                        ; b632 85d9    midway counter
-            lda SDIR                         ; b634 a5d5    smaller dir / key mask
+_M_2:       sta CHRIS                        ; b632 85d9    . midway counter
+            lda SDIR                         ; b634 a5d5    . smaller dir / key mask
 _M_3:       sta DIR                          ; b636 85f2    
-            lda RCNT                         ; b638 a5db    counter for Russian orders
+            lda RCNT                         ; b638 a5db    . counter for Russian orders
             and #$03                         ; b63a 2903    
             tay                              ; b63c a8      
             sta TEMPR                        ; b63d 85ae    
-            lda RCNT                         ; b63f a5db    counter for Russian orders
+            lda RCNT                         ; b63f a5db    . counter for Russian orders
             lsr                              ; b641 4a      
             lsr                              ; b642 4a      
             tax                              ; b643 aa      
@@ -3184,23 +3184,23 @@ __N__:      dey                              ; b646 88
             jmp __N__                        ; b64b 4c46b6  
 
 _N_1:       ldy TEMPR                        ; b64e a4ae    
-            eor RORD1,x                      ; b650 55d1    Russian orders
-            and MASKO,y                      ; b652 3938a0  mask values for decoding orders
-            eor RORD1,x                      ; b655 55d1    Russian orders
-            sta RORD1,x                      ; b657 95d1    Russian orders
-            inc RCNT                         ; b659 e6db    counter for Russian orders
-            ldx RCNT                         ; b65b a6db    counter for Russian orders
+            eor RORD1,x                      ; b650 55d1    . Russian orders
+            and MASKO,y                      ; b652 3938a0  . mask values for decoding orders
+            eor RORD1,x                      ; b655 55d1    . Russian orders
+            sta RORD1,x                      ; b657 95d1    . Russian orders
+            inc RCNT                         ; b659 e6db    . counter for Russian orders
+            ldx RCNT                         ; b65b a6db    . counter for Russian orders
             cpx #$08                         ; b65d e008    
             bcs _N_2                         ; b65f b004    
             cpx RANGE                        ; b661 e4da    
             bcc _M_1                         ; b663 90bd    
 _N_2:       ldx ARMY                         ; b665 a6ab    
-            lda RORD1                        ; b667 a5d1    Russian orders
-            sta WHORDS,x                     ; b669 9d7933  what unit orders are (2 bits per order)
+            lda RORD1                        ; b667 a5d1    . Russian orders
+            sta WHORDS,x                     ; b669 9d7933  . what unit orders are (2 bits per order)
             lda RORD2                        ; b66c a5d2    
-            sta WHORDH,x                     ; b66e 9d2034  unit orders (high bits)
-            lda RCNT                         ; b671 a5db    counter for Russian orders
-            sta HMORDS,x                     ; b673 9dd232  how many orders queued for each unit
+            sta WHORDH,x                     ; b66e 9d2034  . unit orders (high bits)
+            lda RCNT                         ; b671 a5db    . counter for Russian orders
+            sta HMORDS,x                     ; b673 9dd232  . how many orders queued for each unit
 __O__:      dex                              ; b676 ca      
             cpx #$30                         ; b677 e030    
             bcc _O_1                         ; b679 9003    
@@ -3216,62 +3216,62 @@ DBGDLST:
     !byte $2f,$35,$00,$21,$32,$25,$00,$32,$25,$21,$24,$39,$00,$00,$00       ; b6bf /5.!2%.2%!$9...
 
 INITDLST:   lda #$2f                         ; b6ce a92f    set up display list
-            sta SDMCTL                       ; b6d0 8d2f02  Direct Memory Access (DMA) enable
+            sta SDMCTL                       ; b6d0 8d2f02  . Direct Memory Access (DMA) enable
             lda #$6a                         ; b6d3 a96a    
-            sta COLOR0                       ; b6d5 8dc402  Color register 0, color of playfield 0, shadows $D016
+            sta COLOR0                       ; b6d5 8dc402  . Color register 0, color of playfield 0, shadows $D016
             lda #$ba                         ; b6d8 a9ba    
-            sta SDLSTLL                      ; b6da 8d3002  Starting address of the display list
+            sta SDLSTLL                      ; b6da 8d3002  . Starting address of the display list
             lda #$2f                         ; b6dd a92f    
-            sta SDLSTLH                      ; b6df 8d3102  Starting address of the display list
+            sta SDLSTLH                      ; b6df 8d3102  . Starting address of the display list
             rts                              ; b6e2 60      
 
-DEBUG:      sta ICAX12                       ; b6e3 8d6a03  Aux command modifier
+DEBUG:      sta ICAX12                       ; b6e3 8d6a03  . Aux command modifier
             stx TEMPR                        ; b6e6 86ae    
             lda #$00                         ; b6e8 a900    
             sta TEMPZ                        ; b6ea 85f3    
-            sta HPOSP0 / M0PF                ; b6ec 8d00d0  W: h.pos of P0 / R: missile 0 to pf collision
-            sta HPOSP1 / M1PF                ; b6ef 8d01d0  W: h.pos of P1 / R: missile 1 to pf collision
-            sta HPOSP2 / M2PF                ; b6f2 8d02d0  W: h.pos of P2 / R: missile 2 to pf collision
-            sta HPOSP3 / M3PF                ; b6f5 8d03d0  W: h.pos of P3 / R: missile 3 to pf collision
+            sta HPOSP0 / M0PF                ; b6ec 8d00d0  . W: h.pos of P0 / R: missile 0 to pf collision
+            sta HPOSP1 / M1PF                ; b6ef 8d01d0  . W: h.pos of P1 / R: missile 1 to pf collision
+            sta HPOSP2 / M2PF                ; b6f2 8d02d0  . W: h.pos of P2 / R: missile 2 to pf collision
+            sta HPOSP3 / M3PF                ; b6f5 8d03d0  . W: h.pos of P3 / R: missile 3 to pf collision
             lda #$7f                         ; b6f8 a97f    
-            sta SDLSTLL                      ; b6fa 8d3002  Starting address of the display list
+            sta SDLSTLL                      ; b6fa 8d3002  . Starting address of the display list
             lda #$b6                         ; b6fd a9b6    
-            sta SDLSTLH                      ; b6ff 8d3102  Starting address of the display list
+            sta SDLSTLH                      ; b6ff 8d3102  . Starting address of the display list
             lda #$22                         ; b702 a922    
-            sta SDMCTL                       ; b704 8d2f02  Direct Memory Access (DMA) enable
+            sta SDMCTL                       ; b704 8d2f02  . Direct Memory Access (DMA) enable
             lda #$b0                         ; b707 a9b0    
-            sta COLOR0                       ; b709 8dc402  Color register 0, color of playfield 0, shadows $D016
+            sta COLOR0                       ; b709 8dc402  . Color register 0, color of playfield 0, shadows $D016
             lda #$40                         ; b70c a940    
-            sta NMIEN                        ; b70e 8d0ed4  Non-maskable interrupt (NMI) enable
+            sta NMIEN                        ; b70e 8d0ed4  . Non-maskable interrupt (NMI) enable
             ldy #$62                         ; b711 a062    
             ldx #$e4                         ; b713 a2e4    
             lda #$07                         ; b715 a907    
-            jsr SETVBV                       ; b717 205ce4  Set system timers during the VBLANK routine
+            jsr SETVBV                       ; b717 205ce4  . Set system timers during the VBLANK routine
             lda #$02                         ; b71a a902    
-            jsr DELAYA                       ; b71c 20dfaa  Wait A/60 seconds
+            jsr DELAYA                       ; b71c 20dfaa  . Wait A/60 seconds
             lda #$b1                         ; b71f a9b1    
-            sta ICBAL2                       ; b721 8d6403  address of data buffer or file name
+            sta ICBAL2                       ; b721 8d6403  . address of data buffer or file name
             lda #$9b                         ; b724 a99b    
             sta ICBAH2                       ; b726 8d6503  
             lda #$00                         ; b729 a900    
-            sta ICAX22                       ; b72b 8d6b03  Second aux byte
+            sta ICAX22                       ; b72b 8d6b03  . Second aux byte
             lda #$03                         ; b72e a903    
             jsr __R__                        ; b730 20a1b7  
             bpl _DEBUG_2                     ; b733 102f    
             cpy #$82                         ; b735 c082    
             bne _DEBUG_1                     ; b737 d025    
             lda #$38                         ; b739 a938    
-            sta COLOR0                       ; b73b 8dc402  Color register 0, color of playfield 0, shadows $D016
+            sta COLOR0                       ; b73b 8dc402  . Color register 0, color of playfield 0, shadows $D016
             lda #$0c                         ; b73e a90c    
             jsr __R__                        ; b740 20a1b7  
             lda #$bf                         ; b743 a9bf    
-            sta ICBAL2                       ; b745 8d6403  address of data buffer or file name
+            sta ICBAL2                       ; b745 8d6403  . address of data buffer or file name
             lda #$9b                         ; b748 a99b    
             sta ICBAH2                       ; b74a 8d6503  
             lda #$80                         ; b74d a980    
-            sta ICAX22                       ; b74f 8d6b03  Second aux byte
+            sta ICAX22                       ; b74f 8d6b03  . Second aux byte
             lda #$ff                         ; b752 a9ff    
-            sta CH                           ; b754 8dfc02  Internal hardware value for the last key pressed
+            sta CH                           ; b754 8dfc02  . Internal hardware value for the last key pressed
             lda #$03                         ; b757 a903    
             jsr __R__                        ; b759 20a1b7  
             bpl _DEBUG_2                     ; b75c 1006    
@@ -3279,11 +3279,11 @@ _DEBUG_1:   jsr __S__                        ; b75e 20a9b7
             jmp __P__                        ; b761 4c82b7  
 
 _DEBUG_2:   lda #$00                         ; b764 a900    
-            sta ICBAL2                       ; b766 8d6403  address of data buffer or file name
+            sta ICBAL2                       ; b766 8d6403  . address of data buffer or file name
             lda #$24                         ; b769 a924    
             sta ICBAH2                       ; b76b 8d6503  
             lda #$d8                         ; b76e a9d8    
-            sta ICBLL2                       ; b770 8d6803  number of bytes to transfer
+            sta ICBLL2                       ; b770 8d6803  . number of bytes to transfer
             lda #$16                         ; b773 a916    
             sta ICBLH2                       ; b775 8d6903  
             lda TEMPR                        ; b778 a5ae    
@@ -3293,32 +3293,32 @@ _DEBUG_2:   lda #$00                         ; b764 a900
 __P__:      lda #$0c                         ; b782 a90c    
             jsr __R__                        ; b784 20a1b7  
             lda #$03                         ; b787 a903    
-            sta SKCTL / SKSTAT               ; b789 8d0fd2  W: Serial port control / R: status
+            sta SKCTL / SKSTAT               ; b789 8d0fd2  . W: Serial port control / R: status
             tya                              ; b78c 98      
             bmi __S__                        ; b78d 301a    
-__Q__:      jsr INITDLST                     ; b78f 20ceb6  set up display list
+__Q__:      jsr INITDLST                     ; b78f 20ceb6  . set up display list
 SETVVBLK:   ldy #$44                         ; b792 a044    Set VVBLKD handler to VBISRV !! referenced as both code and data
             ldx #$a3                         ; b794 a2a3    
 CLRVVBLK:   lda #$07                         ; b796 a907    
-            jsr SETVBV                       ; b798 205ce4  Set system timers during the VBLANK routine
+            jsr SETVBV                       ; b798 205ce4  . Set system timers during the VBLANK routine
             lda #$c0                         ; b79b a9c0    
-            sta NMIEN                        ; b79d 8d0ed4  Non-maskable interrupt (NMI) enable
+            sta NMIEN                        ; b79d 8d0ed4  . Non-maskable interrupt (NMI) enable
             rts                              ; b7a0 60      
 
-__R__:      sta ICCOM2                       ; b7a1 8d6203  I/O command, block 2
+__R__:      sta ICCOM2                       ; b7a1 8d6203  . I/O command, block 2
             ldx #$20                         ; b7a4 a220    
-            jmp CIOV                         ; b7a6 4c56e4  Central Input/Output (CIO) utility entry
+            jmp CIOV                         ; b7a6 4c56e4  . Central Input/Output (CIO) utility entry
 
 __S__:      jsr __Q__                        ; b7a9 208fb7  
             ldx #$04                         ; b7ac a204    
-            jsr SHOWERR                      ; b7ae 2042ac  Show ERRMSG X at TXTWDW+110
+            jsr SHOWERR                      ; b7ae 2042ac  . Show ERRMSG X at TXTWDW+110
             dey                              ; b7b1 88      
-            lda ICSTA2                       ; b7b2 ad6303  I/O status
-            jsr DNUMBER                      ; b7b5 20a3aa  Show A as base10 number in TXTWDW
+            lda ICSTA2                       ; b7b2 ad6303  . I/O status
+            jsr DNUMBER                      ; b7b5 20a3aa  . Show A as base10 number in TXTWDW
             lda #$ff                         ; b7b8 a9ff    
             sta TEMPZ                        ; b7ba 85f3    
-            jsr DELAYA                       ; b7bc 20dfaa  Wait A/60 seconds
-            jsr CLRTXT                       ; b7bf 20b8a9  Clear TXTWDW + 106-137
+            jsr DELAYA                       ; b7bc 20dfaa  . Wait A/60 seconds
+            jsr CLRTXT                       ; b7bf 20b8a9  . Clear TXTWDW + 106-137
             rts                              ; b7c2 60      
 
 CALIFR:     lda #$00                         ; b7c3 a900    
@@ -3327,67 +3327,67 @@ CALIFR:     lda #$00                         ; b7c3 a900
             sta IFR2                         ; b7c9 85df    
             sta IRF3                         ; b7cb 85e0    
             sta IFRHI                        ; b7cd 85e4    
-            sta MVMODE,x                     ; b7cf 9dc734  (expert level only) standard/assault/forced march/entrench
+            sta MVMODE,x                     ; b7cf 9dc734  . (expert level only) standard/assault/forced march/entrench
             lda #$01                         ; b7d2 a901    
-            sta RFR                          ; b7d4 85b3    Russian force ratio: local Russian strength
-            jsr SETLL                        ; b7d6 2074ab  CORPSX/Y for X -> LAT, LON
+            sta RFR                          ; b7d4 85b3    . Russian force ratio: local Russian strength
+            jsr SETLL                        ; b7d6 2074ab  . CORPSX/Y for X -> LAT, LON
             ldy #$a6                         ; b7d9 a0a6    
-            sty BSTVAL                       ; b7db 84f0    best value, was BVAL
-__T__:      lda ARRIVE,y                     ; b7dd b9a62d  arrival turns
+            sty BSTVAL                       ; b7db 84f0    . best value, was BVAL
+__T__:      lda ARRIVE,y                     ; b7dd b9a62d  . arrival turns
             cmp TURN                         ; b7e0 c591    
             beq _T_1                         ; b7e2 f005    
             bcc _T_1                         ; b7e4 9003    
             jmp __U__                        ; b7e6 4c6fb8  
 
-_T_1:       lda CORPSY,y                     ; b7e9 b9582c  latitude of all units
+_T_1:       lda CORPSY,y                     ; b7e9 b9582c  . latitude of all units
             sec                              ; b7ec 38      
             sbc LAT                          ; b7ed e5b1    
-            sta SQY                          ; b7ef 85e2    adj sq; also OCOLUM
-            jsr ABSA                         ; b7f1 2018b9  A -> abs(A)
+            sta SQY                          ; b7ef 85e2    . adj sq; also OCOLUM
+            jsr ABSA                         ; b7f1 2018b9  . A -> abs(A)
             sta TEMPR                        ; b7f4 85ae    
-            lda CORPSX,y                     ; b7f6 b9b12b  longitude of all units
+            lda CORPSX,y                     ; b7f6 b9b12b  . longitude of all units
             sec                              ; b7f9 38      
             sbc LON                          ; b7fa e5b2    
-            sta SQX                          ; b7fc 85e1    adj sq; also COLUM
-            jsr ABSA                         ; b7fe 2018b9  A -> abs(A)
+            sta SQX                          ; b7fc 85e1    . adj sq; also COLUM
+            jsr ABSA                         ; b7fe 2018b9  . A -> abs(A)
             clc                              ; b801 18      
             adc TEMPR                        ; b802 65ae    
-            cmp BSTVAL                       ; b804 c5f0    best value, was BVAL
+            cmp BSTVAL                       ; b804 c5f0    . best value, was BVAL
             bcs _T_2                         ; b806 b008    
             cpy #$30                         ; b808 c030    
             bcs _T_2                         ; b80a b004    
-            sta BSTVAL                       ; b80c 85f0    best value, was BVAL
-            sty BSTIDX                       ; b80e 84f1    best index, was BONE
+            sta BSTVAL                       ; b80c 85f0    . best value, was BVAL
+            sty BSTIDX                       ; b80e 84f1    . best index, was BONE
 _T_2:       sta TEMPR                        ; b810 85ae    
-            lda SQX                          ; b812 a5e1    adj sq; also COLUM
+            lda SQX                          ; b812 a5e1    . adj sq; also COLUM
             bpl _T_3                         ; b814 100e    
-            lda SQY                          ; b816 a5e2    adj sq; also OCOLUM
+            lda SQY                          ; b816 a5e2    . adj sq; also OCOLUM
             bpl _T_5                         ; b818 1025    
             ldx #$01                         ; b81a a201    
-            cmp SQX                          ; b81c c5e1    adj sq; also COLUM
+            cmp SQX                          ; b81c c5e1    . adj sq; also COLUM
             bcs _T_6                         ; b81e b02c    
             ldx #$02                         ; b820 a202    
             bcc _T_6                         ; b822 9028    
-_T_3:       lda SQY                          ; b824 a5e2    adj sq; also OCOLUM
+_T_3:       lda SQY                          ; b824 a5e2    . adj sq; also OCOLUM
             bpl _T_4                         ; b826 100d    
-            jsr NEGA                         ; b828 201ab9  A -> -A
+            jsr NEGA                         ; b828 201ab9  . A -> -A
             ldx #$02                         ; b82b a202    
-            cmp SQX                          ; b82d c5e1    adj sq; also COLUM
+            cmp SQX                          ; b82d c5e1    . adj sq; also COLUM
             bcs _T_6                         ; b82f b01b    
             ldx #$03                         ; b831 a203    
             bcc _T_6                         ; b833 9017    
 _T_4:       ldx #$00                         ; b835 a200    
-            cmp SQX                          ; b837 c5e1    adj sq; also COLUM
+            cmp SQX                          ; b837 c5e1    . adj sq; also COLUM
             bcs _T_6                         ; b839 b011    
             ldx #$03                         ; b83b a203    
             bcc _T_6                         ; b83d 900d    
-_T_5:       lda SQX                          ; b83f a5e1    adj sq; also COLUM
-            jsr NEGA                         ; b841 201ab9  A -> -A
+_T_5:       lda SQX                          ; b83f a5e1    . adj sq; also COLUM
+            jsr NEGA                         ; b841 201ab9  . A -> -A
             ldx #$01                         ; b844 a201    
-            cmp SQY                          ; b846 c5e2    adj sq; also OCOLUM
+            cmp SQY                          ; b846 c5e2    . adj sq; also OCOLUM
             bcs _T_6                         ; b848 b002    
             ldx #$00                         ; b84a a200    
-_T_6:       lda CSTRNG,y                     ; b84c b92b32  combat strengths
+_T_6:       lda CSTRNG,y                     ; b84c b92b32  . combat strengths
 _T_7:       lsr                              ; b84f 4a      
             beq __U__                        ; b850 f01d    
             dec TEMPR                        ; b852 c6ae    
@@ -3395,10 +3395,10 @@ _T_7:       lsr                              ; b84f 4a
             cpy #$30                         ; b856 c030    
             bcc _T_9                         ; b858 900c    
             clc                              ; b85a 18      
-            adc RFR                          ; b85b 65b3    Russian force ratio: local Russian strength
+            adc RFR                          ; b85b 65b3    . Russian force ratio: local Russian strength
             bcc _T_8                         ; b85d 9002    
             lda #$ff                         ; b85f a9ff    
-_T_8:       sta RFR                          ; b861 85b3    Russian force ratio: local Russian strength
+_T_8:       sta RFR                          ; b861 85b3    . Russian force ratio: local Russian strength
             jmp __U__                        ; b863 4c6fb8  
 
 _T_9:       clc                              ; b866 18      
@@ -3428,7 +3428,7 @@ _U_3:       dex                              ; b880 ca
             rol IFRHI                        ; b88d 26e4    
             ldx #$00                         ; b88f a200    
             sec                              ; b891 38      
-__V__:      sbc RFR                          ; b892 e5b3    Russian force ratio: local Russian strength
+__V__:      sbc RFR                          ; b892 e5b3    . Russian force ratio: local Russian strength
             bcs _V_1                         ; b894 b005    
             dec IFRHI                        ; b896 c6e4    
             sec                              ; b898 38      
@@ -3439,7 +3439,7 @@ _V_1:       inx                              ; b89b e8
 _V_2:       txa                              ; b89f 8a      
             ldx ARMY                         ; b8a0 a6ab    
             clc                              ; b8a2 18      
-            adc OFR                          ; b8a3 65e5    Overall force ratio
+            adc OFR                          ; b8a3 65e5    . Overall force ratio
             ror                              ; b8a5 6a      
             sta IFR-48,x                     ; b8a6 9d2e36  
             lda IFR0                         ; b8a9 a5dd    
@@ -3450,9 +3450,9 @@ _V_2:       txa                              ; b89f 8a
             sta IFRS-48,x                    ; b8b5 9d9637  
             lda IRF3                         ; b8b8 a5e0    
             sta IFRW-48,x                    ; b8ba 9d0e38  
-            lda BSTVAL                       ; b8bd a5f0    best value, was BVAL
+            lda BSTVAL                       ; b8bd a5f0    . best value, was BVAL
             sta BSTVALS-48,x                 ; b8bf 9dfe38  
-            lda BSTIDX                       ; b8c2 a5f1    best index, was BONE
+            lda BSTIDX                       ; b8c2 a5f1    . best index, was BONE
             sta BSTIDXS-48,x                 ; b8c4 9d7639  
             rts                              ; b8c7 60      
 
@@ -3469,7 +3469,7 @@ _TERRTY_1:  iny                              ; b8d6 c8
             iny                              ; b8db c8      
             cmp #$4b                         ; b8dc c94b    
             bcc _TERRTY_4                    ; b8de 9035    
-            cmp #$c0                         ; b8e0 c9c0    
+            cmp #$c0                         ; b8e0 c9c0    <= new (colored city)
             bcs _TERRTY_4                    ; b8e2 b031    
             iny                              ; b8e4 c8      
             cmp #$4f                         ; b8e5 c94f    
@@ -3510,9 +3510,9 @@ INIT:       rts                              ; b91f 60      Main entry point
 
 START:      cld                              ; b920 d8      Main entry point
             lda #$00                         ; b921 a900    
-            sta INITFLG                      ; b923 85cf    Set 0 -> #$ff after first init
-            sta STARTDT                      ; b925 8593    Scenario start 1941/1942
-            sta ORDDLY                       ; b927 85ff    Delay to disambiguate double click?
+            sta INITFLG                      ; b923 85cf    . Set 0 -> #$ff after first init
+            sta STARTDT                      ; b925 8593    . Scenario start 1941/1942
+            sta ORDDLY                       ; b927 85ff    . Delay to disambiguate double click?
             tay                              ; b929 a8      
 _START_1:   sta TXTWDW,y                     ; b92a 991e3a  
             iny                              ; b92d c8      
@@ -3536,7 +3536,7 @@ _START_2:   lda (SRCPTRL),y                  ; b940 b19f
             lsr                              ; b94e 4a      
             lsr                              ; b94f 4a      
             tax                              ; b950 aa      
-            lda RPTBYTE,x                    ; b951 bda8b1  byte x1yz vvvv (y+z>0) -> repeat byte xy * (vvvv + 1) 
+            lda RPTBYTE,x                    ; b951 bda8b1  . byte x1yz vvvv (y+z>0) -> repeat byte xy * (vvvv + 1)
             pha                              ; b954 48      
             lda (SRCPTRL),y                  ; b955 b19f    
             and #$0f                         ; b957 290f    
@@ -3574,114 +3574,114 @@ _RESTART_1: lda PG0VALS,x                    ; b994 bd9b2f  Init page zero data 
             bpl _RESTART_1                   ; b99a 10f8    
             lda #$00                         ; b99c a900    Zero $2200-23ff
             tax                              ; b99e aa      
-_RESTART_2: sta PLYR0,x                      ; b99f 9d0022  Player 0 sprite data
-            sta PLYR2,x                      ; b9a2 9d0023  Player 2 sprite data
+_RESTART_2: sta PLYR0,x                      ; b99f 9d0022  . Player 0 sprite data
+            sta PLYR2,x                      ; b9a2 9d0023  . Player 2 sprite data
             inx                              ; b9a5 e8      
             bne _RESTART_2                   ; b9a6 d0f7    
             ldx #$08                         ; b9a8 a208    
-_RESTART_3: lda PMCLRS,x                     ; b9aa bdeb2f  init -> PCOLR0...
-            sta PCOLR0,x                     ; b9ad 9dc002  Color of player 0 and missile 0, shadows $D012
+_RESTART_3: lda PMCLRS,x                     ; b9aa bdeb2f  . init -> PCOLR0...
+            sta PCOLR0,x                     ; b9ad 9dc002  . Color of player 0 and missile 0, shadows $D012
             dex                              ; b9b0 ca      
             bpl _RESTART_3                   ; b9b1 10f7    
-            jsr INITDLST                     ; b9b3 20ceb6  set up display list
-            lda XPOSL                        ; b9b6 a586    Horiz pos of upper left of screen window
+            jsr INITDLST                     ; b9b3 20ceb6  . set up display list
+            lda XPOSL                        ; b9b6 a586    . Horiz pos of upper left of screen window
             and #$07                         ; b9b8 2907    
-            sta HSCROL                       ; b9ba 8d04d4  Horizontal scroll enable
-            lda YPOSL                        ; b9bd a594    Vert pos of upper left of screen window
+            sta HSCROL                       ; b9ba 8d04d4  . Horizontal scroll enable
+            lda YPOSL                        ; b9bd a594    . Vert pos of upper left of screen window
             and #$0f                         ; b9bf 290f    
-            sta VSCROL                       ; b9c1 8d05d4  Vertical scroll enable
+            sta VSCROL                       ; b9c1 8d05d4  . Vertical scroll enable
             lda #$20                         ; b9c4 a920    
-            sta PMBASE                       ; b9c6 8d07d4  MSB of the player/missile base address
+            sta PMBASE                       ; b9c6 8d07d4  . MSB of the player/missile base address
             lda #$02                         ; b9c9 a902    Enable players
-            sta GRACTL                       ; b9cb 8d1dd0  Used with DMACTLto latch all stick and paddle triggers
-            sta CHACT                        ; b9ce 8df302  Character Mode Register
-            lda SHPOS0                       ; b9d1 a588    shadows player 0 position
-            sta HPOSP0 / M0PF                ; b9d3 8d00d0  W: h.pos of P0 / R: missile 0 to pf collision
+            sta GRACTL                       ; b9cb 8d1dd0  . Used with DMACTLto latch all stick and paddle triggers
+            sta CHACT                        ; b9ce 8df302  . Character Mode Register
+            lda SHPOS0                       ; b9d1 a588    . shadows player 0 position
+            sta HPOSP0 / M0PF                ; b9d3 8d00d0  . W: h.pos of P0 / R: missile 0 to pf collision
             lda #$01                         ; b9d6 a901    
-            sta GPRIOR                       ; b9d8 8d6f02  Priority selection register
-            sta SIZEP0 / M0PL                ; b9db 8d08d0  W: width of P0 / R: missile 0 to plyr collisions
-            ldx SCY                          ; b9de a687    vert pos of cursor (player frame)
+            sta GPRIOR                       ; b9d8 8d6f02  . Priority selection register
+            sta SIZEP0 / M0PL                ; b9db 8d08d0  . W: width of P0 / R: missile 0 to plyr collisions
+            ldx SCY                          ; b9de a687    . vert pos of cursor (player frame)
             ldy #$0d                         ; b9e0 a00d    
-_RESTART_4: lda CRSRIMG,y                    ; b9e2 b90da1  The square window cursor managed as p/m 1
-            sta PLYR0,x                      ; b9e5 9d0022  Player 0 sprite data
+_RESTART_4: lda CRSRIMG,y                    ; b9e2 b90da1  . The square window cursor managed as p/m 1
+            sta PLYR0,x                      ; b9e5 9d0022  . Player 0 sprite data
             inx                              ; b9e8 e8      
             dey                              ; b9e9 88      
             bpl _RESTART_4                   ; b9ea 10f6    
-            lda INITFLG                      ; b9ec a5cf    Set 0 -> #$ff after first init
+            lda INITFLG                      ; b9ec a5cf    . Set 0 -> #$ff after first init
             beq _RESTART_5                   ; b9ee f003    
             jmp NXTTRN                       ; b9f0 4c06be  
 
 _RESTART_5: lda #$c5                         ; b9f3 a9c5    set NMI display list int to DLISRV
-            sta VDSLSTL                      ; b9f5 8d0002  The vector for NMI Display List Interrupts (DLI)
+            sta VDSLSTL                      ; b9f5 8d0002  . The vector for NMI Display List Interrupts (DLI)
             lda #$a9                         ; b9f8 a9a9    
-            sta VDSLSTH                      ; b9fa 8d0102  The vector for NMI Display List Interrupts (DLI)
+            sta VDSLSTH                      ; b9fa 8d0102  . The vector for NMI Display List Interrupts (DLI)
             ldy #$91                         ; b9fd a091    Set VVBLK to ENDISR
             ldx #$a8                         ; b9ff a2a8    
             jsr CLRVVBLK                     ; ba01 2096b7  
             ldx #$03                         ; ba04 a203    Show TXTMSG 3-6-5-4
-            jsr TXTMSG                       ; ba06 208dac  Display TXTTBL msg X
+            jsr TXTMSG                       ; ba06 208dac  . Display TXTTBL msg X
             ldx #$06                         ; ba09 a206    
-            jsr TXTMSG                       ; ba0b 208dac  Display TXTTBL msg X
+            jsr TXTMSG                       ; ba0b 208dac  . Display TXTTBL msg X
             ldx #$05                         ; ba0e a205    
-            jsr TXTMSG                       ; ba10 208dac  Display TXTTBL msg X
+            jsr TXTMSG                       ; ba10 208dac  . Display TXTTBL msg X
             ldx #$04                         ; ba13 a204    
-            jsr TXTMSG                       ; ba15 208dac  Display TXTTBL msg X
-__W__:      jsr KEYPRS                       ; ba18 209fa9  A <- CONSOL flags (opt/sel/strt); prevent display sleep
+            jsr TXTMSG                       ; ba15 208dac  . Display TXTTBL msg X
+__W__:      jsr KEYPRS                       ; ba18 209fa9  . A <- CONSOL flags (opt/sel/strt); prevent display sleep
             and #$01                         ; ba1b 2901    
             beq _W_1                         ; ba1d f003    START pressed?
             jmp __X__                        ; ba1f 4c03bb  
 
-_W_1:       ldy LEVEL                        ; ba22 a492    Level learner/beginner/intermediate/advanced/expert
+_W_1:       ldy LEVEL                        ; ba22 a492    . Level learner/beginner/intermediate/advanced/expert
             ldx #$a6                         ; ba24 a2a6    
 _W_2:       txa                              ; ba26 8a      
             cmp #$30                         ; ba27 c930    
             bcs _W_5                         ; ba29 b019    
-            cmp MAXGER,y                     ; ba2b d90830  Max German unit idx by level
+            cmp MAXGER,y                     ; ba2b d90830  . Max German unit idx by level
             bcc _W_4                         ; ba2e 9007    
 _W_3:       lda #$fe                         ; ba30 a9fe    
-            sta ARRIVE,x                     ; ba32 9da62d  arrival turns
+            sta ARRIVE,x                     ; ba32 9da62d  . arrival turns
             bcs _W_6                         ; ba35 b01d    
-_W_4:       lda MSTRNG,x                     ; ba37 bdff2c  muster strengths
+_W_4:       lda MSTRNG,x                     ; ba37 bdff2c  . muster strengths
             adc GSTRHI                       ; ba3a 659a    
             sta GSTRHI                       ; ba3c 859a    
             bcc _W_6                         ; ba3e 9014    
-            inc GSTRLO                       ; ba40 e698    2 x sum of german MSTRNG
+            inc GSTRLO                       ; ba40 e698    . 2 x sum of german MSTRNG
             bcs _W_6                         ; ba42 b010    
-_W_5:       cmp MAXRUS,y                     ; ba44 d90d30  Max Russian unit idx by level
+_W_5:       cmp MAXRUS,y                     ; ba44 d90d30  . Max Russian unit idx by level
             bcs _W_3                         ; ba47 b0e7    
-            lda MSTRNG,x                     ; ba49 bdff2c  muster strengths
+            lda MSTRNG,x                     ; ba49 bdff2c  . muster strengths
             adc RSTRHI                       ; ba4c 659b    
             sta RSTRHI                       ; ba4e 859b    
             bcc _W_6                         ; ba50 9002    
-            inc RSTRLO                       ; ba52 e699    2 x sum of russian MSTRNG
+            inc RSTRLO                       ; ba52 e699    . 2 x sum of russian MSTRNG
 _W_6:       dex                              ; ba54 ca      
             bne _W_2                         ; ba55 d0cf    
             asl GSTRHI                       ; ba57 069a    
-            rol GSTRLO                       ; ba59 2698    2 x sum of german MSTRNG
+            rol GSTRLO                       ; ba59 2698    . 2 x sum of german MSTRNG
             asl RSTRHI                       ; ba5b 069b    
-            rol RSTRLO                       ; ba5d 2699    2 x sum of russian MSTRNG
+            rol RSTRLO                       ; ba5d 2699    . 2 x sum of russian MSTRNG
             cpy #$04                         ; ba5f c004    
             beq _W_7                         ; ba61 f003    
             jmp BGNPLY                       ; ba63 4cf4ba  
 
-_W_7:       lda STARTDT                      ; ba66 a593    Scenario start 1941/1942
+_W_7:       lda STARTDT                      ; ba66 a593    . Scenario start 1941/1942
             and #$01                         ; ba68 2901    
-            sta STARTDT                      ; ba6a 8593    Scenario start 1941/1942
+            sta STARTDT                      ; ba6a 8593    . Scenario start 1941/1942
             clc                              ; ba6c 18      
             adc #$1a                         ; ba6d 691a    Show 1941 or 1942
             ldy #$71                         ; ba6f a071    
-            jsr SHOWWRD                      ; ba71 201ea9  Add word A to TXTWDW + Y
+            jsr SHOWWRD                      ; ba71 201ea9  . Add word A to TXTWDW + Y
             sta TXTWDW,y                     ; ba74 991e3a  
-            jsr DEBOUNCE                     ; ba77 2030ac  wait for button inactivity
-_W_8:       jsr KEYPRS                       ; ba7a 209fa9  A <- CONSOL flags (opt/sel/strt); prevent display sleep
+            jsr DEBOUNCE                     ; ba77 2030ac  . wait for button inactivity
+_W_8:       jsr KEYPRS                       ; ba7a 209fa9  . A <- CONSOL flags (opt/sel/strt); prevent display sleep
             and #$02                         ; ba7d 2902    
             bne _W_9                         ; ba7f d004    
-            inc STARTDT                      ; ba81 e693    Scenario start 1941/1942
+            inc STARTDT                      ; ba81 e693    . Scenario start 1941/1942
             bpl _W_7                         ; ba83 10e1    
-_W_9:       jsr KEYPRS                       ; ba85 209fa9  A <- CONSOL flags (opt/sel/strt); prevent display sleep
+_W_9:       jsr KEYPRS                       ; ba85 209fa9  . A <- CONSOL flags (opt/sel/strt); prevent display sleep
             and #$01                         ; ba88 2901    
             bne _W_8                         ; ba8a d0ee    
-            lda STARTDT                      ; ba8c a593    Scenario start 1941/1942
+            lda STARTDT                      ; ba8c a593    . Scenario start 1941/1942
             beq BGNPLY                       ; ba8e f064    
             lda #$a1                         ; ba90 a9a1    
             sta SRCPTRH                      ; ba92 85a0    Reset CORPX/Y/MSTRNG (a14f-a3xx -> 2bb1)
@@ -3705,7 +3705,7 @@ _W_10:      lda (SRCPTRL),y                  ; baa2 b19f
             sta TEMPR                        ; bab8 85ae    
             lda #$00                         ; baba a900    
             tax                              ; babc aa      
-_W_11:      sta ARRIVE,x                     ; babd 9da62d  arrival turns
+_W_11:      sta ARRIVE,x                     ; babd 9da62d  . arrival turns
             cpx #$72                         ; bac0 e072    
             bcc _W_12                        ; bac2 9005    
             inc TEMPR                        ; bac4 e6ae    
@@ -3714,17 +3714,17 @@ _W_11:      sta ARRIVE,x                     ; babd 9da62d  arrival turns
 _W_12:      inx                              ; bac9 e8      
             cpx #$a7                         ; baca e0a7    
             bne _W_11                        ; bacc d0ef    
-            dec ARRIVE                       ; bace cea62d  arrival turns
+            dec ARRIVE                       ; bace cea62d  . arrival turns
             jsr __AE__                       ; bad1 2087bf  
             ldx #$11                         ; bad4 a211    
 _W_13:      lda CITYOWN_reloc,x              ; bad6 bdc19b  
-            sta CITYOWN,x                    ; bad9 9dc63a  city ownership
+            sta CITYOWN,x                    ; bad9 9dc63a  . city ownership
             beq _W_14                        ; badc f013    
             lda CITYLAT,x                    ; bade bdbfa0  
             sta LON                          ; bae1 85b2    
             lda CITYLON,x                    ; bae3 bdd2a0  
             sta LAT                          ; bae6 85b1    
-            jsr TERRB                        ; bae8 20edaa  TRNCOD <- chr @ LAT/LON, zero set if it's a unit
+            jsr TERRB                        ; bae8 20edaa  . TRNCOD <- chr @ LAT/LON, zero set if it's a unit
             lda TRNCOD                       ; baeb a5e7    
             and #$7f                         ; baed 297f    
             sta (MAPPTRL),y                  ; baef 91a9    
@@ -3735,12 +3735,12 @@ BGNPLY:     lda #$00                         ; baf4 a900
 _BGNPLY_1:  sta TXTWDW-1,x                   ; baf8 9d1d3a  
             dex                              ; bafb ca      
             bne _BGNPLY_1                    ; bafc d0fa    
-            jsr DEBOUNCE                     ; bafe 2030ac  wait for button inactivity
+            jsr DEBOUNCE                     ; bafe 2030ac  . wait for button inactivity
             beq _X_7                         ; bb01 f04d    
-__X__:      jsr KEYPRS                       ; bb03 209fa9  A <- CONSOL flags (opt/sel/strt); prevent display sleep
+__X__:      jsr KEYPRS                       ; bb03 209fa9  . A <- CONSOL flags (opt/sel/strt); prevent display sleep
             and #$04                         ; bb06 2904    OPTION pressed?
             beq _X_5                         ; bb08 f02e    
-            lda CONSOL                       ; bb0a ad1fd0  Check for OPTION/SELECT/START press (not RESET)
+            lda CONSOL                       ; bb0a ad1fd0  . Check for OPTION/SELECT/START press (not RESET)
             and #$02                         ; bb0d 2902    
             beq _X_1                         ; bb0f f003    SELECT pressed?
             jmp __W__                        ; bb11 4c18ba  
@@ -3750,18 +3750,18 @@ _X_1:       ldx LEVEL                        ; bb14 a692    Cycle level 0-4
             cpx #$05                         ; bb17 e005    
             bne _X_2                         ; bb19 d002    
             ldx #$00                         ; bb1b a200    
-_X_2:       stx LEVEL                        ; bb1d 8692    Level learner/beginner/intermediate/advanced/expert
+_X_2:       stx LEVEL                        ; bb1d 8692    . Level learner/beginner/intermediate/advanced/expert
             txa                              ; bb1f 8a      
             ldy #$71                         ; bb20 a071    
             ora #$10                         ; bb22 0910    
-            jsr SHOWWRD                      ; bb24 201ea9  Add word A to TXTWDW + Y
+            jsr SHOWWRD                      ; bb24 201ea9  . Add word A to TXTWDW + Y
             dey                              ; bb27 88      
 _X_3:       cpy #$79                         ; bb28 c079    
             bcs _X_4                         ; bb2a b006    
             sta TXTWDW,y                     ; bb2c 991e3a  
             iny                              ; bb2f c8      
             bne _X_3                         ; bb30 d0f6    
-_X_4:       jsr DLY500                       ; bb32 20ddaa  Wait 500ms, cf. STALL
+_X_4:       jsr DLY500                       ; bb32 20ddaa  . Wait 500ms, cf. STALL
             jmp __W__                        ; bb35 4c18ba  
 
 _X_5:       lda #$04                         ; bb38 a904    
@@ -3769,70 +3769,70 @@ _X_5:       lda #$04                         ; bb38 a904
             jsr DEBUG                        ; bb3c 20e3b6  
             lda TEMPZ                        ; bb3f a5f3    
             bpl _X_6                         ; bb41 1003    
-            jmp START                        ; bb43 4c20b9  Main entry point
+            jmp START                        ; bb43 4c20b9  . Main entry point
 
 _X_6:       jsr __Q__                        ; bb46 208fb7  
             lda #$ff                         ; bb49 a9ff    
-            sta INITFLG                      ; bb4b 85cf    Set 0 -> #$ff after first init
-            jmp RESTART                      ; bb4d 4c92b9  reset volatile game data
+            sta INITFLG                      ; bb4b 85cf    . Set 0 -> #$ff after first init
+            jmp RESTART                      ; bb4d 4c92b9  . reset volatile game data
 
 _X_7:       ldx #$a6                         ; bb50 a2a6    
-_X_8:       lda MSTRNG,x                     ; bb52 bdff2c  muster strengths
-            sta CSTRNG,x                     ; bb55 9d2b32  combat strengths
+_X_8:       lda MSTRNG,x                     ; bb52 bdff2c  . muster strengths
+            sta CSTRNG,x                     ; bb55 9d2b32  . combat strengths
             lda #$00                         ; bb58 a900    
-            sta HMORDS,x                     ; bb5a 9dd232  how many orders queued for each unit
-            sta MVMODE,x                     ; bb5d 9dc734  (expert level only) standard/assault/forced march/entrench
+            sta HMORDS,x                     ; bb5a 9dd232  . how many orders queued for each unit
+            sta MVMODE,x                     ; bb5d 9dc734  . (expert level only) standard/assault/forced march/entrench
             cpx #$30                         ; bb60 e030    
             bcs _X_9                         ; bb62 b003    
-            sta GREEN,x                      ; bb64 9d7a30  Flag newly arrived German reinforcements
+            sta GREEN,x                      ; bb64 9d7a30  . Flag newly arrived German reinforcements
 _X_9:       lda #$ff                         ; bb67 a9ff    
-            sta EXEC,x                       ; bb69 9ddc30  unit execution times
+            sta EXEC,x                       ; bb69 9ddc30  . unit execution times
             ldy #$7e                         ; bb6c a07e    
-            lda CORPT,x                      ; bb6e bd4d2e  codes for unit types
+            lda CORPT,x                      ; bb6e bd4d2e  . codes for unit types
             and #$04                         ; bb71 2904    
             bne _X_10                        ; bb73 d00b    
             ldy #$7d                         ; bb75 a07d    
-            lda CORPT,x                      ; bb77 bd4d2e  codes for unit types
+            lda CORPT,x                      ; bb77 bd4d2e  . codes for unit types
             and #$02                         ; bb7a 2902    
             beq _X_10                        ; bb7c f002    
             ldy #$7c                         ; bb7e a07c    
 _X_10:      tya                              ; bb80 98      
-            ldy CORPT,x                      ; bb81 bc4d2e  codes for unit types
+            ldy CORPT,x                      ; bb81 bc4d2e  . codes for unit types
             bpl _X_11                        ; bb84 1002    
             ora #$80                         ; bb86 0980    
-_X_11:      sta SWAP,x                       ; bb88 9d8331  terrain code underneath unit
+_X_11:      sta SWAP,x                       ; bb88 9d8331  . terrain code underneath unit
             cpx #$30                         ; bb8b e030    
             bcc _X_12                        ; bb8d 9008    
-            ldy LEVEL                        ; bb8f a492    Level learner/beginner/intermediate/advanced/expert
-            lda FOGOFWAR,y                   ; bb91 b90330  Russian strength masked by low 0-bits
-            sta FOGGY-48,x                   ; bb94 9d8638  Fog of war masks Russian unit strength
+            ldy LEVEL                        ; bb8f a492    . Level learner/beginner/intermediate/advanced/expert
+            lda FOGOFWAR,y                   ; bb91 b90330  . Russian strength masked by low 0-bits
+            sta FOGGY-48,x                   ; bb94 9d8638  . Fog of war masks Russian unit strength
 _X_12:      dex                              ; bb97 ca      
             bne _X_8                         ; bb98 d0b8    
             lda #$02                         ; bb9a a902    
             ldx #$04                         ; bb9c a204    
-_X_13:      sta MVMODE+$2B,x                 ; bb9e 9df234  Fliegerkorps only move assault or forced march
+_X_13:      sta MVMODE+$2B,x                 ; bb9e 9df234  . Fliegerkorps only move assault or forced march
             dex                              ; bba1 ca      
             bpl _X_13                        ; bba2 10fa    
-            jsr SETVVBLK                     ; bba4 2092b7  Set VVBLKD handler to VBISRV
+            jsr SETVVBLK                     ; bba4 2092b7  . Set VVBLKD handler to VBISRV
 NEWTRN:     inc TURN                         ; bba7 e691     !! referenced as both code and data
             lda #$9b                         ; bba9 a99b    
-            sta MAPBASEH                     ; bbab 859c    Contains high byte of map base address
+            sta MAPBASEH                     ; bbab 859c    . Contains high byte of map base address
             jsr INCDATE                      ; bbad 20a0bf  
-            sty CORPS                        ; bbb0 84a1    Number of unit under window
+            sty CORPS                        ; bbb0 84a1    . Number of unit under window
             tya                              ; bbb2 98      
-            sta SWAP,y                       ; bbb3 998331  terrain code underneath unit
-            jsr SHOWDT                       ; bbb6 20c7bf  Show turn date in text window
-            jsr SWITCH                       ; bbb9 2034a9  swap CORPS with terrain @ CHUNKX/Y via SWAP buffer
-            jsr DISTXY                       ; bbbc 205bac  Manhattan distance between unit X and Y -> A
-            jsr SWITCH                       ; bbbf 2034a9  swap CORPS with terrain @ CHUNKX/Y via SWAP buffer
+            sta SWAP,y                       ; bbb3 998331  . terrain code underneath unit
+            jsr SHOWDT                       ; bbb6 20c7bf  . Show turn date in text window
+            jsr SWITCH                       ; bbb9 2034a9  . swap CORPS with terrain @ CHUNKX/Y via SWAP buffer
+            jsr DISTXY                       ; bbbc 205bac  . Manhattan distance between unit X and Y -> A
+            jsr SWITCH                       ; bbbf 2034a9  . swap CORPS with terrain @ CHUNKX/Y via SWAP buffer
             lda #$24                         ; bbc2 a924    
-            sta MAPBASEH                     ; bbc4 859c    Contains high byte of map base address
-            lda SWAP,x                       ; bbc6 bd8331  terrain code underneath unit
+            sta MAPBASEH                     ; bbc4 859c    . Contains high byte of map base address
+            lda SWAP,x                       ; bbc6 bd8331  . terrain code underneath unit
             cmp #$a7                         ; bbc9 c9a7    
             bne _NEWTRN_1                    ; bbcb d007    
             ldx DEFNDR                       ; bbcd a6ad    
-            stx CORPS                        ; bbcf 86a1    Number of unit under window
-            jsr SWITCH                       ; bbd1 2034a9  swap CORPS with terrain @ CHUNKX/Y via SWAP buffer
+            stx CORPS                        ; bbcf 86a1    . Number of unit under window
+            jsr SWITCH                       ; bbd1 2034a9  . swap CORPS with terrain @ CHUNKX/Y via SWAP buffer
 _NEWTRN_1:  lda MONTH                        ; bbd4 a590    
             cmp #$0a                         ; bbd6 c90a    
             bne _NEWTRN_2                    ; bbd8 d006    
@@ -3854,7 +3854,7 @@ _NEWTRN_3:  cmp #$01                         ; bbea c901
             bmi ENDSSN                       ; bbf8 3075    
 _NEWTRN_4:  cmp #$03                         ; bbfa c903    
 _NEWTRN_5:  bne ENDSSN                       ; bbfc d071    
-FRZRVRS:    lda SKREST / RANDOM              ; bbfe ad0ad2  W: Reset serial port status register / R: Random byte
+FRZRVRS:    lda SKREST / RANDOM              ; bbfe ad0ad2  . W: Reset serial port status register / R: Random byte
             and #$07                         ; bc01 2907    
             clc                              ; bc03 18      
             adc #$07                         ; bc04 6907    
@@ -3872,12 +3872,12 @@ _FRZRVRS_2: cmp #$27                         ; bc17 c927
             lda #$27                         ; bc1b a927    
 _FRZRVRS_3: sta ICELAT                       ; bc1d 858b    
             lda #$00                         ; bc1f a900    
-            sta CHUNKX                       ; bc21 85a7    Cursor coords (pixel frame)
+            sta CHUNKX                       ; bc21 85a7    . Cursor coords (pixel frame)
             sta LON                          ; bc23 85b2    
             lda OLDLAT                       ; bc25 a5e6    
             sta CHUNKY                       ; bc27 85a8    
             sta LAT                          ; bc29 85b1    
-__Y__:      jsr TERR                         ; bc2b 20e7aa  TRNCOD <- terrain chr @ LAT/LON, maybe under unit
+__Y__:      jsr TERR                         ; bc2b 20e7aa  . TRNCOD <- terrain chr @ LAT/LON, maybe under unit
             and #$3f                         ; bc2e 293f    
             cmp #$0b                         ; bc30 c90b    
             bcc NOTCH                        ; bc32 901b    
@@ -3891,16 +3891,16 @@ __Y__:      jsr TERR                         ; bc2b 20e7aa  TRNCOD <- terrain ch
 _Y_1:       ora SEASN1                       ; bc42 058c    
             ldx UNITNO                       ; bc44 a6ac    
             beq _Y_2                         ; bc46 f005    
-            sta SWAP,x                       ; bc48 9d8331  terrain code underneath unit
+            sta SWAP,x                       ; bc48 9d8331  . terrain code underneath unit
             bne NOTCH                        ; bc4b d002    
 _Y_2:       sta (MAPPTRL),y                  ; bc4d 91a9    
-NOTCH:      inc CHUNKX                       ; bc4f e6a7    Cursor coords (pixel frame)
-            lda CHUNKX                       ; bc51 a5a7    Cursor coords (pixel frame)
+NOTCH:      inc CHUNKX                       ; bc4f e6a7    . Cursor coords (pixel frame)
+            lda CHUNKX                       ; bc51 a5a7    . Cursor coords (pixel frame)
             sta LON                          ; bc53 85b2    
             cmp #$2e                         ; bc55 c92e    
             bne __Y__                        ; bc57 d0d2    
             lda #$00                         ; bc59 a900    
-            sta CHUNKX                       ; bc5b 85a7    Cursor coords (pixel frame)
+            sta CHUNKX                       ; bc5b 85a7    . Cursor coords (pixel frame)
             sta LON                          ; bc5d 85b2    
             lda CHUNKY                       ; bc5f a5a8    
             cmp ICELAT                       ; bc61 c58b    
@@ -3912,30 +3912,30 @@ NOTCH:      inc CHUNKX                       ; bc4f e6a7    Cursor coords (pixel
             jmp __Y__                        ; bc6c 4c2bbc  
 
 ENDSSN:     ldx #$a6                         ; bc6f a2a6    
-_ENDSSN_1:  lda ARRIVE,x                     ; bc71 bda62d  arrival turns
+_ENDSSN_1:  lda ARRIVE,x                     ; bc71 bda62d  . arrival turns
             cmp TURN                         ; bc74 c591    
             bne __Z__                        ; bc76 d029    
-            jsr SETCHXY                      ; bc78 20a8ac  X -> CORPS, CORPSX/Y -> CHUNKX/Y
-            jsr SETLL                        ; bc7b 2074ab  CORPSX/Y for X -> LAT, LON
-            jsr TERRB                        ; bc7e 20edaa  TRNCOD <- chr @ LAT/LON, zero set if it's a unit
+            jsr SETCHXY                      ; bc78 20a8ac  . X -> CORPS, CORPSX/Y -> CHUNKX/Y
+            jsr SETLL                        ; bc7b 2074ab  . CORPSX/Y for X -> LAT, LON
+            jsr TERRB                        ; bc7e 20edaa  . TRNCOD <- chr @ LAT/LON, zero set if it's a unit
             beq _ENDSSN_3                    ; bc81 f016    
             cpx #$30                         ; bc83 e030    
             bcs _ENDSSN_2                    ; bc85 b00c    
             lda TURN                         ; bc87 a591    
             beq _ENDSSN_2                    ; bc89 f008    
             lda #$8a                         ; bc8b a98a    Blinking asterisk '*' for reinforcement
-            sta TXTWDW+139                   ; bc8d 8da93a  end of TXTWDW - 5
-            sta GREEN,x                      ; bc90 9d7a30  Flag newly arrived German reinforcements
-_ENDSSN_2:  jsr SWITCH                       ; bc93 2034a9  swap CORPS with terrain @ CHUNKX/Y via SWAP buffer
+            sta TXTWDW+139                   ; bc8d 8da93a  . end of TXTWDW - 5
+            sta GREEN,x                      ; bc90 9d7a30  . Flag newly arrived German reinforcements
+_ENDSSN_2:  jsr SWITCH                       ; bc93 2034a9  . swap CORPS with terrain @ CHUNKX/Y via SWAP buffer
             jmp __Z__                        ; bc96 4ca1bc  
 
 _ENDSSN_3:  lda TURN                         ; bc99 a591    
             clc                              ; bc9b 18      
             adc #$01                         ; bc9c 6901    
-            sta ARRIVE,x                     ; bc9e 9da62d  arrival turns
+            sta ARRIVE,x                     ; bc9e 9da62d  . arrival turns
 __Z__:      dex                              ; bca1 ca      
             bne _ENDSSN_1                    ; bca2 d0cd    
-            lda LEVEL                        ; bca4 a592    Level learner/beginner/intermediate/advanced/expert
+            lda LEVEL                        ; bca4 a592    . Level learner/beginner/intermediate/advanced/expert
             cmp #$02                         ; bca6 c902    
             bcc _Z_2                         ; bca8 900c    
             ldx #$a6                         ; bcaa a2a6    
@@ -3946,49 +3946,49 @@ _Z_1:       stx ARMY                         ; bcac 86ab
             bne _Z_1                         ; bcb4 d0f6    
 _Z_2:       ldx #$a6                         ; bcb6 a2a6    
 _Z_3:       stx ARMY                         ; bcb8 86ab    
-            jsr SETLL                        ; bcba 2074ab  CORPSX/Y for X -> LAT, LON
+            jsr SETLL                        ; bcba 2074ab  . CORPSX/Y for X -> LAT, LON
             jsr CHKZOC                       ; bcbd 20a4b0  
             lda ZOC                          ; bcc0 a5ed    
             cmp #$02                         ; bcc2 c902    
             bcs _Z_4                         ; bcc4 b00f    
-            ldy LEVEL                        ; bcc6 a492    Level learner/beginner/intermediate/advanced/expert
-            lda FOGGY-48,x                   ; bcc8 bd8638  Fog of war masks Russian unit strength
+            ldy LEVEL                        ; bcc6 a492    . Level learner/beginner/intermediate/advanced/expert
+            lda FOGGY-48,x                   ; bcc8 bd8638  . Fog of war masks Russian unit strength
             asl                              ; bccb 0a      Out of ZOC, add uncertainty by shifting 1s left, up to original limit
-            ora FOGOFWAR,y                   ; bccc 190330  Russian strength masked by low 0-bits
-            sta FOGGY-48,x                   ; bccf 9d8638  Fog of war masks Russian unit strength
+            ora FOGOFWAR,y                   ; bccc 190330  . Russian strength masked by low 0-bits
+            sta FOGGY-48,x                   ; bccf 9d8638  . Fog of war masks Russian unit strength
             jmp __AA__                       ; bcd2 4cd9bc  
 
 _Z_4:       sec                              ; bcd5 38      Within ZOC, reduce uncertainty by shifting 1s right
-            ror FOGGY-48,x                   ; bcd6 7e8638  Fog of war masks Russian unit strength
+            ror FOGGY-48,x                   ; bcd6 7e8638  . Fog of war masks Russian unit strength
 __AA__:     dex                              ; bcd9 ca      
             cpx #$30                         ; bcda e030    
             bcs _Z_3                         ; bcdc b0da    
             lda #$00                         ; bcde a900    
             ldx #$01                         ; bce0 a201    
-_AA_1:      sta SQX,x                        ; bce2 95e1    adj sq; also COLUM
-            sta TEMPLO,x                     ; bce4 95ba    temp word
+_AA_1:      sta SQX,x                        ; bce2 95e1    . adj sq; also COLUM
+            sta TEMPLO,x                     ; bce4 95ba    . temp word
             sta ACCLO,x                      ; bce6 95af    
             sta TEMPX,x                      ; bce8 959d    
             dex                              ; bcea ca      
             bpl _AA_1                        ; bceb 10f5    
             ldx #$01                         ; bced a201    
             ldy #$a6                         ; bcef a0a6    
-_AA_2:      lda ARRIVE,y                     ; bcf1 b9a62d  arrival turns
+_AA_2:      lda ARRIVE,y                     ; bcf1 b9a62d  . arrival turns
             bmi _AA_5                        ; bcf4 3021    
-            lda TEMPLO,x                     ; bcf6 b5ba    temp word
+            lda TEMPLO,x                     ; bcf6 b5ba    . temp word
             clc                              ; bcf8 18      
-            adc CSTRNG,y                     ; bcf9 792b32  combat strengths
-            sta TEMPLO,x                     ; bcfc 95ba    temp word
+            adc CSTRNG,y                     ; bcf9 792b32  . combat strengths
+            sta TEMPLO,x                     ; bcfc 95ba    . temp word
             bcc _AA_3                        ; bcfe 9002    
             inc ACCLO,x                      ; bd00 f6af    
-_AA_3:      lda ARRIVE,y                     ; bd02 b9a62d  arrival turns
+_AA_3:      lda ARRIVE,y                     ; bd02 b9a62d  . arrival turns
             cmp TURN                         ; bd05 c591    
             beq _AA_4                        ; bd07 f002    
             bcs _AA_5                        ; bd09 b00c    
-_AA_4:      lda SQX,x                        ; bd0b b5e1    adj sq; also COLUM
+_AA_4:      lda SQX,x                        ; bd0b b5e1    . adj sq; also COLUM
             clc                              ; bd0d 18      
-            adc CSTRNG,y                     ; bd0e 792b32  combat strengths
-            sta SQX,x                        ; bd11 95e1    adj sq; also COLUM
+            adc CSTRNG,y                     ; bd0e 792b32  . combat strengths
+            sta SQX,x                        ; bd11 95e1    . adj sq; also COLUM
             bcc _AA_5                        ; bd13 9002    
             inc TEMPX,x                      ; bd15 f69d    
 _AA_5:      dey                              ; bd17 88      
@@ -3997,66 +3997,66 @@ _AA_5:      dey                              ; bd17 88
             ldx #$00                         ; bd1c a200    
             cpy #$00                         ; bd1e c000    
             bne _AA_2                        ; bd20 d0cf    
-            asl TEMPLO                       ; bd22 06ba    temp word
+            asl TEMPLO                       ; bd22 06ba    . temp word
             rol ACCLO                        ; bd24 26af    
             asl TEMPHI                       ; bd26 06bb    
             rol ACCHI                        ; bd28 26b0    
             ldx #$03                         ; bd2a a203    
 _AA_6:      lsr TEMPY                        ; bd2c 469e    
-            ror SQY                          ; bd2e 66e2    adj sq; also OCOLUM
+            ror SQY                          ; bd2e 66e2    . adj sq; also OCOLUM
             dex                              ; bd30 ca      
             bpl _AA_6                        ; bd31 10f9    
 __AB__:     lda TEMPY                        ; bd33 a59e    
             beq _AB_1                        ; bd35 f00b    
             lsr TEMPY                        ; bd37 469e    
-            ror SQY                          ; bd39 66e2    adj sq; also OCOLUM
+            ror SQY                          ; bd39 66e2    . adj sq; also OCOLUM
             lsr TEMPX                        ; bd3b 469d    
-            ror SQX                          ; bd3d 66e1    adj sq; also COLUM
+            ror SQX                          ; bd3d 66e1    . adj sq; also COLUM
             jmp __AB__                       ; bd3f 4c33bd  
 
 _AB_1:      lda TEMPX                        ; bd42 a59d    
-            sta DIVIDH                       ; bd44 85f8    Hi byte of dividend
-            lda SQX                          ; bd46 a5e1    adj sq; also COLUM
-            sta DIVIDL                       ; bd48 85f7    Lo byte of dividend, replaced with quotient
-            lda SQY                          ; bd4a a5e2    adj sq; also OCOLUM
-            sta DIVISR                       ; bd4c 85f9    Divisor
-            jsr DIVIDE                       ; bd4e 2004ac  DIVIDL <- DIVIDH+L / DIVISR note any / 0 = 255
-            lda DIVIDL                       ; bd51 a5f7    Lo byte of dividend, replaced with quotient
+            sta DIVIDH                       ; bd44 85f8    . Hi byte of dividend
+            lda SQX                          ; bd46 a5e1    . adj sq; also COLUM
+            sta DIVIDL                       ; bd48 85f7    . Lo byte of dividend, replaced with quotient
+            lda SQY                          ; bd4a a5e2    . adj sq; also OCOLUM
+            sta DIVISR                       ; bd4c 85f9    . Divisor
+            jsr DIVIDE                       ; bd4e 2004ac  . DIVIDL <- DIVIDH+L / DIVISR note any / 0 = 255
+            lda DIVIDL                       ; bd51 a5f7    . Lo byte of dividend, replaced with quotient
             bne _AB_2                        ; bd53 d002    
             lda #$01                         ; bd55 a901    
-_AB_2:      sta OFR                          ; bd57 85e5    Overall force ratio
-            lda RSTRLO                       ; bd59 a599    2 x sum of russian MSTRNG
+_AB_2:      sta OFR                          ; bd57 85e5    . Overall force ratio
+            lda RSTRLO                       ; bd59 a599    . 2 x sum of russian MSTRNG
             sec                              ; bd5b 38      
             sbc ACCHI                        ; bd5c e5b0    
-            sta SQX                          ; bd5e 85e1    adj sq; also COLUM
-            lda GSTRLO                       ; bd60 a598    2 x sum of german MSTRNG
+            sta SQX                          ; bd5e 85e1    . adj sq; also COLUM
+            lda GSTRLO                       ; bd60 a598    . 2 x sum of german MSTRNG
             sec                              ; bd62 38      
             sbc ACCLO                        ; bd63 e5af    
-            sta SQY                          ; bd65 85e2    adj sq; also OCOLUM
+            sta SQY                          ; bd65 85e2    . adj sq; also OCOLUM
             lda ACCHI                        ; bd67 a5b0    
             sta TEMPR                        ; bd69 85ae    
             lda #$00                         ; bd6b a900    
-            ldy LEVEL                        ; bd6d a492    Level learner/beginner/intermediate/advanced/expert
+            ldy LEVEL                        ; bd6d a492    . Level learner/beginner/intermediate/advanced/expert
             cpy #$02                         ; bd6f c002    
             bcs _AB_3                        ; bd71 b002    
-            sta SQY                          ; bd73 85e2    adj sq; also OCOLUM
+            sta SQY                          ; bd73 85e2    . adj sq; also OCOLUM
 _AB_3:      cpy #$04                         ; bd75 c004    
             bne _AB_4                        ; bd77 d004    
-            sta SQX                          ; bd79 85e1    adj sq; also COLUM
+            sta SQX                          ; bd79 85e1    . adj sq; also COLUM
             beq _AB_5                        ; bd7b f002    
 _AB_4:      sta TEMPR                        ; bd7d 85ae    
-_AB_5:      lda SQY                          ; bd7f a5e2    adj sq; also OCOLUM
+_AB_5:      lda SQY                          ; bd7f a5e2    . adj sq; also OCOLUM
             clc                              ; bd81 18      
             adc TEMPR                        ; bd82 65ae    
             bcc _AB_6                        ; bd84 9002    
             lda #$ff                         ; bd86 a9ff    
 _AB_6:      sta TEMPR                        ; bd88 85ae    
-            lda SQX                          ; bd8a a5e1    adj sq; also COLUM
-            ldx CITYMAX,x                    ; bd8c bef42f  Max city index scored by level
-_AB_7:      ldy CITYOWN,x                    ; bd8f bcc63a  city ownership
+            lda SQX                          ; bd8a a5e1    . adj sq; also COLUM
+            ldx CITYMAX,x                    ; bd8c bef42f  . Max city index scored by level
+_AB_7:      ldy CITYOWN,x                    ; bd8f bcc63a  . city ownership
             beq _AB_8                        ; bd92 f008    
             clc                              ; bd94 18      
-            adc CITYPTS,x                    ; bd95 7daca0  Points earned for city control
+            adc CITYPTS,x                    ; bd95 7daca0  . Points earned for city control
             bcc _AB_8                        ; bd98 9002    
             lda #$ff                         ; bd9a a9ff    
 _AB_8:      dex                              ; bd9c ca      
@@ -4073,58 +4073,58 @@ _AB_8:      dex                              ; bd9c ca
             sta TEMPR                        ; bdb0 85ae    
             iny                              ; bdb2 c8      
             pla                              ; bdb3 68      
-            jsr NEGA                         ; bdb4 201ab9  A -> -A
-_AB_9:      jsr DNUMBER                      ; bdb7 20a3aa  Show A as base10 number in TXTWDW
+            jsr NEGA                         ; bdb4 201ab9  . A -> -A
+_AB_9:      jsr DNUMBER                      ; bdb7 20a3aa  . Show A as base10 number in TXTWDW
             lda #$00                         ; bdba a900    
             sta TXTWDW,y                     ; bdbc 991e3a  
             iny                              ; bdbf c8      
             sta TXTWDW,y                     ; bdc0 991e3a  
-            lda LEVEL                        ; bdc3 a592    Level learner/beginner/intermediate/advanced/expert
+            lda LEVEL                        ; bdc3 a592    . Level learner/beginner/intermediate/advanced/expert
             bne _AB_10                       ; bdc5 d005    
-            lda CITYOWN                      ; bdc7 adc63a  city ownership
+            lda CITYOWN                      ; bdc7 adc63a  . city ownership
             bne _AB_12                       ; bdca d01d    
 _AB_10:     clc                              ; bdcc 18      
-            adc STARTDT                      ; bdcd 6593    Scenario start 1941/1942
+            adc STARTDT                      ; bdcd 6593    . Scenario start 1941/1942
             tax                              ; bdcf aa      
             lda TURN                         ; bdd0 a591    
-            cmp ENDTURN,x                    ; bdd2 dd1230  End turn, index by level, +1 if expert'42
+            cmp ENDTURN,x                    ; bdd2 dd1230  . End turn, index by level, +1 if expert'42
             bne NXTTRN                       ; bdd5 d02f    
             cpx #$04                         ; bdd7 e004    
             bcs _AB_11                       ; bdd9 b007    
             lda TEMPR                        ; bddb a5ae    
-            cmp WINSCR,x                     ; bddd dd1d30  Winning score by level: 5, 25, 40, 80[, 255]
+            cmp WINSCR,x                     ; bddd dd1d30  . Winning score by level: 5, 25, 40, 80[, 255]
             bcs _AB_12                       ; bde0 b007    
 _AB_11:     ldx #$01                         ; bde2 a201    Game over
-            jsr TXTMSG                       ; bde4 208dac  Display TXTTBL msg X
+            jsr TXTMSG                       ; bde4 208dac  . Display TXTTBL msg X
             beq _AB_13                       ; bde7 f005    
 _AB_12:     ldx #$07                         ; bde9 a207    Game over, advance to next level
-            jsr TXTMSG                       ; bdeb 208dac  Display TXTTBL msg X
+            jsr TXTMSG                       ; bdeb 208dac  . Display TXTTBL msg X
 _AB_13:     lda #$00                         ; bdee a900    
-            sta BUTMSK                       ; bdf0 8597    0 allows trigger, 1 prevents
+            sta BUTMSK                       ; bdf0 8597    . 0 allows trigger, 1 prevents
             lda #$80                         ; bdf2 a980    
-            sta ORDDLY                       ; bdf4 85ff    Delay to disambiguate double click?
-            jsr KEYPRS                       ; bdf6 209fa9  A <- CONSOL flags (opt/sel/strt); prevent display sleep
+            sta ORDDLY                       ; bdf4 85ff    . Delay to disambiguate double click?
+            jsr KEYPRS                       ; bdf6 209fa9  . A <- CONSOL flags (opt/sel/strt); prevent display sleep
             and #$01                         ; bdf9 2901    
             bne _AB_13                       ; bdfb d0f1    
-            jsr CLRTXT                       ; bdfd 20b8a9  Clear TXTWDW + 106-137
-            jsr DEBOUNCE                     ; be00 2030ac  wait for button inactivity
-            jmp START                        ; be03 4c20b9  Main entry point
+            jsr CLRTXT                       ; bdfd 20b8a9  . Clear TXTWDW + 106-137
+            jsr DEBOUNCE                     ; be00 2030ac  . wait for button inactivity
+            jmp START                        ; be03 4c20b9  . Main entry point
 
 NXTTRN:     lda #$00                         ; be06 a900    
-            sta CORPS                        ; be08 85a1    Number of unit under window
-            sta THUNK                        ; be0a 85fa    Non-zero after AI first pass
-            sta SORRY                        ; be0c 85b7    Showed sorry; clear when ready
-            sta BUTMSK                       ; be0e 8597    0 allows trigger, 1 prevents
+            sta CORPS                        ; be08 85a1    . Number of unit under window
+            sta THUNK                        ; be0a 85fa    . Non-zero after AI first pass
+            sta SORRY                        ; be0c 85b7    . Showed sorry; clear when ready
+            sta BUTMSK                       ; be0e 8597    . 0 allows trigger, 1 prevents
             tax                              ; be10 aa      
             jsr TXTMSG                       ; be11 208dac  Please enter your orders now
             jsr THINK                        ; be14 20bcb1  
             lda #$01                         ; be17 a901    
-            sta BUTMSK                       ; be19 8597    0 allows trigger, 1 prevents
+            sta BUTMSK                       ; be19 8597    . 0 allows trigger, 1 prevents
             ldx #$02                         ; be1b a202    
-            jsr TXTMSG                       ; be1d 208dac  Display TXTTBL msg X
+            jsr TXTMSG                       ; be1d 208dac  . Display TXTTBL msg X
             lda #$00                         ; be20 a900    
             sta TICK                         ; be22 85ea    
-            sta TXTWDW+139                   ; be24 8da93a  end of TXTWDW - 5
+            sta TXTWDW+139                   ; be24 8da93a  . end of TXTWDW - 5
             tax                              ; be27 aa      
 _NXTTRN_1:  clc                              ; be28 18      
             adc NEWTRN,x                     ; be29 7da7bb  
@@ -4133,93 +4133,93 @@ _NXTTRN_1:  clc                              ; be28 18
             cmp #$8e                         ; be2f c98e    Checksum of 256 bytes from NEWTRN is 8e, but why check ROM?
             beq _NXTTRN_2                    ; be31 f005    
             ldx DEFNDR                       ; be33 a6ad    
-            jsr SETSWTCH                     ; be35 2081bf  SETCHYX and SWITCH
+            jsr SETSWTCH                     ; be35 2081bf  . SETCHYX and SWITCH
 _NXTTRN_2:  ldx #$a6                         ; be38 a2a6    
 _NXTTRN_3:  stx ARMY                         ; be3a 86ab    
             cpx #$30                         ; be3c e030    
             bcs _NXTTRN_4                    ; be3e b01a    
-            ldy LEVEL                        ; be40 a492    Level learner/beginner/intermediate/advanced/expert
-            lda CSTRLVL,y                    ; be42 b91830  German CSTR adj by level +[255, 150, 75, 25, 0]
-            sta CSTRMOD,x                    ; be45 9dab30  German unit CSTR adjustment
+            ldy LEVEL                        ; be40 a492    . Level learner/beginner/intermediate/advanced/expert
+            lda CSTRLVL,y                    ; be42 b91830  . German CSTR adj by level +[255, 150, 75, 25, 0]
+            sta CSTRMOD,x                    ; be45 9dab30  . German unit CSTR adjustment
             cpx #$2b                         ; be48 e02b    Fliegerkorps?
             bcc _NXTTRN_4                    ; be4a 900e    
-            lda MVMODE,x                     ; be4c bdc734  (expert level only) standard/assault/forced march/entrench
+            lda MVMODE,x                     ; be4c bdc734  . (expert level only) standard/assault/forced march/entrench
             cmp #$02                         ; be4f c902    
             beq _NXTTRN_4                    ; be51 f007    
             lda #$ff                         ; be53 a9ff    Fliegerkorps only moves in forced march mode, otherwise exec -> #$ff
-            sta EXEC,x                       ; be55 9ddc30  unit execution times
+            sta EXEC,x                       ; be55 9ddc30  . unit execution times
             bmi _NXTTRN_6                    ; be58 3012    
-_NXTTRN_4:  lda MVMODE,x                     ; be5a bdc734  (expert level only) standard/assault/forced march/entrench
+_NXTTRN_4:  lda MVMODE,x                     ; be5a bdc734  . (expert level only) standard/assault/forced march/entrench
             cmp #$02                         ; be5d c902    forced march halves CSTRNG, min 1
             bne _NXTTRN_5                    ; be5f d008    
-            lsr CSTRNG,x                     ; be61 5e2b32  combat strengths
+            lsr CSTRNG,x                     ; be61 5e2b32  . combat strengths
             bne _NXTTRN_5                    ; be64 d003    
-            inc CSTRNG,x                     ; be66 fe2b32  combat strengths
-_NXTTRN_5:  jsr CALCEXC                      ; be69 207fab  init calc EXEC,x for next order (was DINGO)
+            inc CSTRNG,x                     ; be66 fe2b32  . combat strengths
+_NXTTRN_5:  jsr CALCEXC                      ; be69 207fab  . init calc EXEC,x for next order (was DINGO)
 _NXTTRN_6:  dex                              ; be6c ca      
             bne _NXTTRN_3                    ; be6d d0cb    
             ldx #$2f                         ; be6f a22f    
 AIRASLT:    stx ARMY                         ; be71 86ab    
-            lda MVMODE,x                     ; be73 bdc734  (expert level only) standard/assault/forced march/entrench
+            lda MVMODE,x                     ; be73 bdc734  . (expert level only) standard/assault/forced march/entrench
             cmp #$01                         ; be76 c901    Handle fliegerkorps assault mode
             bne _AIRADJ_1                    ; be78 d039    
-            jsr SETLL                        ; be7a 2074ab  CORPSX/Y for X -> LAT, LON
-            lda HMORDS,x                     ; be7d bdd232  how many orders queued for each unit
+            jsr SETLL                        ; be7a 2074ab  . CORPSX/Y for X -> LAT, LON
+            lda HMORDS,x                     ; be7d bdd232  . how many orders queued for each unit
 AIRORD:     beq AIRADJ                       ; be80 f009    
-            jsr ORD2LL                       ; be82 20edab  Add unit X order to LAT/LON
-            jsr DELORDR                      ; be85 2071bf  remove order for unit x
+            jsr ORD2LL                       ; be82 20edab  . Add unit X order to LAT/LON
+            jsr DELORDR                      ; be85 2071bf  . remove order for unit x
             jmp AIRORD                       ; be88 4c80be  
 
-AIRADJ:     jsr TERR                         ; be8b 20e7aa  TRNCOD <- terrain chr @ LAT/LON, maybe under unit
+AIRADJ:     jsr TERR                         ; be8b 20e7aa  . TRNCOD <- terrain chr @ LAT/LON, maybe under unit
             ldx UNITNO                       ; be8e a6ac    
             beq _AIRADJ_1                    ; be90 f021    
             cpx #$30                         ; be92 e030    
             bcs _AIRADJ_1                    ; be94 b01d    
             ldy ARMY                         ; be96 a4ab    
-            lda HMORDS,y                     ; be98 b9d232  how many orders queued for each unit
+            lda HMORDS,y                     ; be98 b9d232  . how many orders queued for each unit
             lsr                              ; be9b 4a      Add Flieger strength / half flight distance to friendly UNITNO
-            sta DIVISR                       ; be9c 85f9    Divisor
-            lda CSTRNG,y                     ; be9e b92b32  combat strengths
-            sta DIVIDL                       ; bea1 85f7    Lo byte of dividend, replaced with quotient
+            sta DIVISR                       ; be9c 85f9    . Divisor
+            lda CSTRNG,y                     ; be9e b92b32  . combat strengths
+            sta DIVIDL                       ; bea1 85f7    . Lo byte of dividend, replaced with quotient
             lda #$00                         ; bea3 a900    
-            sta DIVIDH                       ; bea5 85f8    Hi byte of dividend
-            jsr DIVIDE                       ; bea7 2004ac  DIVIDL <- DIVIDH+L / DIVISR note any / 0 = 255
-            lda CSTRMOD,x                    ; beaa bdab30  German unit CSTR adjustment
+            sta DIVIDH                       ; bea5 85f8    . Hi byte of dividend
+            jsr DIVIDE                       ; bea7 2004ac  . DIVIDL <- DIVIDH+L / DIVISR note any / 0 = 255
+            lda CSTRMOD,x                    ; beaa bdab30  . German unit CSTR adjustment
             clc                              ; bead 18      
-            adc DIVIDL                       ; beae 65f7    Lo byte of dividend, replaced with quotient
-            sta CSTRMOD,x                    ; beb0 9dab30  German unit CSTR adjustment
+            adc DIVIDL                       ; beae 65f7    . Lo byte of dividend, replaced with quotient
+            sta CSTRMOD,x                    ; beb0 9dab30  . German unit CSTR adjustment
 _AIRADJ_1:  ldx ARMY                         ; beb3 a6ab    
             dex                              ; beb5 ca      
             cpx #$2b                         ; beb6 e02b    
             bcs AIRASLT                      ; beb8 b0b7    
 __AC__:     ldx #$a6                         ; beba a2a6    
 __AD__:     stx ARMY                         ; bebc 86ab    
-            lda MSTRNG,x                     ; bebe bdff2c  muster strengths
-            ldy STARTDT                      ; bec1 a493    Scenario start 1941/1942
+            lda MSTRNG,x                     ; bebe bdff2c  . muster strengths
+            ldy STARTDT                      ; bec1 a493    . Scenario start 1941/1942
             beq _AD_1                        ; bec3 f007    
             cpx #$6d                         ; bec5 e06d    
             bne _AD_1                        ; bec7 d003    
-            sta CSTRNG,x                     ; bec9 9d2b32  combat strengths
+            sta CSTRNG,x                     ; bec9 9d2b32  . combat strengths
 _AD_1:      sec                              ; becc 38      
-            sbc CSTRNG,x                     ; becd fd2b32  combat strengths
+            sbc CSTRNG,x                     ; becd fd2b32  . combat strengths
             cmp #$02                         ; bed0 c902    
             bcc _AD_2                        ; bed2 900b    
-            inc CSTRNG,x                     ; bed4 fe2b32  combat strengths
-            cmp SKREST / RANDOM              ; bed7 cd0ad2  W: Reset serial port status register / R: Random byte
+            inc CSTRNG,x                     ; bed4 fe2b32  . combat strengths
+            cmp SKREST / RANDOM              ; bed7 cd0ad2  . W: Reset serial port status register / R: Random byte
             bcc _AD_2                        ; beda 9003    
-            inc CSTRNG,x                     ; bedc fe2b32  combat strengths
-_AD_2:      lda EXEC,x                       ; bedf bddc30  unit execution times
+            inc CSTRNG,x                     ; bedc fe2b32  . combat strengths
+_AD_2:      lda EXEC,x                       ; bedf bddc30  . unit execution times
             bmi _AD_8                        ; bee2 3077    
             cmp TICK                         ; bee4 c5ea    
             bne _AD_8                        ; bee6 d073    
-            jsr SETLL                        ; bee8 2074ab  CORPSX/Y for X -> LAT, LON
-            jsr ORD2LL                       ; beeb 20edab  Add unit X order to LAT/LON
+            jsr SETLL                        ; bee8 2074ab  . CORPSX/Y for X -> LAT, LON
+            jsr ORD2LL                       ; beeb 20edab  . Add unit X order to LAT/LON
             sty DIR                          ; beee 84f2    
             lda LON                          ; bef0 a5b2    
             sta ACCLO                        ; bef2 85af    
             lda LAT                          ; bef4 a5b1    
             sta ACCHI                        ; bef6 85b0    
-            jsr TERR                         ; bef8 20e7aa  TRNCOD <- terrain chr @ LAT/LON, maybe under unit
+            jsr TERR                         ; bef8 20e7aa  . TRNCOD <- terrain chr @ LAT/LON, maybe under unit
             lda UNITNO                       ; befb a5ac    
             beq _AD_6                        ; befd f02c    
             cmp #$30                         ; beff c930    
@@ -4234,18 +4234,18 @@ _AD_3:      ldx ARMY                         ; bf0b a6ab
 _AD_4:      lda TICK                         ; bf11 a5ea    
             clc                              ; bf13 18      
             adc #$02                         ; bf14 6902    
-            sta EXEC,x                       ; bf16 9ddc30  unit execution times
+            sta EXEC,x                       ; bf16 9ddc30  . unit execution times
             bcc _AD_8                        ; bf19 9040    
 _AD_5:      jsr COMBAT                       ; bf1b 20b5ac  
             lda VICTRY                       ; bf1e a5ee    
             beq _AD_8                        ; bf20 f039    
-            lda WHORDS,x                     ; bf22 bd7933  what unit orders are (2 bits per order)
+            lda WHORDS,x                     ; bf22 bd7933  . what unit orders are (2 bits per order)
             and #$03                         ; bf25 2903    
             sta DIR                          ; bf27 85f2    
             bpl _AD_7                        ; bf29 1022    
 _AD_6:      ldx ARMY                         ; bf2b a6ab    
-            jsr SETCHXY                      ; bf2d 20a8ac  X -> CORPS, CORPSX/Y -> CHUNKX/Y
-            jsr SETLL                        ; bf30 2074ab  CORPSX/Y for X -> LAT, LON
+            jsr SETCHXY                      ; bf2d 20a8ac  . X -> CORPS, CORPSX/Y -> CHUNKX/Y
+            jsr SETLL                        ; bf30 2074ab  . CORPSX/Y for X -> LAT, LON
             jsr CHKZOC                       ; bf33 20a4b0  
             lda ACCHI                        ; bf36 a5b0    
             sta LAT                          ; bf38 85b1    
@@ -4260,9 +4260,9 @@ _AD_6:      ldx ARMY                         ; bf2b a6ab
             bcs _AD_4                        ; bf4b b0c4    
 _AD_7:      jsr __F__                        ; bf4d 2071ae  
             lda #$ff                         ; bf50 a9ff    
-            sta EXEC,x                       ; bf52 9ddc30  unit execution times
-            jsr DELORDR                      ; bf55 2071bf  remove order for unit x
-            jsr CALCEXC                      ; bf58 207fab  init calc EXEC,x for next order (was DINGO)
+            sta EXEC,x                       ; bf52 9ddc30  . unit execution times
+            jsr DELORDR                      ; bf55 2071bf  . remove order for unit x
+            jsr CALCEXC                      ; bf58 207fab  . init calc EXEC,x for next order (was DINGO)
 _AD_8:      ldx ARMY                         ; bf5b a6ab    
             dex                              ; bf5d ca      
             beq _AD_9                        ; bf5e f003    
@@ -4277,22 +4277,22 @@ _AD_9:      inc TICK                         ; bf63 e6ea
 _AD_10:     jmp NEWTRN                       ; bf6e 4ca7bb  
 
 DELORDR:    lsr WHORDH,x                     ; bf71 5e2034  remove order for unit x
-            ror WHORDS,x                     ; bf74 7e7933  what unit orders are (2 bits per order)
-            lsr WHORDH,x                     ; bf77 5e2034  unit orders (high bits)
-            ror WHORDS,x                     ; bf7a 7e7933  what unit orders are (2 bits per order)
-            dec HMORDS,x                     ; bf7d ded232  how many orders queued for each unit
+            ror WHORDS,x                     ; bf74 7e7933  . what unit orders are (2 bits per order)
+            lsr WHORDH,x                     ; bf77 5e2034  . unit orders (high bits)
+            ror WHORDS,x                     ; bf7a 7e7933  . what unit orders are (2 bits per order)
+            dec HMORDS,x                     ; bf7d ded232  . how many orders queued for each unit
             rts                              ; bf80 60      
 
 SETSWTCH:   jsr SETCHXY                      ; bf81 20a8ac  SETCHYX and SWITCH
-            jmp SWITCH                       ; bf84 4c34a9  swap CORPS with terrain @ CHUNKX/Y via SWAP buffer
+            jmp SWITCH                       ; bf84 4c34a9  . swap CORPS with terrain @ CHUNKX/Y via SWAP buffer
 
-__AE__:     ldx STARTDT                      ; bf87 a693    Scenario start 1941/1942
-            lda STRTDAYS,x                   ; bf89 bd9abf  week before scenario start, ie. '41/6/15, '42/5/17
+__AE__:     ldx STARTDT                      ; bf87 a693    . Scenario start 1941/1942
+            lda STRTDAYS,x                   ; bf89 bd9abf  . week before scenario start, ie. '41/6/15, '42/5/17
             sta DAY                          ; bf8c 858f    
             lda STRTMOS,x                    ; bf8e bd9cbf  
             sta MONTH                        ; bf91 8590    
             lda STRTYRS,x                    ; bf93 bd9ebf  
-            sta YEAR                         ; bf96 8d2730  last chr of YRSTR = $11 or $12 for 1941/1942
+            sta YEAR                         ; bf96 8d2730  . last chr of YRSTR = $11 or $12 for 1941/1942
             rts                              ; bf99 60      
 
 STRTDAYS:  ; week before scenario start, ie. '41/6/15, '42/5/17
@@ -4306,14 +4306,14 @@ INCDATE:    lda DAY                          ; bfa0 a58f
             clc                              ; bfa2 18      
             adc #$07                         ; bfa3 6907    
             ldx MONTH                        ; bfa5 a690    
-            cmp MONLEN,x                     ; bfa7 dd21a0  table of month lengths
+            cmp MONLEN,x                     ; bfa7 dd21a0  . table of month lengths
             beq _INCDATE_2                   ; bfaa f016    
             bcc _INCDATE_2                   ; bfac 9014    
-            sbc MONLEN,x                     ; bfae fd21a0  table of month lengths
+            sbc MONLEN,x                     ; bfae fd21a0  . table of month lengths
             inx                              ; bfb1 e8      
             cpx #$0d                         ; bfb2 e00d    
             bne _INCDATE_1                   ; bfb4 d005    
-            inc YEAR                         ; bfb6 ee2730  last chr of YRSTR = $11 or $12 for 1941/1942
+            inc YEAR                         ; bfb6 ee2730  . last chr of YRSTR = $11 or $12 for 1941/1942
             ldx #$01                         ; bfb9 a201    
 _INCDATE_1: stx MONTH                        ; bfbb 8690    
             ldy TRTAB,x                      ; bfbd bc43a0  
@@ -4340,9 +4340,9 @@ _SHOWDT_2:  lda MONTHS,x                     ; bfd6 bd679d
             bne _SHOWDT_2                    ; bfe3 d0f1    
 _SHOWDT_3:  iny                              ; bfe5 c8      
             lda DAY                          ; bfe6 a58f    
-            jsr DNUMBER                      ; bfe8 20a3aa  Show A as base10 number in TXTWDW
+            jsr DNUMBER                      ; bfe8 20a3aa  . Show A as base10 number in TXTWDW
             ldx #$00                         ; bfeb a200    
-_SHOWDT_4:  lda YRSTR,x                      ; bfed bd2230  , 1941/2
+_SHOWDT_4:  lda YRSTR,x                      ; bfed bd2230  . String ', 1941/2' with last char updated in place
             sta TXTWDW,y                     ; bff0 991e3a  
             inx                              ; bff3 e8      
             iny                              ; bff4 c8      

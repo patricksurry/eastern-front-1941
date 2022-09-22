@@ -1,0 +1,36 @@
+<head>
+    <style>
+#asciimap pre {
+    margin-left: 100px;
+    display: inline-block;
+    transform: scale(2, 1);
+    transform-origin: top left;
+}
+code {
+    font-family: andale mono,monospace;
+}
+    </style>
+
+
+</head>
+<body>
+    <div id="asciimap">
+        <pre>
+            <code>
+            </code>
+        </pre>
+    </div>
+    <script src="static/d3-7.6.1.min.js"></script>
+    <script src="static/data.js"></script>
+<script>
+function escapeHtml(unsafe) {
+    return unsafe
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
+}
+d3.select('#asciimap code').html(escapeHtml(mapascii))
+</script>
+</body>
