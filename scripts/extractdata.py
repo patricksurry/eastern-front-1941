@@ -162,18 +162,25 @@ def buildoob(chunks, outbase, scenario=''):
     num_units = len(chunks[keys[0]])
 
     oob = [tuple(int(chunks[k][i]) for k in keys) for i in range(num_units)]
-
-    json.dump(oob, open(outbase + '.dat', 'w'), indent=4)
-    print(f"Wrote {len(oob)} units to {outbase}.dat")
+    with open(outbase + '.json', 'w') as f:
+        f.write(f'// {json.dumps(keys)}\n')
+        f.write('[\n')
+        for u in oob:
+            f.write(f'    {json.dumps(u)},\n')
+        f.write(']\n')
+    print(f"Wrote {len(oob)} units to {outbase}.json")
     print("Unique CORPT values", sorted({u[-2] for u in oob}))
 
 
-def buildwords(data, outbase, fixedwidth=None):
-    data = data.decode('ascii')
-    if fixedwidth:
-        words = [data[i:i+fixedwidth].rstrip() for i in range(0, len(data), fixedwidth)]
-    else:
-        words = data.split(' ')
+def buildwords(chunks, outbase, fmts):
+    words = {}
+    for k, fmt in fmts.items():
+        data = bytes(b & 0x7f for b in chunks[k]).decode('ascii')
+        if isinstance(fmt, int):
+            ws = [data[i:i+fmt] for i in range(0, len(data), fmt)]
+        else:
+            ws = data.split(fmt)
+        words[k] = ws
     json.dump(words, open(outbase + '.json', 'w'), indent=4)
 
 
@@ -198,7 +205,7 @@ def buildterrain(data, outbase):
                 key=key,
                 movecost=[[int(data[ttyp + season*20]) for season in range(3)] for armor in range(2)]
             ))
-            f.write(s + ',\n')
+            f.write(f'    {s},\n')
         f.write(']\n')
 
 
@@ -217,7 +224,6 @@ for ver, chunks in versions.items():
     buildoob(chunks, f'oob-{ver}')
     if 'CORPSX42' in chunks:
         buildoob(chunks, f'oob-{ver}42', '42')
-    buildwords(chunks['WORDS'], f'words-{ver}', None if ver == 'cart' else 8)
+    fmts = dict(zip('WORDS TXTTBL ERRMSG'.split(), ' !!' if ver == 'cart' else [8, 32, 32]))
+    buildwords(chunks, f'words-{ver}', fmts)
     buildterrain(chunks['TRNTAB'], f'terrain-{ver}')
-
-

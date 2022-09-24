@@ -247,11 +247,11 @@
         {"addr": "9d4b", "symbol": "WRDSOFST", "mode": "data"},
         {"addr": "9d67", "symbol": "MONTHS", "mode": "data"},
         {"addr": "9dbd", "symbol": "MTHOFST", "mode": "data"},
-        {"addr": "9dca", "symbol": "TXTTBL", "mode": "data", "comm": "more text"},
+        {"addr": "9dca", "symbol": "TXTTBL", "mode": "data", "comm": "more text", "length": 180},
 
         {"addr": "9e7e", "symbol": "TXTOFST", "mode": "data"},
         {"addr": "9e86", "symbol": "TXTLOC", "mode": "data", "comm": "Show TXTMSG,x at TXTWDW + TXTLOC,x"},
-        {"addr": "9e8e", "symbol": "ERRMSG", "mode": "data", "comm": "table of error messages"},
+        {"addr": "9e8e", "symbol": "ERRMSG", "mode": "data", "comm": "table of error messages", "length": 244},
 
         {"addr": "9f82", "symbol": "ERROFST", "mode": "data", "comm": "10 offsets into ERRMSG"},
         {"addr": "9f8c", "symbol": "CITIES", "mode": "data", "comm": "high-bit terminated strings"},
@@ -372,6 +372,7 @@
         {"addr": "ae28", "symbol": "FLGRBRK", "mode": "code", "comm": "Fliegerkorps break and suffer 75% loss"},
         {"addr": "ae41", "symbol": "DEALDMG", "mode": "code", "comm": "X takes damage during ARMY attack, carry clear if dies else set"},
         {"addr": "ae5f", "symbol": "ZOCDMG", "mode": "code", "comm": "Deal CSTRDMG to units blocked by ZOC"},
+        {"addr": "ae71", "symbol": "ADVANCE", "mode": "code", "comm": "Advance CORP -> LAT, LON, track city capture"},
         {"addr": "aeec", "symbol": "SCRNPOS", "mode": "code", "comm": "CORPS -> SCRNX/Y; 0,0 if offscreen"},
 
         {"addr": "afef", "symbol": "CHKLEGAL", "mode": "code", "comm": "zflag clr if CORPSX/Y -> LAT/LON is legal"},

@@ -177,9 +177,19 @@ slight differences between the APX map (pictured) and the cartridge version
 
 notes, fun discoveries
 
+- why is Sevastpol listed as a scoring city in APX version but not represented on the map in either version?
+
+- APX version allows attacker response even if the defender attack breaks it, cart adds `bcc ATAKR / jmp ENDCOM`
+
+- APX gives MSTRNG+2 to russian in supply via `inc MSTRNG,x`, cart doesn't
+
+- APX has fixed damage 1/5; cart is variable
+
 - possible APX bugs, e.g. freezing Kerch straits, the corps,x/y issue differs in binary, notes (2 versions?)
 
-    russian retreat bug mentioned pdf p33 https://www.cgwmuseum.org/galleries/issues/cgw_120.pdf
+    "russian units would advance into better positions during the retreat phase" bug mentioned in the [Opponents Undaunted][cpw120] piece in this old Computer Gaming world piece pdf p32-33
+
+[cpw120]: https://www.cgwmuseum.org/galleries/issues/cgw_120.pdf
 
 - cartridge bug - TERRTY should shift estuary check one down
 
@@ -283,6 +293,12 @@ _COMBAT_7:  ldx HMORDS,x     ; ad29 bed232  how many orders queued for each unit
 
 
 ### Things todo
+
+- scrollmsg()
+
+- variants: moreRandom, sevastopol, astar, ...
+
+- dealdmg varies by level via M/CSTRDMG not 1/5 like APX, some weirdness with assault nmode #$01 and cpx ARMY ?
 
 - toggle x twice reveals debug.  refactor toggles as shared routine?
 

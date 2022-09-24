@@ -203,6 +203,8 @@ function nextTurn() {
     // regroup, reinforce, recover...
     oob.filter(u => u.isActive()).forEach(u => u.recover());
 
+    // TODO trace supply, with CSTR >> 1 if not, russian MSTR+2 (for apx)
+
     // M.ASM:3720  delay reinforcements scheduled for an occuplied square
     oob.filter(u => u.arrive == gameState.turn)
         .forEach(u => {

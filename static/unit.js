@@ -135,9 +135,11 @@ Unit.resolveCombat = function(opp) {
 
     // opponent attacks
     let str = modifyStrength(opp.cstrng, modifier);
-    if (str >= rand256()) this.takeDamage(1, 5);
-
-    //TODO original game doesn't skip attacker if break
+    // note APX doesn't skip attacker if break, but cart does
+    if (str >= rand256()) {
+        this.takeDamage(1, 5, true);
+        if (!this.orders) return 0;
+    }
     modifier = terraintypes[Location.of(opp).terrain].offence;
     str = modifyStrength(this.cstrng, modifier);
     if (str >= rand256()) {

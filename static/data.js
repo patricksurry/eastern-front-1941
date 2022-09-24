@@ -80,30 +80,46 @@ const
     ],
     Player = enumFor(players),
     cities = [
-// M.ASM:8630 MPTS / MOSCX / MOSCY - special city victory points
-// oddly Sevastpol is assigned points but is not coded as a city in the map?
-        {owner: Player.russian, lon: 33, lat: 36, label: 'Leningrad', points: 10},
-        {owner: Player.russian, lon: 13, lat: 33, label: 'Gorky'},
-        {owner: Player.russian, lon: 7,  lat: 32, label: 'Kazan'},
-        {owner: Player.russian, lon: 38, lat: 30, label: 'Riga'},
-        {owner: Player.russian, lon: 24, lat: 28, label: 'Rzhev'},
-        {owner: Player.russian, lon: 20, lat: 28, label: 'Moscow', points: 20},
-        {owner: Player.russian, lon: 26, lat: 24, label: 'Smolensk'},
-        {owner: Player.russian, lon: 3,  lat: 24, label: 'Kubyshev'},
-        {owner: Player.russian, lon: 33, lat: 22, label: 'Minsk'},
-        {owner: Player.russian, lon: 21, lat: 21, label: 'Orel'},
-        {owner: Player.russian, lon: 15, lat: 21, label: 'Voronezh'},
-        {owner: Player.german,  lon: 44, lat: 19, label: 'Warsaw'},
-        {owner: Player.russian, lon: 20, lat: 15, label: 'Kharkov'},
-        {owner: Player.russian, lon: 6,  lat: 15, label: 'Stalingrad', points: 20},
-        {owner: Player.russian, lon: 29, lat: 14, label: 'Kiev'},
-        {owner: Player.russian, lon: 20, lat:  8, label: 'Dnepropetrovsk'},
-        {owner: Player.russian, lon: 12, lat:  8, label: 'Rostov'},
-        {owner: Player.russian, lon: 26, lat:  5, label: 'Odessa'},
-        {owner: Player.russian, lon: 12, lat:  4, label: 'Krasnodar'},
-        //TODO replace the first F => @ in the bottom row of the map for Sevastopol variant
-        //        {owner: 1, lon: 20, lat:  0, label: 'Sevastopol', points: 20},
+// M.ASM:8630 MPTS / MOSCX / MOSCY - special city victory points; updated in CITYxxx for CART
+// oddly Sevastpol is assigned points but is not coded as a city in either version of the map?
+//TODO  create a variant that replaces F => @ in the bottom row of the map, and adds to city list
+        {owner: Player.russian, lon: 20, lat: 28, points: 10, label: 'Moscow'},      // APX = 20
+        {owner: Player.russian, lon: 33, lat: 36, points: 5,  label: 'Leningrad'},   // APX = 10
+        {owner: Player.russian, lon: 6,  lat: 15, points: 5,  label: 'Stalingrad'},  // APX = 10
+        {owner: Player.russian, lon: 12, lat:  4, points: 5,  label: 'Krasnodar'},   // APX all others zero except Sevastopol
+        {owner: Player.russian, lon: 13, lat: 33, points: 5,  label: 'Gorky'},
+        {owner: Player.russian, lon: 7,  lat: 32, points: 5,  label: 'Kazan'},
+        {owner: Player.russian, lon: 38, lat: 30, points: 2,  label: 'Riga'},
+        {owner: Player.russian, lon: 24, lat: 28, points: 2,  label: 'Rzhev'},
+        {owner: Player.russian, lon: 26, lat: 24, points: 2,  label: 'Smolensk'},
+        {owner: Player.russian, lon: 3,  lat: 24, points: 5,  label: 'Kuibishev'},
+        {owner: Player.russian, lon: 33, lat: 22, points: 2,  label: 'Minsk'},
+        {owner: Player.russian, lon: 15, lat: 21, points: 2,  label: 'Voronezh'},
+        {owner: Player.russian, lon: 21, lat: 21, points: 2,  label: 'Orel'},
+        {owner: Player.russian, lon: 20, lat: 15, points: 2,  label: 'Kharkov'},
+        {owner: Player.russian, lon: 29, lat: 14, points: 2,  label: 'Kiev'},
+        {owner: Player.russian, lon: 12, lat:  8, points: 2,  label: 'Rostov'},
+        {owner: Player.russian, lon: 20, lat:  8, points: 2,  label: 'Dnepropetrovsk'},
+        {owner: Player.russian, lon: 26, lat:  5, points: 2,  label: 'Odessa'},
+        {owner: Player.german,  lon: 44, lat: 19, points: 0,  label: 'Warsaw'},
+//        {owner: Player.russian, lon: 20, lat:  0, points: 5,  label: 'Sevastopol'},
     ],
+    // cartridge offers selection of levels which modify various parameters:
+    //  ncity:  is the number of cities that are scored - note needs bumped if Sevastopol added
+    //  mdmg/cdmg: is the amount of damage caused by a successful attack tick
+    //  cadj: is the base adjustment to german combat strength
+    //  fog: controls which bits are randomized for enemy units out of sight
+    //  nunit: gives index of first ineligbile unit, e.g. 0x2 means control first 2 ids
+    //  endturn: when the scneario ends
+    //  score required to win
+    leveldata = [
+        {key: "learner",      ncity: 1,  mdmg: 4, cdmg: 12, cadj: 255, fog: 0xff, nunit: [0x2,  0x31], endturn: 14, win: 5},
+        {key: "beginner",     ncity: 1,  mdmg: 4, cdmg: 12, cadj: 150, fog: 0xff, nunit: [0x12, 0x50], endturn: 14, win: 25},
+        {key: "intermediate", ncity: 3,  mdmg: 2, cdmg: 8,  cadj:  75, fog: 0xff, nunit: [0x1f, 0x72], endturn: 40, win: 40},
+        {key: "advanced",     ncity: 18, mdmg: 1, cdmg: 5,  cadj:  25, fog: 0xc0, nunit: [0x2b, 0x90], endturn: 40, win: 80},
+        {key: "expert",       ncity: 18, mdmg: 1, cdmg: 4,  cadj:   0, fog: 0x80, nunit: [0x30, 0xa8], endturn: 44, win: 255},
+    ],
+    Level = enumFor(leveldata),
     // terrain types M.ASM: 8160 TERRTY
     // OFFNC I.ASM:9080 1,1,1,1,1,1,2,2,1,0
     // DEFNC I.ASM:9080 2,3,3,2,2,2,1,1,2,0
