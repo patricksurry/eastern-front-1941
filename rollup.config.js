@@ -10,7 +10,7 @@ const production = !process.env.ROLLUP_WATCH;
 export default {
     input: 'src/main.js',
     output: {
-        file: 'public/ef1941.js',
+        file: 'static/ef1941.js',
         name: 'ef1941',
         format: 'iife', // immediately-invoked function expression — suitable for <script> tags
         sourcemap: true

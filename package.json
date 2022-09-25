@@ -36,7 +36,7 @@
     "build": "rollup -c",
     "dev": "npm-run-all --parallel start watch test",
     "watch": "rollup -c -w",
-    "start": "serve public",
+    "start": "serve .",
     "test": "jest --watch"
   }
 }
