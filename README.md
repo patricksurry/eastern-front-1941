@@ -294,6 +294,10 @@ _COMBAT_7:  ldx HMORDS,x     ; ad29 bed232  how many orders queued for each unit
 
 ### Things todo
 
+- remove and test spiral1
+
+- guide.html with cc notes + commentary boxes
+
 - scrollmsg()
 
 - variants: moreRandom, sevastopol, astar, ...
@@ -356,6 +360,13 @@ https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle / modulo bias sort fu
   to learn about computer game algorithms via engaging visualizations with a little math,
   including a great introduction to path-finding and the [A* algorithm][astar]
 
+
+
+https://tesseract-ocr.github.io/
+
+convert -density 300 APX_Eastern_Front_1941.pdf -quality 90 apxdoc%02d.jpg
+
+for i in 07 08 09 10 11 12 13 14 15 16 17 18; do echo $i; tesseract apxdoc$i.jpg - >> apxdoc.txt; done
 
 
 [apxvideo]: https://www.youtube.com/watch?v=MOV5C_wvP4o

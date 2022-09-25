@@ -1,3 +1,12 @@
+import {
+    maxlon, maxlat, mapdata,
+    directions, Direction,
+    terraintypes, Terrain,
+    waterstate, Water,
+    blocked, cities,
+} from './data.js';
+import {randbyte, gameState} from './game.js';
+
 // the map is made up of locations, each with a lon and lat
 function Location(lon, lat, ...data) {
     if (!Number.isInteger(lon) || !Number.isInteger(lat)) throw("bad Location(lon: int, lat: int, ...data)")
@@ -43,6 +52,8 @@ const mapboard = mapdata.map(
         (data, j) => Location(maxlon - j, maxlat - i, data, {unitid: null})
     )
 );
+mapboard.maxlon = maxlon;
+mapboard.maxlat = maxlat;
 
 cities.forEach((city, i) => {
     city.points ||= 0;
@@ -66,12 +77,12 @@ function moveIceLine(w) {
         other = waterstate[1-w],
         oldlat = gameState.icelat,
         dlat = directions[state.dir].dlat,
-        change = (rand256() & 0x8) + 7;
+        change = (randbyte() & 0x8) + 7;
 
     gameState.icelat = Math.min(maxlat, Math.max(1, oldlat + dlat * change));
 
     let skip = (w == Water.freeze) ? oldlat: gameState.icelat;  // for freeze skip old line, for thaw skip new new
-    for (i = oldlat; i != gameState.icelat + dlat; i += dlat) {
+    for (let i = oldlat; i != gameState.icelat + dlat; i += dlat) {
         if (i == skip) continue;
         mapboard[maxlat - i].forEach(d => {
             let k = other.terrain.indexOf(d.terrain);
@@ -152,7 +163,7 @@ function directPath(p, q, costs) {
     const
         A = q.lat - p.lat,
         B = - (q.lon - p.lon),
-        C = q.lon * p.lat - q.lat * p.lon,
+        // C = q.lon * p.lat - q.lat * p.lon,
         projections = _directionsFrom(p, q),
         i = projections[0][1], j = projections[1][1], // best two directinoe
         s = directions[i], t = directions[j],
@@ -161,11 +172,10 @@ function directPath(p, q, costs) {
 
     let err = 0,
         cost = 0,
-        orders = [],
-        k;
+        orders = [];
 
     while (loc.id != goal.id) {
-        [k, de] = Math.abs(err + ds) < Math.abs(err + dt) ? [i, ds]: [j, dt];
+        let [k, de] = Math.abs(err + ds) < Math.abs(err + dt) ? [i, ds]: [j, dt];
         err += de;
         orders.push(k);
         loc = loc.neighbor(k, true);
@@ -215,7 +225,7 @@ function bestPath(p, q, costs) {
     if (src.id != goal.id) return null;
 
     let orders = [];
-    while (true) {
+    for(;;) {
         let dir = dirTo[src.id];
         if (dir == null) break;
         orders.unshift(dir);
@@ -231,7 +241,8 @@ function reach(src, range, costs) {
         locs = {[start.id]: 0};
 
     while (cost < range) {
-        Object.entries(locs).filter(([k,v]) => v == cost).forEach(([k,_]) => {
+        // eslint-disable-next-line no-unused-vars
+        Object.entries(locs).filter(([_,v]) => v == cost).forEach(([k,_]) => {
             let src = Location.fromid(k);
             Object.values(Direction).forEach(i => {
                 let dst = src.neighbor(i);
@@ -246,3 +257,17 @@ function reach(src, range, costs) {
     }
     return locs;
 }
+
+export {
+    Location,
+    mapboard,
+    mapForegroundColor,
+    moveIceLine,
+    moveCosts,
+    manhattanDistance,
+    directionFrom,
+    squareSpiral,
+    directPath,
+    bestPath,
+    reach,
+};

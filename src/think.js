@@ -1,16 +1,7 @@
-function sum(xs) {
-    return xs.reduce((s, x) => s + x, 0);
-}
-
-
-function score(player) {
-    // M.asm:4050
-    let eastwest = sum(oob.map(u => u.score() * (u.player == player ? 1: -1))),
-        bonus = sum(cities.filter(c => c.owner == player).map(c => c.points)),
-        score = Math.max(0, eastwest) + bonus;
-    if (gameState.handicap) score >>= 1;
-    return score;
-}
+import {players, Player, directions, terraintypes} from './data.js';
+import {sum} from './game.js';
+import {Location, manhattanDistance, directionFrom, squareSpiral} from './map.js';
+import {oob} from './unit.js';
 
 function think(player, train) {
     if (train == null) {
@@ -62,7 +53,7 @@ function think(player, train) {
             });
         }
         if (!u.objective) return;
-        result = u.bestPath(u.objective);
+        let result = u.bestPath(u.objective);
         if (!result) return;
         u.orders = result.orders;  // We'll prune to 8 later
         u.show();
@@ -94,7 +85,7 @@ function calcForceRatios(player) {
         ofropp = Math.floor((friend << 4) / foe);
 
     active.forEach(u => {
-        let nearby = active.filter(v => manhattanDistance(u, v) <= 8)
+        let nearby = active.filter(v => manhattanDistance(u, v) <= 8),
             friend = 0,
             loc = Location.of(u);
         u.ifrdir = [0, 0, 0, 0];
@@ -202,9 +193,11 @@ function linePoints(locs, diameter, occupied) {
     })
     if (frontline[r] == r && counts[r] == 1) score += 48;
     // also curious that we look at all pairs not just adjacent ones?
-    for (i=1; i<diameter; i++) for (j=0; j<i; j++) {
+    for (let i=1; i<diameter; i++) for (let j=0; j<i; j++) {
         let delta = Math.abs(frontline[i]-frontline[j]);
         if (delta) score -= 1 << delta;
     }
     return score;
 }
+
+export {think, conclude, linePoints, sortSquareFacing};

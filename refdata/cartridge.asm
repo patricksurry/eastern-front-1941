@@ -926,14 +926,14 @@ _FBUTPSB_5: sta PCOLR0                       ; a521 8dc002  . Color of player 0 
             ldx CORPS                        ; a52f a6a1    . Number of unit under window
             lda CORPT,x                      ; a531 bd4d2e  . codes for unit types
             pha                              ; a534 48      
-            and #$70                         ; a535 2970    
+            and #$70                         ; a535 2970    show '',<CORPS>,FINNISH,RUMANIAN,ITALIAN,HUNGARIAN,<ARMY>,GUARDS
             lsr                              ; a537 4a      
             lsr                              ; a538 4a      
             lsr                              ; a539 4a      
             lsr                              ; a53a 4a      
             jsr SHOWWRD                      ; a53b 201ea9  . Add word A to TXTWDW + Y
             pla                              ; a53e 68      
-            and #$07                         ; a53f 2907    
+            and #$07                         ; a53f 2907    show INFANTRY,MILITIA,<MUSTER>,FLIEGER,PANZER,TANK,CAVALRY,<COMBAT>
             ora #$08                         ; a541 0908    
             jsr SHOWWRD                      ; a543 201ea9  . Add word A to TXTWDW + Y
             ldx #$06                         ; a546 a206    
@@ -948,17 +948,17 @@ _FBUTPSB_6: jsr SHOWWRDX                     ; a550 201fa9  . Add word X to TXTW
             ldx CORPS                        ; a559 a6a1    . Number of unit under window
             lda MVMODE,x                     ; a55b bdc734  . (expert level only) standard/assault/forced march/entrench
             clc                              ; a55e 18      
-            adc #$15                         ; a55f 6915    
+            adc #$15                         ; a55f 6915    Show STANDARD,ASSAULT,MARCH,ENTRENCH
             ldy #$24                         ; a561 a024    
             jsr SHOWWRD                      ; a563 201ea9  . Add word A to TXTWDW + Y
             ldy #$56                         ; a566 a056    
-            ldx #$19                         ; a568 a219    
+            ldx #$19                         ; a568 a219    Show MODE
             jsr SHOWWRDX                     ; a56a 201fa9  . Add word X to TXTWDW + Y
 _FBUTPSB_7: ldy #$39                         ; a56d a039    
-            ldx #$0a                         ; a56f a20a    
+            ldx #$0a                         ; a56f a20a    Show MUSTER
             jsr SHOWWRDX                     ; a571 201fa9  . Add word X to TXTWDW + Y
             dey                              ; a574 88      
-            lda #$1a                         ; a575 a91a    
+            lda #$1a                         ; a575 a91a    ":"
             sta TXTWDW,y                     ; a577 991e3a  
             iny                              ; a57a c8      
             iny                              ; a57b c8      
@@ -967,10 +967,10 @@ _FBUTPSB_7: ldy #$39                         ; a56d a039
             jsr SHOWSTR                      ; a581 2075aa  . Show unit X strength A, with Russian fog of war
             iny                              ; a584 c8      
             iny                              ; a585 c8      
-            ldx #$0f                         ; a586 a20f    
+            ldx #$0f                         ; a586 a20f    Show COMBAT
             jsr SHOWWRDX                     ; a588 201fa9  . Add word X to TXTWDW + Y
             dey                              ; a58b 88      
-            lda #$1a                         ; a58c a91a    
+            lda #$1a                         ; a58c a91a    ":"
             sta TXTWDW,y                     ; a58e 991e3a  
             iny                              ; a591 c8      
             iny                              ; a592 c8      
@@ -2559,7 +2559,7 @@ BRKCHK:     ldy LEVEL                        ; b15a a492    Maybe break unit X, 
 _BRKCHK_1:  cpx #$30                         ; b168 e030    
             bcs _BRKCHK_2                    ; b16a b00d    
             lda CORPT,x                      ; b16c bd4d2e  . codes for unit types
-            and #$f0                         ; b16f 29f0    
+            and #$f0                         ; b16f 29f0    ; all except german "" unnamed?
             bne _BRKCHK_2                    ; b171 d006    
             lda MSTRNG,x                     ; b173 bdff2c  . muster strengths
             lsr                              ; b176 4a      
@@ -2626,7 +2626,7 @@ THNKLP:     stx ARMY                         ; b1e1 86ab
 _THNKLP_1:  jmp TOGSCN                       ; b1ea 4c41b5  
 
 _THNKLP_2:  lda CORPT,x                      ; b1ed bd4d2e  . codes for unit types
-            cmp #$81                         ; b1f0 c981    
+            cmp #$81                         ; b1f0 c981    ; russian "" unnamed? 1 -> ?
             beq _THNKLP_1                    ; b1f2 f0f6    
             lda BSTVALS-48,x                 ; b1f4 bdfe38  
             cmp #$06                         ; b1f7 c906    
@@ -3753,7 +3753,7 @@ _W_1:       ldx LEVEL                        ; bb14 a692    Cycle level 0-4
 _W_2:       stx LEVEL                        ; bb1d 8692    . Level learner/beginner/intermediate/advanced/expert
             txa                              ; bb1f 8a      
             ldy #$71                         ; bb20 a071    
-            ora #$10                         ; bb22 0910    
+            ora #$10                         ; bb22 0910    show level
             jsr SHOWWRD                      ; bb24 201ea9  . Add word A to TXTWDW + Y
             dey                              ; bb27 88      
 _W_3:       cpy #$79                         ; bb28 c079    
@@ -3789,16 +3789,16 @@ _W_9:       lda #$ff                         ; bb67 a9ff
             sta EXEC,x                       ; bb69 9ddc30  . unit execution times
             ldy #$7e                         ; bb6c a07e    
             lda CORPT,x                      ; bb6e bd4d2e  . codes for unit types
-            and #$04                         ; bb71 2904    
+            and #$04                         ; bb71 2904    bit 3 clr => armor
             bne _W_10                        ; bb73 d00b    
             ldy #$7d                         ; bb75 a07d    
             lda CORPT,x                      ; bb77 bd4d2e  . codes for unit types
-            and #$02                         ; bb7a 2902    
+            and #$02                         ; bb7a 2902    bit 2 set => inf
             beq _W_10                        ; bb7c f002    
-            ldy #$7c                         ; bb7e a07c    
+            ldy #$7c                         ; bb7e a07c    bit 2 clr => flieger
 _W_10:      tya                              ; bb80 98      
             ldy CORPT,x                      ; bb81 bc4d2e  . codes for unit types
-            bpl _W_11                        ; bb84 1002    
+            bpl _W_11                        ; bb84 1002    hi bit => player
             ora #$80                         ; bb86 0980    
 _W_11:      sta SWAP,x                       ; bb88 9d8331  . terrain code underneath unit
             cpx #$30                         ; bb8b e030    

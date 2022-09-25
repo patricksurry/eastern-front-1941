@@ -1,3 +1,11 @@
+import {anticColor, players, directions, cities} from './data.js';
+import {Location} from './map.js';
+import {oob} from './unit.js';
+import {gameState, score} from './game.js';
+
+import * as d3 from 'd3';
+
+
 var focusid = null,  // current focused unit id
     lastid = null;   // must recent focused unit id (= focusid or null)
 
@@ -6,15 +14,30 @@ function centered(s, width) {
     let pad = width - s.length;
     return s.padStart((pad >> 1) + s.length).padEnd(width) ;
 }
+
+function setclr(sel, c) {
+    //TODO support sel as existing d3 selection
+    d3.selectAll(sel).style('background-color', anticColor(c));
+}
+
+const atascii = (c) => c.charCodeAt(0) & 0x7f;
+
+function maskpos(c) {
+    return `${-(c%16)*8}px ${-Math.floor(c/16)*8}px`;
+}
+
 function errmsg(text) {
     let s = score(gameState.human).toString().padStart(3).padEnd(4);
     s += centered(text || "", 36);
     putlines('#err-window', [s])
-};
-infomsg = (line1, line2) => putlines('#info-window', [line1 || "", line2 || ""])
+}
+
+function infomsg(line1, line2) {
+    putlines('#info-window', [line1 || "", line2 || ""]);
+}
 
 function setupDisplay(help, mapchrs, units) {
-    const icon = (d) => d.icon
+    const icon = (d) => d.icon,
         unitcolor = (u) => players[u.player].color;
 
     // set up background colors
@@ -107,7 +130,7 @@ function setupDisplay(help, mapchrs, units) {
         .classed('chr-cstrng', true);
 
     // put arrows and kreuze in layer for path animation
-    chrs = putlines('#arrows', [[256], directions.map(icon)], '1A', null, c => c, (d,i) => i == 0 ? 'kreuze': `arrow-${i-1}`)
+    putlines('#arrows', [[256], directions.map(icon)], '1A', null, c => c, (d,i) => i == 0 ? 'kreuze': `arrow-${i-1}`)
         .style('opacity', 0);
 }
 
@@ -124,21 +147,6 @@ function repaintMap(fg, bg, labels) {
         .style('color', anticColor(labels));
 }
 
-function anticColor(v) {
-    return anticPaletteRGB[Math.floor(parseInt(v, 16)/2)];
-}
-
-function setclr(sel, c) {
-    //TODO support sel as existing d3 selection
-    d3.selectAll(sel).style('background-color', anticColor(c));
-}
-
-atascii = (c) => c.charCodeAt(0) & 0x7f;
-
-function maskpos(c) {
-    return `${-(c%16)*8}px ${-Math.floor(c/16)*8}px`;
-}
-
 function putlines(win, lines, fg, bg, chrfn, idfn) {
     // fg color can be a function of the data element, bg should be a constant
     const w = d3.select(win);
@@ -147,15 +155,15 @@ function putlines(win, lines, fg, bg, chrfn, idfn) {
     fg ||= w.attr('data-fg-color');
     bg ||= w.attr('data-bg-color');
 
-    w.attr('data-fg-color', _ => fg);
+    w.attr('data-fg-color', () => fg);
     if (bg) {
-        w.attr('data-bg-color', _ => bg);
+        w.attr('data-bg-color', () => bg);
         w.style('background-color', anticColor(bg));
     }
     w.selectAll('div.chr').remove();  //TODO don't deal with enter/update yet
 
     let
-        fgfn = typeof fg == 'function' ? fg : (_ => fg),
+        fgfn = typeof fg == 'function' ? fg : (() => fg),
         data = [].concat(
             ...lines.map(
                 (ds, i) =>
@@ -169,9 +177,9 @@ function putlines(win, lines, fg, bg, chrfn, idfn) {
         .data(data)
       .join('div')
         .classed('chr', true)
-        .style('top', ([i, j, d]) => `${i*8}px`)
-        .style('left', ([i, j, d]) => `${j*8}px`)
-        .datum(([i, j, d]) => d);
+        .style('top', ([i, _, __]) => `${i*8}px`)        // eslint-disable-line no-unused-vars
+        .style('left', ([_, j, __]) => `${j*8}px`)       // eslint-disable-line no-unused-vars
+        .datum(([_, __, d]) => d);                       // eslint-disable-line no-unused-vars
 
     if (idfn) chrs.attr('id', idfn);
 
@@ -382,3 +390,52 @@ function showNewOrder(dir) {
 function stopUnitsFlashing() {
     d3.selectAll('#units .chr-fg.flash').classed('flash', false);
 }
+
+function toggleZoom() {
+    var elt;
+    // remember either the focused unit's target, or elt currently near center of screen
+    if (getFocusedUnit()) {
+        elt = d3.select('#kreuze').node();
+    } else {
+        let x = 320/2,
+            y = 144/2 + d3.select('#map-window').node().offsetTop - window.scrollY;
+        elt = document.elementFromPoint(x*4, y*4);
+    }
+    // toggle zoom level, apply it, and re-center target eleemnt
+    gameState.zoom = !gameState.zoom;
+    d3.select('#map-window .container').classed('doubled', gameState.zoom);
+    elt.scrollIntoView({block: "center", inline: "center"})
+}
+
+function toggleExtras() {
+    gameState.extras = !gameState.extras;
+    d3.selectAll('.extra').style('visibility', gameState.extras ? 'visible': 'hidden')
+}
+
+function toggleDebug() {
+    gameState.debug = !gameState.debug;
+    d3.selectAll('.debug').style('visibility', gameState.debug ? 'visible': 'hidden')
+}
+
+function putIcon(selector, u) {
+    putlines(selector, [[u]], u => players[u.player].color, '02', u => u.icon)
+}
+
+export {
+    centered,
+    errmsg,
+    infomsg,
+    setupDisplay,
+    repaintMap,
+    putlines,
+    focusUnit,
+    focusUnitRelative,
+    getFocusedUnit,
+    unfocusUnit,
+    showNewOrder,
+    stopUnitsFlashing,
+    toggleZoom,
+    toggleExtras,
+    toggleDebug,
+    putIcon,
+};

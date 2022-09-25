@@ -1,0 +1,102 @@
+<html>
+<head>
+    <title>Chris Crawford's Eastern Front 1941</title>
+    <link rel="icon" href="static/AtariFuji.png">  <!-- https://en.wikipedia.org/wiki/George_Opperman -->
+    <link rel="stylesheet" href="static/style.css">
+    <style>
+        div.oob {
+            height: 400px;
+            overflow-y: scroll;
+            margin: 100px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+        }
+        .oob table {
+            margin: 0 auto;
+            border-collapse: collapse;
+            font-family: sans-serif;
+            color: #333;
+            min-width: 400px;
+
+        }
+        .oob thead tr {
+            background-color: lightblue;
+            text-align: left;
+        }
+        .oob thead {
+            position: sticky;
+            inset-block-start: 0; /* "top" */
+            z-index: 99;
+        }
+        .oob th, .oob td {
+            padding: 12px 15px;
+        }
+        .oob tbody tr:nth-of-type(even) {
+            background-color: #f3f3f3;
+        }
+        .oob td {
+            text-align: right;
+        }
+        .oob td.left {
+            text-align: left;
+        }
+        div.icon {
+            position: relative;
+            height: 32px;
+            width: 32px;
+        }
+        .chr {
+            transform:  scale(4);
+            transform-origin: top left;
+        }
+    </style>
+</head>
+<body>
+    <script src="ef1941.js"></script>
+
+    <div class='oob'>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Icon</th>
+                    <th>Label</th>
+                    <th>Arrive</th>
+                    <th>Lng</th>
+                    <th>Lat</th>
+                    <th>Muster</th>
+                    <th>Combat</th>
+                    <th>Note</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script type="text/javascript">
+const d3 = ef1941.d3;
+
+function unitRow(u) {
+    const row = d3.select(this), iconid = `icon-${u.id}`;
+    row.append('td').text(u.id);
+    row.append('td').append('div').attr('id', iconid).classed('icon', true);
+    row.append('td').classed('left', true).text(u.label);
+    row.append('td').text(u.arrive);
+    row.append('td').text(u.lon);
+    row.append('td').text(u.lat);
+    row.append('td').text(u.mstrng);
+    row.append('td').text(u.cstrng);
+    row.append('td').classed('left', true).text([
+        u.arrive == 255 ? "Removed": "",
+        (!u.canAttack ? "No attack": ""),
+        (!u.canMove ? "No move": "")
+    ].filter(s => s).join(', '));
+    ef1941.putIcon('#' + iconid, u);
+}
+d3.select('.oob tbody')
+    .selectAll('.unit')
+    .data(ef1941.oob)
+    .join('tr')
+    .each(unitRow);
+    </script>
+</body>
+</html>

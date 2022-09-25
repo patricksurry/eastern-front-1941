@@ -1,15 +1,32 @@
-var gameState = {
-    human: Player.german,
-    turn: -1,       // 0-based turn counter, -1 is pre-game
-    startDate: null,
-    icelat: 39,     // via M.ASM:8600 PSXVAL initial value is 0x27
-    handicap: 0,    // whether the game is handicapped
-    zoom: false,    // display zoom on or off
-    extras: true,   // display extras like labels, health, zoc
-    debug: false,   // whether to display debug info for Russian units
-    weather: null,
-    help: null,     // after init, has boolean indicating help hide/show state
-}
+import {
+    players, Player, terraintypes, Terrain, directions, Direction, weatherdata, Weather,
+    monthdata, cities, anticColor
+} from './data.js';
+import {gameState} from './game.js';
+import {oob} from './unit.js';
+import {mapboard, Location, mapForegroundColor, moveIceLine} from './map.js';
+import {
+    centered, errmsg, infomsg,
+    focusUnit, focusUnitRelative, getFocusedUnit, unfocusUnit, showNewOrder, stopUnitsFlashing,
+    setupDisplay, putlines, repaintMap,
+    toggleZoom, toggleExtras, toggleDebug,
+    putIcon
+} from './display.js';
+import {think, conclude} from './think.js';
+
+import * as d3 from 'd3';
+
+/*
+    <script src="static/d3-7.6.1.min.js"></script>
+    <script src="static/data.js"></script>
+    <script src="static/map.js"></script>
+    <script src="static/unit.js"></script>
+    <script src="static/think.js"></script>
+    <script src="static/display.js"></script>
+    <script src="static/main.js"></script>
+    <script src="static/tests.js"></script>
+*/
+
 
 function mapinfo(ev, m) {
     // maybe location describe?
@@ -34,39 +51,14 @@ function mapinfo(ev, m) {
 }
 
 function mapclick(ev, m) {
+    let u = getFocusedUnit();
     errmsg();
-    if (m.unitid == null || m.unitid == focusid) {
+    if (m.unitid == null || (u && u.id == m.unitid)) {
         unfocusUnit();
         if (m.cityid) infomsg(centered(cities[m.cityid].label.toUpperCase()));
     } else {
         focusUnit(oob[m.unitid]);
     }
-}
-
-function toggleZoom() {
-    var elt;
-    // remember either the focused unit's target, or elt currently near center of screen
-    if (getFocusedUnit()) {
-        elt = kreuze.node();
-    } else {
-        let x = 320/2,
-            y = 144/2 + d3.select('#map-window').node().offsetTop - window.scrollY;
-        elt = document.elementFromPoint(x*4, y*4);
-    }
-    // toggle zoom level, apply it, and re-center target eleemnt
-    gameState.zoom = !gameState.zoom;
-    d3.select('#map-window .container').classed('doubled', gameState.zoom);
-    elt.scrollIntoView({block: "center", inline: "center"})
-}
-
-function toggleExtras() {
-    gameState.extras = !gameState.extras;
-    d3.selectAll('.extra').style('visibility', gameState.extras ? 'visible': 'hidden')
-}
-
-function toggleDebug() {
-    gameState.debug = !gameState.debug;
-    d3.selectAll('.debug').style('visibility', gameState.debug ? 'visible': 'hidden')
 }
 
 function toggleHelp() {
@@ -170,7 +162,6 @@ function endTurn() {
         return;
     }
     // process movement from prior turn
-    fcsidx = null;
     unfocusUnit();
 
     errmsg('EXECUTING MOVE');
@@ -218,7 +209,7 @@ function nextTurn() {
 
     let dt = new Date(gameState.startDate);
     dt.setDate(dt.getDate() + 7 * gameState.turn);
-    let datelabel = dt.toLocaleDateString("en-US", {year: 'numeric', month: 'long', day: 'numeric'});
+    let datelabel = dt.toLocaleDateString("en-US", {year: 'numeric', month: 'long', day: 'numeric'}),
         minfo = monthdata[dt.getMonth()];  // note JS getMonth is 0-indexed
 
     putlines('#date-window', ["", " " + datelabel])
@@ -236,3 +227,5 @@ function nextTurn() {
     // start thinking...
     players.forEach((_, player) => { if (player != gameState.human) think(player); });
 }
+
+export {start, oob, d3, putIcon};

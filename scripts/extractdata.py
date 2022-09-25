@@ -156,7 +156,19 @@ def buildoob(chunks, outbase, scenario=''):
     # CORPNO is unit designation information only
     keys = ['CORPSX' + scenario, 'CORPSY' + scenario, 'MSTRNG' + scenario, 'ARRIVE', 'CORPT', 'CORPNO']  # 'SWAP'
 
-    # for cart, SWAP gets set from CORPT @ bb88
+"""
+    cart CORPT
+    bit 5-7 => '',CORPS,FINNISH,RUMANIAN,ITALIAN,HUNGARIAN,ARMY,GUARDS
+    bit 1-3 => INFANTRY,MILITIA,MUSTER,FLIEGER,PANZER,TANK,CAVALRY,COMBAT
+
+    player: bit 8: 0 -> german, 1 -> russian
+
+    icon:
+    bit 3 == 1 => armor (PANZER,TANK,CAVALRY,COMBAT)
+    bit 2 == 0 => inf (INFANTRY,MILITIA)
+    else FLIEGER
+"""
+
     assert len({len(chunks[k]) for k in keys}) == 1  # all equal
 
     num_units = len(chunks[keys[0]])

@@ -1,6 +1,3 @@
-// Atari had a memory location that could be read for a byte of random noise
-const rand256 = () => Math.floor(Math.random()*256);
-
 function enumFor(vs, key) {
     return Object.fromEntries(vs.map((v, i) => [v[key || 'key'], i]));
 }
@@ -35,6 +32,7 @@ const
         {dlon: 1,  dlat: 0,  key: 'west',  icon: 260},   // left  1011 => 3 - west
     ],
     Direction = enumFor(directions),
+    //TODO remove me
     spiral1 = [
         Direction.north, Direction.east, Direction.south, Direction.south,
         Direction.west, Direction.west, Direction.north, Direction.north
@@ -286,7 +284,7 @@ const
     mapdata = mapascii.split(/\n/).slice(1,-1).map(
             (row, i) =>
             row.split('').map(
-                (c, j) => Object.assign({}, mapencoding[i <= 25 ? 0: 1][c])
+                c => Object.assign({}, mapencoding[i <= 25 ? 0: 1][c])
             )
         ),
     maxlon = mapdata[0].length-2,
@@ -458,3 +456,26 @@ const
         [20, 3, 102, 253, 4, 4, 5],
         [19, 2, 98, 253, 4, 4, 6],
     ];
+
+
+function anticColor(v) {
+    return anticPaletteRGB[Math.floor(parseInt(v, 16)/2)];
+}
+
+export {
+    directions, Direction,
+    blocked,
+    players, Player,
+    cities,
+    leveldata, Level,
+    terraintypes, Terrain,
+    weatherdata, Weather,
+    waterstate, Water,
+    monthdata, Month,
+    mapdata, maxlon, maxlat,
+    oobdata,
+    anticColor,
+    spiral1, //TODO remove
+};
+
+

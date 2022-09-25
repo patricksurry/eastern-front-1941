@@ -1,3 +1,9 @@
+import {oobdata, cities, players, Player, terraintypes, Terrain, Direction, Weather, spiral1} from './data.js';
+import {randbyte, gameState} from './game.js';
+import {Location, mapboard, bestPath, reach, moveCosts} from './map.js';
+import {errmsg} from './display.js';
+
+
 function Unit(corpsx, corpsy, mstrng, swap, arrive, corpt, corpno) {
     const types = ['', 'SS', 'FINNISH', 'RUMANIAN', 'ITALIAN', 'HUNGARAN', 'MOUNTAIN', 'GUARDS'],
         variants = ['INFANTRY', 'TANK', 'CAVALRY', 'PANZER', 'MILITIA', 'SHOCK', 'PARATRP', 'PZRGRNDR'];
@@ -136,13 +142,13 @@ Unit.resolveCombat = function(opp) {
     // opponent attacks
     let str = modifyStrength(opp.cstrng, modifier);
     // note APX doesn't skip attacker if break, but cart does
-    if (str >= rand256()) {
+    if (str >= randbyte()) {
         this.takeDamage(1, 5, true);
         if (!this.orders) return 0;
     }
     modifier = terraintypes[Location.of(opp).terrain].offence;
     str = modifyStrength(this.cstrng, modifier);
-    if (str >= rand256()) {
+    if (str >= randbyte()) {
         return opp.takeDamage(1, 5, true, this.orders[0]);
     } else {
         return 0;
@@ -178,10 +184,10 @@ Unit.takeDamage = function(mdmg, cdmg, checkBreak, retreatDir) {
 
         if (retreatDir !== null) {
             const homedir = players[this.player].homedir,
-                nxtdir = (rand256() & 0x1) ? Direction.north : Direction.south,
+                nxtdir = (randbyte() & 0x1) ? Direction.north : Direction.south,
                 dirs = [retreatDir, homedir,  nxtdir, (nxtdir + 2) % 4, (homedir + 2) % 4];
 
-            for (dir of dirs) {
+            for (let dir of dirs) {
                 let src = Location.of(this),
                     dst = src.neighbor(dir);
                 if (!dst || dst.unitid != null || zocBlocked(this.player, src, dst)) {
@@ -198,7 +204,7 @@ Unit.takeDamage = function(mdmg, cdmg, checkBreak, retreatDir) {
 }
 Unit.recover = function() {
     // M.ASM:5070  recover combat strength
-    if (this.mstrng - this.cstrng >= 2) this.cstring += 1 + (rand256() & 0x1);
+    if (this.mstrng - this.cstrng >= 2) this.cstring += 1 + (randbyte() & 0x1);
 }
 Unit.traceSupply = function(weather) {
     // implement the supply check from C.ASM:3430, returns 0 if supplied, 1 if not
@@ -210,7 +216,7 @@ Unit.traceSupply = function(weather) {
 
     if (supply.freeze && weather == Weather.snow) {
         // C.ASM:3620
-        if (rand256() >= 74 + 4*(dir == Direction.west ? this.lon: maxlon-this.lon)) {
+        if (randbyte() >= 74 + 4*(dir == Direction.west ? this.lon: mapboard.maxlon-this.lon)) {
             return 0;
         }
     }
@@ -229,7 +235,7 @@ Unit.traceSupply = function(weather) {
         }
         if (cost) {
             fail += cost;
-            dir = (rand256() & 0x1) ? Direction.north : Direction.south;
+            dir = (randbyte() & 0x1) ? Direction.north : Direction.south;
         } else {
             dir = player.homedir;
         }
@@ -241,7 +247,7 @@ Unit.score = function() {
     // see M.ASM:4050 - note even inactive units are scored based on future arrival/strength
     if (this.player == Player.german) {
         // maxlon + 2 == #$30 per M.ASM:4110
-        v = (maxlon + 2 - this.lon) * (this.mstrng >> 1);
+        v = (mapboard.maxlon + 2 - this.lon) * (this.mstrng >> 1);
     } else {
         v = this.lon * (this.cstrng >> 3);
     }
@@ -282,3 +288,11 @@ function modifyStrength(strength, modifier) {
     }
     return strength;
 }
+
+export {
+    Unit,
+    oob,
+    zocAffecting,
+    zocBlocked,
+    modifyStrength,
+};
