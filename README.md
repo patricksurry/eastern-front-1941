@@ -179,6 +179,27 @@ notes, fun discoveries
 
 - why is Sevastpol listed as a scoring city in APX version but not represented on the map in either version?
 
+- unused unit types: ASM vs Cart, injects other words in gaps, reorders second group
+
+        "        ",        "",
+x       "SS      ",        ["CORPS",]
+        "FINNISH ",        "FINNISH",
+        "RUMANIAN",        "RUMANIAN",
+        "ITALIAN ",        "ITALIAN",
+        "HUNGARAN",        "HUNGARIAN",
+x        "MOUNTAIN",       ["ARMY",]
+        "GUARDS  ",        "GUARDS",
+
+        "INFANTRY",        "INFANTRY",
+        "TANK    ",        "MILITIA",
+        "CAVALRY ",        ["MUSTER",]
+        "PANZER  ",        "FLIEGER",
+        "MILITIA ",        "PANZER",
+x        "SHOCK   ",       "TANK",
+x        "PARATRP ",       "CAVALRY",
+x        "PZRGRNDR",       ["COMBAT",]
+
+
 - APX version allows attacker response even if the defender attack breaks it, cart adds `bcc ATAKR / jmp ENDCOM`
 
 - APX gives MSTRNG+2 to russian in supply via `inc MSTRNG,x`, cart doesn't
