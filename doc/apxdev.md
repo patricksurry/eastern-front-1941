@@ -605,7 +605,8 @@ Exchange, for it presents a far more general and better commented program for
 scrolling than this one. This scrolling routine differs from SCRL19.ASM in
 several ways. First, scrolling does not occur until the cursor bumps into an
 invisible wall near the edge of the screen. This is accomplished with some
-rather simple ad hoc tests in lines 7110, 7440, 7740, and 8220. The values
+rather simple ad hoc tests in lines [7110][EFT18I-7110],
+[7440][EFT18I-7440], [7740][EFT18I-7740], and [8220][EFT18I-8220]. The values
 tested were derived by trial and error. Second, the cursor motion is not
 uniform; it accelerates in the first second of motion. The purpose of the
 acceleration is to allow fine positioning without sacrificing speed. The
@@ -958,7 +959,7 @@ number of points assigned for that city are added to the point score.
 
 The final operation associated with point evaluation is to halve the
 total points if the handicap was used. The operation takes three
-lines (4700-4720).
+lines ([4700-4720][EFT18M-4700-4720]).
 
 Once the points have been calculated, they must be displayed. This is
 done in [lines 4730-4760][EFT18M-4730-4760] in an operation which by now should be familiar to
@@ -1920,7 +1921,7 @@ initialized myself to half of LRNGE.
 We now begin the walk from A to B. On each step we shall assume that we
 should take a step in the larger direction (LDIR). In so doing we add SRNGE
 to CHRIS; if CHRIS exceeds RANGE then we must instead take a small step in
-direction SDIR. The figuring for this is done in [lines 78350-7940][EFT18T-78350-7940]. The code
+direction SDIR. The figuring for this is done in [lines 7830-7940][EFT18T-7830-7940]. The code
 runs fast. The orders that result from this are folded into the main orders
 in [lines 8110-8140][EFT18T-8110-8140], another case of that weird code that first popped up in
 the interrupt module. If you didn't figure it out then, you might as well
@@ -2356,166 +2357,172 @@ opposite sides.
 
 link line numbers to disassembly by address, map to URL
 
-[Ll]ines? \d+(-\d+)
-
-rather simple ad hoc tests in lines 7110, 7440, 7740, and 8220. The values
-lines (4700-4720).
 
 
-   [EFT18D-30-330]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18D-340-570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L10-L30
-   [EFT18D-580-790]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18D-800-1000]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18D-1180-1380]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18D-1390-1590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18D-1010-1170]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18D-1600]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18D-2450-2500]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18D-2510-2520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18D-2530-2540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18D-2550]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18D-2560-2630]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18D-2640-2680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18D-2690-2700]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18D-2710]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18D-2780-2830]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18D-2840]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18D-2950-5400]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18D-5410]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18D-5440-5490]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18D-5430]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18D-5500-5570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18I-2000]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18I-2660-3330]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18I-2630]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18I-3370-3590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18I-4430-5350]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18I-5070-5240]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18I-5280-5340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18I-5390-6570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18I-5410-5660]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18I-5700-5750]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18I-5810-5870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18I-5880-5930]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18I-5940-6000]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18I-6010-6050]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18I-6140-6360]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18I-8650-8770]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18I-9900-10310]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18I-10450-11340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18I-8790-8990]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18I-11390-11590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-1410-1460]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-1480-1570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-1620-2060]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-2080]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-2190-2250]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-2340-2350]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-2570-2670]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-2710-3080]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-3130-3700]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-3390]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-3540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-3580]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-3720-3960]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-3760-3840]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-3850-3880]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-3910-3940]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-3980-4030]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-4070-4760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-4190-4280]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-4550-4590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-4600-4680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-4730-4760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-4850-4930]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-4970-5030]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-5050-6180]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-5180-5190]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-5450-5490]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-5550-6060]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-5550-5740]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-5850-5920]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-5930-6060]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-6420-6610]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18M-7220-7230]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18C-1270-1400]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18C-1410-1520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18C-1430-1520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18C-1560-1590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18C-1620-1760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18C-1690-1700]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18C-1740-1760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18C-1800-1900]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18C-1940]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18C-2100-2140]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18C-4980-5200]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18C-2210-2750]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18C-2850-3410]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18C-2500-2630]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18C-3450-3490]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18C-3510]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18C-3530]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18C-3540-3550]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18C-4410-4460]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18C-4510-4740]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-1680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-1730-1870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-1950]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-1970]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-1980]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-2070-2140]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-8390-9690]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-8520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-9230]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-8520-8540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-8680-8690]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-8750-9020]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-9030-9150]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-9250-9320]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-9350-9570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-9350-9420]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-9450-9510]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-9540-9560]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-9610-9680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-2340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-7290]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-2360-2420]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-2470]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-2870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-2520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-2660-2680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-2690]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-2700-2760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-2990-3050]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-3130]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-3160-3240]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-3290-3340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-3450-3800]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-3760-3780]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-3920-4220]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-4060-4220]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-4240]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-4240-4320]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-4360-4460]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-4500-4730]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-4880-4990]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-5100-5370]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-5240-5280]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-5290-5370]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-5480-5580]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-5620-6310]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-5930-6050]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-6090-6250]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-6200-6250]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-6270-6310]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-6350-6870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-6350-6540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-6580-6870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-6910-6970]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-6980-7020]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-7040-7150]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-7370-7540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-7550-7690]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-78350-7940]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-8110-8140]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
-   [EFT18T-8340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+    [EFT18D-30-330]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1211-L1237
+    [EFT18D-340-570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1233-L1256
+    [EFT18D-580-790]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1255-L1276
+    [EFT18D-800-1000]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1266-L1286
+    [EFT18D-1180-1380]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1296-L1316
+    [EFT18D-1390-1590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1307-L1327
+    [EFT18D-1010-1170]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1277-L1293
+    [EFT18D-1600]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1328
+    [EFT18D-2450-2500]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1369-L1374
+    [EFT18D-2510-2520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1376-L1377
+    [EFT18D-2530-2540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1378-L1379
+    [EFT18D-2550]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1411
+    [EFT18D-2560-2630]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1413-L1420
+    [EFT18D-2640-2680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1422-L1430
+    [EFT18D-2690-2700]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1432-L1433
+    [EFT18D-2710]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1434
+    [EFT18D-2780-2830]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1441-L1446
+    [EFT18D-2840]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1508
+    [EFT18D-2950-5400]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1519-L1764
+    [EFT18D-5410]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1652
+    [EFT18D-5440-5490]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1656-L1661
+    [EFT18D-5430]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1654
+    [EFT18D-5500-5570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1661-L1670
+
+    [EFT18I-2000]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2447
+    [EFT18I-2660-3330]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2513-L2580
+    [EFT18I-2630]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2510
+    [EFT18I-3370-3590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2575-L2597
+    [EFT18I-4430-5350]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2667-L2759
+    [EFT18I-5070-5240]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2731-L2748
+    [EFT18I-5280-5340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2752-L2758
+    [EFT18I-5390-6570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2746-L2857
+    [EFT18I-5410-5660]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2748-L2773
+    [EFT18I-5700-5750]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2777-L2782
+    [EFT18I-5810-5870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2788-L2794
+    [EFT18I-5880-5930]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2795-L2800
+    [EFT18I-5940-6000]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2801-L2807
+    [EFT18I-6010-6050]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2808-L2812
+    [EFT18I-6140-6360]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2821-L2843
+    [EFT18I-7110]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2909
+    [EFT18I-7440]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2937
+    [EFT18I-7740]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2967
+    [EFT18I-8220]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L3015
+    [EFT18I-8650-8770]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L3053-L3065
+    [EFT18I-8790-8990]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L3066-L3086
+    [EFT18I-9900-10310]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L3170-L3206
+    [EFT18I-10450-11340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L3221-L3311
+    [EFT18I-11390-11590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L3313-L3333
+
+    [EFT18M-1410-1460]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1684-L1689
+    [EFT18M-1480-1570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1691-L1700
+    [EFT18M-1620-2060]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1705-L1749
+    [EFT18M-2080]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1751
+    [EFT18M-2190-2250]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1762-L1768
+    [EFT18M-2340-2350]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1777-L1778
+    [EFT18M-2570-2670]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1800-L1810
+    [EFT18M-2710-3080]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1814-L1851
+    [EFT18M-3130-3700]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1856-L1908
+    [EFT18M-3390]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1882
+    [EFT18M-3540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1897
+    [EFT18M-3580]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1896
+    [EFT18M-3720-3960]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1910-L1935
+    [EFT18M-3760-3840]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1914-L1922
+    [EFT18M-3850-3880]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1923-L1926
+    [EFT18M-3910-3940]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1930-L1933
+    [EFT18M-3980-4030]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1937-L1942
+    [EFT18M-4070-4760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1946-L2015
+    [EFT18M-4190-4280]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1958-L1967
+    [EFT18M-4550-4590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1994-L1998
+    [EFT18M-4600-4680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1999-L2007
+    [EFT18M-4700-4720]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2009-L2011
+    [EFT18M-4730-4760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2012-L2015
+    [EFT18M-4850-4930]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2017-L2025
+    [EFT18M-4970-5030]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2029-L2035
+    [EFT18M-5050-6180]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2037-L2145
+    [EFT18M-5180-5190]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2050-L2051
+    [EFT18M-5450-5490]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2072-L2076
+    [EFT18M-5550-6060]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2082-L2133
+    [EFT18M-5550-5740]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2082-L2101
+    [EFT18M-5850-5920]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2112-L2119
+    [EFT18M-5930-6060]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2120-L2133
+    [EFT18M-6420-6610]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2169-L2188
+    [EFT18M-7220-7230]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2240-L2241
+
+    [EFT18C-1270-1400]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L784-L797
+    [EFT18C-1410-1520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L798-L809
+    [EFT18C-1430-1520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L800-L809
+    [EFT18C-1560-1590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L813-L816
+    [EFT18C-1620-1760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L819-L833
+    [EFT18C-1690-1700]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L826-L827
+    [EFT18C-1740-1760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L831-L833
+    [EFT18C-1800-1900]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L837-L847
+    [EFT18C-1940]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L849
+    [EFT18C-2100-2140]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L865-L869
+    [EFT18C-4980-5200]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1146-L1168
+    [EFT18C-2210-2750]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L876-L931
+    [EFT18C-2850-3410]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L936-L992
+    [EFT18C-2500-2630]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L905-L918
+    [EFT18C-3450-3490]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L996-L1000
+    [EFT18C-3510]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1002
+    [EFT18C-3530]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1004
+    [EFT18C-3540-3550]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1005-L1006
+    [EFT18C-4410-4460]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1088-L1093
+    [EFT18C-4510-4740]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1098-L1121
+
+    [EFT18T-1680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L-7
+    [EFT18T-1730-1870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L-2-L12
+    [EFT18T-1950]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L20
+    [EFT18T-1970]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L22
+    [EFT18T-1980]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L23
+    [EFT18T-2070-2140]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L32-L39
+    [EFT18T-8390-9690]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L614-L744
+    [EFT18T-8520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L627
+    [EFT18T-9230]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L698
+    [EFT18T-8520-8540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L627-L629
+    [EFT18T-8680-8690]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L643-L644
+    [EFT18T-8750-9020]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L650-L677
+    [EFT18T-9030-9150]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L678-L690
+    [EFT18T-9250-9320]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L700-L707
+    [EFT18T-9350-9570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L710-L732
+    [EFT18T-9350-9420]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L710-L717
+    [EFT18T-9450-9510]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L720-L726
+    [EFT18T-9540-9560]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L729-L731
+    [EFT18T-9610-9680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L736-L743
+    [EFT18T-2340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L59
+    [EFT18T-7290]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L503
+    [EFT18T-2360-2420]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L61-L67
+    [EFT18T-2470]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L72
+    [EFT18T-2870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L112
+    [EFT18T-2520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L77
+    [EFT18T-2660-2680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L91-L93
+    [EFT18T-2690]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L94
+    [EFT18T-2700-2760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L95-L101
+    [EFT18T-2990-3050]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L124-L130
+    [EFT18T-3130]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L132
+    [EFT18T-3160-3240]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L135-L143
+    [EFT18T-3290-3340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L148-L153
+    [EFT18T-3450-3800]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L164-L199
+    [EFT18T-3760-3780]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L195-L197
+    [EFT18T-3920-4220]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L211-L241
+    [EFT18T-4060-4220]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L225-L241
+    [EFT18T-4240]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L243
+    [EFT18T-4240-4320]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L243-L251
+    [EFT18T-4360-4460]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L255-L265
+    [EFT18T-4500-4730]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L269-L292
+    [EFT18T-4880-4990]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L307-L318
+    [EFT18T-5100-5370]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L329-L356
+    [EFT18T-5240-5280]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L343-L347
+    [EFT18T-5290-5370]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L348-L356
+    [EFT18T-5480-5580]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L367-L377
+    [EFT18T-5620-6310]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L381-L450
+    [EFT18T-5930-6050]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L412-L424
+    [EFT18T-6090-6250]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L428-L444
+    [EFT18T-6200-6250]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L439-L444
+    [EFT18T-6270-6310]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L446-L450
+    [EFT18T-6350-6870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L454-L506
+    [EFT18T-6350-6540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L454-L473
+    [EFT18T-6580-6870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L477-L506
+    [EFT18T-6910-6970]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L467-L473
+    [EFT18T-6980-7020]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L474-L478
+    [EFT18T-7040-7150]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L480-L491
+    [EFT18T-7370-7540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L512-L529
+    [EFT18T-7550-7690]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L530-L544
+    [EFT18T-7830-7940]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L558-L569
+    [EFT18T-8110-8140]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L586-L589
+    [EFT18T-8340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L609
+
