@@ -106,23 +106,23 @@ pages 56-58. There are 159 different units recognized in this game. Of
 these, 54 are German and 105 are Russian. These numbers are critical; you
 will see them often in the code in one form or another.
 
-The first two data tables are CORPSX and CORPSY (lines 30-330). These
+The first two data tables are CORPSX and CORPSY ([lines 30-330][EFT18D-30-330]). These
 tables specify the initial map coordinates for the military units, corps for
 the Germans and armies for the Russians. The coordinate system is the same
 one used for the map; see the map reproduced on page 55.
 
-The next two data tables are MSTRNG and CSTRNG (lines 340-570). These
+The next two data tables are MSTRNG and CSTRNG ([lines 340-570][EFT18D-340-570]). These
 tables store the muster and combat strength of the units. The combat
 strength is initialized at the beginning of the game to equal the muster
 strength.
 
-Next comes the SWAP table (lines 580-790). This table serves two
+Next comes the SWAP table ([lines 580-790][EFT18D-580-790]). This table serves two
 purposes. It contains the character type of the unit (infantry or armor) for
 use when the unit is put onto the map. The same table also acts as a buffer
 to store the terrain underneath the unit. The unit's image is swapped with
 the terrain image, hence the label.
 
-The table called ARRIVE (lines 800-1000) tells the turn on which each
+The table called ARRIVE ([lines 800-1000][EFT18D-800-1000]) tells the turn on which each
 unit first arrives on the map. It is a reinforcement schedule. Note that
 some units are set to arrive on turn 255. As in the real world, it is
 sometimes more convenient to postpone beyond reasonable limits some
@@ -131,7 +131,7 @@ table is frequently used to determine if a unit is on the map. Many sections
 of code begin with LDA ARRIVE, X/CMP #$FF/BEQ NEXT to weed out units that are
 either already dead or not yet on the map.
 
-CORPT (lines 1180-1380) specifies the type of unit. There are many
+CORPT ([lines 1180-1380][EFT18D-1180-1380]) specifies the type of unit. There are many
 different types of units in this game, but only three types are recognized in
 the mechanics of the game: infantry, armor, and militia. I do recognize
 different types of units for identification purposes. There are
@@ -140,7 +140,7 @@ Guards, tank and shock armies for the Russians, among others. There are also
 the different nationalities. All these factors are encoded in the single
 CORPT constant.
 
-CORPNO (lines 1390-1590) specifies the military unit number, as in the
+CORPNO ([lines 1390-1590][EFT18D-1390-1590]) specifies the military unit number, as in the
 48th Panzer Corps. This is another quantity that has no significance to the
 operation of the game but is included for the unit description when a unit is
 examined. Such nonfunctional elements in a game are referred to as "color".
@@ -157,7 +157,7 @@ anything with it.
 WORDS TABLE
 ---
 
-Another chunk of this module is devoted to the WORDS table (lines 1010-1170),
+Another chunk of this module is devoted to the WORDS table ([lines 1010-1170][EFT18D-1010-1170]),
 which gives the text strings used in the text windows. I decided
 to use a fixed field size of eight characters rather than a variable field
 size. There are only a few cases where the words I need are too long to fit:
@@ -168,7 +168,7 @@ simple, and the data tables required are short.
 CONVERTING BYTES TO DIGITS
 ---
 
-Line 1600 begins one of the strangest ideas I have ever implemented in a
+[Line 1600][EFT18D-1600] begins one of the strangest ideas I have ever implemented in a
 program. It is also one of the stupidest. I was worried about the
 conversion of hexadecimal byte values in my tables into numeral strings on
 the screen. Whenever the player presses the button to raise a unit in the
@@ -233,11 +233,11 @@ time.
 MORE MISCELLANEOUS TABLES
 ---
 
-The next table in the data module is called TXTTBL (lines 2450-2500).
+The next table in the data module is called TXTTBL ([lines 2450-2500][EFT18D-2450-2500]).
 It is a table of long text messages. I chose a fixed field length of 32
 bytes for these messages. There are only three messages here.
 
-MONLEN (lines 2510-2520) is a table giving the lengths in days of the
+MONLEN ([lines 2510-2520][EFT18D-2510-2520]) is a table giving the lengths in days of the
 months. MONLEN jis 13 bytes long. More astute readers may recall that this
 does not quite correspond with the number of months in a year. This is an
 example of lazy coding. 1 chose to number my months from 1 rather than
@@ -247,7 +247,7 @@ than think the problem through I decided on a brazen solution. "What the
 hell!", I cried, "Let's waste a byte! I've got plenty to spare!" I'm a
 devil-may-care rascal.
 
-The next two tables, HMORDS and WHORDS (lines 2530-2540), keep track of
+The next two tables, HMORDS and WHORDS ([lines 2530-2540][EFT18D-2530-2540]), keep track of
 the orders given to the units during the course of the game. They are
 initialized to zero at the beginning of the game. HMORDS tells how many
 valid orders are in storage, and WHORDS tells what the orders are. This
@@ -262,10 +262,10 @@ keeps moving right off the edge of the map. I have never found the cause of
 the bug. The bug is rare and nondestructive, so I never bothered expending
 the time to track it down.
 
-BEEPTB (line 2550) is a table of frequencies used to give feedback when
+BEEPTB ([line 2550][EFT18D-2550]) is a table of frequencies used to give feedback when
 the joystick is used to give orders.
 
-ERRMSG (lines 2560-2630) is a table of error messages. Like the other
+ERRMSG ([lines 2560-2630][EFT18D-2560-2630]) is a table of error messages. Like the other
 text messages, I use a fixed field length of 32 bytes. Only four error
 messages are supported, yet together they consume 128 bytes of RAM. This
 demonstrates why textual error messages are so rare in personal computers.
@@ -294,25 +294,25 @@ can mistakenly enter a diagonal move when they intended to enter only a
 horizontal or vertical move. I am torn between protecting my user and
 accommodating him.
 
-The tables in lines 2640-2680 are used for logical manipulation of the
+The tables in [lines 2640-2680][EFT18D-2640-2680] are used for logical manipulation of the
 joystick entries and for unit motion.
 
-TRTAB (lines 2690-2700) is a table of monthly colors for trees. It is
+TRTAB ([lines 2690-2700][EFT18D-2690-2700]) is a table of monthly colors for trees. It is
 the table that allows me to change the color of the trees as the seasons go
 by. It is only 13 bytes long. The extra byte can be attributed to my
 wanton disregard for the requirements of tight coding.
 
-MLTKRZ (line 2710) is a bit map of the maltese cross.
+MLTKRZ ([line 2710][EFT18D-2710]) is a bit map of the maltese cross.
 
 The RAM from $6000-$63FF is reserved for the two graphics character
 sets. They are contained in file FONTS.DAT.
 
-The display list comes next (lines 2780-2830). It is rather long
+The display list comes next ([lines 2780-2830][EFT18D-2780-2830]). It is rather long
 because I reload the memory scan counter on each ANTIC mode 7 line. This is
 necessary for proper fine scrolling. Note also the blank lines inserted
 into the display list.
 
-ARRTAB (line 2840) is a bit map of the arrows used to display existing
+ARRTAB ([line 2840][EFT18D-2840]) is a bit map of the arrows used to display existing
 orders. One shape is used for each of the four cardinal directions.
 
 The screen data for the text window comes next. An interesting oddity
@@ -323,7 +323,7 @@ screen. This was accomplished with a simple change in the display list.
 The upshot of this is that the screen data area for the date window comes
 after the screen data area for the text window at the bottom of the screen.
 
-Lines 2950-5400 contain the map data. This huge chunk contains all of
+[Lines 2950-5400][EFT18D-2950-5400] contain the map data. This huge chunk contains all of
 the terrain. It acts both as display data and as terrain behavior data. I
 had no need to keep separate images of the map, one for display and one for
 computations. The same 2K chunk fills both needs. The numbers stored here
@@ -332,7 +332,7 @@ border character used to indicate the edge of the map. For a fuller
 understanding of how the map works, consult the map image figure and the
 character set definition.
 
-Line 5410 gives a table called STKTAB. This table is used in decoding
+[Line 5410][EFT18D-5410] gives a table called STKTAB. This table is used in decoding
 joystick values. You may have noticed that I use tables rather heavily. In
 general, table-driven solutions to programming problems are frequently more
 desirable than solutions implemented directly in code. They offer far
@@ -340,7 +340,7 @@ greater flexibility and are normally simpler to program. Furthermore,
 table-driven routines normally execute faster than code-intensive routines.
 This point is discussed further in the comments on the interrupt module.
 
-The TRNTAB (lines 5440-5490) specifies the number of subturns expended
+The TRNTAB ([lines 5440-5490][EFT18D-5440-5490]) specifies the number of subturns expended
 to enter a given type of square under given weather conditions. A wargamer
 would call ft a movement point costs chart. An entry of 128 indicates that
 the square in question can never be entered. The operation of this table is
@@ -348,10 +348,10 @@ a little messy. There are ten terrain types supported, with different
 values for each of three seasons and two unit types. Thus, there are sixty
 entries in this table. Ten entries for infantry alternate with ten entries
 for armor. Twenty entries for summer are followed by twenty for mud and
-twenty for snow. The SSNCOD table on line 5430 gives an index into TRNTAB
+twenty for snow. The SSNCOD table on [line 5430][EFT18D-5430] gives an index into TRNTAB
 as a function of month. The terrain table is on page 63.
 
-The four following tables (BHX1 through BHY2---lines 5500-5570) specify
+The four following tables (BHX1 through BHY2---[lines 5500-5570][EFT18D-5500-5570]) specify
 blocked movement paths. One of the worst problems I encountered in
 designing the movement algorithms of this game involved blocked movement.
 it is a simple matter to determine whether motion into a particular type of
@@ -507,7 +507,7 @@ surprising. This particular application accomplished nothing more than to
 save me a few minutes of programmer time and destroy any last shreds of
 respectability the program may have had.
 
-The code beginning at line 2000 determines the state of the button and
+The code beginning at [line 2000][EFT18I-2000] determines the state of the button and
 responds to it. It is tricked by the variable BUTMSK, a button mask set or
 cleared by the mainline routine to prevent the vertical blank interrupt
 routine from responding to the button. There are actually two conditions
@@ -524,14 +524,14 @@ and the arrow in case they were being displayed.
 
 If the button was down and is still down, (BUTHLD) we must test the
 Joystick for orders. First we check for a space bar being pressed; this
-would cause the orders to be cleared. Then we move the arrow (lines 2660-3330)
+would cause the orders to be cleared. Then we move the arrow ([lines 2660-3330][EFT18I-2660-3330])
 until it reaches the maltakreuze. The task of moving the arrow is
 involved. The unit's orders must be retrieved and the relevant order must be
 stripped out of the byte. The arrow must be positioned and moved according
 to the order stored. Furthermore, the display is not done in a single pass
 of the vertical blank interrupt but in several. The speed of the arrow is
-set with the operand of the instruction in line 2630. The display of the
-maltakreuze is a somewhat simpler task (lines 3370-3590). The critical
+set with the operand of the instruction in [line 2630][EFT18I-2630]. The display of the
+maltakreuze is a somewhat simpler task ([lines 3370-3590][EFT18I-3370-3590]). The critical
 values for this routine are (BASEX, BASEY) which give the player-missile
 coordinates of the displayed unit, and (STEPX, STEPY) which give the
 player-missile coordinates of the arrow along its path.
@@ -544,10 +544,10 @@ find the unit (if any) underneath the cursor. This search alone can consume
 If it finds a unit under the cursor, then it must display the information on
 the unit.
 
-The display routine is long (lines 4430-5350) but straightforward. The
+The display routine is long ([lines 4430-5350][EFT18I-4430-5350]) but straightforward. The
 Y-register acts as an index into the text window for all display
 computations. As the characters are put into the text window, Y is
-incremented. The important coordinates BASEX, BASEY are computed in lines 5070-5240.
+incremented. The important coordinates BASEX, BASEY are computed in [lines 5070-5240][EFT18I-5070-5240].
 These coordinates are expressed in the player-missile coordinate
 system. They are computed from the cursor coordinates SHPOSO and SCY.
 Unlike the cursor, which can straddle map gridlines, they must be properly
@@ -556,12 +556,12 @@ BASEX, BASEY on the unit.
 
 The HMORDS and WHORDS values are shadowed out of their tables and into
 special locations on page six (HOWMNY and ORD1, ORD2). This is done in
-lines 5280-5340; its purpose is to make the orders processing simpler.
+[lines 5280-5340][EFT18I-5280-5340]; its purpose is to make the orders processing simpler.
 
-The orders input routine follows (lines 5390-6570). It is only entered
+The orders input routine follows ([lines 5390-6570][EFT18I-5390-6570]). It is only entered
 when the button is held down and has been held down for at least one previous
 VBI. There are several error conditions which are tested before orders are
-entered (lines 5410-5660). These include giving orders to Russian units,
+entered ([lines 5410-5660][EFT18I-5410-5660]). These include giving orders to Russian units,
 exceeding eight orders, failure to wait for the maltakreuze, and entering
 diagonal orders. All errors result in a jump to SQUAWK, the nasty noisemaker
 routine which displays an error message.
@@ -579,21 +579,21 @@ machine to work properly) and partly to provide some protection against minor
 mistakes with the joystick. The delay of 1/6th second is not readily
 noticeable and gives some extra protection against errors.
 
-The next chunk of code (lines 5700-5750) generate a feedback beep in
+The next chunk of code ([lines 5700-5750][EFT18I-5700-5750]) generate a feedback beep in
 response to the order. Next the new order must be folded into the existing
 orders. The task is to insert the two-bit order code specified by the
 joystick into the current orders byte. This requires some bit-twiddling.
 First we determine which of four bit pairs in the byte to use; the bit pair
-number is put into the Y=-register and saved in TEMPI (lines 5810-5870). Next
+number is put into the Y=-register and saved in TEMPI ([lines 5810-5870][EFT18I-5810-5870]). Next
 we determine which of the two orders bytes should be twiddled. This byte
-index is either a 1 or a O and is put into the X-register (lines 5880-5930).
+index is either a 1 or a O and is put into the X-register ([lines 5880-5930][EFT18I-5880-5930]).
 Next, we shift the joystick entry bit pair upward in the byte to correspond
-to its desired position in the orders byte (lines 5940-6000). Lastly we fold
+to its desired position in the orders byte ([lines 5940-6000][EFT18I-5940-6000]). Lastly we fold
 our new order into the orders byte with a fiendishly clever bit of code that
-I learned from the fellows at Coin-Op (lines 6010-6050). Thanks, Mike and
+I learned from the fellows at Coin-Op ([lines 6010-6050][EFT18I-6010-6050]). Thanks, Mike and
 Ed.
 
-The next routine repositions the maltakreuze (lines 6140-6360). This
+The next routine repositions the maltakreuze ([lines 6140-6360][EFT18I-6140-6360]). This
 routine is a trivial memory move which moves bytes from the bit map table
 into the player RAM. It is of little interest.
 
@@ -617,7 +617,7 @@ determine when to move the cursor.
 Fine scrolling is implemented by storing numbers directly into the fine
 scrolling registers. Coarse scrolling is implemented by accumulating a value
 called (OFFLO, OFFHI) and adding it to the LMS operands in the display list.
-This is done in lines 8650-8770. The final operation of the VBI routine is
+This is done in [lines 8650-8770][EFT18I-8650-8770]. The final operation of the VBI routine is
 the preparation for the DLI routine. More on this later.
 
 TABLES AND SUBROUTINES
@@ -650,7 +650,7 @@ proper map byte. The computation of MAPLO, MAPHI is made simple by the fact
 that there are 48 bytes per map row. Multiplication by 48 is easy: four left
 shifts, a store, another left shift, and an add.
 
-Subroutines CLRP1, CLRPZ, and ERRCLR (lines 9900-10310) are
+Subroutines CLRP1, CLRPZ, and ERRCLR ([lines 9900-10310][EFT18I-9900-10310]) are
 uninteresting routines which merely clear out a player or an error condition
 and the text window. Nothing very fancy. BITTAB is used to select pairs of
 bits in a byte. ROTARR is a table used by the artificial intelligence
@@ -660,7 +660,7 @@ intelligence routine.
 DISPLAY LIST INTERRUPT SERVICE ROUTINES
 ---
 
-The display list interrupt routines are in lines 10450-11340. They are
+The display list interrupt routines are in [lines 10450-11340][EFT18I-10450-11340]. They are
 short, but very important. They are a curious mixture of cleverness and
 stupidity. The stupidity lies in the bucket brigade structure of the DLI
 execution. There are seven different DLIs serviced by this routine; the
@@ -682,7 +682,7 @@ required.
 
 The solution I used was to calculate during vertical blank the mode line
 on which the transition should take place. This value is calculated in
-lines 8790-8990 and is called CNT1. DLIs are set to hit on each and every mode
+[lines 8790-8990][EFT18I-8790-8990] and is called CNT1. DLIs are set to hit on each and every mode
 line in the scrolling window. The DLI code will not be executed until the
 value of CNT1 indicates that the proper time has arrived. An alternative
 solution would have been to rewrite the display list every time a scroll is
@@ -723,7 +723,7 @@ display list interrupts.
 FINAL SUBROUTINES AND TABLES
 ---
 
-Subroutine DNUMBR (lines 11390-11590) displays a number. It uses the
+Subroutine DNUMBR ([lines 11390-11590][EFT18I-11390-11590]) displays a number. It uses the
 table-driven method described in the notes on the data module. You can see
 that the code is certainly very clean and fast. Note that I was too lazy to
 properly encode the screen values properly, so I must perform a CLC/ADC #$10
@@ -804,34 +804,34 @@ There will always be miscellaneous initializations necessary; with these
 you have no choice but to write a long string of LDA this, STA there,
 instructions. The code is simple but you can waste a lot of bytes this way.
 One trick for reducing the size of this type of code is to group common
-initial values together. This is done in lines 1410-1460. Five very
+initial values together. This is done in [lines 1410-1460][EFT18M-1410-1460]. Five very
 different locations all needed to be initiallzed to zero. Load once and then
 store five times. A similar method is used for several tables in
-lines 1480-1570.
+[lines 1480-1570][EFT18M-1480-1570].
 
-The initializations in lines 1620-2060 are all quite straightforward.
+The initializations in [lines 1620-2060][EFT18M-1620-2060] are all quite straightforward.
 
 MAIN GAME TURN LOOP
 ---
 
-The outermost program loop begins on line 2080. The variable TURN is a
+The outermost program loop begins on [line 2080][EFT18M-2080]. The variable TURN is a
 simple turn counter telling which turn we are on.
 
 First come the calendar calculations. These are simple enough. I add
 seven to the day, compare with the length of the month to see if a new month
 has arrived, and correct if it has. There is even a provision for the leap
-year in 1944 provided in lines 2190-2250. (At the time I wrote this routine
+year in 1944 provided in [lines 2190-2250][EFT18M-2190-2250]. (At the time I wrote this routine
 I was planning to have the game cover the entire campaign.) With just a
 little effort the routine could be generalized to handle any leap year.
 
-The tree color trick is executed in lines 2340-2350. Only two lines of
+The tree color trick is executed in [lines 2340-2350][EFT18M-2340-2350]. Only two lines of
 code (6 bytes) and 13 bytes of table are required to implement the trick.
 Color register indirection can be powerful indeed, no?
 
-Lines 2570-2670 put the date information onto the screen. They are
+[Lines 2570-2670][EFT18M-2570-2670] put the date information onto the screen. They are
 simple data move routines with no interesting techniques.
 
-The code in lines 2710-3080 is certainly the most obscure and clumsy
+The code in [lines 2710-3080][EFT18M-2710-3080] is certainly the most obscure and clumsy
 code I have written in a long time. The purpose of the code is to figure out
 what season is in effect and perform any necessary changes related to the
 season. Unfortunately, I did not take the time to think the problem through.
@@ -848,7 +848,7 @@ SEASN2 but contains a different value because it is used in a different way.
 It holds a $01 in spring and a $FF in fall. EARTH its the color of the
 ground, brown for summer, grey for mud, and white for winter.
 
-The code in lines 3130-3700 freezes the rivers and swamps. The
+The code in [lines 3130-3700][EFT18M-3130-3700] freezes the rivers and swamps. The
 algorithm here is interesting and instructive. The critical variables are
 ICELAT and OLDLAT. ICELAT defines the ice-line, that is, the latitude north
 of which everything is frozen. OLDLAT is the last turn's value of ICELAT.
@@ -878,14 +878,14 @@ of terrain (mountains, for instance), we skip ahead to NOTCH (as in "no
 toucha da moichendize, eh!"), which proceeds to the next square in the row.
 if the square is touchable, we freeze or thaw it with the single instruction
 ORA SEASN1. Actually, we had already thawed it with the AND #$3F instruction
-in line 3390; the ORA instruction will freeze or ignore the byte depending on
-the value of SEASN1. In line 3540 we store the results of our crime. MAPPTR
+in [line 3390][EFT18M-3390]; the ORA instruction will freeze or ignore the byte depending on
+the value of SEASN1. In [line 3540][EFT18M-3540] we store the results of our crime. MAPPTR
 just happens to point to the right place because it is set up by subroutine
 TERR. Convenient, no?
 
 As I said before, NOTCH moves us on to the next square. This is done by
 the simple expedient of incrementing CHUNKX. Of course, we must test to see
-If we have run off the edge of the map. This is done in line 3580. If we
+If we have run off the edge of the map. This is done in [line 3580][EFT18M-3580]. If we
 have reached the west edge of the map, we must reset CHUNKX and LONG to point
 back to the east edge of the map. Then we must go one step to the north or
 south depending on the season. This is done by adding SEASN3, which is
@@ -898,23 +898,23 @@ the freezing process in the game. You can actually see the iceline moving
 southward in November. Note that the routine is general enough that it can
 operate through many different years.
 
-The next routine (lines 3720-3960) brings in reinforcements---units that
+The next routine ([lines 3720-3960][EFT18M-3720-3960]) brings in reinforcements---units that
 have not been on the map up to now. This would be a simple routine if it
 weren't for one small problem: what if the unit comes in on top of another
 unit? We can't have that, so before we place the unit we have to see if
-anybody else is already there. This is all done in lines 3760-3840.
-Lines 3850-3880 notify the player of the arrival of reinforcements. If a unit was
-not allowed entry onto the board, lines 3910-3940 make sure that he'll get
+anybody else is already there. This is all done in [lines 3760-3840][EFT18M-3760-3840].
+[Lines 3850-3880][EFT18M-3850-3880] notify the player of the arrival of reinforcements. If a unit was
+not allowed entry onto the board, [lines 3910-3940][EFT18M-3910-3940] make sure that he'll get
 another chance next turn by modifying his value of ARRIVE.
 
-Logistics is handled in lines 3980-4030. It is a simple loop with a
+Logistics is handled in [lines 3980-4030][EFT18M-3980-4030]. It is a simple loop with a
 subroutine call. The subroutine is inside the combat module; it is discussed
 in the essay on that module.
 
 POINTS CALCULATION
 ---
 
-Lines 4070-4760 calculate the current point score of the player. The
+[Lines 4070-4760][EFT18M-4070-4760] calculate the current point score of the player. The
 algorithm used is involved. There are three factors used in calculating
 points: 1) how many German muster strength points have been projected how far
 east, 2) how many Russian combat strength points have been projected how far
@@ -929,7 +929,7 @@ The routine starts by zeroing ACCHI and ACCLO, as these together
 constitute the point counter, which is sixteen bits wide. It then enters a
 loop that calculates the points for moving German units east. The longitude
 of each German unit (CORPSX) is subtracted from a constant value of $30.
-This value is multiplied by MSTRNG/2 in lines 4190-4280. The multiplication
+This value is multiplied by MSTRNG/2 in [lines 4190-4280][EFT18M-4190-4280]. The multiplication
 is the stupidest kind: a simple repetitive addition. For single-byte
 quantities the technique is not too expensive in time. Unfortunately, I did
 not analyze the problem carefully and so I got the looping backwards. The
@@ -950,7 +950,7 @@ wanted to reward the Germans for Russian units that were still on the board
 but out of supply. So I used combat strength for the Russians.
 
 The sum of the Russian score is subtracted from the German score in
-lines 4550-4590. Lines 4600-4680 award point bonuses for capturing cities.
+[lines 4550-4590][EFT18M-4550-4590]. [Lines 4600-4680][EFT18M-4600-4680] award point bonuses for capturing cities.
 A simple loop is used. Two tables drive this routine. One, MOSCOW, is a
 simple set of flags that tell if the cities have been captured. The other,
 MPTS, holds the point values for each of the cities. If MOSCOW is set, the
@@ -961,13 +961,13 @@ total points if the handicap was used. The operation takes three
 lines (4700-4720).
 
 Once the points have been calculated, they must be displayed. This is
-done in lines 4730-4760 in an operation which by now should be familiar to
+done in [lines 4730-4760][EFT18M-4730-4760] in an operation which by now should be familiar to
 the reader. Next comes a test for end of game. The termination is not
 particularly elegant. I simply put an endgame message onto the screen and
 hang the game up in a loop. I am sure a more elegant termination could have
 been arranged but I was too lazy to implement one.
 
-Lines 4850-4930 deal with the artificial intelligence routine. They
+[Lines 4850-4930][EFT18M-4850-4930] deal with the artificial intelligence routine. They
 allow the player to use the joystick button (by clearing BUTMSK) and put a
 prompting message on the screen. Then they jump to the artificial
 intelligence routine. The program spends most of its time there. It does
@@ -978,7 +978,7 @@ move---no orders allowed") is put onto the screen.
 MOVEMENT EXECUTION
 ---
 
-Lines 4970-5030 prepare the way for movement execution. They initialize
+[Lines 4970-5030][EFT18M-4970-5030] prepare the way for movement execution. They initialize
 the subturn counter TICK and calculate the first execution time of each unit.
 As mentioned in the player's manual, each turn is broken into 32 subturns.
 The movement cost to enter a square is expressed in terms of the number of
@@ -993,7 +993,7 @@ different incarnations. Later on I took to using names of animals, fruits,
 foods, anything. I can't stand acronymic gibberish. I prefer creative
 gibberish.
 
-Lines 5050-6180 perform the movement. The outer loop beginning with
+[Lines 5050-6180][EFT18M-5050-6180] perform the movement. The outer loop beginning with
 LOOP33 sweeps through all of the subturns. The inner loop beginning with
 LOOP32 sweeps through all of the units. The inner loop begins by performing
 the combat strength recovery function. If the combat strength is less than
@@ -1001,7 +1001,7 @@ the muster strength, it is incremented. If the difference between the two is
 large, the combat strength may be incremented again. This ensures that large
 units will recover combat strength faster than small units.
 
-The most heavily used test is at lines 5180-5190. This determines if
+The most heavily used test is at [lines 5180-5190][EFT18M-5180-5190]. This determines if
 the execution time of the unit has arrived yet. If not, the loop proceeds to
 the next unit.
 
@@ -1021,19 +1021,19 @@ abortions. Three bytes are saved for each abortion path.
 The remainder of the movement code retrieves the unit's orders, examines
 the terrain in the destination square, and checks if it is occupied. If it
 is occupied by a friendly unit, the moving unit must wait two subturns
-(lines 5450-5490). If it is occupied by an enemy unit, combat occurs and is
+([lines 5450-5490][EFT18M-5450-5490]). If it is occupied by an enemy unit, combat occurs and is
 referred to the combat subroutine at $4ED8. If the unit is allowed to enter
 the square, either because it was victorious in combat or the square was
-unoccupied, the code at DOMOVE, lines 5550-6060, is executed.
+unoccupied, the code at DOMOVE, [lines 5550-6060][EFT18M-5550-6060], is executed.
 
 One last test must be made before actual motion happens. Zones of
-control are tested in lines 5550-5740. If zones of control do not interfere,
+control are tested in [lines 5550-5740][EFT18M-5550-5740]. If zones of control do not interfere,
 the unit is moved by SWITCHing it off the map, substituting the new
 coordinates as parameters for SWITCH, and SWITCHIng it back onto the map.
 The now-executed order is deleted from the unit's orders queue
-(lines 5850-5920). A test is made to see if the unit has entered a victory city.
+([lines 5850-5920][EFT18M-5850-5920]). A test is made to see if the unit has entered a victory city.
 If so, the flag for that city is set or cleared depending on the nationality
-of the moving unit. This is done in lines 5930-6060. Lastly, the execution
+of the moving unit. This is done in [lines 5930-6060][EFT18M-5930-6060]. Lastly, the execution
 time until the next order is calculated by DINGO. Then the loop goes to the
 next unit. When the last unit has had its chance to move, the subturn
 counter TICK is incremented; when TICK reaches 32 a new turn begins. With
@@ -1041,7 +1041,7 @@ this the major loop terminates.
 
 The remainder of the module is devoted to subroutines and tables. STALL
 is a delay loop that kills time to slow down the action during movement. The
-debugging routine that follows (lines 6420-6610) links with the debugging
+debugging routine that follows ([lines 6420-6610][EFT18M-6420-6610]) links with the debugging
 routine first mentioned in the interrupt discussion.
 
 TERR is a major subroutine. It sets up a pointer to the map (MAPPTR) on
@@ -1054,7 +1054,7 @@ flag of the 6502 processor status register set if the square was indeed
 occupied. Many calls to TERR are immediately followed by a BEQ or BNE
 instruction; such calls are attempting to determine if a square is occupied.
 
-TERR does contain an interesting tidbit. Lines 7220-7230 are strictly
+TERR does contain an interesting tidbit. [Lines 7220-7230][EFT18M-7220-7230] are strictly
 error flag lines. They put an asterisk onto the screen. If these lines are
 ever executed a program error has occurred. The error arises when TERR finds
 a unit character in a square but ts unable to find a unit whose coordinates
@@ -1128,7 +1128,7 @@ attack was successful. If so, the attacking unit will be allowed to enter
 the square it attacked. It then checks the attacking unit (ARMY) to make
 sure that it is not a Finnish unit. Finnish units are not allowed to attack.
 
-The next step (lines 1270-1400) is to create the combat graphic in which
+The next step ([lines 1270-1400][EFT18C-1270-1400]) is to create the combat graphic in which
 the defending unit flashes in solid color. This is done by replacing the
 unit's original representation on the map with a solid square of color.
 There must be some logic to determine the nationality of the defending unit
@@ -1136,10 +1136,10 @@ There must be some logic to determine the nationality of the defending unit
 solid character used for the borders of the map and the open seas. We'll
 replace the original character later on.
 
-Now we must make the machine gun sound. This is done in lines 1410-1520.
+Now we must make the machine gun sound. This is done in [lines 1410-1520][EFT18C-1410-1520].
 My original intention was to create a deep explosion sound,
 rather like artillery. The result was not at all what I expected, but I
-liked it so much I left it as it was. The loop in lines 1430-1520 changes
+liked it so much I left it as it was. The loop in [lines 1430-1520][EFT18C-1430-1520] changes
 the frequency and the volume of the sound produced. The sound is stretched
 out with subroutine STALL from the mainline module.
 
@@ -1150,22 +1150,22 @@ button and saw pieces flying all over the screen like banshees. It was all
 over in less than a second. I decided that the player would enjoy sweating
 his turn out, so I put in longer and longer delays until it seemed right.
 
-In lines 1560-1590 I put the defending unit's piece back on the map.
+In [lines 1560-1590][EFT18C-1560-1590] I put the defending unit's piece back on the map.
 The rest of the routine will execute very quickly.
 
 COMBAT RESOLUTION
 ---
 
-In lines 1620-1760 I evaluate the factors affecting the defender's
+In [lines 1620-1760][EFT18C-1620-1760] I evaluate the factors affecting the defender's
 strength. There are three: the defender's combat strength (CSTRNG), the
 terrain that the defender lies in, and the motion of the defender. Terrain
 evaluation is simple. Terrain can halve, double, or not affect the
-defender's strength. Notice the test on lines 1690-1700. This protects
+defender's strength. Notice the test on [lines 1690-1700][EFT18C-1690-1700]. This protects
 against overflow. If a large number is doubled too much it can overflow and
 produce a small number---an unfortunate inaccuracy. I guard against this by
 monitoring the carry bit and reloading an $FF if it strikes.
 
-In lines 1740-1760 I implement a very simple rule: defenders who are
+In [lines 1740-1760][EFT18C-1740-1760] I implement a very simple rule: defenders who are
 moving at the time they are attacked have their defensive strength halved.
 The implementation is about as clean and simple as you can get. This makes
 an important point about designing with a microcomputer. Some things are
@@ -1177,7 +1177,7 @@ machine rather than against it. Of course, if he/she is to produce anything
 interesting, he/she must eventually cut across the grain. Doing it well is
 the hallmark of brilliant design.
 
-In lines 1800-1900 the defender gets to make a first strike against the
+In [lines 1800-1900][EFT18C-1800-1900] the defender gets to make a first strike against the
 attacker. The defender's adjusted combat strength in the accumulator is
 compared with a random number. If it is less than the random number, the
 defender's pre-emptive strike fails and the attacker makes his strike. If it
@@ -1186,7 +1186,7 @@ loses one point of muster strength and five points of combat strength. A
 test is then made to see if the attacker dies or breaks. More on death and
 breakage later.
 
-On line 1940 we begin the main point of the whole routine, indeed of the
+On [line 1940][EFT18C-1940] we begin the main point of the whole routine, indeed of the
 whole game. ("The decision by arms ts for all operations in war what cash
 settlement is in trade"---Clausewitz). We figure the attack. The only
 adjustment made on the attacker's combat strength is the halving of attack
@@ -1196,7 +1196,7 @@ if the attacker's adjusted combat strength is less than the random number,
 the attack fails and the combat routine terminates. If it is greater, then
 the attack succeeds and many things must happen. First, the defender loses
 one muster strength point and five combat strength points. That's easy
-enough to execute (lines 2100-2140).
+enough to execute ([lines 2100-2140][EFT18C-2100-2140]).
 
 Next, we must check if the defender dies. If so, we jump to subroutine
 DEAD, which handles all the paperwork for killing units. This is
@@ -1217,22 +1217,22 @@ German and Finnish units were fairly tough; they don't break until their
 combat strength falls below one-half of their muster strength. All other
 units break when their combat strength falls below seven-eighths of their
 muster strength. The calculations for this are carried out in subroutine
-BRKCHK, lines 4980-5200. Any unit that breaks forgets any orders that had
+BRKCHK, [lines 4980-5200][EFT18C-4980-5200]. Any unit that breaks forgets any orders that had
 been assigned to it. Your priorities change when you're on the run.
 
 If the defender does not break, the combat routine terminates. If he
 does break, he must retreat. This is a complex procedure; it is executed in
-lines 2210-2750. The basic idea of this code is that the defender attempts
+[lines 2210-2750][EFT18C-2210-2750]. The basic idea of this code is that the defender attempts
 to retreat in various directions, but can find his retreat path blocked by
 zones of control, enemy or friendly units, or open ocean. If any of these
 events occurs, the unit suffers a penalty and attempts another route. If no
 retreat path is available the unit suffers heavy losses and remains in place.
 
-An important subroutine for this retreat process is RETRET (lines 2850-3410),
+An important subroutine for this retreat process is RETRET ([lines 2850-3410][EFT18C-2850-3410]),
 which checks for the various conditions that block retreats and
 exacts the penalty for blocked retreat paths.
 
-If the defender can retreat, the retreat is executed in lines 2500-2630.
+If the defender can retreat, the retreat is executed in [lines 2500-2630][EFT18C-2500-2630].
 The victory flag is set to tell the mainline routine that the attacker may
 indeed move into the defender's square regardless of the presence of enemy
 zones of control.
@@ -1261,10 +1261,10 @@ receive supplies depends on how far east the unit has gone. The further
 east, the smaller the probability. Let's see how all this is done.
 
 The first thing to do is skip units which have not yet arrived on the
-map (lines 3450-3490). In line 3510 I determine the nationality of the unit.
+map ([lines 3450-3490][EFT18C-3450-3490]). In [line 3510][EFT18C-3510] I determine the nationality of the unit.
 If it is Russian, I skip the weather determination section. Notice the
-redundant code on line 3530. I blew it. I determine the season in
-lines 3540-3550 by examining the color of the ground. That's the simplest way to
+redundant code on [line 3530][EFT18C-3530]. I blew it. I determine the season in
+[lines 3540-3550][EFT18C-3540-3550] by examining the color of the ground. That's the simplest way to
 find out the season. If it is mud, there is no supply, period. If it is
 winter, then I perform a rather odd calculation. I quadruple the unit's
 longitude and add $4A. This guarantees that the resulting number in the
@@ -1307,7 +1307,7 @@ with that of the original unit (CMP TEMPR). If they are equal, it is an
 enemy unit and the routine immediately sets the ZOC counter and terminates.
 If they are unequal, it is a friendly unit and the routine must find out if
 it is the same as the friendly unit. This is done by comparing coordinates
-(lines 4410-4460).
+([lines 4410-4460][EFT18C-4410-4460]).
 
 If the square is unoccupied, the surrounding squares are examined by a
 sneaky scheme. There is a table in memory called JSTP+16 that holds jump
@@ -1326,7 +1326,7 @@ numbers, the sequence of steps is:
 These are the values seen in the JSTP+16 table, backwards for the 6502's
 countdown capability. Thus, to execute a walk around the square X, we
 execute jumps in the directions specified in the JSTP+16 table. The complete
-walk around the square is executed in lines 4510-4740.
+walk around the square is executed in [lines 4510-4740][EFT18C-4510-4740].
 
 THE IMPORTANCE OF ALGORITHMS
 ---
@@ -1400,12 +1400,12 @@ way hypothesis is converted into plans.
 OVERALL FORCE RATIO
 ---
 
-The module begins at line 1680. The first task is to calculate the
+The module begins at [line 1680][EFT18T-1680]. The first task is to calculate the
 overall force ratio. This is the ratio of total German strength to total
 Russian strength, and ts a useful indicator of the overall strategic
 situation. To calculate this number, we must first add up the total German
 strength and the total Russian strength. This calculation is made in
-lines 1730-1870, The upper byte of the total strengths is stored in TOTGS
+[lines 1730-1870][EFT18T-1730-1870], The upper byte of the total strengths is stored in TOTGS
 (total German strength) and TOTRS (total Russian strength).
 
 The next problem is to calculate the ratio of these two numbers. This
@@ -1435,12 +1435,12 @@ number. For example, what if total German strength is 17 and I multiply by
 16 by ASLing four times? I don't get 272 for an answer, I get 16. Check it
 out for yourself.
 
-Here's the clunky solution I came up with: ASL the dividend (line 1950)
+Here's the clunky solution I came up with: ASL the dividend ([line 1950][EFT18T-1950])
 until a bit falls off the high end of the byte into the Carry bit (line
-1960). Put it back where it belongs (line 1970) and then LSR the divisor
-(line 1980) the remaining number of shifts.
+1960). Put it back where it belongs ([line 1970][EFT18T-1970]) and then LSR the divisor
+([line 1980][EFT18T-1980]) the remaining number of shifts.
 
-Now I am prepared to do a dumb long division (lines 2070-2140). Load
+Now I am prepared to do a dumb long division ([lines 2070-2140][EFT18T-2070-2140]). Load
 the dividend into the accumulator. Keep subtracting the divisor from it
 until it is all gone. The number of times you subtract the divisor is the
 quotient. It's dumb, it's slow, but it works. More important, I can
@@ -1463,7 +1463,7 @@ called the IFRN, IFRS, IFRE, and IFRW, for the directions they represent.
 SUBROUTINE CALIFR
 ---
 
-Subroutine CALIFR (lines 8390-9690) calculates the individual force
+Subroutine CALIFR ([lines 8390-9690][EFT18T-8390-9690]) calculates the individual force
 ratios. This is an extensive computation which requires a great deal of time
 and memory. The fundamental idea behind this subroutine is that danger is a
 vector, having both a magnitude and a direction. This subroutine determines
@@ -1474,42 +1474,42 @@ IFR3, and IFRHI. These correspond to the IFRN, IFRE, IFRS, IFRW, and IFR
 tables, but are easier to use in the routine. After initializing some
 coordinate variables, the first large loop begins.
 
-This loop, beginning with line 8520, extends all the way to line 9230.
+This loop, beginning with [line 8520][EFT18T-8520], extends all the way to [line 9230][EFT18T-9230].
 Its purpose is to calculate the directional IFRs, so it is really the meat of
 the subroutine. It sweeps through each unit, first checking if the unit is
-on the map (lines 8520-8540). If so, it determines the separation between
+on the map ([lines 8520-8540][EFT18T-8520-8540]). If so, it determines the separation between
 the tested unit and the unit whose IFR is being computed. It measures this
 in terms of both the total distance between the two (ignoring Pythagoras) and
 the X-separation (TEMPX) and the Y-separation (TEMPY). Units further than
 eight squares away are considered to be too far to be of any local
-consequence (lines 8680-8690). The range to closer units is halved and
+consequence ([lines 8680-8690][EFT18T-8680-8690]). The range to closer units is halved and
 stored in TEMPR.
 
 The unit's combat strength determines the magnitude of the unit's
 threat. We must also calculate the direction to the unit. This is done in
-lines 8750-9020. These lines test the direction vectors to determine the
+[lines 8750-9020][EFT18T-8750-9020]. These lines test the direction vectors to determine the
 overall direction to the unit. The result of these tests is a value in X of
 0, 1, 2, or 3. This value specifies the direction of. the threat.
 
-In lines 9030-9150 we determine the magnitude of the threat. We get the
+In [lines 9030-9150][EFT18T-9030-9150] we determine the magnitude of the threat. We get the
 combat strength of the tested unit, divide by 16, and check to see if the
 tested unit is Russian or German. If Russian, the result is added to the
 running sum of local Russian strength (RFR). If German, it is added to the
 running sum of local German strength in the direction specified in the X
 register. This done, program flow loops back to the next unit in sequence.
 
-The next chunk of code, lines 9250-9320, add up all the danger values
+The next chunk of code, [lines 9250-9320][EFT18T-9250-9320], add up all the danger values
 from all four directions and leave the result in the accumulator.
 
-The next chunk of code, lines 9350-9570, calculates the final individual
+The next chunk of code, [lines 9350-9570][EFT18T-9350-9570], calculates the final individual
 force ratio in much the same manner that the overall force ratio was
-calculated. The dividend is multiplied by 16 (lines 9350-9420), and then the
+calculated. The dividend is multiplied by 16 ([lines 9350-9420][EFT18T-9350-9420]), and then the
 divisor is subtracted from the dividend repeatedly until the dividend is all
-gone (lines 9450-9510). The count of the number of subtractions equals the
+gone ([lines 9450-9510][EFT18T-9450-9510]). The count of the number of subtractions equals the
 quotient. This quotient is averaged with the overall force ratio
-(lines 9540-9560) and the result is stored in the IFR for the unit. The only
+([lines 9540-9560][EFT18T-9540-9560]) and the result is stored in the IFR for the unit. The only
 remaining function is to move the local directional IFRs to the unit-specific
-IFR tables (lines 9610-9680).
+IFR tables ([lines 9610-9680][EFT18T-9610-9680]).
 
 Subroutine INVERT is a simple absolute value routine. It takes a value
 in the accumulator and returns the absolute value of the number in the
@@ -1525,8 +1525,8 @@ program.
 MAIN LOOP STRUCTURE
 ---
 
-The main program loop begins on line 2340 and extends all the way to
-line 7290. It is obviously a gigantic loop, and it takes a long time to
+The main program loop begins on [line 2340][EFT18T-2340] and extends all the way to
+[line 7290][EFT18T-7290]. It is obviously a gigantic loop, and it takes a long time to
 execute. It is also an indefinitely terminated loop. It does not terminate
 after a specific number of passes. It keeps looping until the player presses
 the START key. The main loop sweeps over the entire Russian army. The inner
@@ -1534,7 +1534,7 @@ loop sweeps over each unit in the Russian army.
 
 The first task of the loop is to ignore militia armies and armies that
 are not on the map. Militia are not allowed to move. If an army does not
-fall these two tests in lines 2360-2420, then the local military situation
+fall these two tests in [lines 2360-2420][EFT18T-2360-2420], then the local military situation
 for the army is evaluated. This is done by comparing the army's individual
 force ratio with the overall force ratio. If IFR=OFR/2, then the army must
 be more than eight squares from the nearest German unit. This conclusion can
@@ -1558,15 +1558,15 @@ rescuers. More important, we need to take into account the distance between
 unit in distress and rescuer. There is no point in rushing to save somebody
 several thousand miles away.
 
-The code to do all this extends from line 2470 to line 2870. The
+The code to do all this extends from [line 2470][EFT18T-2470] to [line 2870][EFT18T-2870]. The
 section starts by initializing BVAL to the value of OFR/2. BVAL stands for
 "best value" and is used to store the value for the most beleaguered Russian
-army. Then a loop begins at line 2520 which sweeps through all Russian
+army. Then a loop begins at [line 2520][EFT18T-2520] which sweeps through all Russian
 armies, rejecting off-map armies and calculating the separation between the
 tested army and the reinforcing army. This separation is divided by 8
-(lines 2660-2680). I cannot now figure out the purpose of the branch in line 2690.
+([lines 2660-2680][EFT18T-2660-2680]). I cannot now figure out the purpose of the branch in [line 2690][EFT18T-2690].
 It throws out the tested army if the separation had bit D3 set. A very
-strange test indeed. Lines 2700-2760 subtract the separation from the tested
+strange test indeed. [Lines 2700-2760][EFT18T-2700-2760] subtract the separation from the tested
 unit's IFR and compare the result with the best previous result. If the new
 result is bigger, then this unit has a better combination of proximity and
 (get this) beleagueredness. This unit becomes the preferred unit. Its value
@@ -1587,7 +1587,7 @@ to being surrounded, the danger imposed by nearby Germans, the possibility of
 a traffic jam, the terrain in the square, and the distance to it. Let's take
 it slowly.
 
-In lines 2990-3050 we perform a simple test to see if the unit should
+In [lines 2990-3050][EFT18T-2990-3050] we perform a simple test to see if the unit should
 take emergency measures. We ask, is the army seriously outnumbered? Is it
 out of supply? If either answer is yes, then this army is probably trapped
 behind German lines and it must escape to the east. It is given an objective
@@ -1610,15 +1610,15 @@ NORMAL FRONT-LINE ARMIES
 ---
 
 If an army is not in trouble then it must choose a direction in which to
-move. The computations for this choice begin in line 3130, with DRLOOP, the
+move. The computations for this choice begin in [line 3130][EFT18T-3130], with DRLOOP, the
 direction loop. The critical loop variable is DIR, the direction of movement
 being evaluated. For the purposes of this loop, DIR takes the following
 meanings: 0=north, l=east, 2=south, 3=west, FF=stay put. This loop answers
 the question, "Should this army move in direction DIR?" It first determines
-The square being moved into (lines 3160-3240). The coordinates of this
+The square being moved into ([lines 3160-3240][EFT18T-3160-3240]). The coordinates of this
 target square are TARGX, TARGY. The square being left is a ghost army square
 at OBJX, OBJY. The value of this target square is SQVAL. After verifying
-that the square can be entered (lines 3290-3340), the primary logic begins.
+that the square can be entered ([lines 3290-3340][EFT18T-3290-3340]), the primary logic begins.
 
 LINE INTEGRITY COMPUTATIONS
 ---
@@ -1639,14 +1639,14 @@ called JSTP. The counter for the steps is called JCNT. The coordinate of a
 little square being considered within the big square is always SQX, SQY.
 
 The contents of the big square are computed with two nested loops,
-LOOP56 and LOOP55 (lines 3450-3800). The outer loop steps through each of
+LOOP56 and LOOP55 ([lines 3450-3800][EFT18T-3450-3800]). The outer loop steps through each of
 the 25 squares in the big square (except the central square, which we assume
 will contain the ghost army). The inner loops sweeps through all Russian
 armies to see if one's objective is in the square being tested. Note that we
 check not for the presence of the unit itself (CORPSX, CORPSY) but rather for
 the intention of the unit to go to the square (OBJX, OBJY). This is how we
 coordinate the plans of the different armies. If a match is obtained, the
-muster strength of that army is stored into the array element (lines 3760-3780).
+muster strength of that army is stored into the array element ([lines 3760-3780][EFT18T-3760-3780]).
 We then store the muster strength of the army whose plans are
 being made into the array element for the central square. When this task is
 completed we have an array, LINARR, which tells us how much Russian muster
@@ -1669,14 +1669,14 @@ forward is the enemy in each column?" A picture might help:
 If a particular column is not populated at all, the value in the
 corresponding LV entry is five.
 
-Lines 3920-4220 build the LV array from the LINARR. The variable POTATO
+[Lines 3920-4220][EFT18T-3920-4220] build the LV array from the LINARR. The variable POTATO
 (remember I told you I sometimes used funny variable names?) counts which
 column we are in. The Y=register holds the row within the column, and the
 X-register holds the LINARR index. The loop searches each column looking for
 the first populated square. When it finds one, the row index of the square
 is stored in the LV array. If it finds no populated square in the column,
 it assigns a value of 5 to the corresponding LV element. The sequence of
-CPX, BNE, LDX instructions in lines 4060-4220 translate the current row count
+CPX, BNE, LDX instructions in [lines 4060-4220][EFT18T-4060-4220] translate the current row count
 in X into an index for LINARR and resume the loop. This is the clumsiest
 kind of code. It is special purpose code, code that is executed only once
 per condition. During program execution, much of the code is effectively
@@ -1695,14 +1695,14 @@ stored in a variable called LPTS. Initially, we shall set this variable to
 zero and during the course of the evaluation we shall add to it or subtract
 from it.
 
-The calculation begins on line 4240. We first evaluate the
+The calculation begins on [line 4240][EFT18T-4240]. We first evaluate the
 configuration for its completeness. Is there a unit in every single column
 in the array? For each populated column, we add $28 to LPTS (now in the
-accumulator). This is done in lines 4240-4320.
+accumulator). This is done in [lines 4240-4320][EFT18T-4240-4320].
 
 We then test if the contemplated presence of our army would fill an
 otherwise empty column. The test for this is simple and inelegant
-(lines 4360-4460). An easier way to have done this would have been LDA LV+2/CMP
+([lines 4360-4460][EFT18T-4360-4460]). An easier way to have done this would have been LDA LV+2/CMP
 #$02/BNE Y95. It seems so simple and obvious now. In any event, if the
 condition is satisfied, we add $30 to LPTS.
 
@@ -1710,7 +1710,7 @@ We don't want to create a traffic jam, so we must evaluate the degree of
 blocking in this array. This is done by testing the frontmost unit in each
 column and looking behind it; if somebody is in that square the retreat route
 of the front unit and the attack route of the rear unit are both blocked.
-This is undesirable. Subtract $20 points for each such case (lines 4500-4730).
+This is undesirable. Subtract $20 points for each such case ([lines 4500-4730][EFT18T-4500-4730]).
 
 Our next concern is with penetrations. We do not want to create a line
 configuration which is easily flanked. A picture illustrates the problem.
@@ -1734,7 +1734,7 @@ move to the next column; the discrepancy will be handled when the other
 column is directly tested. If the latter column is more rearward than the
 primary column, then a penalty must be extracted. The penalty I use is a
 power of two, one power for each row of discrepancy. The evaluation is done
-in lines 4880-4990.
+in [lines 4880-4990][EFT18T-4880-4990].
 
 We have now calculated the strength of the line and stored it in LPTS.
 However, the importance of this strength depends on the amount of danger
@@ -1742,10 +1742,10 @@ coming from the direction in question. A line which is strong facing north
 will probably be weak to an attack from the west. We must therefore evaluate
 the strength of the line in light of the danger vector on the army. I do
 this by multiplying LPTS by the IFR value for the direction for which the
-line was evaluated. This multiplication is done in lines 5100-5370. The
+line was evaluated. This multiplication is done in [lines 5100-5370][EFT18T-5100-5370]. The
 first 14 lines select the IFR to be used by some more inelegant code. The
-preparation for the multiplication is done in lines 5240-5280; the
-multiplication itself is done in lines 5290-5370. As with the long division,
+preparation for the multiplication is done in [lines 5240-5280][EFT18T-5240-5280]; the
+multiplication itself is done in [lines 5290-5370][EFT18T-5290-5370]. As with the long division,
 this routine is a triumph of pedestrian programming. To multiply A by B, I
 add A to itself B times. It is a two-byte add, and only the upper byte
 (ACCHI) is important to me. I throw away the lower byte in the accumulator.
@@ -1760,7 +1760,7 @@ Then I rotate the array. It is easier to rotate the array in place and
 evaluate it than to write code that can look from any direction. My code is
 customized to look at the 25-square array from the north. To look at it from
 other directions, I simply rotate it to those directions. This is done with
-an elegant piece of code (at last!) in lines 5480-5580. First I store the
+an elegant piece of code (at last!) in [lines 5480-5580][EFT18T-5480-5580]. First I store the
 array LINARR into a temporary buffer array (BAKARR). Then I rotate it by a
 pointer array called ROTARR. This array holds numbers that tell where each
 array element goes when the array is rotated 90 degrees to the right. Thus,
@@ -1791,7 +1791,7 @@ depend on whether the Russian is pursuing an offensive or a defensive
 strategy. In considering the direct combat significance of a square, we must
 also consider the defensive bonus provided by the terrain in the square.
 
-These factors are considered in lines 5620-6310. After storing the
+These factors are considered in [lines 5620-6310][EFT18T-5620-6310]. After storing the
 modified line points value into SQVAL (square value), we determine the range
 to the nearest German unit. This is done with a straightforward loop that
 subtracts the coordinates of each German unit from the target square's
@@ -1805,7 +1805,7 @@ a signed value; it is always positive. If the Russians are doing well, then
 IFR will be small but still positive. In such a case the value of IFR * NBVAL
 would be a measure of the opportunity presented to the Russian, not a measure
 of danger. Thus, small values of IFR demand that IFR * NBVAL be interpreted
-differently. The logic to do this is managed in lines 5930-6050. The IFR is
+differently. The logic to do this is managed in [lines 5930-6050][EFT18T-5930-6050]. The IFR is
 subtracted from $F; if the result is greater than zero it is doubled and
 stored into TEMPR to act as a fake IFR; NBVAL is replaced by 9=NBVAL. The
 effect of these strange manipulations is to invert the meaning of the code
@@ -1813,7 +1813,7 @@ about to be executed. This succeeding code was intended to determine the
 importance of running from a square. With the inversion, it will also
 determine the importance of attacking the same square.
 
-The fooled code (lines 6090-6250) begins by checking the square to see
+The fooled code ([lines 6090-6250][EFT18T-6090-6250]) begins by checking the square to see
 if it is occupied by a German. If so, it immediately removes the square from
 consideration; we don't go around picking fights with Germans when we are the
 underdogs. Note that this will never happen when the Russians are using
@@ -1821,8 +1821,8 @@ offensive strategy. If the square is unoccupied, we add the terrain bonus to
 NBVAL; this is a crude way of Including terrain into the computation. I now
 think that this was not the correct way to handle terrain.
 
-In lines 6200-6250 I execute one of my disgustingly familiar Neanderthal
-multiplications. I then add this value to SQVAL (lines 6270-6310).
+In [lines 6200-6250][EFT18T-6200-6250] I execute one of my disgustingly familiar Neanderthal
+multiplications. I then add this value to SQVAL ([lines 6270-6310][EFT18T-6270-6310]).
 
 TRAFFIC AND DISTANCE PENALTIES
 ---
@@ -1834,10 +1834,10 @@ brutal reality that things sometimes do not go as expected, and so plans that
 call for armies to march long distances in the face of the enemy are seldom
 prudent.
 
-The code for making these tests is simple (lines 6350-6870). The first
-test (lines 6350-6540) is a loop that tests all the other Russians, looking
+The code for making these tests is simple ([lines 6350-6870][EFT18T-6350-6870]). The first
+test ([lines 6350-6540][EFT18T-6350-6540]) is a loop that tests all the other Russians, looking
 for one that has already chosen this square as an objective. If so, a
-penalty is extracted from SQVAL. The second test (lines 6580-6870)
+penalty is extracted from SQVAL. The second test ([lines 6580-6870][EFT18T-6580-6870])
 calculates the range from the army's current position to the target square.
 If it is greater than 6, the target is unreachable and the square is ruled
 out; SQVAL is set to zero. if not, 2 raised to the power of the range is
@@ -1848,12 +1848,12 @@ FINAL SQUARE EVALUATION
 ---
 
 We now compare the value of this square with the best value we have
-obtained so far (lines 6910-6970). If our new value is better, it becomes
+obtained so far ([lines 6910-6970][EFT18T-6910-6970]). If our new value is better, it becomes
 the best. If not, we forget it. In either event, we go to the next square
-and loop back to the far beginning (lines 6980-7020).
+and loop back to the far beginning ([lines 6980-7020][EFT18T-6980-7020]).
 
 Upon completion of this gigantic process we have obtained a best square.
-In lines 7040-7150 we make this square our newest objective for this army.
+In [lines 7040-7150][EFT18T-7040-7150] we make this square our newest objective for this army.
 We then look at the START key to see if the human player has finished his
 move. If not, we continue our analysis, evaluating more and more squares
 without end. If so, we jump to a completely different section.
@@ -1907,10 +1907,10 @@ The first step in implementing this algorithm is to calculate some
 intermediate values. These are HDIR and HRNGE, the horizontal direction from
 A to B, and the horizontal range (delta-x). VDIR and VRNGE are the
 corresponding values for the vertical separation. These four values are
-calculated in lines 7370-7540.
+calculated in [lines 7370-7540][EFT18T-7370-7540].
 
 Next we calculate the larger range LRNGE and the smaller range SRNGE, as
-well as the corresponding directions LDIR and SDIR (lines 7550-7690). Then
+well as the corresponding directions LDIR and SDIR ([lines 7550-7690][EFT18T-7550-7690]). Then
 we prepare some counting variables by setting them equal to zero: RCNT, the
 number of steps taken, and RORD1 and RORD2Z, the actual orders assigned.
 RANGE is the total distance from A to B in non-Pythagorean measure. CHRIS (I
@@ -1920,16 +1920,16 @@ initialized myself to half of LRNGE.
 We now begin the walk from A to B. On each step we shall assume that we
 should take a step in the larger direction (LDIR). In so doing we add SRNGE
 to CHRIS; if CHRIS exceeds RANGE then we must instead take a small step in
-direction SDIR. The figuring for this is done in lines 78350-7940. The code
+direction SDIR. The figuring for this is done in [lines 78350-7940][EFT18T-78350-7940]. The code
 runs fast. The orders that result from this are folded into the main orders
-in lines 8110-8140, another case of that weird code that first popped up in
+in [lines 8110-8140][EFT18T-8110-8140], another case of that weird code that first popped up in
 the interrupt module. If you didn't figure it out then, you might as well
 figure it out now.
 
 A few more manipulations loop back to finish the walk to point B; then
 the army's orders are stored and the next army is given its orders until all
 armies have been taken care of. With that, the routine is complete and it
-returns to the mainline routine in line 8340. That was simple enough, wasn't
+returns to the mainline routine in [line 8340][EFT18T-8340]. That was simple enough, wasn't
 it?
 
 NARRATIVE HISTORY
@@ -2361,3 +2361,161 @@ link line numbers to disassembly by address, map to URL
 rather simple ad hoc tests in lines 7110, 7440, 7740, and 8220. The values
 lines (4700-4720).
 
+
+   [EFT18D-30-330]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18D-340-570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L10-L30
+   [EFT18D-580-790]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18D-800-1000]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18D-1180-1380]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18D-1390-1590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18D-1010-1170]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18D-1600]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18D-2450-2500]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18D-2510-2520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18D-2530-2540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18D-2550]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18D-2560-2630]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18D-2640-2680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18D-2690-2700]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18D-2710]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18D-2780-2830]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18D-2840]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18D-2950-5400]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18D-5410]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18D-5440-5490]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18D-5430]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18D-5500-5570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18I-2000]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18I-2660-3330]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18I-2630]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18I-3370-3590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18I-4430-5350]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18I-5070-5240]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18I-5280-5340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18I-5390-6570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18I-5410-5660]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18I-5700-5750]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18I-5810-5870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18I-5880-5930]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18I-5940-6000]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18I-6010-6050]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18I-6140-6360]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18I-8650-8770]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18I-9900-10310]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18I-10450-11340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18I-8790-8990]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18I-11390-11590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-1410-1460]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-1480-1570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-1620-2060]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-2080]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-2190-2250]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-2340-2350]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-2570-2670]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-2710-3080]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-3130-3700]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-3390]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-3540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-3580]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-3720-3960]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-3760-3840]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-3850-3880]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-3910-3940]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-3980-4030]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-4070-4760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-4190-4280]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-4550-4590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-4600-4680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-4730-4760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-4850-4930]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-4970-5030]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-5050-6180]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-5180-5190]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-5450-5490]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-5550-6060]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-5550-5740]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-5850-5920]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-5930-6060]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-6420-6610]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18M-7220-7230]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18C-1270-1400]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18C-1410-1520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18C-1430-1520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18C-1560-1590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18C-1620-1760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18C-1690-1700]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18C-1740-1760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18C-1800-1900]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18C-1940]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18C-2100-2140]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18C-4980-5200]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18C-2210-2750]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18C-2850-3410]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18C-2500-2630]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18C-3450-3490]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18C-3510]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18C-3530]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18C-3540-3550]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18C-4410-4460]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18C-4510-4740]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-1680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-1730-1870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-1950]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-1970]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-1980]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-2070-2140]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-8390-9690]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-8520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-9230]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-8520-8540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-8680-8690]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-8750-9020]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-9030-9150]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-9250-9320]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-9350-9570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-9350-9420]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-9450-9510]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-9540-9560]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-9610-9680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-2340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-7290]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-2360-2420]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-2470]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-2870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-2520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-2660-2680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-2690]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-2700-2760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-2990-3050]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-3130]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-3160-3240]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-3290-3340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-3450-3800]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-3760-3780]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-3920-4220]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-4060-4220]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-4240]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-4240-4320]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-4360-4460]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-4500-4730]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-4880-4990]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-5100-5370]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-5240-5280]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-5290-5370]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-5480-5580]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-5620-6310]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-5930-6050]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-6090-6250]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-6200-6250]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-6270-6310]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-6350-6870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-6350-6540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-6580-6870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-6910-6970]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-6980-7020]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-7040-7150]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-7370-7540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-7550-7690]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-78350-7940]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-8110-8140]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
+   [EFT18T-8340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1-L3
