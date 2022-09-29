@@ -2559,10 +2559,10 @@ BRKCHK:     ldy LEVEL                        ; b15a a492    Maybe break unit X, 
 _BRKCHK_1:  cpx #$30                         ; b168 e030    
             bcs _BRKCHK_2                    ; b16a b00d    
             lda CORPT,x                      ; b16c bd4d2e  . codes for unit types
-            and #$f0                         ; b16f 29f0    ; all except german "" unnamed?
-            bne _BRKCHK_2                    ; b171 d006    
+            and #$f0                         ; b16f 29f0
+            bne _BRKCHK_2                    ; b171 d006    hi bit set (russian) or german ally?
             lda MSTRNG,x                     ; b173 bdff2c  . muster strengths
-            lsr                              ; b176 4a      
+            lsr                              ; b176 4a      compare to 50% mstrng
             bpl _BRKCHK_3                    ; b177 100e    
 _BRKCHK_2:  lda MSTRNG,x                     ; b179 bdff2c  . muster strengths
             lsr                              ; b17c 4a      
@@ -2571,18 +2571,18 @@ _BRKCHK_2:  lda MSTRNG,x                     ; b179 bdff2c  . muster strengths
             sta TEMPR                        ; b17f 85ae    
             lda MSTRNG,x                     ; b181 bdff2c  . muster strengths
             sec                              ; b184 38      
-            sbc TEMPR                        ; b185 e5ae    
+            sbc TEMPR                        ; b185 e5ae    compare to 7/8 mstrng
 _BRKCHK_3:  ldy MVMODE,x                     ; b187 bcc734  . (expert level only) standard/assault/forced march/entrench
             beq __H__                        ; b18a f00c    
-            cpy #$02                         ; b18c c002    
+            cpy #$02                         ; b18c c002    forced march?
             bne _BRKCHK_4                    ; b18e d007    
-            asl                              ; b190 0a      
+            asl                              ; b190 0a      A *= 2 max 255
             bcc __H__                        ; b191 9005    
             lda #$ff                         ; b193 a9ff    
             bcs __H__                        ; b195 b001    
-_BRKCHK_4:  lsr                              ; b197 4a      
+_BRKCHK_4:  lsr                              ; b197 4a      A /= 2
 __H__:      cmp CSTRNG,x                     ; b198 dd2b32  . combat strengths
-            bcc _H_1                         ; b19b 900a    
+            bcc _H_1                         ; b19b 900a    break unless cstrng exceeds A
             lda #$ff                         ; b19d a9ff    
             sta EXEC,x                       ; b19f 9ddc30  . unit execution times
             lda #$00                         ; b1a2 a900    
@@ -2626,7 +2626,7 @@ THNKLP:     stx ARMY                         ; b1e1 86ab
 _THNKLP_1:  jmp TOGSCN                       ; b1ea 4c41b5  
 
 _THNKLP_2:  lda CORPT,x                      ; b1ed bd4d2e  . codes for unit types
-            cmp #$81                         ; b1f0 c981    ; russian "" unnamed? 1 -> ?
+            cmp #$81                         ; b1f0 c981    ; (russian) militia can't move
             beq _THNKLP_1                    ; b1f2 f0f6    
             lda BSTVALS-48,x                 ; b1f4 bdfe38  
             cmp #$06                         ; b1f7 c906    
@@ -3787,18 +3787,18 @@ _W_8:       lda MSTRNG,x                     ; bb52 bdff2c  . muster strengths
             sta GREEN,x                      ; bb64 9d7a30  . Flag newly arrived German reinforcements
 _W_9:       lda #$ff                         ; bb67 a9ff    
             sta EXEC,x                       ; bb69 9ddc30  . unit execution times
-            ldy #$7e                         ; bb6c a07e    
+            ldy #$7e                         ; bb6c a07e    armor symbol
             lda CORPT,x                      ; bb6e bd4d2e  . codes for unit types
-            and #$04                         ; bb71 2904    bit 3 clr => armor
+            and #$04                         ; bb71 2904    bit 3 set => armor
             bne _W_10                        ; bb73 d00b    
-            ldy #$7d                         ; bb75 a07d    
+            ldy #$7d                         ; bb75 a07d    inf symbol
             lda CORPT,x                      ; bb77 bd4d2e  . codes for unit types
-            and #$02                         ; bb7a 2902    bit 2 set => inf
+            and #$02                         ; bb7a 2902    bit 2 clr => inf
             beq _W_10                        ; bb7c f002    
-            ldy #$7c                         ; bb7e a07c    bit 2 clr => flieger
+            ldy #$7c                         ; bb7e a07c    bit 2 set => flieger
 _W_10:      tya                              ; bb80 98      
             ldy CORPT,x                      ; bb81 bc4d2e  . codes for unit types
-            bpl _W_11                        ; bb84 1002    hi bit => player
+            bpl _W_11                        ; bb84 1002    bit 8 => player (0=german, 1=russian)
             ora #$80                         ; bb86 0980    
 _W_11:      sta SWAP,x                       ; bb88 9d8331  . terrain code underneath unit
             cpx #$30                         ; bb8b e030    

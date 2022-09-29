@@ -1,4 +1,4 @@
-import {Direction, Weather} from './data.js';
+import {Direction, Weather} from './game.js';
 import {Location, reach, moveCosts, manhattanDistance, directionFrom, directPath, squareSpiral} from './map.js';
 import {oob} from './unit.js';
 

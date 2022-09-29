@@ -1,5 +1,4 @@
-import {players, Player, directions, terraintypes} from './data.js';
-import {sum} from './game.js';
+import {players, Player, directions, terraintypes, sum} from './game.js';
 import {Location, manhattanDistance, directionFrom, squareSpiral} from './map.js';
 import {oob} from './unit.js';
 

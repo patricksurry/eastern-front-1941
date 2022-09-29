@@ -1,4 +1,4 @@
-import {directions} from './data.js';
+import {directions} from './game.js';
 import {Location, squareSpiral} from './map.js';
 import {linePoints, sortSquareFacing} from './think.js';
 

@@ -1,11 +1,38 @@
+import {mapVariants} from './map-data.js';
 import {
-    maxlon, maxlat, mapdata,
     directions, Direction,
     terraintypes, Terrain,
     waterstate, Water,
-    blocked, cities,
-} from './data.js';
-import {randbyte, gameState} from './game.js';
+    cities,
+    randbyte, gameState,
+} from './game.js';
+
+
+// D.ASM:5500 BHX1 .BYTE ... / BHY1 / BHX2 / BHY2
+// there are 11 impassable square-sides
+// the original game stores 22 sets of (x1,y1),(x2,y2) coordinates
+// to enumerate the to/from coordinates in both senses
+// but we can reduce from 88 to 22 bytes by storing a list of
+// squares you can't move north from (or south to), and likewise west from (or east to)
+const blocked = [
+    // can't move north from here (or south into here)
+    [
+        {lon: 40, lat: 35},
+        {lon: 39, lat: 35},
+        {lon: 38, lat: 35},
+        {lon: 35, lat: 36},
+        {lon: 34, lat: 36},
+        {lon: 22, lat: 3},
+        {lon: 15, lat: 6},
+        {lon: 14, lat: 7},
+        {lon: 19, lat: 3}
+    ],
+    // can't move west from here (or east into here)
+    [
+        {lon: 35, lat: 33},
+        {lon: 14, lat: 7},
+    ]
+];
 
 // the map is made up of locations, each with a lon and lat
 function Location(lon, lat, ...data) {
@@ -46,21 +73,6 @@ Location.neighbor = function(dir, skipcheck) {
         );
     return legal ? loc: null;
 }
-
-const mapboard = mapdata.map(
-    (row, i) => row.map(
-        (data, j) => Location(maxlon - j, maxlat - i, data, {unitid: null})
-    )
-);
-mapboard.maxlon = maxlon;
-mapboard.maxlat = maxlat;
-
-cities.forEach((city, i) => {
-    city.points ||= 0;
-    let loc = Location.of(city);
-    console.assert(loc.terrain == Terrain.city, `Expected city terrain for ${city}`);
-    loc.cityid = i;
-});
 
 function mapForegroundColor(loc) {
     // return the antic fg color for a given location
@@ -257,6 +269,50 @@ function reach(src, range, costs) {
     }
     return locs;
 }
+
+
+//TOOD bundle as functions to build mapboard from variant
+const variant = mapVariants.apx,
+    mapencoding = variant.encoding.map((enc, i) => {
+        // convert the encoding table into a lookup of char => [icon, terraintype, alt-flag]
+        let lookup = {}, ch=0;
+        enc.split('|').forEach((s, t) =>
+            s.split('').forEach(c => {
+                let alt = ((t == 1 && i == 0) || ch == 0x40) ? 1 : 0;
+                if (ch==0x40) ch--;
+                lookup[c] = {
+                    icon: 0x80 + i * 0x40 + ch++,
+                    terrain: t,
+                    alt: alt
+                };
+            })
+        );
+        return lookup;
+    }),
+    // decode the map into a 2-d array of rows x cols of  {lon: , lat:, icon:, terrain:, alt:}
+    mapdata = variant.ascii.split(/\n/).slice(1,-1).map(
+            (row, i) =>
+            row.split('').map(
+                c => Object.assign({}, mapencoding[i <= 25 ? 0: 1][c])
+            )
+        ),
+    maxlon = mapdata[0].length-2,
+    maxlat = mapdata.length-2,
+    mapboard = mapdata.map(
+        (row, i) => row.map(
+            (data, j) => Location(maxlon - j, maxlat - i, data, {unitid: null})
+        )
+    );
+mapboard.maxlon = maxlon;
+mapboard.maxlat = maxlat;
+
+cities.forEach((city, i) => {
+    city.points ||= 0;
+    let loc = Location.of(city);
+    console.assert(loc.terrain == Terrain.city, `Expected city terrain for ${city}`);
+    loc.cityid = i;
+});
+
 
 export {
     Location,

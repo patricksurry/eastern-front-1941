@@ -95,13 +95,15 @@
 }
 @keyframes blink {
   0% {opacity: 1.0;}
+  50% {opacity: 1.0;}
+  75% {opacity:  0.0;}
   100% {opacity: 0.0;}
 }
 .flash {
     animation: flash 0.25s infinite;
 }
 .blink {
-    animation: blink 0.5s ease-in infinite;
+    animation: blink 1.0s ease-in infinite;
 }
 .chr, .chr-bg, .chr-fg, .chr-dim {
     width: 8px;

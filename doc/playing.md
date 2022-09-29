@@ -1,5 +1,4 @@
 - link the map poster
-- tesseract the design doc
 
 
 INTRODUCTION

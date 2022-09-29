@@ -1,8 +1,7 @@
 import {
     players, Player, terraintypes, Terrain, directions, Direction, weatherdata, Weather,
-    monthdata, cities, anticColor
-} from './data.js';
-import {gameState} from './game.js';
+    monthdata, cities, anticColor, gameState
+} from './game.js';
 import {oob} from './unit.js';
 import {mapboard, Location, mapForegroundColor, moveIceLine} from './map.js';
 import {

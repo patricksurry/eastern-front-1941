@@ -2377,7 +2377,7 @@ ZPVAL:  ; init for DLSTPT/2, MAP/2, CORPS, CURS{X|Y}/2
     !byte $00,$64,$00,$00,$00,$22,$01,$30,$02                               ; 73b6 .d...".0.
 PSXVAL:
     !byte $e0,$00,$00,$33,$78,$d6,$10,$27,$40,$00,$01,$0f,$06,$29,$00,$01   ; 73bf `..3xV.'@....)..
-COLTAB:
+COLTAB:                                      ; sets PCOLR0-3, COLOR0-3
     !byte $58,$dc,$2f,$00,$6a,$0c,$94,$46,$b0                               ; 73cf X\/.j..F0
 MOSCPTS:
     !byte $14,$0a,$0a,$0a                                                   ; 73d8 ....
@@ -2649,12 +2649,12 @@ MAYBE:      lda CHUNKX                       ; 75fe a5be    . Cursor coords (pix
             lda ARRIVE,x                     ; 7605 bd1b57  . arrival turns
             bmi _P_2                         ; 7608 3006
             cmp TURN                         ; 760a c5c9    
-            bcc MATCH                        ; 760c 9007
-            beq MATCH                        ; 760e f005
+            bcc FOUND                        ; 760c 9007
+            beq FOUND                        ; 760e f005
 _P_2:       lda CHUNKY                       ; 7610 a5bf
             jmp __P__                        ; 7612 4cf275
 
-MATCH:      lda #$00                         ; 7615 a900    match obtained
+FOUND:      lda #$00                         ; 7615 a900    match obtained
             sta HITFLG                       ; 7617 8d2706  note match
             sta CH                           ; 761a 8dfc02  . Internal hardware value for the last key pressed
             lda #$5c                         ; 761d a95c    

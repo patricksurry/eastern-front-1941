@@ -139,11 +139,14 @@ def buildasciimap(mapdata, outbase, flieger=False):
     assert '|' not in asciimap
 
     open(outbase + '.asc', 'w').write(f"""
-mapencoding = {json.dumps(map64, indent=True)}
-
-mapascii = `
+{
+    encoding: {
+        json.dumps(map64, indent=True)
+    },
+    ascii: `
 {asciimap}
 `
+}
 """)
 
 

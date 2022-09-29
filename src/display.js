@@ -1,7 +1,6 @@
-import {anticColor, players, directions, cities} from './data.js';
+import {anticColor, players, directions, cities, gameState, score} from './game.js';
 import {Location} from './map.js';
 import {oob} from './unit.js';
-import {gameState, score} from './game.js';
 
 import * as d3 from 'd3';
 
@@ -27,7 +26,7 @@ function maskpos(c) {
 }
 
 function errmsg(text) {
-    let s = score(gameState.human).toString().padStart(3).padEnd(4);
+    let s = score(gameState.human, oob).toString().padStart(3).padEnd(4);
     s += centered(text || "", 36);
     putlines('#err-window', [s])
 }
@@ -130,7 +129,9 @@ function setupDisplay(help, mapchrs, units) {
         .classed('chr-cstrng', true);
 
     // put arrows and kreuze in layer for path animation
-    putlines('#arrows', [[256], directions.map(icon)], '1A', null, c => c, (d,i) => i == 0 ? 'kreuze': `arrow-${i-1}`)
+    putlines(
+        '#arrows', [[256], directions.map(icon)],
+        d => d == 256 ? '1A': 'DC', null, c => c, (d, i) => d == 256 ? 'kreuze': `arrow-${i-1}`)
         .style('opacity', 0);
 }
 
@@ -247,9 +248,10 @@ function focusUnit(u) {
         d3.selectAll('.chr-dim').filter(d => !(d.id in locs)).style('opacity', 0.5);
     }
 
+    u.blink();
+
     if (u.player == gameState.human) {
         animateUnitPath(u);
-        u.blink();
     }
 }
 

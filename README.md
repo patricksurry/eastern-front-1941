@@ -1,6 +1,5 @@
 # Eastern Front 1941
 
-
 This is a [playable][game] JavaScript port of [Chris Crawford][ccwiki]'s [Eastern Front 1941][efwiki] with a few optional extras.
 
 [![game](doc/preview.png)][game]
@@ -77,7 +76,7 @@ full disassembly of the APX disk image(ref) including transcribed comments/label
 
 - `README.md` - you are here
 - `index.html` - basic structure for the game display showing how the map layers stack within the scrolling container
-- `static/` - the javascript, style sheet and fontmap image sprite that implement the game
+- `src/` - the javascript, style sheet and fontmap image sprite that implement the game
     - `data.js` - prettified chunks of raw data that drive the game, e.g map, order-of-battle, colors, etc
     - `display.js` - D3-based html/css display interface simulating an Atari-esque character-based display
     - `map.js` - helpers for interacting with the map and its squares, wrapped as simple Location objects
@@ -169,10 +168,8 @@ slight differences between the APX map (pictured) and the cartridge version
 - unit paths
 - unit reach
 - why 8 order limit (just 8 x 2 bits = 2 bytes)?
-- A* path finding; v Bresenham
-- more random retreat/supply check for n/s
 
-- more efficient impassable hex check?
+- more random retreat/supply check for n/s
 - do linepoints N/S at same time (one rotartion vs three)
 
 notes, fun discoveries
@@ -181,6 +178,7 @@ notes, fun discoveries
 
 - unused unit types: ASM vs Cart, injects other words in gaps, reorders second group
 
+hi nibble:
         "        ",        "",
 x       "SS      ",        ["CORPS",]
         "FINNISH ",        "FINNISH",
@@ -190,15 +188,18 @@ x       "SS      ",        ["CORPS",]
 x        "MOUNTAIN",       ["ARMY",]
         "GUARDS  ",        "GUARDS",
 
-        "INFANTRY",        "INFANTRY",
-        "TANK    ",        "MILITIA",
-        "CAVALRY ",        ["MUSTER",]
-        "PANZER  ",        "FLIEGER",
-        "MILITIA ",        "PANZER",
-x        "SHOCK   ",       "TANK",
-x        "PARATRP ",       "CAVALRY",
-x        "PZRGRNDR",       ["COMBAT",]
+lo nibble:
+        "INFANTRY",        "INFANTRY",   0000     inf
+        "TANK    ",        "MILITIA",    0001     inf
+        "CAVALRY ",        ["MUSTER",]   0010    [fly]
+        "PANZER  ",        "FLIEGER",    0011     fly
+        "MILITIA ",        "PANZER",     0100   armor
+x        "SHOCK   ",       "TANK",       0101   armor
+x        "PARATRP ",       "CAVALRY",    0110   armor
+        "PZRGRNDR",       ["COMBAT",]    0111  [armor]
 
+cart uses low nibble for second name and infer icon/unit type
+high nibble low 3 bits gives first word, high bit gives player (0=german, 1=russian)
 
 - APX version allows attacker response even if the defender attack breaks it, cart adds `bcc ATAKR / jmp ENDCOM`
 
@@ -313,13 +314,17 @@ _COMBAT_7:  ldx HMORDS,x     ; ad29 bed232  how many orders queued for each unit
 ```
 
 
-### Things todo
+### Things TODO
 
-- remove and test spiral1
+- have think() track a current unit and bail out once it uses a certain amount of time
+
+- * for reinforcements
+
+- zocAffecting needs different option for whether to ignore central unit (eg. supply check vs move)
 
 - guide.html with cc notes + commentary boxes
 
-- scrollmsg()
+- scrollmsg() to report more death & destruction during combat
 
 - variants: moreRandom, sevastopol, astar, ...
 
@@ -377,13 +382,9 @@ https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle / modulo bias sort fu
   Nick Morgan's [6502 simulator][6502sim] was handy to understand some of the more gnarly code fragments,
   like the new integer division routine :facepalm:.
 
-- [Red Blob Games][rbgames] is a great resource
-  to learn about computer game algorithms via engaging visualizations with a little math,
-  including a great introduction to path-finding and the [A* algorithm][astar]
 
 
 
-https://tesseract-ocr.github.io/
 
 convert -density 300 APX_Eastern_Front_1941.pdf -quality 90 apxdoc%02d.jpg
 
@@ -398,5 +399,3 @@ for i in 07 08 09 10 11 12 13 14 15 16 17 18; do echo $i; tesseract apxdoc$i.jpg
 [6502disass]: https://github.com/Esshahn/pydisass6502
 [6502pds]: https://github.com/patricksurry/pydisass6502
 [6502sim]: https://skilldrick.github.io/easy6502/
-[rbgames]: https://www.redblobgames.com/
-[astar]: https://www.redblobgames.com/pathfinding/a-star/introduction.html

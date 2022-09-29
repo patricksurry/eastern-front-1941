@@ -1,5 +1,20 @@
-EASTERN FRONT DOCUMENTATION PACKAGE
-===
+# EASTERN FRONT DOCUMENTATION PACKAGE
+
+<table><td>
+
+:point_right:  This is an annotated version of the
+[Source code notes for Eastern Front APX-20095][apxsrcpdf]
+&copy; Chris Crawford 1981.
+I used Google's [Tesseract][tesseract] OCR to import the
+original text to markdown, and added links to a more readable
+disassembly of the APX disk image.
+I haven't touched the original text other than correcting OCR errors and
+obvious typos.  All of my additional commentary is shown in boxes like this one.
+
+[apxsrcpdf]: ../refdoc/APX_Source_Code_for_Eastern_Front_1941_rev_2.pdf
+[tesseract]: https://tesseract-ocr.github.io/
+
+</td></table>
 
 This package contains material of value to any programmer attempting to
 study the program EASTERN FRONT (1941). My purpose in making these materials
@@ -44,9 +59,8 @@ programming genius; the majority are simple mistakes.
 (signed) Chris Crawford
 
 
+## EASTERN FRONT STRUCTURE
 
-EASTERN FRONT STRUCTURE
-===
 
 EASTERN FRONT 1941 is divided into six modules. The program was
 developed with the Atari Assembler/Editor cartridge, which has no linking
@@ -87,8 +101,8 @@ closely before appropriating any memory. You should also refer to the
 appropriate source code listing. I repeat, there is very little available
 memory.
 
-DATA MODULE
-===
+
+## DATA MODULE
 
 This is the simplest of the modules. It is nothing more than a
 collection of data bytes. Many inexperienced programmers think of a program
@@ -97,8 +111,7 @@ program. The data is the other major component. Both components are
 necessary, but many programmers neglect the data. Don't make this mistake.
 The data needs as much attention as the code.
 
-MILITARY STATE VARIABLES
----
+### MILITARY STATE VARIABLES
 
 The first data tables are the values for the military units. These are
 presented in a more orderly fashion in the Unit Characteristics Chart on
@@ -140,6 +153,16 @@ Guards, tank and shock armies for the Russians, among others. There are also
 the different nationalities. All these factors are encoded in the single
 CORPT constant.
 
+<table><td>
+
+:point_right: Curiously SS, MOUNTAIN, SHOCK and PARATRP unit types are
+enumerated in the data but aren't used in the order of battle.  These are replaced
+in the cartridge version by various utility words, and PZRGRNDR becomes FLIEGER.
+Note that Finnish units also have special mechanics: they can't attack.
+
+</td></table>
+
+
 CORPNO ([lines 1390-1590][EFT18D-1390-1590]) specifies the military unit number, as in the
 48th Panzer Corps. This is another quantity that has no significance to the
 operation of the game but is included for the unit description when a unit is
@@ -154,8 +177,7 @@ not be able to do. This lent focus to the design. Before doing any
 simulation, you must declare precisely what you know before you attempt to do
 anything with it.
 
-WORDS TABLE
----
+### WORDS TABLE
 
 Another chunk of this module is devoted to the WORDS table ([lines 1010-1170][EFT18D-1010-1170]),
 which gives the text strings used in the text windows. I decided
@@ -165,8 +187,7 @@ SEPTEMBR, HUNGARAN, PARATRP, PZRGRNDR. The decision to use eight characters
 per field was a good one. The code to put text on the screen is fast and
 simple, and the data tables required are short.
 
-CONVERTING BYTES TO DIGITS
----
+### CONVERTING BYTES TO DIGITS
 
 [Line 1600][EFT18D-1600] begins one of the strangest ideas I have ever implemented in a
 program. It is also one of the stupidest. I was worried about the
@@ -230,8 +251,7 @@ built into a program, it is extremely difficult to expunge. Problems should
 be prevented before you have exhausted your reserves of memory and execution
 time.
 
-MORE MISCELLANEOUS TABLES
----
+### MORE MISCELLANEOUS TABLES
 
 The next table in the data module is called TXTTBL ([lines 2450-2500][EFT18D-2450-2500]).
 It is a table of long text messages. I chose a fixed field length of 32
@@ -378,15 +398,31 @@ wargamer and I still think in terms of hexes even though the game uses
 squares.
 
 This case is an excellent example of the usefulness of table-driven
-solutions. Logic=-driven solutions did not work acceptably, yet the
+solutions. Logic-driven solutions did not work acceptably, yet the
 table-driven solution was simple and easy to implement.
+
+<table><td>
+
+:point_right: I found a minor improvement here.  The original code
+stores both X1,Y1,X2,Y2 and X2,Y2,X1,Y1 for each of the 11 forbidden pairs,
+and loops over 22 pairs stored in 11 * 2 * 4 = 88 bytes to check each legal move.
+By splitting the list into north-south pairs (9) and east-west pairs (2)
+and only storing the southernmost or easternmost X,Y coordinate of each pair
+we can reduce both the storage and expected number of tests by a factor of four.
+When testing a move from A to B, we use the direction of movement to
+pick which point to test, and which list to check against.
+For example to test a northward move from A to B, we check if A is
+in the illegal southernmost list;
+conversely to test a southward move from A to B we just check B.
+
+</td></table>
 
 The last chunk of RAM reserved by the module is EXEC. This table holds
 the execution times of the units. The number stored here specifies the
 subturn in which the unit's next order will be executed.
 
-INTERRUPT MODULE
-===
+
+## INTERRUPT MODULE
 
 This module handles all of the I/O for the game. It consists of two
 routines: a vertical blank interrupt routine which is executed at the
@@ -399,8 +435,7 @@ orders inputs, and displays existing orders. The entire vertical blank
 interrupt routine must operate under tight timing requirements, as there are
 only 2000 machine cycles available during vertical blank.
 
-COORDINATE SYSTEMS
----
+### COORDINATE SYSTEMS
 
 The coordinate systems used by this module will drive you nuts. I must
 admit that I didn't quite know what I was doing as I wrote this module, so
@@ -437,8 +472,7 @@ map relative to the screen. It is useful for calculations involving the
 relationship between the map as a whole and the subset that the user sees.
 It uses the variables XPOSL, YPOSL, and YPOSH.
 
-DATABASE
----
+### DATABASE
 
 There are three primary database regions used by the interrupt service
 routines. The first is the data area on page zero in locations $B0-$BF. I
@@ -452,8 +486,7 @@ counters and miscellaneous variables. The third database area for these
 routines is the database established by the data module. This consists of
 tables.
 
-PERSONAL PROGRAMMING STYLE AND CONVENTIONS
----
+### PERSONAL PROGRAMMING STYLE AND CONVENTIONS
 
 A word on my personal programming practices is in order. Every
 programmer has little conventions about writing code and assigning labels.
@@ -485,8 +518,7 @@ TEMPthat. My rule for such variables is absolute: such a variable is always
 usable for very short-term storage and may never be used for storage
 exceeding one-half page of source code. I have a short memory.
 
-VERTICAL BLANK INTERRUPT CODE
----
+### VERTICAL BLANK INTERRUPT CODE
 
 The VBI routine begins at $7400. It begins with a now-defunct break
 routine that I used for debugging purposes. This is a valuable tool for any
@@ -584,7 +616,7 @@ response to the order. Next the new order must be folded into the existing
 orders. The task is to insert the two-bit order code specified by the
 joystick into the current orders byte. This requires some bit-twiddling.
 First we determine which of four bit pairs in the byte to use; the bit pair
-number is put into the Y=-register and saved in TEMPI ([lines 5810-5870][EFT18I-5810-5870]). Next
+number is put into the Y-register and saved in TEMPI ([lines 5810-5870][EFT18I-5810-5870]). Next
 we determine which of the two orders bytes should be twiddled. This byte
 index is either a 1 or a O and is put into the X-register ([lines 5880-5930][EFT18I-5880-5930]).
 Next, we shift the joystick entry bit pair upward in the byte to correspond
@@ -621,8 +653,7 @@ called (OFFLO, OFFHI) and adding it to the LMS operands in the display list.
 This is done in [lines 8650-8770][EFT18I-8650-8770]. The final operation of the VBI routine is
 the preparation for the DLI routine. More on this later.
 
-TABLES AND SUBROUTINES
----
+### TABLES AND SUBROUTINES
 
 The table JSTP is used by the artificial intelligence routine. DEFNC is
 used by the combat routine to figure the defensive value of a terrain type.
@@ -658,8 +689,7 @@ bits in a byte. ROTARR is a table used by the artificial intelligence
 routines to rotate an array. OBJX is a data table used by the artificial
 intelligence routine.
 
-DISPLAY LIST INTERRUPT SERVICE ROUTINES
----
+### DISPLAY LIST INTERRUPT SERVICE ROUTINES
 
 The display list interrupt routines are in [lines 10450-11340][EFT18I-10450-11340]. They are
 short, but very important. They are a curious mixture of cleverness and
@@ -674,7 +704,7 @@ routine. The time wasted by the technique is shameful.
 The clever aspect of the code is the way that a DLI is applied to the
 map, even though the map is scrolled through the screen area. There are two
 character sets for the map. The switch from the northern character set to
-the southern one is made at CHUNKY=15. Unfortunately, we cannot simply set a
+the southern one is made at CHUNKY-15. Unfortunately, we cannot simply set a
 DLI to hit on a specific mode line of the display, for there is no way of
 knowing if the map will be lined up with the screen properly. Indeed, with
 vertical scrolling taking place, the point where the transition should take
@@ -721,8 +751,7 @@ works.
 On page 59 is a diagram depicting the sequence of changes made by the
 display list interrupts.
 
-FINAL SUBROUTINES AND TABLES
----
+### FINAL SUBROUTINES AND TABLES
 
 Subroutine DNUMBR ([lines 11390-11590][EFT18I-11390-11590]) displays a number. It uses the
 table-driven method described in the notes on the data module. You can see
@@ -748,8 +777,8 @@ an ugly green bug chuckling to himself. Someday he'll get me with that one.
 OFFNC is a table of values used by the combat routines to evaluate
 attacks.
 
-MAINLINE MODULE
-===
+
+## MAINLINE MODULE
 
 This module handles the initialization of the game and game turn logic.
 it brings in reinforcements, figures the dates, seasons, and movement. The
@@ -784,8 +813,7 @@ the unnecessary equates I was able to reduce it to only two and one-half
 pages. As you can see, there was a lot of fat. So if you see unused equates
 in the module equate files, don't get excited.
 
-INITIALIZATION
----
+### INITIALIZATION
 
 The mainline routine begins with the initialization routines. The
 beginning of the mainline routine ($6E00) is the address to which the machine
@@ -812,8 +840,7 @@ store five times. A similar method is used for several tables in
 
 The initializations in [lines 1620-2060][EFT18M-1620-2060] are all quite straightforward.
 
-MAIN GAME TURN LOOP
----
+### MAIN GAME TURN LOOP
 
 The outermost program loop begins on [line 2080][EFT18M-2080]. The variable TURN is a
 simple turn counter telling which turn we are on.
@@ -842,7 +869,7 @@ together until it worked. The result is a gory mess.
 There are four different variables (SEASN1, SEASN2, SEASN3, and EARTH)
 to tell the state of the season. SEASN1 is used to set the color of rivers
 and swamps. It holds a $40 for unfrozen water and a $80 for frozen water.
-SEASN2 tells if we are in fall or = spring. This indicates whether the
+SEASN2 tells if we are in fall or spring. This indicates whether the
 ice-line should move to the south or to the north. It holds a $00 to
 indicate spring and a SFF to indicate fall. SEASN3 is logically identical to
 SEASN2 but contains a different value because it is used in a different way.
@@ -912,8 +939,7 @@ Logistics is handled in [lines 3980-4030][EFT18M-3980-4030]. It is a simple loop
 subroutine call. The subroutine is inside the combat module; it is discussed
 in the essay on that module.
 
-POINTS CALCULATION
----
+### POINTS CALCULATION
 
 [Lines 4070-4760][EFT18M-4070-4760] calculate the current point score of the player. The
 algorithm used is involved. There are three factors used in calculating
@@ -976,8 +1002,7 @@ not return until the player presses the START button. Then the joystick
 button is masked out by setting BUTMSK and an appropriate message ("figuring
 move---no orders allowed") is put onto the screen.
 
-MOVEMENT EXECUTION
----
+### MOVEMENT EXECUTION
 
 [Lines 4970-5030][EFT18M-4970-5030] prepare the way for movement execution. They initialize
 the subturn counter TICK and calculate the first execution time of each unit.
@@ -1087,8 +1112,8 @@ scores allocated for each captured city. MOSCX and MOSCY give the
 coordinates of cities that earn points. TXTMSG is a very simple subroutine
 that puts a 32-byte text message onto the screen.
 
-COMBAT MODULE
-===
+
+## COMBAT MODULE
 
 This module handles combat resolution and logistics for the mainline
 routines. It is nothing more than a set of subroutines called by the
@@ -1120,8 +1145,7 @@ eight bits of resolution give better than one percent accuracy in stating a
 properly normalized number. With imaginative programming these machines can
 do a great deal of impressive simulation.
 
-SOUND AND GRAPHICS EFFECTS
----
+### SOUND AND GRAPHICS EFFECTS
 
 The module begins with the combat resolution routine at $4ED8. It first
 clears the flag VICTRY, which is used to tell the mainline routine if the
@@ -1154,8 +1178,7 @@ his turn out, so I put in longer and longer delays until it seemed right.
 In [lines 1560-1590][EFT18C-1560-1590] I put the defending unit's piece back on the map.
 The rest of the routine will execute very quickly.
 
-COMBAT RESOLUTION
----
+### COMBAT RESOLUTION
 
 In [lines 1620-1760][EFT18C-1620-1760] I evaluate the factors affecting the defender's
 strength. There are three: the defender's combat strength (CSTRNG), the
@@ -1241,8 +1264,7 @@ zones of control.
 The combat routine terminates by incrementing the execution time of the
 attacking unit.
 
-LOGISTICS
----
+### LOGISTICS
 
 The supply evaluation routine is the next major routine in the module.
 The basic idea of the routine is to start at the location of each unit and
@@ -1284,8 +1306,7 @@ out or it runs out of tries.
 After supplies have been figured, any Russian units in supply have two
 points added to their muster strength. This is a Russian advantage.
 
-ZONE OF CONTROL
----
+### ZONE OF CONTROL
 
 The next routine tests for zones of control. Specifically, it answers
 the question, "Is there an enemy zone of control extending into square (LAT,
@@ -1329,8 +1350,7 @@ countdown capability. Thus, to execute a walk around the square X, we
 execute jumps in the directions specified in the JSTP+16 table. The complete
 walk around the square is executed in [lines 4510-4740][EFT18C-4510-4740].
 
-THE IMPORTANCE OF ALGORITHMS
----
+### THE IMPORTANCE OF ALGORITHMS
 
 This routine demonstrates a very important principle of software design:
 the best way to improve performance is to re-examine your algorithms very
@@ -1351,8 +1371,8 @@ third of its previous value. The moral of the story is, rethinking your
 algorithms will frequently net you far more performance than any amount of
 clever coding.
 
-THINKING MODULE
-===
+
+## THINKING MODULE
 
 This module handles but one task: the artificial intelligence for the
 Russian player. It has one entry point at $4700 and one exit point at $4C22.
@@ -1398,8 +1418,7 @@ iterations. However, if the player presses the START button, the iterations
 stop and the ghost army becomes the destinations for the real army. In this
 way hypothesis is converted into plans.
 
-OVERALL FORCE RATIO
----
+### OVERALL FORCE RATIO
 
 The module begins at [line 1680][EFT18T-1680]. The first task is to calculate the
 overall force ratio. This is the ratio of total German strength to total
@@ -1447,8 +1466,7 @@ until it is all gone. The number of times you subtract the divisor is the
 quotient. It's dumb, it's slow, but it works. More important, I can
 understand it. The final result is stored in OFR, the overall force ratio.
 
-INDIVIDUAL FORCE RATIOS
----
+### INDIVIDUAL FORCE RATIOS
 
 The next task is to calculate the individual force ratios. The war
 might be going really well for Mother Russia, but the 44th Infantry Army may
@@ -1461,8 +1479,7 @@ four cardinal directions. The fifth expresses the average of these four.
 The fifth its called the individual force ratio (IFR). The other four are
 called the IFRN, IFRS, IFRE, and IFRW, for the directions they represent.
 
-SUBROUTINE CALIFR
----
+### SUBROUTINE CALIFR
 
 Subroutine CALIFR ([lines 8390-9690][EFT18T-8390-9690]) calculates the individual force
 ratios. This is an extensive computation which requires a great deal of time
@@ -1523,8 +1540,7 @@ OBJY). OBJX and OBJY are the coordinates of our ghost armies. This
 completes the initialization loop. We now enter the main loop of the
 program.
 
-MAIN LOOP STRUCTURE
----
+### MAIN LOOP STRUCTURE
 
 The main program loop begins on [line 2340][EFT18T-2340] and extends all the way to
 [line 7290][EFT18T-7290]. It is obviously a gigantic loop, and it takes a long time to
@@ -1543,8 +1559,17 @@ be made from the way that CALIFR calculates the IFR. If the army is far from
 the front, then it is treated as a reinforcement. If not, it is treated as a
 front-line unit, and a different strategy is used.
 
-REINFORCEMENT STRATEGY
----
+<table><td>
+
+:point_right: This comment confused me for quite a while.
+But IFR is just calculated as the average of the overall force ratio
+and a non-negative local force ratio which isn't stored,
+i.e. IFR = (LFR + OFR)/2.  LFR is zero if any only if there are no nearby enemies,
+so checking IFR=OFR/2 is equivalent to asking if the unit is far from the front.
+
+</td></table>
+
+### REINFORCEMENT STRATEGY
 
 The job of a reinforcement is to plug weak spots in the line. This
 requires that the unit be able to figure out where the line is weak, no easy
@@ -1577,8 +1602,7 @@ is selected for support. Its coordinates become the objective of the
 reinforcing army. The job of planning that army's move is done and the
 routine jumps to the end of the loop (TOGSCN).
 
-STRATEGY FOR FRONT-LINE ARMIES
----
+### STRATEGY FOR FRONT-LINE ARMIES
 
 Front-line armies have a very complex strategy. They must evaluate a
 large number of factors to determine the best possible objective square.
@@ -1607,28 +1631,26 @@ down and stay put, but then they would never have any chance of escaping.
 Quite a few Russians do indeed escape with this system, so I think it has
 proven to be a successful way of dealing with a difficult problem.
 
-NORMAL FRONT-LINE ARMIES
----
+### NORMAL FRONT-LINE ARMIES
 
 If an army is not in trouble then it must choose a direction in which to
 move. The computations for this choice begin in [line 3130][EFT18T-3130], with DRLOOP, the
 direction loop. The critical loop variable is DIR, the direction of movement
 being evaluated. For the purposes of this loop, DIR takes the following
-meanings: 0=north, l=east, 2=south, 3=west, FF=stay put. This loop answers
+meanings: 0=north, 1=east, 2=south, 3=west, FF=stay put. This loop answers
 the question, "Should this army move in direction DIR?" It first determines
 The square being moved into ([lines 3160-3240][EFT18T-3160-3240]). The coordinates of this
 target square are TARGX, TARGY. The square being left is a ghost army square
 at OBJX, OBJY. The value of this target square is SQVAL. After verifying
 that the square can be entered ([lines 3290-3340][EFT18T-3290-3340]), the primary logic begins.
 
-LINE INTEGRITY COMPUTATIONS
----
+### LINE INTEGRITY COMPUTATIONS
 
 To figure whether a move will result in a solid line or a weak line, it
 is first necessary to give the computer some image of what that line looks
 like. I did this by creating two arrays. The first array is called the
 direct line array and is stored in LINARR. This array is 25 bytes long and
-covers a 5=by-5 square. The square being tested is always at the center of
+covers a 5-by-5 square. The square being tested is always at the center of
 the big square. The routine will not evaluate the entire Russian line, for
 that task is impossibly large. Instead, it will treat it as a collection of
 short line segments and evaluate each segment for desirable configuration.
@@ -1657,8 +1679,7 @@ four different directions: north, south, east, and west. We will keep track
 of which direction we are looking from with the variable SECDIR (secondary
 direction).
 
-THE LINE VALUE ARRAY
----
+### THE LINE VALUE ARRAY
 
 A very useful tool for examining this two-dimensional array is to
 construct a one-dimensional representation of its most important feature.
@@ -1672,7 +1693,7 @@ corresponding LV entry is five.
 
 [Lines 3920-4220][EFT18T-3920-4220] build the LV array from the LINARR. The variable POTATO
 (remember I told you I sometimes used funny variable names?) counts which
-column we are in. The Y=register holds the row within the column, and the
+column we are in. The Y-register holds the row within the column, and the
 X-register holds the LINARR index. The loop searches each column looking for
 the first populated square. When it finds one, the row index of the square
 is stored in the LV array. If it finds no populated square in the column,
@@ -1685,8 +1706,7 @@ useless, testing for conditions that do not exist. A more elegant solution
 is called for here. I was too lazy to be elegant; I just slopped the code
 together.
 
-EVALUATING THE STRENGTH OF THE LINE (LPTS)
----
+### EVALUATING THE STRENGTH OF THE LINE (LPTS)
 
 Now that the analytical tools we need are in place, we are ready to
 begin analysis of the position. We shall analyze the strength of a given
@@ -1751,8 +1771,7 @@ this routine is a triumph of pedestrian programming. To multiply A by B, I
 add A to itself B times. It is a two-byte add, and only the upper byte
 (ACCHI) is important to me. I throw away the lower byte in the accumulator.
 
-NEXT SECONDARY DIRECTION
----
+### NEXT SECONDARY DIRECTION
 
 I have now calculated the line configuration value of the square from
 one direction. I must now perform the same evaluation for each of the other
@@ -1781,8 +1800,7 @@ tools developed just for supporting the effort. I wrote four different BASIC
 programs as part of the EASTERN FRONT development cycle. They are no longer
 useful, so I have discarded them.
 
-EVALUATING IMMEDIATE COMBAT FACTORS
----
+### EVALUATING IMMEDIATE COMBAT FACTORS
 
 It is not good enough to analyze the danger in a square in terms of some
 obscure danger vector. It is also necessary to ask the simple question, how
@@ -1808,7 +1826,7 @@ would be a measure of the opportunity presented to the Russian, not a measure
 of danger. Thus, small values of IFR demand that IFR * NBVAL be interpreted
 differently. The logic to do this is managed in [lines 5930-6050][EFT18T-5930-6050]. The IFR is
 subtracted from $F; if the result is greater than zero it is doubled and
-stored into TEMPR to act as a fake IFR; NBVAL is replaced by 9=NBVAL. The
+stored into TEMPR to act as a fake IFR; NBVAL is replaced by 9-NBVAL. The
 effect of these strange manipulations is to invert the meaning of the code
 about to be executed. This succeeding code was intended to determine the
 importance of running from a square. With the inversion, it will also
@@ -1825,8 +1843,7 @@ think that this was not the correct way to handle terrain.
 In [lines 6200-6250][EFT18T-6200-6250] I execute one of my disgustingly familiar Neanderthal
 multiplications. I then add this value to SQVAL ([lines 6270-6310][EFT18T-6270-6310]).
 
-TRAFFIC AND DISTANCE PENALTIES
----
+### TRAFFIC AND DISTANCE PENALTIES
 
 The final tasks are to include penalties for traffic jams and
 long-distance marching. The former is necessary to make sure that Russians
@@ -1845,8 +1862,7 @@ out; SQVAL is set to zero. if not, 2 raised to the power of the range is
 subtracted from the SQVAL. With this work done, we have completed our
 calculation of the value of this square.
 
-FINAL SQUARE EVALUATION
----
+### FINAL SQUARE EVALUATION
 
 We now compare the value of this square with the best value we have
 obtained so far ([lines 6910-6970][EFT18T-6910-6970]). If our new value is better, it becomes
@@ -1859,8 +1875,7 @@ We then look at the START key to see if the human player has finished his
 move. If not, we continue our analysis, evaluating more and more squares
 without end. If so, we jump to a completely different section.
 
-TRANSLATING TARGETS INTO ORDERS
----
+### TRANSLATING TARGETS INTO ORDERS
 
 If the human has pressed the START key, we must ‘convert the targets
 figured by the previous routines into orders for execution in the mainline
@@ -1885,6 +1900,37 @@ proposed step and comparing this resultant step with the desired slope; if
 the slope resulting from a proposed step is the closest that can be obtained,
 then that step is the best. Unfortunately, calculating a slope requires
 dividing a delta-y by a delta-x, and division is not allowed.
+
+<table><td>
+
+:point_right: I didn't try to recreate this approach exactly.
+It seems a lot like [Bresenham's line algorithm][bresenham]
+except that we want a path with only vertical or horizontal steps
+(no diagonal jumps).   In that spirit my `map.js:directPath()`
+defines the target path with the equation A x + B y + C = 0,
+where A, B, C are integers defined by the start and end coordinates.
+We want to pick the integer step from (left, right, up, down) that keeps
+us closest to the true line, i.e has a value of A x + B y + C
+near zero. A little math tells us that each possible step
+makes a fixed contribution to the accumulated error, so
+we just keep choosing the one that moves us back towards zero.
+
+For amusement I also implemented the [A* algorithm][astar]
+in `bestPath()` which uses the terrain cost to find the
+cheapest route rather than (say) blindly trying to march through
+swamps or across the sea.
+[Red Blob Games][rbgames] is a great resource for learning about
+computer game algorithms via engaging visualizations,
+including a great introduction to path-finding and A\*.
+This is certainly more expensive than calculating the direct path,
+but perhaps feasible on the original hardware if only used at the
+final stage of translating targets to orders.
+
+[bresenham]: https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+[rbgames]: https://www.redblobgames.com/
+[astar]: https://www.redblobgames.com/pathfinding/a-star/introduction.html
+
+</td></table>
 
 I found my solution in the calendraic system of the Mayan Indians. They
 never developed the concept of the fraction, and so they had a terrible time
@@ -1933,8 +1979,8 @@ armies have been taken care of. With that, the routine is complete and it
 returns to the mainline routine in [line 8340][EFT18T-8340]. That was simple enough, wasn't
 it?
 
-NARRATIVE HISTORY
-===
+
+# NARRATIVE HISTORY
 
 A common misconception among non-programmers is that a program is a
 static product, something that springs complete from the hand of the
@@ -1958,8 +2004,7 @@ program in terms of historical happenstance. In this essay I will narrate
 the history of the entire project. I hope that this will make the final
 product more understandable.
 
-ORIGINS
----
+### ORIGINS
 
 EASTERN FRONT (1941) began as OURRAH POBIEDA in June of 1979. The
 original name is Russian for "Hooray for the Motherland!" and was the Russian
@@ -1988,8 +2033,7 @@ folder and started on a new design. Someday, when I had shaken off whatever
 preconceptions were contaminating my mind, I would come back to the game and
 start over with a fresh outlook.
 
-REBIRTH
----
+### REBIRTH
 
 Fifteen months passed. I went to work for Atari, programming first on
 the Video Computer System and then on the Home Computer. In September of
@@ -2016,8 +2060,7 @@ produce a map of Russia. This map was completed on December 10. It
 impressed many people, but it was only a map; it didn't do anything other
 than scroll.
 
-DESIGNING A NEW GAME
----
+### DESIGNING A NEW GAME
 
 Game design is art, not engineering. During December I took many long
 walks alone at night, sorting through my thoughts and trying to formulate my
@@ -2044,8 +2087,7 @@ of the game. Note especially the importance I attached to human interface
 and graphics. This reflects my belief that computation is never a serious
 problem, but interface is always the primary problem.
 
-PLUNGING INTO THE MORASS
----
+### PLUNGING INTO THE MORASS
 
 I now began the serious task of implementing the design. At first I
 proceeded slowly, cautiously. I documented all steps carefully and wrote
@@ -2077,7 +2119,7 @@ me to go back to the space bar.
 
 My next problem with the input routines arose when I tried to display a
 unit's existing orders. I had no end of problems here. My original idea had
-been to use player=-missile graphics to draw some kind of dotted path that
+been to use player-missile graphics to draw some kind of dotted path that
 would show a unit's planned route instantly. Unfortunately, there weren't
 enough players and missiles to do the job properly. It could only be done if
 I used single dots for each square entered. I put the display up on the
@@ -2086,8 +2128,7 @@ drawing board. The solution I eventually came up with (after considerable
 creative agony) is the system now used---the moving arrow that shows a unit's
 path. This takes a little longer but the animation effect is nice.
 
-THE LIGHT AT THE END OF THE TUNNEL
----
+### THE LIGHT AT THE END OF THE TUNNEL
 
 By now it was early March and I paused to consider the pace of the
 effort. I could see how much effort would be needed to complete the task. I
@@ -2099,8 +2140,7 @@ weekend. The schedule appeared to give me very little extra time in the
 event of problems. I did not like the looks of it. I resolved to redouble
 my efforts and try to get ahead of the schedule.
 
-MAINLINE MODULE
----
+### MAINLINE MODULE
 
 With the input routines done it was time to work on the mainline module.
 The very first task was to take care of calendraic functions. I wrote the
@@ -2123,8 +2163,7 @@ The next task was movement execution. This went extremely well. I had
 planned on taking two weeks to get units moving properly; as luck would have
 it, the routines were working fine after only one week. I was hot!
 
-COMBAT ROUTINES
----
+### COMBAT ROUTINES
 
 As March ended, I was beginning work on the combat resolution routines.
 I had some severe problems here. My routines were based closely on the
@@ -2142,8 +2181,7 @@ solve the problem and achieve a much better combat system. I still retained
 the central idea of the earlier system, which broke a unit's strength up into
 muster strength and combat strength.
 
-ARTIFICIAL INTELLIGENCE
----
+### ARTIFICIAL INTELLIGENCE
 
 In early April I turned to the last major module of the project: the
 artificial intelligence routines. This module frightened me, for I was
@@ -2180,8 +2218,7 @@ The transition was really quite clean. This indicates that I wrote the
 original code very well, for the ease with which code can be rewritten is a
 good measure of its quality.
 
-FIRST STARTUP
----
+### FIRST STARTUP
 
 It was now mid-May. Six months had passed since I had begun the first
 efforts on the game. One evening, rather late, I finished work on the
@@ -2193,8 +2230,7 @@ turkey on my hands. The game was dull and boring, It took too much time to
 play, it didn't seem to hang together conceptually, and the Russians played a
 very stupid game.
 
-THE CRISIS
----
+### THE CRISIS
 
 I remember that night very well. I shut off the machine and went for a
 long walk. It was time to do some hard thinking. The first question was,
@@ -2255,8 +2291,7 @@ program ran in May, it fit in almost exactly 16K. I never took anything out
 to meet the 16K requirement; I simply committed to maintaining the current
 size.
 
-FRANTIC JUNE
----
+### FRANTIC JUNE
 
 During the first two weeks of June I worked like a madman to implement
 all of these ideas. The program's structure went to hell during this time.
@@ -2270,8 +2305,7 @@ saw it. The version shown there was version 272. It was a complete game,
 and a playable game, and even an enjoyable game. It was not yet ready for
 release.
 
-THE POLISHING STAGES
----
+### THE POLISHING STAGES
 
 Two of the most critical stages in the development of a program are the
 design stage and the polishing stage. In the former, the programmer is
@@ -2306,8 +2340,7 @@ only hurt the design. The playtesters will catch these. The good designer
 must have the courage to reject the bad 90 percent, and the wisdom to accept
 the good 10 percent. It's a tough business.
 
-DELIVERY AND AFTERMATH
----
+### DELIVERY AND AFTERMATH
 
 I delivered the final product to Dale Yocum at the Atari Program
 Exchange around the 20th of August. It was the 317th version of the program.
@@ -2318,7 +2351,7 @@ anything less would not have been worth the effort.
 
 [figure]
 
-CHARACTER SET DESCRIPTIONS
+### CHARACTER SET DESCRIPTIONS
 
 There are three character sets used in EASTERN FRONT 1941. The first is
 the standard text character set. The other two are graphics character sets
@@ -2329,7 +2362,7 @@ characters in the character sets. 1 do not include the actual bit
 assignments for each character, as this information is not of primary
 interest to a designer.
 
-Each chart gives the 6=<bit number, which is the number that specifies
+Each chart gives the 6-bit number, which is the number that specifies
 the shape of the character, and the 8-bit number, which specifies the
 combination of color and shape that is used in the program. There are a few
 exceptions. For example, the river characters are normally presented in
@@ -2355,174 +2388,171 @@ opposite sides.
 
 [figure]  (link multiple back into doc)
 
-link line numbers to disassembly by address, map to URL
 
+[EFT18D-30-330]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1211-L1232
+[EFT18D-340-570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1233-L1254
+[EFT18D-580-790]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1255-L1265
+[EFT18D-800-1000]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1266-L1276
+[EFT18D-1180-1380]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1296-L1306
+[EFT18D-1390-1590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1307-L1317
+[EFT18D-1010-1170]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1277-L1294
+[EFT18D-1600]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1317
+[EFT18D-2450-2500]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1369-L1374
+[EFT18D-2510-2520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1376-L1384
+[EFT18D-2530-2540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1393-L1402
+[EFT18D-2550]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1411
+[EFT18D-2560-2630]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1413-L1420
+[EFT18D-2640-2680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1422-L1430
+[EFT18D-2690-2700]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1432-L1433
+[EFT18D-2710]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1434
+[EFT18D-2780-2830]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1473-L1502
+[EFT18D-2840]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1508
+[EFT18D-2950-5400]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1514-L1651
+[EFT18D-5410]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1652
+[EFT18D-5440-5490]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1656-L1660
+[EFT18D-5430]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1654
+[EFT18D-5500-5570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1661-L1671
 
+[EFT18I-2000]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2447
+[EFT18I-2660-3330]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2510-L2571
+[EFT18I-2630]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2507
+[EFT18I-3370-3590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2575-L2593
+[EFT18I-4430-5350]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2663-L2742
+[EFT18I-5070-5240]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2718-L2733
+[EFT18I-5280-5340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2736-L2741
+[EFT18I-5390-6570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2746-L2854
+[EFT18I-5410-5660]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2747-L2771
+[EFT18I-5700-5750]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2774-L2779
+[EFT18I-5810-5870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2785-L2790
+[EFT18I-5880-5930]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2791-L2796
+[EFT18I-5940-6000]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2797-L2802
+[EFT18I-6010-6050]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2803-L2807
+[EFT18I-6140-6360]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2815-L2836
+[EFT18I-7110]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2905
+[EFT18I-7440]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2937
+[EFT18I-7740]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2967
+[EFT18I-8220]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L3013
+[EFT18I-8650-8770]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L3053-L3064
+[EFT18I-8790-8990]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L3066-L3086
+[EFT18I-9900-10310]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L3170-L3206
+[EFT18I-10450-11340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L3221-L3309
+[EFT18I-11390-11590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L3313-L3333
 
-    [EFT18D-30-330]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1211-L1237
-    [EFT18D-340-570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1233-L1256
-    [EFT18D-580-790]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1255-L1276
-    [EFT18D-800-1000]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1266-L1286
-    [EFT18D-1180-1380]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1296-L1316
-    [EFT18D-1390-1590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1307-L1327
-    [EFT18D-1010-1170]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1277-L1293
-    [EFT18D-1600]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1328
-    [EFT18D-2450-2500]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1369-L1374
-    [EFT18D-2510-2520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1376-L1377
-    [EFT18D-2530-2540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1378-L1379
-    [EFT18D-2550]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1411
-    [EFT18D-2560-2630]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1413-L1420
-    [EFT18D-2640-2680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1422-L1430
-    [EFT18D-2690-2700]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1432-L1433
-    [EFT18D-2710]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1434
-    [EFT18D-2780-2830]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1441-L1446
-    [EFT18D-2840]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1508
-    [EFT18D-2950-5400]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1519-L1764
-    [EFT18D-5410]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1652
-    [EFT18D-5440-5490]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1656-L1661
-    [EFT18D-5430]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1654
-    [EFT18D-5500-5570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1661-L1670
+[EFT18M-1410-1460]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1684-L1689
+[EFT18M-1480-1570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1691-L1700
+[EFT18M-1620-2060]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1705-L1749
+[EFT18M-2080]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1751
+[EFT18M-2190-2250]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1761-L1767
+[EFT18M-2340-2350]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1776-L1777
+[EFT18M-2570-2670]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1798-L1807
+[EFT18M-2710-3080]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1811-L1847
+[EFT18M-3130-3700]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1852-L1908
+[EFT18M-3390]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1877
+[EFT18M-3540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1892
+[EFT18M-3580]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1896
+[EFT18M-3720-3960]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1910-L1934
+[EFT18M-3760-3840]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1914-L1922
+[EFT18M-3850-3880]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1923-L1926
+[EFT18M-3910-3940]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1930-L1932
+[EFT18M-3980-4030]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1936-L1941
+[EFT18M-4070-4760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1944-L2008
+[EFT18M-4190-4280]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1955-L1964
+[EFT18M-4550-4590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1989-L1992
+[EFT18M-4600-4680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1993-L2001
+[EFT18M-4700-4720]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2002-L2004
+[EFT18M-4730-4760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2005-L2008
+[EFT18M-4850-4930]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2016-L2024
+[EFT18M-4970-5030]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2027-L2033
+[EFT18M-5050-6180]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2035-L2144
+[EFT18M-5180-5190]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2047-L2048
+[EFT18M-5450-5490]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2072-L2076
+[EFT18M-5550-6060]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2082-L2132
+[EFT18M-5550-5740]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2082-L2100
+[EFT18M-5850-5920]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2111-L2118
+[EFT18M-5930-6060]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2119-L2132
+[EFT18M-6420-6610]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2165-L2179
+[EFT18M-7220-7230]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2240-L2241
 
-    [EFT18I-2000]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2447
-    [EFT18I-2660-3330]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2513-L2580
-    [EFT18I-2630]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2510
-    [EFT18I-3370-3590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2575-L2597
-    [EFT18I-4430-5350]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2667-L2759
-    [EFT18I-5070-5240]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2731-L2748
-    [EFT18I-5280-5340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2752-L2758
-    [EFT18I-5390-6570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2746-L2857
-    [EFT18I-5410-5660]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2748-L2773
-    [EFT18I-5700-5750]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2777-L2782
-    [EFT18I-5810-5870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2788-L2794
-    [EFT18I-5880-5930]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2795-L2800
-    [EFT18I-5940-6000]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2801-L2807
-    [EFT18I-6010-6050]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2808-L2812
-    [EFT18I-6140-6360]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2821-L2843
-    [EFT18I-7110]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2909
-    [EFT18I-7440]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2937
-    [EFT18I-7740]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2967
-    [EFT18I-8220]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L3015
-    [EFT18I-8650-8770]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L3053-L3065
-    [EFT18I-8790-8990]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L3066-L3086
-    [EFT18I-9900-10310]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L3170-L3206
-    [EFT18I-10450-11340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L3221-L3311
-    [EFT18I-11390-11590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L3313-L3333
+[EFT18C-1270-1400]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L784-L797
+[EFT18C-1410-1520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L798-L809
+[EFT18C-1430-1520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L800-L809
+[EFT18C-1560-1590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L813-L816
+[EFT18C-1620-1760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L819-L833
+[EFT18C-1690-1700]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L826-L827
+[EFT18C-1740-1760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L831-L833
+[EFT18C-1800-1900]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L837-L845
+[EFT18C-1940]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L849
+[EFT18C-2100-2140]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L865-L869
+[EFT18C-4980-5200]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1144-L1163
+[EFT18C-2210-2750]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L876-L931
+[EFT18C-2850-3410]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L936-L990
+[EFT18C-2500-2630]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L905-L918
+[EFT18C-3450-3490]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L994-L998
+[EFT18C-3510]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1000
+[EFT18C-3530]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1002
+[EFT18C-3540-3550]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1003-L1004
+[EFT18C-4410-4460]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1088-L1093
+[EFT18C-4510-4740]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1098-L1121
 
-    [EFT18M-1410-1460]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1684-L1689
-    [EFT18M-1480-1570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1691-L1700
-    [EFT18M-1620-2060]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1705-L1749
-    [EFT18M-2080]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1751
-    [EFT18M-2190-2250]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1762-L1768
-    [EFT18M-2340-2350]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1777-L1778
-    [EFT18M-2570-2670]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1800-L1810
-    [EFT18M-2710-3080]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1814-L1851
-    [EFT18M-3130-3700]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1856-L1908
-    [EFT18M-3390]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1882
-    [EFT18M-3540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1897
-    [EFT18M-3580]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1896
-    [EFT18M-3720-3960]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1910-L1935
-    [EFT18M-3760-3840]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1914-L1922
-    [EFT18M-3850-3880]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1923-L1926
-    [EFT18M-3910-3940]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1930-L1933
-    [EFT18M-3980-4030]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1937-L1942
-    [EFT18M-4070-4760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1946-L2015
-    [EFT18M-4190-4280]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1958-L1967
-    [EFT18M-4550-4590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1994-L1998
-    [EFT18M-4600-4680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1999-L2007
-    [EFT18M-4700-4720]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2009-L2011
-    [EFT18M-4730-4760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2012-L2015
-    [EFT18M-4850-4930]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2017-L2025
-    [EFT18M-4970-5030]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2029-L2035
-    [EFT18M-5050-6180]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2037-L2145
-    [EFT18M-5180-5190]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2050-L2051
-    [EFT18M-5450-5490]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2072-L2076
-    [EFT18M-5550-6060]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2082-L2133
-    [EFT18M-5550-5740]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2082-L2101
-    [EFT18M-5850-5920]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2112-L2119
-    [EFT18M-5930-6060]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2120-L2133
-    [EFT18M-6420-6610]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2169-L2188
-    [EFT18M-7220-7230]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L2240-L2241
-
-    [EFT18C-1270-1400]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L784-L797
-    [EFT18C-1410-1520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L798-L809
-    [EFT18C-1430-1520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L800-L809
-    [EFT18C-1560-1590]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L813-L816
-    [EFT18C-1620-1760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L819-L833
-    [EFT18C-1690-1700]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L826-L827
-    [EFT18C-1740-1760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L831-L833
-    [EFT18C-1800-1900]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L837-L847
-    [EFT18C-1940]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L849
-    [EFT18C-2100-2140]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L865-L869
-    [EFT18C-4980-5200]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1146-L1168
-    [EFT18C-2210-2750]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L876-L931
-    [EFT18C-2850-3410]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L936-L992
-    [EFT18C-2500-2630]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L905-L918
-    [EFT18C-3450-3490]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L996-L1000
-    [EFT18C-3510]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1002
-    [EFT18C-3530]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1004
-    [EFT18C-3540-3550]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1005-L1006
-    [EFT18C-4410-4460]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1088-L1093
-    [EFT18C-4510-4740]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1098-L1121
-
-    [EFT18T-1680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L-7
-    [EFT18T-1730-1870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L-2-L12
-    [EFT18T-1950]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L20
-    [EFT18T-1970]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L22
-    [EFT18T-1980]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L23
-    [EFT18T-2070-2140]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L32-L39
-    [EFT18T-8390-9690]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L614-L744
-    [EFT18T-8520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L627
-    [EFT18T-9230]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L698
-    [EFT18T-8520-8540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L627-L629
-    [EFT18T-8680-8690]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L643-L644
-    [EFT18T-8750-9020]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L650-L677
-    [EFT18T-9030-9150]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L678-L690
-    [EFT18T-9250-9320]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L700-L707
-    [EFT18T-9350-9570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L710-L732
-    [EFT18T-9350-9420]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L710-L717
-    [EFT18T-9450-9510]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L720-L726
-    [EFT18T-9540-9560]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L729-L731
-    [EFT18T-9610-9680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L736-L743
-    [EFT18T-2340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L59
-    [EFT18T-7290]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L503
-    [EFT18T-2360-2420]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L61-L67
-    [EFT18T-2470]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L72
-    [EFT18T-2870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L112
-    [EFT18T-2520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L77
-    [EFT18T-2660-2680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L91-L93
-    [EFT18T-2690]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L94
-    [EFT18T-2700-2760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L95-L101
-    [EFT18T-2990-3050]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L124-L130
-    [EFT18T-3130]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L132
-    [EFT18T-3160-3240]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L135-L143
-    [EFT18T-3290-3340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L148-L153
-    [EFT18T-3450-3800]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L164-L199
-    [EFT18T-3760-3780]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L195-L197
-    [EFT18T-3920-4220]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L211-L241
-    [EFT18T-4060-4220]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L225-L241
-    [EFT18T-4240]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L243
-    [EFT18T-4240-4320]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L243-L251
-    [EFT18T-4360-4460]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L255-L265
-    [EFT18T-4500-4730]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L269-L292
-    [EFT18T-4880-4990]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L307-L318
-    [EFT18T-5100-5370]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L329-L356
-    [EFT18T-5240-5280]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L343-L347
-    [EFT18T-5290-5370]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L348-L356
-    [EFT18T-5480-5580]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L367-L377
-    [EFT18T-5620-6310]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L381-L450
-    [EFT18T-5930-6050]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L412-L424
-    [EFT18T-6090-6250]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L428-L444
-    [EFT18T-6200-6250]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L439-L444
-    [EFT18T-6270-6310]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L446-L450
-    [EFT18T-6350-6870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L454-L506
-    [EFT18T-6350-6540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L454-L473
-    [EFT18T-6580-6870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L477-L506
-    [EFT18T-6910-6970]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L467-L473
-    [EFT18T-6980-7020]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L474-L478
-    [EFT18T-7040-7150]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L480-L491
-    [EFT18T-7370-7540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L512-L529
-    [EFT18T-7550-7690]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L530-L544
-    [EFT18T-7830-7940]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L558-L569
-    [EFT18T-8110-8140]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L586-L589
-    [EFT18T-8340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L609
+[EFT18T-1680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L-7
+[EFT18T-1730-1870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L-2-L12
+[EFT18T-1950]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L20
+[EFT18T-1970]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L22
+[EFT18T-1980]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L23
+[EFT18T-2070-2140]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L32-L39
+[EFT18T-8390-9690]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L612-L739
+[EFT18T-8520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L624
+[EFT18T-9230]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L694
+[EFT18T-8520-8540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L624-L626
+[EFT18T-8680-8690]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L640-L641
+[EFT18T-8750-9020]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L647-L673
+[EFT18T-9030-9150]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L674-L686
+[EFT18T-9250-9320]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L696-L703
+[EFT18T-9350-9570]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L706-L727
+[EFT18T-9350-9420]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L706-L713
+[EFT18T-9450-9510]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L716-L721
+[EFT18T-9540-9560]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L724-L726
+[EFT18T-9610-9680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L731-L738
+[EFT18T-2340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L59
+[EFT18T-7290]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L503
+[EFT18T-2360-2420]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L60-L66
+[EFT18T-2470]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L71
+[EFT18T-2870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L107
+[EFT18T-2520]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L75
+[EFT18T-2660-2680]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L88-L90
+[EFT18T-2690]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L91
+[EFT18T-2700-2760]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L92-L97
+[EFT18T-2990-3050]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L119-L124
+[EFT18T-3130]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L132
+[EFT18T-3160-3240]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L134-L141
+[EFT18T-3290-3340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L146-L150
+[EFT18T-3450-3800]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L160-L191
+[EFT18T-3760-3780]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L187-L189
+[EFT18T-3920-4220]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L202-L228
+[EFT18T-4060-4220]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L214-L228
+[EFT18T-4240]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L230
+[EFT18T-4240-4320]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L230-L237
+[EFT18T-4360-4460]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L241-L249
+[EFT18T-4500-4730]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L253-L273
+[EFT18T-4880-4990]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L287-L296
+[EFT18T-5100-5370]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L306-L330
+[EFT18T-5240-5280]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L318-L322
+[EFT18T-5290-5370]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L323-L330
+[EFT18T-5480-5580]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L340-L349
+[EFT18T-5620-6310]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L352-L413
+[EFT18T-5930-6050]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L380-L390
+[EFT18T-6090-6250]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L394-L408
+[EFT18T-6200-6250]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L404-L408
+[EFT18T-6270-6310]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L410-L413
+[EFT18T-6350-6870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L417-L463
+[EFT18T-6350-6540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L417-L434
+[EFT18T-6580-6870]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L437-L463
+[EFT18T-6910-6970]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L467-L472
+[EFT18T-6980-7020]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L473-L477
+[EFT18T-7040-7150]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L479-L489
+[EFT18T-7370-7540]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L511-L528
+[EFT18T-7550-7690]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L529-L543
+[EFT18T-7830-7940]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L557-L567
+[EFT18T-8110-8140]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L584-L587
+[EFT18T-8340]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L607
 

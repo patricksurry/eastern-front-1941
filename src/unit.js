@@ -1,8 +1,51 @@
-import {oobdata, cities, players, Player, terraintypes, Terrain, Direction, Weather, spiral1} from './data.js';
-import {randbyte, gameState} from './game.js';
-import {Location, mapboard, bestPath, reach, moveCosts} from './map.js';
+import {
+    enumFor, cities, players, Player, terraintypes, Terrain, Direction, Weather, randbyte, gameState
+} from './game.js';
+import {Location, mapboard, squareSpiral, bestPath, reach, moveCosts} from './map.js';
 import {errmsg} from './display.js';
 
+import {oobVariants} from './unit-data.js';
+
+const
+    defaults = {canMove: 1, canAttack: 1, resolute: 0},
+    kinds = [
+        {key: 'infantry', icon: 0xfd},
+        {key: 'armor', icon: 0xfe},
+        {key: 'air', icon: 0xfc},
+    ],
+    Kind = enumFor(kinds),
+    types = [
+        {key: 'infantry', kind: Kind.infantry},
+        {key: 'militia',  kind: Kind.infantry, canAttack: 0},
+        {key: 'unused'},  // apx had unused labels for shock and paratrp
+        {key: 'flieger',  kind: Kind.fly},   // cart only
+        {key: 'panzer',   kind: Kind.armor},
+        {key: 'tank',     kind: Kind.armor},
+        {key: 'cavalry',  kind: Kind.armor},
+        {key: 'pzgrndr',  kind: Kind.armor},   // apx only
+    ],
+    Type = enumFor(types),
+    apxTypeMap = {
+        0: Type.infantry, 1: Type.tank, 2: Type.cavalry, 3: Type.panzer,
+        4: Type.militia, 5: Type.unused /* shock */, 6: Type.unused /* paratrp */, 7: Type.pzgrndr,
+    },
+    modifiers = [
+        {key: ''},
+        {key: 'ss'}, // unused
+        {key: 'finnish',  canMove: 0},
+        {key: 'rumanian'},
+        {key: 'italian'},
+        {key: 'hungarian'},
+        {key: 'mountain'},  //  unused
+        {key: 'guards'},
+    ],
+    Modifier = enumFor(modifiers)
+    ;
+
+
+// have Unit check arguments.length and vary based on that
+
+// save/load game - turn, city control, unit mstrng/cstrng/lat/lon (0 if dead, skip if not arrive)
 
 function Unit(corpsx, corpsy, mstrng, swap, arrive, corpt, corpno) {
     const types = ['', 'SS', 'FINNISH', 'RUMANIAN', 'ITALIAN', 'HUNGARAN', 'MOUNTAIN', 'GUARDS'],
@@ -40,7 +83,7 @@ function Unit(corpsx, corpsy, mstrng, swap, arrive, corpt, corpno) {
     });
     u.canAttack = u.type != 'FINNISH' ? 1: 0;
     u.canMove = u.variant != 'MILITIA' ? 1: 0;
-    u.label = [u.unitno, u.variant, u.type, players[u.player].unit].filter(Boolean).join(' ').trim();
+    u.label = [u.unitno, u.type, u.variant, players[u.player].unit].filter(Boolean).join(' ').trim();
     return u;
 }
 Unit.id = 0;
@@ -254,10 +297,6 @@ Unit.score = function() {
     return v >> 8;
 }
 
-
-const oob = oobdata.map(vs => Unit(...vs));
-
-
 function zocAffecting(player, loc) {
     // evaluate zoc experienced by player (eg. exerted by !player) in square at pt
     let zoc = 0;
@@ -266,11 +305,9 @@ function zocAffecting(player, loc) {
         if (oob[loc.unitid].player == player) return zoc;
         zoc += 4;
     }
-    //TODO spiralFrom(loc, 1).forEach((loc, i) => { ... })
-    spiral1.forEach((d, i) => {
-        loc = loc.neighbor(d, true);
+    squareSpiral(loc, 3).slice(1).forEach((d, i) => {
         // even steps in the spiral exert 2, odd steps exert 1
-        if (loc.unitid != null && oob[loc.unitid].player != player) zoc += (i % 2) ? 1: 2;
+        if (d.unitid != null && oob[d.unitid].player != player) zoc += (i % 2) ? 1: 2;
     });
     return zoc;
 }
@@ -288,6 +325,9 @@ function modifyStrength(strength, modifier) {
     }
     return strength;
 }
+
+//TODO set up oob after choosing variant
+const oob = oobVariants.apx.map(vs => Unit(...vs));
 
 export {
     Unit,
