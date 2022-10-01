@@ -107,6 +107,7 @@ const
     ],
     Level = enumFor(leveldata),
     // terrain types M.ASM: 8160 TERRTY
+    // NB we store offence and defence modifiers so 0 is no effect, equivalent to orignal game's 2
     // OFFNC I.ASM:9080 1,1,1,1,1,1,2,2,1,0
     // DEFNC I.ASM:9080 2,3,3,2,2,2,1,1,2,0
     // movement costs (of 32/turn) come from D.ASM:5430 SSNCOD / 5440 TRNTAB
@@ -184,7 +185,14 @@ const
         {label: "November",  trees: '12', weather: Weather.snow, water: Water.freeze},
         {label: "December",  trees: '12', weather: Weather.snow},
     ],
-    Month = enumFor(monthdata, 'label');
+    Month = enumFor(monthdata, 'label'),
+    unitkinds = [
+        {key: 'infantry',   icon: 0xfd},
+        {key: 'armor',      icon: 0xfe},
+        {key: 'air',        icon: 0xfc},
+    ],
+    UnitKind = enumFor(unitkinds);
+
 
 var gameState = {
     human: Player.german,
@@ -209,6 +217,7 @@ export {
     weatherdata, Weather,
     waterstate, Water,
     monthdata, Month,
+    unitkinds, UnitKind,
     anticColor,
     randbyte,
     sum,

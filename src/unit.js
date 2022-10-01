@@ -1,89 +1,106 @@
 import {
-    enumFor, cities, players, Player, terraintypes, Terrain, Direction, Weather, randbyte, gameState
+    enumFor, cities,
+    players, Player, terraintypes, Terrain, Direction, Weather,
+    unitkinds, UnitKind,
+    randbyte, gameState
 } from './game.js';
-import {Location, mapboard, squareSpiral, bestPath, reach, moveCosts} from './map.js';
+import {Location, mapboard, squareSpiral, bestPath, reach, moveCost, moveCosts} from './map.js';
 import {errmsg} from './display.js';
 
 import {oobVariants} from './unit-data.js';
 
 const
-    defaults = {canMove: 1, canAttack: 1, resolute: 0},
-    kinds = [
-        {key: 'infantry', icon: 0xfd},
-        {key: 'armor', icon: 0xfe},
-        {key: 'air', icon: 0xfc},
-    ],
-    Kind = enumFor(kinds),
     types = [
-        {key: 'infantry', kind: Kind.infantry},
-        {key: 'militia',  kind: Kind.infantry, canAttack: 0},
+        {key: 'infantry', kind: UnitKind.infantry},
+        {key: 'militia',  kind: UnitKind.infantry, canMove: 0},
         {key: 'unused'},  // apx had unused labels for shock and paratrp
-        {key: 'flieger',  kind: Kind.fly},   // cart only
-        {key: 'panzer',   kind: Kind.armor},
-        {key: 'tank',     kind: Kind.armor},
-        {key: 'cavalry',  kind: Kind.armor},
-        {key: 'pzgrndr',  kind: Kind.armor},   // apx only
+        {key: 'flieger',  kind: UnitKind.air},   // cart only
+        {key: 'panzer',   kind: UnitKind.armor},
+        {key: 'tank',     kind: UnitKind.armor},
+        {key: 'cavalry',  kind: UnitKind.armor},
+        {key: 'pzgrndr',  kind: UnitKind.armor},   // apx only
     ],
     Type = enumFor(types),
-    apxTypeMap = {
+    apxXref = {
         0: Type.infantry, 1: Type.tank, 2: Type.cavalry, 3: Type.panzer,
         4: Type.militia, 5: Type.unused /* shock */, 6: Type.unused /* paratrp */, 7: Type.pzgrndr,
     },
     modifiers = [
         {key: ''},
         {key: 'ss'}, // unused
-        {key: 'finnish',  canMove: 0},
+        {key: 'finnish',  canAttack: 0},
         {key: 'rumanian'},
         {key: 'italian'},
         {key: 'hungarian'},
         {key: 'mountain'},  //  unused
         {key: 'guards'},
-    ],
-    Modifier = enumFor(modifiers)
-    ;
+    ];
 
+function Unit(...args) {
+    let corpsx, corpsy, mstrng, arrive, corpt, corpno;
 
-// have Unit check arguments.length and vary based on that
+    if (args.length == 7) {     // apx
+        let swap, corptapx;
+        [corpsx, corpsy, mstrng, swap, arrive, corptapx, corpno] = args;
+        // translate apx => cart format
+        corpt = (swap & 0x80) | (corptapx & 0x70) | apxXref[corptapx & 0x7];
+    } else {                    // cart
+        [corpsx, corpsy, mstrng, arrive, corpt, corpno] = args;
+    }
+    const
+        modifier = (corpt >> 4) & 0x7,
+        type = corpt & 0x7,
+        kind = types[type].kind;
 
-// save/load game - turn, city control, unit mstrng/cstrng/lat/lon (0 if dead, skip if not arrive)
+    let u = Object.assign(
+        {
+            id: Unit.id++,
+            player: (corpt & 0x80) ? Player.russian : Player.german,  // german=0, russian=1; equiv i >= 55
+            unitno: corpno,
+            kind,
+            type,
+            modifier,
+            canMove: 1,
+            canAttack: 1,
+            resolute: 0,
+            arrive,
+            lon: corpsx,
+            lat: corpsy,
+            mstrng,
+            cstrng: mstrng,
+            orders: [],      // WHORDRS, HMORDS
+        },
+        unitkinds[kind],
+        types[type],
+        modifiers[modifier],
+        {
+            isActive: Unit.isActive,
+            path: Unit.path,
+            addOrder: Unit.addOrder,
+            resetOrders: Unit.resetOrders,
+            moveCost: Unit.moveCost,
+            scheduleOrder: Unit.scheduleOrder,
+            bestPath: Unit.bestPath,
+            reach: Unit.reach,
+            moveTo: Unit.moveTo,
+            tryOrder: Unit.tryOrder,
+            resolveCombat: Unit.resolveCombat,
+            takeDamage: Unit.takeDamage,
+            recover: Unit.recover,
+            traceSupply: Unit.traceSupply,
+            score: Unit.score,
+        },
+    );
+    delete u.key;
 
-function Unit(corpsx, corpsy, mstrng, swap, arrive, corpt, corpno) {
-    const types = ['', 'SS', 'FINNISH', 'RUMANIAN', 'ITALIAN', 'HUNGARAN', 'MOUNTAIN', 'GUARDS'],
-        variants = ['INFANTRY', 'TANK', 'CAVALRY', 'PANZER', 'MILITIA', 'SHOCK', 'PARATRP', 'PZRGRNDR'];
-    let u = Object.assign({
-        id: Unit.id++,
-        player: (swap & 0x80) ? Player.russian : Player.german,  // german=0, russian=1; equiv i >= 55
-        lon: corpsx,
-        lat: corpsy,
-        mstrng: mstrng,
-        cstrng: mstrng,
-        icon: swap & 0x3f | 0x80,  // drop the color and address custom char pages
-        arrive: arrive,
-        flags: corpt,
-        type: types[corpt >> 4],
-        variant: variants[corpt & 0x0f],
-        armor: (swap & 0x1) == 0 ? 1 : 0,        // inf is clr | 0x3d, armor is clr | 0x3e
-        unitno: corpno,
-        orders: [],      // WHORDRS, HMORDS
-        isActive: Unit.isActive,
-        path: Unit.path,
-        addOrder: Unit.addOrder,
-        resetOrders: Unit.resetOrders,
-        moveCost: Unit.moveCost,
-        scheduleOrder: Unit.scheduleOrder,
-        bestPath: Unit.bestPath,
-        reach: Unit.reach,
-        moveTo: Unit.moveTo,
-        tryOrder: Unit.tryOrder,
-        resolveCombat: Unit.resolveCombat,
-        takeDamage: Unit.takeDamage,
-        recover: Unit.recover,
-        traceSupply: Unit.traceSupply,
-        score: Unit.score,
-    });
-    u.canAttack = u.type != 'FINNISH' ? 1: 0;
-    u.canMove = u.variant != 'MILITIA' ? 1: 0;
-    u.label = [u.unitno, u.type, u.variant, players[u.player].unit].filter(Boolean).join(' ').trim();
+    u.resolute = u.player == Player.german && !u.modifier ? 1: 0;
+    u.label = [
+        u.unitno,
+        modifiers[u.modifier].key,
+        types[u.type].key,
+        players[u.player].unit
+    ].filter(Boolean).join(' ').toUpperCase().trim();
+
     return u;
 }
 Unit.id = 0;
@@ -119,7 +136,8 @@ Unit.resetOrders = function() { this.orders = []; this.tick = 255;}
 Unit.moveCost = function(dir) {
     if (!this.canMove) return 255;
     let dst = Location.of(this).neighbor(dir);
-    return dst ? terraintypes[dst.terrain].movecost[this.armor][gameState.weather]: 255;
+    if (!dst) return 255;
+    return moveCost(dst.terrain, this.kind, gameState.weather);
 }
 Unit.scheduleOrder = function(reset) {
     if (reset) this.tick = 0;
@@ -128,10 +146,10 @@ Unit.scheduleOrder = function(reset) {
 }
 Unit.bestPath = function(goal) {
     //TODO config directPath for comparison
-    return bestPath(Location.of(this), goal, moveCosts(this.armor, gameState.weather));
+    return bestPath(Location.of(this), goal, moveCosts(this.kind, gameState.weather));
 }
 Unit.reach = function(range) {
-    return reach(this, range || 32, moveCosts(this.armor, gameState.weather));
+    return reach(this, range || 32, moveCosts(this.kind, gameState.weather));
 }
 Unit.moveTo = function(dst) {
     // move the unit
@@ -219,10 +237,9 @@ Unit.takeDamage = function(mdmg, cdmg, checkBreak, retreatDir) {
     if (!checkBreak) return 0;
 
     // russian (& ger allies) break if cstrng <= 7/8 mstrng
-    // german break if cstrng < 1/2 mstrng
-    // original game seems to include SS type with german allies which seems wrong (are there any?)
-    let shft = (this.player == Player.german && this.type <= 1) ? 1 : 3;
-    if (this.cstrng < this.mstrng - (this.mstrng >> shft)) {
+    // german regulars break if cstrng < 1/2 mstrng
+    let brkpt = this.mstrng - (this.mstrng >> (this.resolute ? 1: 3));
+    if (this.cstrng < brkpt) {
         this.resetOrders();
 
         if (retreatDir !== null) {

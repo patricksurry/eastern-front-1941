@@ -19,7 +19,7 @@ _THINK_1:   lda ARRIVE,y                     ; 470c b91b57  . arrival turns
 _THINK_2:   dey                              ; 4720 88      
             cpy #$37                         ; 4721 c037    
             bcs _THINK_1                     ; 4723 b0e7    
-            ldx #$00                         ; 4725 a200    
+            ldx #$00                         ; 4725 a200    Bug: TEMPR doesn't get zero'd so TOTGS starts with TOTRS remainder
             cpy #$00                         ; 4727 c000    
             bne _THINK_1                     ; 4729 d0e1    
             lda TOTRS                        ; 472b ad9106  Calc TOTGS*16/TOTRS by right shift numerator until overflow then left shft denom
@@ -646,25 +646,25 @@ _G_1:       bcs __H__                        ; 4c6d b067
             bpl _G_2                         ; 4c75 1010
             lda TEMPY                        ; 4c77 ad8306  select which IFR gets this German
             bpl _G_4                         ; 4c7a 1029
-            ldx #$02                         ; 4c7c a202    
-            cmp TEMPX                        ; 4c7e cd8206  
+            ldx #$02                         ; 4c7c a202    south-east quadrant
+            cmp TEMPX                        ; 4c7e cd8206  bug: both negative, need flip sense of comp
             bcs _G_5                         ; 4c81 b031
             ldx #$01                         ; 4c83 a201    
             bcc _G_5                         ; 4c85 902d
 _G_2:       lda TEMPY                        ; 4c87 ad8306
             bpl _G_3                         ; 4c8a 100e
             jsr NEGA                         ; 4c8c 20324d  . A -> -A
-            ldx #$02                         ; 4c8f a202    
+            ldx #$02                         ; 4c8f a202    south-west quadrant
             cmp TEMPX                        ; 4c91 cd8206  
             bcs _G_5                         ; 4c94 b01e
             ldx #$03                         ; 4c96 a203    
             bcc _G_5                         ; 4c98 901a
-_G_3:       ldx #$00                         ; 4c9a a200
+_G_3:       ldx #$00                         ; 4c9a a200    north-west quadrant
             cmp TEMPX                        ; 4c9c cd8206  
             bcs _G_5                         ; 4c9f b013
             ldx #$03                         ; 4ca1 a203    
             bcc _G_5                         ; 4ca3 900f
-_G_4:       lda TEMPX                        ; 4ca5 ad8206
+_G_4:       lda TEMPX                        ; 4ca5 ad8206  north-east quadrant
             jsr NEGA                         ; 4ca8 20324d  . A -> -A
             ldx #$01                         ; 4cab a201    
             cmp TEMPY                        ; 4cad cd8306  

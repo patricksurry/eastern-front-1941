@@ -13,7 +13,8 @@ export default {
         file: 'static/ef1941.js',
         name: 'ef1941',
         format: 'iife', // immediately-invoked function expression — suitable for <script> tags
-        sourcemap: true
+        sourcemap: true,
+        exports: 'auto',  // ? Disable warning for default imports in D3
     },
     onwarn: function (warning, warn) {
         if (warning.code === 'CIRCULAR_DEPENDENCY') return;

@@ -1,8 +1,8 @@
-# EASTERN FRONT DOCUMENTATION PACKAGE
+<p align="center"><img src="apxlogo.png"></p>
 
 <table><td>
 
-:point_right:  This is an annotated version of the
+:information_source:  This is an annotated version of the
 [Source code notes for Eastern Front APX-20095][apxsrcpdf]
 &copy; Chris Crawford 1981.
 I used Google's [Tesseract][tesseract] OCR to import the
@@ -15,6 +15,8 @@ obvious typos.  All of my additional commentary is shown in boxes like this one.
 [tesseract]: https://tesseract-ocr.github.io/
 
 </td></table>
+
+# EASTERN FRONT DOCUMENTATION PACKAGE
 
 This package contains material of value to any programmer attempting to
 study the program EASTERN FRONT (1941). My purpose in making these materials
@@ -96,11 +98,12 @@ preserve the 1K region used by the Operating System for its mode 0 display
 list and display data. This RAM could be stolen by a desperate programmer,
 but the Mode 0 display shown while loading the program would go wild,
 possibly frightening the user into unfortunate recourse to the SYSTEM RESET
-key. The programmer should study the global memory map on page 54 very
+key. The programmer should study the global memory map on page 54 [below] very
 closely before appropriating any memory. You should also refer to the
 appropriate source code listing. I repeat, there is very little available
 memory.
 
+<p align="center"><img width=512 src="memmap.jpg"></p>
 
 ## DATA MODULE
 
@@ -115,14 +118,20 @@ The data needs as much attention as the code.
 
 The first data tables are the values for the military units. These are
 presented in a more orderly fashion in the Unit Characteristics Chart on
-pages 56-58. There are 159 different units recognized in this game. Of
+pages 56-58 [below]. There are 159 different units recognized in this game. Of
 these, 54 are German and 105 are Russian. These numbers are critical; you
 will see them often in the code in one form or another.
+
+<p align="center"><img width=512 src="oob-german.jpg"></p>
+
+<p align="center"><img width=512 src="oob-russian1.jpg"></p>
+
+<p align="center"><img width=512 src="oob-russian2.jpg"></p>
 
 The first two data tables are CORPSX and CORPSY ([lines 30-330][EFT18D-30-330]). These
 tables specify the initial map coordinates for the military units, corps for
 the Germans and armies for the Russians. The coordinate system is the same
-one used for the map; see the map reproduced on page 55.
+one used for the map; see the map reproduced on [page 55](#user-content-mapgrid).
 
 The next two data tables are MSTRNG and CSTRNG ([lines 340-570][EFT18D-340-570]). These
 tables store the muster and combat strength of the units. The combat
@@ -155,7 +164,7 @@ CORPT constant.
 
 <table><td>
 
-:point_right: Curiously SS, MOUNTAIN, SHOCK and PARATRP unit types are
+:information_source: Curiously SS, MOUNTAIN, SHOCK and PARATRP unit types are
 enumerated in the data but aren't used in the order of battle.  These are replaced
 in the cartridge version by various utility words, and PZRGRNDR becomes FLIEGER.
 Note that Finnish units also have special mechanics: they can't attack.
@@ -349,8 +358,11 @@ had no need to keep separate images of the map, one for display and one for
 computations. The same 2K chunk fills both needs. The numbers stored here
 are the character codes for the ANTIC mode 7 display. The 127 code is a
 border character used to indicate the edge of the map. For a fuller
-understanding of how the map works, consult the map image figure and the
-character set definition.
+understanding of how the map works, consult the map image figure [below] and the
+[character set definition](#character-set-descriptions).
+
+<a name="mapgrid"></a>
+<p align="center"><img src="mapgrid.jpg"></p>
 
 [Line 5410][EFT18D-5410] gives a table called STKTAB. This table is used in decoding
 joystick values. You may have noticed that I use tables rather heavily. In
@@ -369,7 +381,9 @@ values for each of three seasons and two unit types. Thus, there are sixty
 entries in this table. Ten entries for infantry alternate with ten entries
 for armor. Twenty entries for summer are followed by twenty for mud and
 twenty for snow. The SSNCOD table on [line 5430][EFT18D-5430] gives an index into TRNTAB
-as a function of month. The terrain table is on page 63.
+as a function of month. The terrain table is on page 63 [below].
+
+<p align="center"><img width=512 src="terrain.jpg"></p>
 
 The four following tables (BHX1 through BHY2---[lines 5500-5570][EFT18D-5500-5570]) specify
 blocked movement paths. One of the worst problems I encountered in
@@ -403,7 +417,7 @@ table-driven solution was simple and easy to implement.
 
 <table><td>
 
-:point_right: I found a minor improvement here.  The original code
+:information_source: I found a minor improvement here.  The original code
 stores both X1,Y1,X2,Y2 and X2,Y2,X1,Y1 for each of the 11 forbidden pairs,
 and loops over 22 pairs stored in 11 * 2 * 4 = 88 bytes to check each legal move.
 By splitting the list into north-south pairs (9) and east-west pairs (2)
@@ -748,8 +762,10 @@ as horizontal blank occurred. Rather than try to force horizontal blank
 synchrony, I decided to wait it out with a few time-killing instructions. It
 works.
 
-On page 59 is a diagram depicting the sequence of changes made by the
+On page 59 [below] is a diagram depicting the sequence of changes made by the
 display list interrupts.
+
+<p align="center"><img width=512 src="displist.jpg"></p>
 
 ### FINAL SUBROUTINES AND TABLES
 
@@ -1335,20 +1351,35 @@ If the square is unoccupied, the surrounding squares are examined by a
 sneaky scheme. There is a table in memory called JSTP+16 that holds jump
 vectors for a walk around a square. The system works like this:
 
-[diagram]
+<p align="center"><img width=128 src="spiral.png"></p>
 
 Starting at X, and proceeding in sequence around X as indicated by the
 numbers, the sequence of steps is:
 
-<center>
+<pre align=center>
 (0=north 1=east 2=south 3=west)
+
 0, 1, 2, 2, 3, 3, 0, 0
-</center>
+</pre>
 
 These are the values seen in the JSTP+16 table, backwards for the 6502's
 countdown capability. Thus, to execute a walk around the square X, we
 execute jumps in the directions specified in the JSTP+16 table. The complete
 walk around the square is executed in [lines 4510-4740][EFT18C-4510-4740].
+
+<table><td>
+
+:information_source:  The `JSTP` and `JSTP+16` tables are a nice example
+of compact storage, with the former representing the (reversed) 5x5 spiral
+and containing the latter 3x3 spiral.
+
+There's actually a nice pattern for generating these spirals
+
+    // which form a square of 'radius' (diameter-1)/2, based on a spiralpattern
+    // that looks like N, E, S,S, W,W, N,N,N, E,E,E, S,S,S,S, W,W,W,W, ...
+
+
+</td></table>
 
 ### THE IMPORTANCE OF ALGORITHMS
 
@@ -1418,6 +1449,12 @@ iterations. However, if the player presses the START button, the iterations
 stop and the ghost army becomes the destinations for the real army. In this
 way hypothesis is converted into plans.
 
+<p align="center"><img width=512 src="ai1.jpg"></p>
+
+<p align="center"><img width=512 src="ai2.jpg"></p>
+
+<p align="center"><img width=600 src="ai3.jpg"></p>
+
 ### OVERALL FORCE RATIO
 
 The module begins at [line 1680][EFT18T-1680]. The first task is to calculate the
@@ -1427,6 +1464,27 @@ situation. To calculate this number, we must first add up the total German
 strength and the total Russian strength. This calculation is made in
 [lines 1730-1870][EFT18T-1730-1870], The upper byte of the total strengths is stored in TOTGS
 (total German strength) and TOTRS (total Russian strength).
+
+<table><td>
+
+:information_source: There's a subtle bug here (fixed in the cartridge version).
+TEMPR doesn't get reset, so german strength biased upward, making Russians a litlte more
+conservative
+
+this variable precision division is :fire:
+
+Non-symmetric directionTO, plus flipped comparison giving fuzzy vision in SE(?) direction
+
+```
+ x x x x x      2 1 0 f e      N N N N E      N N N N E      N N N N E      N N N N E
+ x . . . x      3 . . . d      W . . . E      W . . . E      W . . . E      W . . . E
+ x . + . x      4 . + . c      W . + . E      W . + . E      W . + . E      W . + . E
+ x . . . x      5 . . . b      W . . . S      W . . . S      W . . . E      W . . . E
+ x x x x x      6 7 8 9 a      S S S E S      W S S E S      W S S S S      S S S S E
+
+test points      labeled      APX "as is"    tie breaking   fix SE cond     cartridge
+```
+</td></table>
 
 The next problem is to calculate the ratio of these two numbers. This
 is a simple long division. Unfortunately, I was not prepared to do a long
@@ -1561,7 +1619,7 @@ front-line unit, and a different strategy is used.
 
 <table><td>
 
-:point_right: This comment confused me for quite a while.
+:information_source: This comment confused me for quite a while.
 But IFR is just calculated as the average of the overall force ratio
 and a non-negative local force ratio which isn't stored,
 i.e. IFR = (LFR + OFR)/2.  LFR is zero if any only if there are no nearby enemies,
@@ -1686,7 +1744,7 @@ construct a one-dimensional representation of its most important feature.
 This one-dimensional representation will answer the question, "How far
 forward is the enemy in each column?" A picture might help:
 
-[diagram]
+<p align="center"><img width=512 src="lvarray.png"></p>
 
 If a particular column is not populated at all, the value in the
 corresponding LV entry is five.
@@ -1736,7 +1794,7 @@ This is undesirable. Subtract $20 points for each such case ([lines 4500-4730][E
 Our next concern is with penetrations. We do not want to create a line
 configuration which is easily flanked. A picture illustrates the problem.
 
-[diagram]
+<p align="center"><img width=384 src="flanking.png"></p>
 
 The right arrangement is bad because it allows the enemy to easily
 penetrate to the rear of the most forward units before engaging the line.
@@ -1883,7 +1941,7 @@ routine. This task in done in the remaining section of the module. The
 fundamental problem solved in the module is a very standard problem in
 computer graphics. It is depicted in the following diagram:
 
-[diagram]
+<p align="center"><img width=512 src="straightpath.png"></p>
 
 Starting at square A, what is the straightest path to square B?
 Specifically, what sequence of single steps will take you from A to B in the
@@ -1903,7 +1961,7 @@ dividing a delta-y by a delta-x, and division is not allowed.
 
 <table><td>
 
-:point_right: I didn't try to recreate this approach exactly.
+:information_source: I didn't try to recreate this approach exactly.
 It seems a lot like [Bresenham's line algorithm][bresenham]
 except that we want a path with only vertical or horizontal steps
 (no diagonal jumps).   In that spirit my `map.js:directPath()`
@@ -2079,13 +2137,15 @@ fully conceived yet.
 
 Then, in January, the vision was clear. I knew (or thought I knew)
 exactly what the game would be like. I wrote a one-page description of the
-game. The original document is reproduced at the end of this essay. You
+game. The original document is reproduced at the end of this essay [below]. You
 will note that it is a surprisingly accurate description of the final product.
 Also note what is specified. The information given represents my judgment of
 the critical design and technical factors that would dominate the development
 of the game. Note especially the importance I attached to human interface
 and graphics. This reflects my belief that computation is never a serious
 problem, but interface is always the primary problem.
+
+<p align="center"><img width=600 src="efspec.jpg"></p>
 
 ### PLUNGING INTO THE MORASS
 
@@ -2349,7 +2409,6 @@ responses. I was not able to embark on a new project for ten weeks; I was
 completely burned out. I do not regret burning myself out in this way;
 anything less would not have been worth the effort.
 
-[figure]
 
 ### CHARACTER SET DESCRIPTIONS
 
@@ -2386,7 +2445,12 @@ side of the square to the west side, with the land on the north and the sea
 on the south. A 42 coastline would be similar with the land and sea on
 opposite sides.
 
-[figure]  (link multiple back into doc)
+
+<p align="center"><img width=384 src="fontapx.png"></p>
+
+<p align="center"><img width=512 src="charset-north.jpg"></p>
+
+<p align="center"><img width=512 src="charset-south.jpg"></p>
 
 
 [EFT18D-30-330]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1211-L1232

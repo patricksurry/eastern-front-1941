@@ -139,27 +139,30 @@ def buildasciimap(mapdata, outbase, flieger=False):
     assert '|' not in asciimap
 
     open(outbase + '.asc', 'w').write(f"""
-{
-    encoding: {
+{{
+    encoding: {{
         json.dumps(map64, indent=True)
-    },
+    }},
     ascii: `
 {asciimap}
 `
-}
+}}
 """)
 
 
-def buildoob(chunks, outbase, scenario=''):
+def buildoob(chunks, outbase, scenario='', includeSwap=False):
     # CORPSX,Y is map position
     # M/CSTRNG is muster and current strength [skip CSTRNG initialized later]
     # SWAP is icon chr
     # ARRIVE is arrival turn
     # CORPT is unit type (lo and hi nibble index into word lists)
     # CORPNO is unit designation information only
-    keys = ['CORPSX' + scenario, 'CORPSY' + scenario, 'MSTRNG' + scenario, 'ARRIVE', 'CORPT', 'CORPNO']  # 'SWAP'
+    keys = ['CORPSX' + scenario, 'CORPSY' + scenario, 'MSTRNG' + scenario, 'SWAP', 'ARRIVE', 'CORPT', 'CORPNO']
 
-"""
+    if not includeSwap:
+        keys.remove('SWAP')
+
+    """
     cart CORPT
     bit 5-7 => '',CORPS,FINNISH,RUMANIAN,ITALIAN,HUNGARIAN,ARMY,GUARDS
     bit 1-3 => INFANTRY,MILITIA,MUSTER,FLIEGER,PANZER,TANK,CAVALRY,COMBAT
@@ -170,7 +173,7 @@ def buildoob(chunks, outbase, scenario=''):
     bit 3 == 1 => armor (PANZER,TANK,CAVALRY,COMBAT)
     bit 2 == 0 => inf (INFANTRY,MILITIA)
     else FLIEGER
-"""
+    """
 
     assert len({len(chunks[k]) for k in keys}) == 1  # all equal
 
@@ -236,7 +239,7 @@ for ver, chunks in versions.items():
     if 'MAPRLE' in chunks:
         chunks['MAPDATA'] = decodemaprle(chunks['MAPRLE'])
     buildasciimap(chunks['MAPDATA'], f'mapboard-{ver}', ver == 'cart')
-    buildoob(chunks, f'oob-{ver}')
+    buildoob(chunks, f'oob-{ver}', '', ver == 'apx')
     if 'CORPSX42' in chunks:
         buildoob(chunks, f'oob-{ver}42', '42')
     fmts = dict(zip('WORDS TXTTBL ERRMSG'.split(), ' !!' if ver == 'cart' else [8, 32, 32]))

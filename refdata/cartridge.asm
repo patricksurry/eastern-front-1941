@@ -3960,7 +3960,7 @@ _Y_3:       stx ARMY                         ; bcb8 86ab
 
 _Y_4:       sec                              ; bcd5 38      Within ZOC, reduce uncertainty by shifting 1s right
             ror FOGGY-48,x                   ; bcd6 7e8638  . Fog of war masks Russian unit strength
-__Z__:      dex                              ; bcd9 ca      
+__Z__:      dex                              ; bcd9 ca      Calcuate overall force ratio (OFR)
             cpx #$30                         ; bcda e030    
             bcs _Y_3                         ; bcdc b0da    
             lda #$00                         ; bcde a900    

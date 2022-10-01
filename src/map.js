@@ -3,6 +3,7 @@ import {
     directions, Direction,
     terraintypes, Terrain,
     waterstate, Water,
+    UnitKind,
     cities,
     randbyte, gameState,
 } from './game.js';
@@ -103,9 +104,13 @@ function moveIceLine(w) {
     }
 }
 
-function moveCosts(armor, weather) {
+function moveCost(terrain, kind, weather) {
+    return kind == UnitKind.air ? 4: (terraintypes[terrain].movecost[kind][weather] || 255);
+}
+
+function moveCosts(kind, weather) {
     // return a table of movement costs based on armor/inf and weather
-    return terraintypes.map(t => t.movecost[armor][weather] || 255);
+    return terraintypes.map((_, i) => moveCost(i, kind, weather));
 }
 
 function manhattanDistance(p, q) {
@@ -120,8 +125,8 @@ function _directionsFrom(p, q) {
     if (!dlat && !dlon) return null;
     return directions
         .map((d, i) => [d.dlon * dlon + d.dlat * dlat, i])
-        // in case of tie, which will be neighbors, should the clockwise leader
-        .sort(([a, i], [b, j]) => (b - a) || ((i - j + 4)%4) - 2);
+        // in case tied dirs (which will be neighbors) pick the  the clockwise leader
+        .sort(([a, i], [b, j]) => (b - a) || ((j - i + 4 + 2)%4) - 2);
 }
 
 function directionFrom(p, q) {
@@ -319,6 +324,7 @@ export {
     mapboard,
     mapForegroundColor,
     moveIceLine,
+    moveCost,
     moveCosts,
     manhattanDistance,
     directionFrom,

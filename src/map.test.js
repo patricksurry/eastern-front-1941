@@ -71,7 +71,7 @@ test("Unexpected bestPath() for 2 Finn Inf", () => {
 })
 
 test("Unexpected reach() for 2 Finn Inf", () => {
-    let costs = reach(finn2, 32, moveCosts(finn2.armor, Weather.dry));
+    let costs = reach(finn2, 32, moveCosts(finn2.kind, Weather.dry));
     expect(Object.keys(costs).length).toBe(18);
     expect(Math.max(...Object.values(costs))).toBeLessThanOrEqual(32);
 })

@@ -2,6 +2,54 @@ import {players, Player, directions, terraintypes, sum} from './game.js';
 import {Location, manhattanDistance, directionFrom, squareSpiral} from './map.js';
 import {oob} from './unit.js';
 
+
+function _think(player, firstpass) {
+    const
+        pinfo = players[player],
+        friends = oob.filter(u => u.player == player && u.isActive()),
+        foes = oob.filter(u => u.player != player && u.isActive());
+
+    // set up the ghost army
+    var ofr = 0;  // only used in first pass
+    if (firstpass) {
+        ofr = calcForceRatios(player).ofr;
+        console.log('Overall force ratio (OFR) is', ofr);
+        friends.forEach(u => {u.objective = Location.of(u)});
+    }
+
+    friends.filter(u => u.canMove).forEach(u => {
+        //TODO these first two checks don't seem to depend on ghost army so are fixed on first pass?
+        if (firstpass && u.ifr == (ofr >> 1)) {
+            // head to reinforce if no local threat since (Local + OFR) / 2 = OFR / 2
+            //TODO this tends to send most units to same beleagured square
+            u.objective = Location.of(findBeleaguered(u, friends));
+        } else if (firstpass && (u.cstrng <= (u.mstrng >> 1) || u.ifrdir[pinfo.homedir] >= 16)) {
+            // run home if hurting or blocked towards home
+            //TODO could look for farthest legal square (valid & not impassable) 5, 4, ...
+            u.objective = Location(u.lon + 5 * directions[pinfo.homedir].dlon, u.lat);
+        } else {
+            // find nearest best square
+            let start = Location.of(u.objective),
+                bestval = evalLocation(u, start, friends, foes);
+            directions.forEach((_, i) => {
+                let loc = start.neighbor(i);
+                if (!loc) return;
+                let sqval = evalLocation(u, loc, friends, foes);
+                if (sqval > bestval) {
+                    bestval = sqval;
+                    u.objective = loc;
+                }
+            });
+        }
+        if (!u.objective) return;
+        let result = u.bestPath(u.objective);
+        if (!result) return;
+        u.orders = result.orders;  // We'll prune to 8 later
+    });
+
+    return friends.filter(u => u.objective);
+}
+
 function think(player, train) {
     if (train == null) {
         think.delay = 250;
@@ -14,49 +62,10 @@ function think(player, train) {
     }
     think.depth++;
 
-    const t0 = performance.now(),
-        pinfo = players[player],
-        firstpass = think.depth == 1,
-        units = oob.filter(u => u.player == player && u.isActive());
+    const t0 = performance.now();
 
-    // set up the ghost army
-    var ofr = 0;  // only used in first pass
-    if (firstpass) {
-        ofr = calcForceRatios(player);
-        console.log('Overall force ratio (OFR) is', ofr);
-        units.forEach(u => u.objective = Location.of(u));
-    }
+    _think(player, think.depth == 1).forEach(u => u.show());
 
-    units.filter(u => u.canMove).forEach(u => {
-        //TODO these first two checks don't seem to depend on ghost army so are fixed on first pass?
-        if (firstpass && u.ifr == ofr >> 1) {
-            // head to reinforce if no local threat since (Local + OFR) / 2 = OFR / 2
-            //TODO this tends to send most units to same beleagured square
-            u.objective = Location.of(findBeleaguered(u));
-        } else if (firstpass && (u.cstrng <= (u.mstrng >> 1) || u.ifrdir[pinfo.homedir] >= 16)) {
-            // run home if hurting or blocked towards home
-            //TODO could look for farthest legal square (valid & not impassable) 5, 4, ...
-            u.objective = Location(u.lon + 5 * directions[pinfo.homedir].dlon, u.lat);
-        } else {
-            // find nearest best square
-            let start = Location.of(u.objective),
-                bestval = evalLocation(u, start);
-            directions.forEach((_, i) => {
-                let loc = start.neighbor(i);
-                if (!loc) return;
-                let sqval = evalLocation(u, loc);
-                if (sqval > bestval) {
-                    bestval = sqval;
-                    u.objective = loc;
-                }
-            });
-        }
-        if (!u.objective) return;
-        let result = u.bestPath(u.objective);
-        if (!result) return;
-        u.orders = result.orders;  // We'll prune to 8 later
-        u.show();
-    });
     const dt = performance.now() - t0;
 
     think.delay *= 1.1;  // gradually back off thinking rate
@@ -98,13 +107,12 @@ function calcForceRatios(player) {
         // we actually work with average of IFR + OFR
         u.ifr = (ifr + (u.player == player ? ofr: ofropp)) >> 1;
     });
-    return ofr;
+    return {ofr, friend, foe};
 }
 
-function findBeleaguered(u) {
-    let best = null, score = u.ifr;
-    oob.filter(v => v.isActive() && v.player == u.player)
-        .forEach(v => {
+function findBeleaguered(u, friends) {
+    let best = null, score = 0;
+    friends.filter(v => v.ifr > u.ifr).forEach(v => {
             let d = manhattanDistance(u, v);
             if (d <= 8) return;  // APX code does weird bit 3 check
             let s = v.ifr - (d >> 3);
@@ -116,34 +124,35 @@ function findBeleaguered(u) {
     return best;
 }
 
-function evalLocation(u, loc) {
+function evalLocation(u, loc, friends, foes) {
     let ghosts = {},
         range = manhattanDistance(u, loc);
 
+    // too far, early exit
     if (range >= 8) return 0;
 
-    oob.filter(v => v.player == u.player && v.isActive() && v.id != u.id)
+    const nbval = Math.min(...foes.map(v => manhattanDistance(loc, v)));
+
+    // on the defensive and square is occupied by an enemy
+    if (u.ifr >= 16 && nbval == 0) return 0;
+
+    friends.filter(v => v.id != u.id)
         .forEach(v => { ghosts[v.objective.id] = v.id; });
 
-    let isOccupied = p => ghosts[p.id],
+    let isOccupied = pt => ghosts[pt.id],
         dibs = false;
 
     if (isOccupied(loc)) dibs = true;      // someone else have dibs already?
     else ghosts[loc.id] = u.id;
 
-    let square = squareSpiral(loc, 5),
-        linepts = directions
-            .map((_, i) => linePoints(sortSquareFacing(loc, 5, i, square), 5, isOccupied)),
-        sqval = sum(linepts.map((pts, i) => pts * u.ifrdir[i])) >> 8,
-        nbval = Math.min(...
-            oob
-            .filter(v => v.player != u.player && v.isActive())
-            .map(v => manhattanDistance(loc, v))
-        );
-    if (u.ifr >= 16 && nbval == 0) return 0;
+    const square = squareSpiral(loc, 5),
+        linepts = directions.map(
+            (_, i) => linePoints(sortSquareFacing(loc, 5, i, square), 5, isOccupied)
+        ),
+        tadj = terraintypes[loc.terrain].defence + 2;  // our 0 adj is equiv to his 2
 
-    nbval += terraintypes[loc.terrain].defence + 1;  // our 0 adj is equiv to his 1
-    sqval += u.ifr >= 16 ? u.ifr * nbval : 2 * (15 - u.ifr) * (9 - nbval);
+    let sqval = sum(linepts.map((scr, i) => scr * u.ifrdir[i])) >> 8;
+    sqval += u.ifr >= 16 ? u.ifr * (nbval + tadj) : 2 * (15 - u.ifr) * (9 - nbval + tadj);
     if (dibs) sqval -= 32;
     sqval -= 1 << range;
     return sqval < 0 ? 0 : sqval;
@@ -199,4 +208,6 @@ function linePoints(locs, diameter, occupied) {
     return score;
 }
 
-export {think, conclude, linePoints, sortSquareFacing};
+const privateExports = {_think, calcForceRatios};
+
+export {think, conclude, linePoints, sortSquareFacing, privateExports};

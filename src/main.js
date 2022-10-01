@@ -35,6 +35,7 @@ function mapinfo(ev, m) {
         // `ZoC: German ${zoneOfControl(Player.german, m)}, Russian ${zoneOfControl(Player.russian, m)}`,
     ]
     //TODO check debug, maybe refactor as Unit.describe?
+    //TODO why is this here not display?
     if (m.unitid != null) {
         let u = oob[m.unitid];
         clauses.push(''),
@@ -43,6 +44,11 @@ function mapinfo(ev, m) {
         if (u.ifr && gameState.debug) {
             let s = directions.map((d, i) => `${d.key[0]}: ${u.ifrdir[i]}`).join(' ');
             clauses.push(`ifr: ${u.ifr}; ${s}`);
+            clauses.push(
+                u.objective
+                ? `obj: lon ${u.objective.lon} lat ${u.objective.lat}`
+                : 'no objective'
+            );
         }
         // clauses.push(`Supply: ${traceSupply(u, gameState.weather)}`);
     }
@@ -123,6 +129,12 @@ const helpText = [].concat(
 
 // main entry point
 function start() {
+
+/*
+    var r = document.querySelector(':root');
+    r.style.setProperty('--fontmap', 'url(fontmap-cart.png)');
+*/
+
     // configure the scenario-based start date
     gameState.startDate = new Date('1941/06/22');
 

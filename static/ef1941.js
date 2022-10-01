@@ -108,6 +108,7 @@ var ef1941 = (function (exports) {
         ];
         enumFor(leveldata);
         const // terrain types M.ASM: 8160 TERRTY
+        // NB we store offence and defence modifiers so 0 is no effect, equivalent to orignal game's 2
         // OFFNC I.ASM:9080 1,1,1,1,1,1,2,2,1,0
         // DEFNC I.ASM:9080 2,3,3,2,2,2,1,1,2,0
         // movement costs (of 32/turn) come from D.ASM:5430 SSNCOD / 5440 TRNTAB
@@ -186,6 +187,13 @@ var ef1941 = (function (exports) {
             {label: "December",  trees: '12', weather: Weather.snow},
         ];
         enumFor(monthdata, 'label');
+        const unitkinds = [
+            {key: 'infantry',   icon: 0xfd},
+            {key: 'armor',      icon: 0xfe},
+            {key: 'air',        icon: 0xfc},
+        ],
+        UnitKind = enumFor(unitkinds);
+
 
     var gameState = {
         human: Player.german,
@@ -416,9 +424,13 @@ var ef1941 = (function (exports) {
         }
     }
 
-    function moveCosts(armor, weather) {
+    function moveCost(terrain, kind, weather) {
+        return kind == UnitKind.air ? 4: (terraintypes[terrain].movecost[kind][weather] || 255);
+    }
+
+    function moveCosts(kind, weather) {
         // return a table of movement costs based on armor/inf and weather
-        return terraintypes.map(t => t.movecost[armor][weather] || 255);
+        return terraintypes.map((_, i) => moveCost(i, kind, weather));
     }
 
     function manhattanDistance(p, q) {
@@ -433,8 +445,8 @@ var ef1941 = (function (exports) {
         if (!dlat && !dlon) return null;
         return directions
             .map((d, i) => [d.dlon * dlon + d.dlat * dlat, i])
-            // in case of tie, which will be neighbors, should the clockwise leader
-            .sort(([a, i], [b, j]) => (b - a) || ((i - j + 4)%4) - 2);
+            // in case tied dirs (which will be neighbors) pick the  the clockwise leader
+            .sort(([a, i], [b, j]) => (b - a) || ((j - i + 4 + 2)%4) - 2);
     }
 
     function directionFrom(p, q) {
@@ -21985,82 +21997,98 @@ var ef1941 = (function (exports) {
         ],
     };
 
-    const kinds = [
-            {key: 'infantry', icon: 0xfd},
-            {key: 'armor', icon: 0xfe},
-            {key: 'air', icon: 0xfc},
-        ],
-        Kind = enumFor(kinds),
+    const
         types = [
-            {key: 'infantry', kind: Kind.infantry},
-            {key: 'militia',  kind: Kind.infantry, canAttack: 0},
+            {key: 'infantry', kind: UnitKind.infantry},
+            {key: 'militia',  kind: UnitKind.infantry, canMove: 0},
             {key: 'unused'},  // apx had unused labels for shock and paratrp
-            {key: 'flieger',  kind: Kind.fly},   // cart only
-            {key: 'panzer',   kind: Kind.armor},
-            {key: 'tank',     kind: Kind.armor},
-            {key: 'cavalry',  kind: Kind.armor},
-            {key: 'pzgrndr',  kind: Kind.armor},   // apx only
+            {key: 'flieger',  kind: UnitKind.air},   // cart only
+            {key: 'panzer',   kind: UnitKind.armor},
+            {key: 'tank',     kind: UnitKind.armor},
+            {key: 'cavalry',  kind: UnitKind.armor},
+            {key: 'pzgrndr',  kind: UnitKind.armor},   // apx only
         ],
-        Type = enumFor(types);
-        ({
+        Type = enumFor(types),
+        apxXref = {
             0: Type.infantry, 1: Type.tank, 2: Type.cavalry, 3: Type.panzer,
             4: Type.militia, 5: Type.unused /* shock */, 6: Type.unused /* paratrp */, 7: Type.pzgrndr,
-        });
-        const modifiers = [
+        },
+        modifiers = [
             {key: ''},
             {key: 'ss'}, // unused
-            {key: 'finnish',  canMove: 0},
+            {key: 'finnish',  canAttack: 0},
             {key: 'rumanian'},
             {key: 'italian'},
             {key: 'hungarian'},
             {key: 'mountain'},  //  unused
             {key: 'guards'},
         ];
-        enumFor(modifiers)
-        ;
 
+    function Unit(...args) {
+        let corpsx, corpsy, mstrng, arrive, corpt, corpno;
 
-    // have Unit check arguments.length and vary based on that
+        if (args.length == 7) {     // apx
+            let swap, corptapx;
+            [corpsx, corpsy, mstrng, swap, arrive, corptapx, corpno] = args;
+            // translate apx => cart format
+            corpt = (swap & 0x80) | (corptapx & 0x70) | apxXref[corptapx & 0x7];
+        } else {                    // cart
+            [corpsx, corpsy, mstrng, arrive, corpt, corpno] = args;
+        }
+        const
+            modifier = (corpt >> 4) & 0x7,
+            type = corpt & 0x7,
+            kind = types[type].kind;
 
-    // save/load game - turn, city control, unit mstrng/cstrng/lat/lon (0 if dead, skip if not arrive)
+        let u = Object.assign(
+            {
+                id: Unit.id++,
+                player: (corpt & 0x80) ? Player.russian : Player.german,  // german=0, russian=1; equiv i >= 55
+                unitno: corpno,
+                kind,
+                type,
+                modifier,
+                canMove: 1,
+                canAttack: 1,
+                resolute: 0,
+                arrive,
+                lon: corpsx,
+                lat: corpsy,
+                mstrng,
+                cstrng: mstrng,
+                orders: [],      // WHORDRS, HMORDS
+            },
+            unitkinds[kind],
+            types[type],
+            modifiers[modifier],
+            {
+                isActive: Unit.isActive,
+                path: Unit.path,
+                addOrder: Unit.addOrder,
+                resetOrders: Unit.resetOrders,
+                moveCost: Unit.moveCost,
+                scheduleOrder: Unit.scheduleOrder,
+                bestPath: Unit.bestPath,
+                reach: Unit.reach,
+                moveTo: Unit.moveTo,
+                tryOrder: Unit.tryOrder,
+                resolveCombat: Unit.resolveCombat,
+                takeDamage: Unit.takeDamage,
+                recover: Unit.recover,
+                traceSupply: Unit.traceSupply,
+                score: Unit.score,
+            },
+        );
+        delete u.key;
 
-    function Unit(corpsx, corpsy, mstrng, swap, arrive, corpt, corpno) {
-        const types = ['', 'SS', 'FINNISH', 'RUMANIAN', 'ITALIAN', 'HUNGARAN', 'MOUNTAIN', 'GUARDS'],
-            variants = ['INFANTRY', 'TANK', 'CAVALRY', 'PANZER', 'MILITIA', 'SHOCK', 'PARATRP', 'PZRGRNDR'];
-        let u = Object.assign({
-            id: Unit.id++,
-            player: (swap & 0x80) ? Player.russian : Player.german,  // german=0, russian=1; equiv i >= 55
-            lon: corpsx,
-            lat: corpsy,
-            mstrng: mstrng,
-            cstrng: mstrng,
-            icon: swap & 0x3f | 0x80,  // drop the color and address custom char pages
-            arrive: arrive,
-            flags: corpt,
-            type: types[corpt >> 4],
-            variant: variants[corpt & 0x0f],
-            armor: (swap & 0x1) == 0 ? 1 : 0,        // inf is clr | 0x3d, armor is clr | 0x3e
-            unitno: corpno,
-            orders: [],      // WHORDRS, HMORDS
-            isActive: Unit.isActive,
-            path: Unit.path,
-            addOrder: Unit.addOrder,
-            resetOrders: Unit.resetOrders,
-            moveCost: Unit.moveCost,
-            scheduleOrder: Unit.scheduleOrder,
-            bestPath: Unit.bestPath,
-            reach: Unit.reach,
-            moveTo: Unit.moveTo,
-            tryOrder: Unit.tryOrder,
-            resolveCombat: Unit.resolveCombat,
-            takeDamage: Unit.takeDamage,
-            recover: Unit.recover,
-            traceSupply: Unit.traceSupply,
-            score: Unit.score,
-        });
-        u.canAttack = u.type != 'FINNISH' ? 1: 0;
-        u.canMove = u.variant != 'MILITIA' ? 1: 0;
-        u.label = [u.unitno, u.type, u.variant, players[u.player].unit].filter(Boolean).join(' ').trim();
+        u.resolute = u.player == Player.german && !u.modifier ? 1: 0;
+        u.label = [
+            u.unitno,
+            modifiers[u.modifier].key,
+            types[u.type].key,
+            players[u.player].unit
+        ].filter(Boolean).join(' ').toUpperCase().trim();
+
         return u;
     }
     Unit.id = 0;
@@ -22096,7 +22124,8 @@ var ef1941 = (function (exports) {
     Unit.moveCost = function(dir) {
         if (!this.canMove) return 255;
         let dst = Location.of(this).neighbor(dir);
-        return dst ? terraintypes[dst.terrain].movecost[this.armor][gameState.weather]: 255;
+        if (!dst) return 255;
+        return moveCost(dst.terrain, this.kind, gameState.weather);
     };
     Unit.scheduleOrder = function(reset) {
         if (reset) this.tick = 0;
@@ -22105,10 +22134,10 @@ var ef1941 = (function (exports) {
     };
     Unit.bestPath = function(goal) {
         //TODO config directPath for comparison
-        return bestPath(Location.of(this), goal, moveCosts(this.armor, gameState.weather));
+        return bestPath(Location.of(this), goal, moveCosts(this.kind, gameState.weather));
     };
     Unit.reach = function(range) {
-        return reach(this, range || 32, moveCosts(this.armor, gameState.weather));
+        return reach(this, range || 32, moveCosts(this.kind, gameState.weather));
     };
     Unit.moveTo = function(dst) {
         // move the unit
@@ -22196,10 +22225,9 @@ var ef1941 = (function (exports) {
         if (!checkBreak) return 0;
 
         // russian (& ger allies) break if cstrng <= 7/8 mstrng
-        // german break if cstrng < 1/2 mstrng
-        // original game seems to include SS type with german allies which seems wrong (are there any?)
-        let shft = (this.player == Player.german && this.type <= 1) ? 1 : 3;
-        if (this.cstrng < this.mstrng - (this.mstrng >> shft)) {
+        // german regulars break if cstrng < 1/2 mstrng
+        let brkpt = this.mstrng - (this.mstrng >> (this.resolute ? 1: 3));
+        if (this.cstrng < brkpt) {
             this.resetOrders();
 
             if (retreatDir !== null) {
@@ -22306,6 +22334,53 @@ var ef1941 = (function (exports) {
     //TODO set up oob after choosing variant
     const oob = oobVariants.apx.map(vs => Unit(...vs));
 
+    function _think(player, firstpass) {
+        const
+            pinfo = players[player],
+            friends = oob.filter(u => u.player == player && u.isActive()),
+            foes = oob.filter(u => u.player != player && u.isActive());
+
+        // set up the ghost army
+        var ofr = 0;  // only used in first pass
+        if (firstpass) {
+            ofr = calcForceRatios(player).ofr;
+            console.log('Overall force ratio (OFR) is', ofr);
+            friends.forEach(u => {u.objective = Location.of(u);});
+        }
+
+        friends.filter(u => u.canMove).forEach(u => {
+            //TODO these first two checks don't seem to depend on ghost army so are fixed on first pass?
+            if (firstpass && u.ifr == (ofr >> 1)) {
+                // head to reinforce if no local threat since (Local + OFR) / 2 = OFR / 2
+                //TODO this tends to send most units to same beleagured square
+                u.objective = Location.of(findBeleaguered(u, friends));
+            } else if (firstpass && (u.cstrng <= (u.mstrng >> 1) || u.ifrdir[pinfo.homedir] >= 16)) {
+                // run home if hurting or blocked towards home
+                //TODO could look for farthest legal square (valid & not impassable) 5, 4, ...
+                u.objective = Location(u.lon + 5 * directions[pinfo.homedir].dlon, u.lat);
+            } else {
+                // find nearest best square
+                let start = Location.of(u.objective),
+                    bestval = evalLocation(u, start, friends, foes);
+                directions.forEach((_, i) => {
+                    let loc = start.neighbor(i);
+                    if (!loc) return;
+                    let sqval = evalLocation(u, loc, friends, foes);
+                    if (sqval > bestval) {
+                        bestval = sqval;
+                        u.objective = loc;
+                    }
+                });
+            }
+            if (!u.objective) return;
+            let result = u.bestPath(u.objective);
+            if (!result) return;
+            u.orders = result.orders;  // We'll prune to 8 later
+        });
+
+        return friends.filter(u => u.objective);
+    }
+
     function think(player, train) {
         if (train == null) {
             think.delay = 250;
@@ -22318,49 +22393,10 @@ var ef1941 = (function (exports) {
         }
         think.depth++;
 
-        const t0 = performance.now(),
-            pinfo = players[player],
-            firstpass = think.depth == 1,
-            units = oob.filter(u => u.player == player && u.isActive());
+        const t0 = performance.now();
 
-        // set up the ghost army
-        var ofr = 0;  // only used in first pass
-        if (firstpass) {
-            ofr = calcForceRatios(player);
-            console.log('Overall force ratio (OFR) is', ofr);
-            units.forEach(u => u.objective = Location.of(u));
-        }
+        _think(player, think.depth == 1).forEach(u => u.show());
 
-        units.filter(u => u.canMove).forEach(u => {
-            //TODO these first two checks don't seem to depend on ghost army so are fixed on first pass?
-            if (firstpass && u.ifr == ofr >> 1) {
-                // head to reinforce if no local threat since (Local + OFR) / 2 = OFR / 2
-                //TODO this tends to send most units to same beleagured square
-                u.objective = Location.of(findBeleaguered(u));
-            } else if (firstpass && (u.cstrng <= (u.mstrng >> 1) || u.ifrdir[pinfo.homedir] >= 16)) {
-                // run home if hurting or blocked towards home
-                //TODO could look for farthest legal square (valid & not impassable) 5, 4, ...
-                u.objective = Location(u.lon + 5 * directions[pinfo.homedir].dlon, u.lat);
-            } else {
-                // find nearest best square
-                let start = Location.of(u.objective),
-                    bestval = evalLocation(u, start);
-                directions.forEach((_, i) => {
-                    let loc = start.neighbor(i);
-                    if (!loc) return;
-                    let sqval = evalLocation(u, loc);
-                    if (sqval > bestval) {
-                        bestval = sqval;
-                        u.objective = loc;
-                    }
-                });
-            }
-            if (!u.objective) return;
-            let result = u.bestPath(u.objective);
-            if (!result) return;
-            u.orders = result.orders;  // We'll prune to 8 later
-            u.show();
-        });
         const dt = performance.now() - t0;
 
         think.delay *= 1.1;  // gradually back off thinking rate
@@ -22402,13 +22438,12 @@ var ef1941 = (function (exports) {
             // we actually work with average of IFR + OFR
             u.ifr = (ifr + (u.player == player ? ofr: ofropp)) >> 1;
         });
-        return ofr;
+        return {ofr, friend, foe};
     }
 
-    function findBeleaguered(u) {
-        let best = null, score = u.ifr;
-        oob.filter(v => v.isActive() && v.player == u.player)
-            .forEach(v => {
+    function findBeleaguered(u, friends) {
+        let best = null, score = 0;
+        friends.filter(v => v.ifr > u.ifr).forEach(v => {
                 let d = manhattanDistance(u, v);
                 if (d <= 8) return;  // APX code does weird bit 3 check
                 let s = v.ifr - (d >> 3);
@@ -22420,34 +22455,35 @@ var ef1941 = (function (exports) {
         return best;
     }
 
-    function evalLocation(u, loc) {
+    function evalLocation(u, loc, friends, foes) {
         let ghosts = {},
             range = manhattanDistance(u, loc);
 
+        // too far, early exit
         if (range >= 8) return 0;
 
-        oob.filter(v => v.player == u.player && v.isActive() && v.id != u.id)
+        const nbval = Math.min(...foes.map(v => manhattanDistance(loc, v)));
+
+        // on the defensive and square is occupied by an enemy
+        if (u.ifr >= 16 && nbval == 0) return 0;
+
+        friends.filter(v => v.id != u.id)
             .forEach(v => { ghosts[v.objective.id] = v.id; });
 
-        let isOccupied = p => ghosts[p.id],
+        let isOccupied = pt => ghosts[pt.id],
             dibs = false;
 
         if (isOccupied(loc)) dibs = true;      // someone else have dibs already?
         else ghosts[loc.id] = u.id;
 
-        let square = squareSpiral(loc, 5),
-            linepts = directions
-                .map((_, i) => linePoints(sortSquareFacing(loc, 5, i, square), 5, isOccupied)),
-            sqval = sum$3(linepts.map((pts, i) => pts * u.ifrdir[i])) >> 8,
-            nbval = Math.min(...
-                oob
-                .filter(v => v.player != u.player && v.isActive())
-                .map(v => manhattanDistance(loc, v))
-            );
-        if (u.ifr >= 16 && nbval == 0) return 0;
+        const square = squareSpiral(loc, 5),
+            linepts = directions.map(
+                (_, i) => linePoints(sortSquareFacing(loc, 5, i, square), 5, isOccupied)
+            ),
+            tadj = terraintypes[loc.terrain].defence + 2;  // our 0 adj is equiv to his 2
 
-        nbval += terraintypes[loc.terrain].defence + 1;  // our 0 adj is equiv to his 1
-        sqval += u.ifr >= 16 ? u.ifr * nbval : 2 * (15 - u.ifr) * (9 - nbval);
+        let sqval = sum$3(linepts.map((scr, i) => scr * u.ifrdir[i])) >> 8;
+        sqval += u.ifr >= 16 ? u.ifr * (nbval + tadj) : 2 * (15 - u.ifr) * (9 - nbval + tadj);
         if (dibs) sqval -= 32;
         sqval -= 1 << range;
         return sqval < 0 ? 0 : sqval;
@@ -22523,6 +22559,7 @@ var ef1941 = (function (exports) {
             // `ZoC: German ${zoneOfControl(Player.german, m)}, Russian ${zoneOfControl(Player.russian, m)}`,
         ];
         //TODO check debug, maybe refactor as Unit.describe?
+        //TODO why is this here not display?
         if (m.unitid != null) {
             let u = oob[m.unitid];
             clauses.push(''),
@@ -22531,6 +22568,11 @@ var ef1941 = (function (exports) {
             if (u.ifr && gameState.debug) {
                 let s = directions.map((d, i) => `${d.key[0]}: ${u.ifrdir[i]}`).join(' ');
                 clauses.push(`ifr: ${u.ifr}; ${s}`);
+                clauses.push(
+                    u.objective
+                    ? `obj: lon ${u.objective.lon} lat ${u.objective.lat}`
+                    : 'no objective'
+                );
             }
             // clauses.push(`Supply: ${traceSupply(u, gameState.weather)}`);
         }
@@ -22611,6 +22653,12 @@ var ef1941 = (function (exports) {
 
     // main entry point
     function start() {
+
+    /*
+        var r = document.querySelector(':root');
+        r.style.setProperty('--fontmap', 'url(fontmap-cart.png)');
+    */
+
         // configure the scenario-based start date
         gameState.startDate = new Date('1941/06/22');
 

@@ -1,3 +1,5 @@
+<p align="center"><img src="apxlogo.png"></p>
+
 - link the map poster
 
 
@@ -77,7 +79,7 @@ TOURING THE MAP
 ===
 
 You will see a map of a portion of Russia. In the center of the map is
-@ square pink cursor. (Because of adjustment differences between different
+a square pink cursor. (Because of adjustment differences between different
 televisions, colors on your television set may not be the same as in this
 description.) Manipulating the joystick will cause the cursor to move. When
 the cursor bumps into the edge of the screen, the entire map image will
@@ -608,3 +610,6 @@ I AM TOO! — HIS WIFE
 
 <p align="center"><img src="apxmap.png"></p>
 
+Compare the [map poster][ef1941poster] that shipped with the cartridge version.
+
+[ef1941poster]: ../refdoc/Eastern_Front_1941_Atari_poster_text.pdf

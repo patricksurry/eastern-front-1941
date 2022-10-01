@@ -316,6 +316,22 @@ _COMBAT_7:  ldx HMORDS,x     ; ad29 bed232  how many orders queued for each unit
 
 ### Things TODO
 
+- Loc by ref issue??
+
+- debug console group for specific unit
+
+- change fontmap with apx/cart choice, via css variable?
+
+- toggle x twice reveals debug.  refactor toggles as shared routine?
+
+- fogofwar option for enemy unit strength a la cartridge
+
+- russians don't all retreat in playthru video
+
+- can air fly over impassable?
+
+- save/load game - turn, city control, unit mstrng/cstrng/lat/lon/arr (0 if dead, skip if not arrive)
+
 - have think() track a current unit and bail out once it uses a certain amount of time
 
 - * for reinforcements
@@ -330,8 +346,6 @@ _COMBAT_7:  ldx HMORDS,x     ; ad29 bed232  how many orders queued for each unit
 
 - dealdmg varies by level via M/CSTRDMG not 1/5 like APX, some weirdness with assault nmode #$01 and cpx ARMY ?
 
-- toggle x twice reveals debug.  refactor toggles as shared routine?
-
 - confirm attack/defend adjust are applied based on correct square - always defender?
 
 - confirm russian mstrng replacements in supply check?
@@ -344,8 +358,6 @@ _COMBAT_7:  ldx HMORDS,x     ; ad29 bed232  how many orders queued for each unit
 - update title/hover on click (for supply and zoc)
 
 - some indicator for zoc (both sides?) on click square
-
-- fogofwar option for enemy unit strength a la cartridge
 
 - no sound, e.g. maybe https://archive.org/details/MachineGunSoundEffects/Machine%2BGun%2B4.mp3 ?
 
@@ -381,8 +393,6 @@ https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle / modulo bias sort fu
   the APX and cartridge editions, and led to a bunch of [enhancements][6502pds].
   Nick Morgan's [6502 simulator][6502sim] was handy to understand some of the more gnarly code fragments,
   like the new integer division routine :facepalm:.
-
-
 
 
 
