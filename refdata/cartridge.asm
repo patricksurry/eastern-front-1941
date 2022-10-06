@@ -3706,16 +3706,16 @@ _V_10:      lda (SRCPTRL),y                  ; baa2 b19f
             lda #$00                         ; baba a900    
             tax                              ; babc aa      
 _V_11:      sta ARRIVE,x                     ; babd 9da62d  . arrival turns
-            cpx #$72                         ; bac0 e072    
+            cpx #$72                         ; bac0 e072    set arrival turns to 0 for up to unit #$72
             bcc _V_12                        ; bac2 9005    
-            inc TEMPR                        ; bac4 e6ae    
+            inc TEMPR                        ; bac4 e6ae    then set two units to arrive each turn from turn 5>>1 = 2 ?
             lda TEMPR                        ; bac6 a5ae    
             lsr                              ; bac8 4a      
 _V_12:      inx                              ; bac9 e8      
             cpx #$a7                         ; baca e0a7    
             bne _V_11                        ; bacc d0ef    
             dec ARRIVE                       ; bace cea62d  . arrival turns
-            jsr __AD__                       ; bad1 2087bf  
+            jsr SETSTRT                      ; bad1 2087bf  set start date based on scenario STARTDT 0/1
             ldx #$11                         ; bad4 a211    
 _V_13:      lda CITYOWN_reloc,x              ; bad6 bdc19b  
             sta CITYOWN,x                    ; bad9 9dc63a  . city ownership
@@ -4286,7 +4286,7 @@ DELORDR:    lsr WHORDH,x                     ; bf71 5e2034  remove order for uni
 SETSWTCH:   jsr SETCHXY                      ; bf81 20a8ac  SETCHYX and SWITCH
             jmp SWITCH                       ; bf84 4c34a9  . swap CORPS with terrain @ CHUNKX/Y via SWAP buffer
 
-__AD__:     ldx STARTDT                      ; bf87 a693    . Scenario start 1941/1942
+SETSTRT:    ldx STARTDT                      ; bf87 a693    . Scenario start 1941/1942
             lda STRTDAYS,x                   ; bf89 bd9abf  . week before scenario start, ie. '41/6/15, '42/5/17
             sta DAY                          ; bf8c 858f    
             lda STRTMOS,x                    ; bf8e bd9cbf  

@@ -14,7 +14,7 @@ export default {
         name: 'ef1941',
         format: 'iife', // immediately-invoked function expression — suitable for <script> tags
         sourcemap: true,
-        exports: 'auto',  // ? Disable warning for default imports in D3
+        exports: 'auto',
     },
     onwarn: function (warning, warn) {
         if (warning.code === 'CIRCULAR_DEPENDENCY') return;
@@ -27,3 +27,11 @@ export default {
         production && terser() // minify, but only in production
     ]
 };
+
+/*
+Entry module "node_modules/d3-array/src/bisector.js" is implicitly using "default" export mode,
+which means for CommonJS output that its default export is assigned to "module.exports".
+For many tools, such CommonJS output will not be interchangeable with the original ES module.
+If this is intended, explicitly set "output.exports" to either "auto" or "default",
+otherwise you might want to consider changing the signature of "node_modules/d3-array/src/bisector.js" to use named exports only.
+*/

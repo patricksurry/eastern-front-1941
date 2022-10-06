@@ -2,21 +2,11 @@ var ef1941 = (function (exports) {
     'use strict';
 
     // Atari had a memory location that could be read for a byte of random noise
-    function randbyte() {
-        return Math.floor(Math.random()*256);
-    }
 
     function sum$3(xs) {
         return xs.reduce((s, x) => s + x, 0);
     }
 
-    function score$1(player, oob) {
-        // M.asm:4050
-        let eastwest = sum$3(oob.map(u => u.score() * (u.player == player ? 1: -1))),
-            bonus = sum$3(cities.filter(c => c.owner == player).map(c => c.points)),
-            score = Math.max(0, eastwest) + bonus;
-        return score;
-    }
 
     function enumFor(vs, key) {
         return Object.fromEntries(vs.map((v, i) => [v[key || 'key'], i]));
@@ -66,31 +56,6 @@ var ef1941 = (function (exports) {
             },
         ],
         Player = enumFor(players),
-        cities = [
-    // M.ASM:8630 MPTS / MOSCX / MOSCY - special city victory points; updated in CITYxxx for CART
-    // oddly Sevastpol is assigned points but is not coded as a city in either version of the map?
-    //TODO  create a variant that replaces F => @ in the bottom row of the map, and adds to city list
-            {owner: Player.russian, lon: 20, lat: 28, points: 10, label: 'Moscow'},      // APX = 20
-            {owner: Player.russian, lon: 33, lat: 36, points: 5,  label: 'Leningrad'},   // APX = 10
-            {owner: Player.russian, lon: 6,  lat: 15, points: 5,  label: 'Stalingrad'},  // APX = 10
-            {owner: Player.russian, lon: 12, lat:  4, points: 5,  label: 'Krasnodar'},   // APX all others zero except Sevastopol
-            {owner: Player.russian, lon: 13, lat: 33, points: 5,  label: 'Gorky'},
-            {owner: Player.russian, lon: 7,  lat: 32, points: 5,  label: 'Kazan'},
-            {owner: Player.russian, lon: 38, lat: 30, points: 2,  label: 'Riga'},
-            {owner: Player.russian, lon: 24, lat: 28, points: 2,  label: 'Rzhev'},
-            {owner: Player.russian, lon: 26, lat: 24, points: 2,  label: 'Smolensk'},
-            {owner: Player.russian, lon: 3,  lat: 24, points: 5,  label: 'Kuibishev'},
-            {owner: Player.russian, lon: 33, lat: 22, points: 2,  label: 'Minsk'},
-            {owner: Player.russian, lon: 15, lat: 21, points: 2,  label: 'Voronezh'},
-            {owner: Player.russian, lon: 21, lat: 21, points: 2,  label: 'Orel'},
-            {owner: Player.russian, lon: 20, lat: 15, points: 2,  label: 'Kharkov'},
-            {owner: Player.russian, lon: 29, lat: 14, points: 2,  label: 'Kiev'},
-            {owner: Player.russian, lon: 12, lat:  8, points: 2,  label: 'Rostov'},
-            {owner: Player.russian, lon: 20, lat:  8, points: 2,  label: 'Dnepropetrovsk'},
-            {owner: Player.russian, lon: 26, lat:  5, points: 2,  label: 'Odessa'},
-            {owner: Player.german,  lon: 44, lat: 19, points: 0,  label: 'Warsaw'},
-    //        {owner: Player.russian, lon: 20, lat:  0, points: 5,  label: 'Sevastopol'},
-        ],
         // cartridge offers selection of levels which modify various parameters:
         //  ncity:  is the number of cities that are scored - note needs bumped if Sevastopol added
         //  mdmg/cdmg: is the amount of damage caused by a successful attack tick
@@ -191,22 +156,20 @@ var ef1941 = (function (exports) {
             {key: 'infantry',   icon: 0xfd},
             {key: 'armor',      icon: 0xfe},
             {key: 'air',        icon: 0xfc},
-        ],
-        UnitKind = enumFor(unitkinds);
-
-
-    var gameState = {
-        human: Player.german,
-        turn: -1,       // 0-based turn counter, -1 is pre-game
-        startDate: null,
-        icelat: 39,     // via M.ASM:8600 PSXVAL initial value is 0x27
-        handicap: 0,    // whether the game is handicapped
-        zoom: false,    // display zoom on or off
-        extras: true,   // display extras like labels, health, zoc
-        debug: false,   // whether to display debug info for Russian units
-        weather: null,
-        help: null,     // after init, has boolean indicating help hide/show state
-    };
+        ];
+        enumFor(unitkinds);
+        const variants = [
+            {key: 'apx'},
+            {key: 'cart'}
+        ];
+        enumFor(variants);
+        const //TODO arrival turns for '42 scenario seem to be calculated in cartridge.asm:3709
+        scenarios = [
+            // start dates stored as week prior to first turn in cartridge, ie. '41/6/15, '42/5/17
+            {key: '41', start: '1941/6/22'},
+            {key: '42', start: '1942/5/24'},
+        ];
+        enumFor(scenarios);
 
     /*
     The game map is represented as binary data using one byte per square at offset 0x6500
@@ -228,7 +191,7 @@ var ef1941 = (function (exports) {
     Ihe first 25 rows (incl border) are mapped with a northern charset
     which mainly uses forest rather than the mountains of the southern charset
     */
-    const mapVariants = {
+    ({
         apx: {
             encoding: [
                 ' |123456|@*0$|||,.;:|abcdefghijklmnopqrstuvwxyz|ABCDEFGHIJKLMNOPQR|{}??|~#',
@@ -277,6 +240,31 @@ var ef1941 = (function (exports) {
 #               B~~~~~~~~~FJ~~~~~~~~~FDES123433#
 ################################################
 `,
+            // M.ASM:8630 MPTS / MOSCX / MOSCY - special city victory points; updated in CITYxxx for CART
+            // oddly Sevastpol is assigned points but is not coded as a city in either version of the map?
+            //TODO  create a variant that replaces F => @ in the bottom row of the map, and adds to city list
+            cities: [
+                {owner: Player.russian, lon: 20, lat: 28, points: 20, label: 'Moscow'},
+                {owner: Player.russian, lon: 33, lat: 36, points: 10,  label: 'Leningrad'},
+                {owner: Player.russian, lon: 6,  lat: 15, points: 10,  label: 'Stalingrad'},
+                {owner: Player.russian, lon: 12, lat:  4, points: 0,  label: 'Krasnodar'},   // APX all others zero except Sevastopol
+                {owner: Player.russian, lon: 13, lat: 33, points: 0,  label: 'Gorky'},
+                {owner: Player.russian, lon: 7,  lat: 32, points: 0,  label: 'Kazan'},
+                {owner: Player.russian, lon: 38, lat: 30, points: 0,  label: 'Riga'},
+                {owner: Player.russian, lon: 24, lat: 28, points: 0,  label: 'Rzhev'},
+                {owner: Player.russian, lon: 26, lat: 24, points: 0,  label: 'Smolensk'},
+                {owner: Player.russian, lon: 3,  lat: 24, points: 0,  label: 'Kuibishev'},
+                {owner: Player.russian, lon: 33, lat: 22, points: 0,  label: 'Minsk'},
+                {owner: Player.russian, lon: 15, lat: 21, points: 0,  label: 'Voronezh'},
+                {owner: Player.russian, lon: 21, lat: 21, points: 0,  label: 'Orel'},
+                {owner: Player.russian, lon: 20, lat: 15, points: 0,  label: 'Kharkov'},
+                {owner: Player.russian, lon: 29, lat: 14, points: 0,  label: 'Kiev'},
+                {owner: Player.russian, lon: 12, lat:  8, points: 0,  label: 'Rostov'},
+                {owner: Player.russian, lon: 20, lat:  8, points: 0,  label: 'Dnepropetrovsk'},
+                {owner: Player.russian, lon: 26, lat:  5, points: 0,  label: 'Odessa'},
+                {owner: Player.german,  lon: 44, lat: 19, points: 0,  label: 'Warsaw'},
+        //        {owner: Player.russian, lon: 20, lat:  0, points: 10,  label: 'Sevastopol'},
+            ]
         },
         cart: {
             encoding: [
@@ -325,275 +313,50 @@ var ef1941 = (function (exports) {
 #               OJ~~~~~~~GSMI~~~~~~GCS542361621#
 #               B~~~~~~~~~FJ~~~~~~~~~FDES123433#
 ################################################
-`
-        },
-    };
-
-    // D.ASM:5500 BHX1 .BYTE ... / BHY1 / BHX2 / BHY2
-    // there are 11 impassable square-sides
-    // the original game stores 22 sets of (x1,y1),(x2,y2) coordinates
-    // to enumerate the to/from coordinates in both senses
-    // but we can reduce from 88 to 22 bytes by storing a list of
-    // squares you can't move north from (or south to), and likewise west from (or east to)
-    const blocked = [
-        // can't move north from here (or south into here)
-        [
-            {lon: 40, lat: 35},
-            {lon: 39, lat: 35},
-            {lon: 38, lat: 35},
-            {lon: 35, lat: 36},
-            {lon: 34, lat: 36},
-            {lon: 22, lat: 3},
-            {lon: 15, lat: 6},
-            {lon: 14, lat: 7},
-            {lon: 19, lat: 3}
-        ],
-        // can't move west from here (or east into here)
-        [
-            {lon: 35, lat: 33},
-            {lon: 14, lat: 7},
-        ]
-    ];
+`,
+            // M.ASM:8630 MPTS / MOSCX / MOSCY - special city victory points; updated in CITYxxx for CART
+            // oddly Sevastpol is assigned points but is not coded as a city in either version of the map?
+            //TODO  create a variant that replaces F => @ in the bottom row of the map, and adds to city list
+            cities: [
+                {owner: Player.russian, lon: 20, lat: 28, points: 10, label: 'Moscow'},
+                {owner: Player.russian, lon: 33, lat: 36, points: 5,  label: 'Leningrad'},
+                {owner: Player.russian, lon: 6,  lat: 15, points: 5,  label: 'Stalingrad'},
+                {owner: Player.russian, lon: 12, lat:  4, points: 5,  label: 'Krasnodar'},
+                {owner: Player.russian, lon: 13, lat: 33, points: 5,  label: 'Gorky'},
+                {owner: Player.russian, lon: 7,  lat: 32, points: 5,  label: 'Kazan'},
+                {owner: Player.russian, lon: 38, lat: 30, points: 2,  label: 'Riga'},
+                {owner: Player.russian, lon: 24, lat: 28, points: 2,  label: 'Rzhev'},
+                {owner: Player.russian, lon: 26, lat: 24, points: 2,  label: 'Smolensk'},
+                {owner: Player.russian, lon: 3,  lat: 24, points: 5,  label: 'Kuibishev'},
+                {owner: Player.russian, lon: 33, lat: 22, points: 2,  label: 'Minsk'},
+                {owner: Player.russian, lon: 15, lat: 21, points: 2,  label: 'Voronezh'},
+                {owner: Player.russian, lon: 21, lat: 21, points: 2,  label: 'Orel'},
+                {owner: Player.russian, lon: 20, lat: 15, points: 2,  label: 'Kharkov'},
+                {owner: Player.russian, lon: 29, lat: 14, points: 2,  label: 'Kiev'},
+                {owner: Player.russian, lon: 12, lat:  8, points: 2,  label: 'Rostov'},
+                {owner: Player.russian, lon: 20, lat:  8, points: 2,  label: 'Dnepropetrovsk'},
+                {owner: Player.russian, lon: 26, lat:  5, points: 2,  label: 'Odessa'},
+                {owner: Player.german,  lon: 44, lat: 19, points: 0,  label: 'Warsaw'},
+        //        {owner: Player.russian, lon: 20, lat:  0, points: 5,  label: 'Sevastopol'},
+            ]
+        }
+    });
 
     // the map is made up of locations, each with a lon and lat
     function Location(lon, lat, ...data) {
-        if (!Number.isInteger(lon) || !Number.isInteger(lat)) throw("bad Location(lon: int, lat: int, ...data)")
+        if (!Number.isInteger(lon) || !Number.isInteger(lat))
+            throw(`bad Location(lon: int, lat: int, ...data), got lon=${lon}, lat=${lat}`)
         return Object.assign({
                 lon,
                 lat,
-                valid: lat >= 0 && lat < maxlat && lon >= 0 && lon < maxlon,
-                id:  (lat << 8) + lon,
-                row: maxlat - lat,
-                col: maxlon - lon,
                 put: Location.put,
-                neighbor: Location.neighbor,
             }, ...data);
     }
-    Location.of = d => {
-        let loc = Location(d.lon, d.lat);
-        return loc.valid ? mapboard[loc.row][loc.col]: loc;
+    Location.put = function(d) {
+        d.lon = this.lon;
+        d.lat = this.lat;
+        return d;
     };
-    Location.fromid = x => Location.of({lon: x & 0xff, lat: x >> 8});
-    Location.put = function(d) { d.lon = this.lon; d.lat = this.lat; return d; };
-    Location.neighbor = function(dir, skipcheck) {
-        let d = directions[dir],
-            lon = this.lon + d.dlon,
-            lat = this.lat + d.dlat,
-            loc = Location.of({lon, lat});
-
-        if (skipcheck) return loc;
-        if (!loc.valid) return null;
-
-        let legal = (
-                loc.terrain != Terrain.impassable
-                && !(
-                    (dir == Direction.north || dir == Direction.south)
-                    ? blocked[0].find(d => d.lon == this.lon && d.lat == (dir == Direction.north ? this.lat : loc.lat))
-                    : blocked[1].find(d => d.lon == (dir == Direction.west ? this.lon : loc.lon) && d.lat == this.lat)
-                )
-            );
-        return legal ? loc: null;
-    };
-
-    function mapForegroundColor(loc) {
-        // return the antic fg color for a given location
-        let tinfo = terraintypes[loc.terrain],
-            alt = (loc.terrain == Terrain.city) ? cities[loc.cityid].owner : loc.alt;
-        return alt ? tinfo.altcolor : tinfo.color;
-    }
-
-    function moveIceLine(w) {
-        // move ice by freeze/thaw rivers and swamps, where w is Water.freeze or Water.thaw
-        // ICELAT -= [7,14] incl]; clamp 1-39 incl
-        // small bug in APX code? freeze chrs $0B - $29 (exclusive, seems like it could freeze Kerch straight?)
-        let state = waterstate[w],
-            other = waterstate[1-w],
-            oldlat = gameState.icelat,
-            dlat = directions[state.dir].dlat,
-            change = (randbyte() & 0x8) + 7;
-
-        gameState.icelat = Math.min(maxlat, Math.max(1, oldlat + dlat * change));
-
-        let skip = (w == Water.freeze) ? oldlat: gameState.icelat;  // for freeze skip old line, for thaw skip new new
-        for (let i = oldlat; i != gameState.icelat + dlat; i += dlat) {
-            if (i == skip) continue;
-            mapboard[maxlat - i].forEach(d => {
-                let k = other.terrain.indexOf(d.terrain);
-                if (k != -1) d.terrain = state.terrain[k];
-            });
-        }
-    }
-
-    function moveCost(terrain, kind, weather) {
-        return kind == UnitKind.air ? 4: (terraintypes[terrain].movecost[kind][weather] || 255);
-    }
-
-    function moveCosts(kind, weather) {
-        // return a table of movement costs based on armor/inf and weather
-        return terraintypes.map((_, i) => moveCost(i, kind, weather));
-    }
-
-    function manhattanDistance(p, q) {
-        // calculate the taxicab metric between two locations
-        return Math.abs(p.lat - q.lat) + Math.abs(p.lon - q.lon);
-    }
-
-    function _directionsFrom(p, q) {
-        // project all directions from p to q and rank them, ensuring tie breaking has no bias
-        let dlat = (q.lat - p.lat),
-            dlon = (q.lon - p.lon);
-        if (!dlat && !dlon) return null;
-        return directions
-            .map((d, i) => [d.dlon * dlon + d.dlat * dlat, i])
-            // in case tied dirs (which will be neighbors) pick the  the clockwise leader
-            .sort(([a, i], [b, j]) => (b - a) || ((j - i + 4 + 2)%4) - 2);
-    }
-
-    function directionFrom(p, q) {
-        // return the index of the winning direction
-        let projections = _directionsFrom(p, q);
-        return projections && projections[0][1];
-    }
-
-    function squareSpiral(center, diameter) {
-        // return list of the diameter^2 locations spiraling out from loc
-        // which form a square of 'radius' (diameter-1)/2, based on a spiralpattern
-        // that looks like N, E, S,S, W,W, N,N,N, E,E,E, S,S,S,S, W,W,W,W, ...
-
-        if (diameter % 2 != 1) throw("Diameter should be odd: 1, 3, 5, ...");
-        let loc = center,
-            locs = [loc],
-            dir = 0,
-            i = 0,
-            side = 1;
-
-        while (++i < diameter) {
-            loc = loc.neighbor(dir, true);
-            locs.push(loc);
-            if (i == side) {
-                side += dir % 2;
-                dir = (dir + 1) % 4;
-                i = 0;
-            }
-        }
-        return locs;
-    }
-
-    function bestPath(p, q, costs) {
-        // implements A* shortest path, e.g. see https://www.redblobgames.com/pathfinding/a-star/introduction.html
-        // returns {cost: , orders: []} where cost is the movement cost (ticks), and orders is a seq of dir indices
-        // or null if goal is unreachable
-        const minCost = Math.min(...costs);
-        let src = Location.of(p),
-            goal = Location.of(q),
-            frontEst = {_: 0},              // estimated total cost via this square, _ is head
-            frontNext = {_: src.id},        // linked list with next best frontier square to check
-            dirTo = {[src.id]: null},       // direction index which arrived at keyed square
-            costTo = {[src.id]: 0};         // actual cost to get to keyed square
-
-        while (frontNext._) {
-            let next = frontNext._;
-            src = Location.fromid(next);
-            if (src.id == goal.id) break;
-            frontNext._ = frontNext[next];
-            frontEst._ = frontEst[next];
-            delete frontNext[next], frontEst[next];
-
-            directions.forEach((_, i) => {
-                let dst = src.neighbor(i);
-                if (!dst) return;
-                let cost = costTo[src.id] + costs[dst.terrain];
-                if (!(dst.id in costTo)) {  // with consistent estimate we always find best first
-                    costTo[dst.id] = cost;
-                    dirTo[dst.id] = i;
-                    let est = cost + minCost * manhattanDistance(src, dst),
-                        at = '_';
-                    while (frontNext[at] && frontEst[at] < est) at = frontNext[at];
-                    next = frontNext[at];
-                    frontNext[at] = dst.id;
-                    frontNext[dst.id] = next;
-                    frontEst[dst.id] = est;
-                }
-            });
-        }
-        if (src.id != goal.id) return null;
-
-        let orders = [];
-        for(;;) {
-            let dir = dirTo[src.id];
-            if (dir == null) break;
-            orders.unshift(dir);
-            src = src.neighbor((dir + 2) % 4);
-        }
-        return {cost: costTo[goal.id], orders: orders}
-    }
-
-    function reach(src, range, costs) {
-        // find all squares accessible to unit within range, ignoring other units, zoc
-        let cost = 0,
-            start = Location.of(src),
-            locs = {[start.id]: 0};
-
-        while (cost < range) {
-            // eslint-disable-next-line no-unused-vars
-            Object.entries(locs).filter(([_,v]) => v == cost).forEach(([k,_]) => {
-                let src = Location.fromid(k);
-                Object.values(Direction).forEach(i => {
-                    let dst = src.neighbor(i);
-                    if (!dst) return;
-                    let curr = dst.id in locs ? locs[dst.id] : 255;
-                    if (curr <= cost) return;
-                    let c = cost + costs[dst.terrain];
-                    if (c <= range && c < curr) locs[dst.id] = c;
-                });
-            });
-            cost++;
-        }
-        return locs;
-    }
-
-
-    //TOOD bundle as functions to build mapboard from variant
-    const variant = mapVariants.apx,
-        mapencoding = variant.encoding.map((enc, i) => {
-            // convert the encoding table into a lookup of char => [icon, terraintype, alt-flag]
-            let lookup = {}, ch=0;
-            enc.split('|').forEach((s, t) =>
-                s.split('').forEach(c => {
-                    let alt = ((t == 1 && i == 0) || ch == 0x40) ? 1 : 0;
-                    if (ch==0x40) ch--;
-                    lookup[c] = {
-                        icon: 0x80 + i * 0x40 + ch++,
-                        terrain: t,
-                        alt: alt
-                    };
-                })
-            );
-            return lookup;
-        }),
-        // decode the map into a 2-d array of rows x cols of  {lon: , lat:, icon:, terrain:, alt:}
-        mapdata = variant.ascii.split(/\n/).slice(1,-1).map(
-                (row, i) =>
-                row.split('').map(
-                    c => Object.assign({}, mapencoding[i <= 25 ? 0: 1][c])
-                )
-            ),
-        maxlon = mapdata[0].length-2,
-        maxlat = mapdata.length-2,
-        mapboard = mapdata.map(
-            (row, i) => row.map(
-                (data, j) => Location(maxlon - j, maxlat - i, data, {unitid: null})
-            )
-        );
-    mapboard.maxlon = maxlon;
-    mapboard.maxlat = maxlat;
-
-    cities.forEach((city, i) => {
-        city.points ||= 0;
-        let loc = Location.of(city);
-        console.assert(loc.terrain == Terrain.city, `Expected city terrain for ${city}`);
-        loc.cityid = i;
-    });
 
     function ascending$3(a, b) {
       return a == null || b == null ? NaN : a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
@@ -13917,7 +13680,7 @@ var ef1941 = (function (exports) {
       return dr > 0 && dr * dr > dx * dx + dy * dy;
     }
 
-    function score(node) {
+    function score$1(node) {
       var a = node._,
           b = node.next._,
           ab = a.r + b.r,
@@ -13982,9 +13745,9 @@ var ef1941 = (function (exports) {
         c.previous = a, c.next = b, a.next = b.previous = b = c;
 
         // Compute the new closest circle pair to the centroid.
-        aa = score(a);
+        aa = score$1(a);
         while ((c = c.next) !== b) {
-          if ((ca = score(c)) < aa) {
+          if ((ca = score$1(c)) < aa) {
             a = c, aa = ca;
           }
         }
@@ -21090,7 +20853,7 @@ var ef1941 = (function (exports) {
     }
 
     function errmsg(text) {
-        let s = score$1(gameState.human, oob).toString().padStart(3).padEnd(4);
+        let s = score(gameState.human, oob).toString().padStart(3).padEnd(4);
         s += centered(text || "", 36);
         putlines('#err-window', [s]);
     }
@@ -21128,7 +20891,7 @@ var ef1941 = (function (exports) {
             .classed('label', true)
             .classed('extra', true)
             .text(d => d.label)
-            .each(function(d) { select(this).call(showAt, Location.of(d), 4, -4); });
+            .each(function(d) { select(this).call(showAt, game.mapboard.locationOf(d), 4, -4); });
 
         // create a layer to show paths with unit orders
         select('#orders').append('svg')
@@ -21155,7 +20918,7 @@ var ef1941 = (function (exports) {
                 // set up some callbacks for units to manage their display state
                 u.show = function(animate) {
                     let chr = select(`#unit-${this.id}`),
-                        loc = Location.of(this),
+                        loc = game.mapboard.locationOf(this),
                         path = select(`#path-${this.id}`);
                     if (animate) chr = chr.transition().duration(250).ease(linear$1);
                     chr.call(showAt, loc);
@@ -21321,23 +21084,22 @@ var ef1941 = (function (exports) {
 
     function focusUnitRelative(offset) {
         // sort active germans descending by location id (right => left reading order)
-        let german = oob
-                .filter(u => u.player == gameState.human && u.isActive())
-                .sort((a, b) => Location.of(b).id - Location.of(a).id),
-            n = german.length;
+        let humanUnits = oob.activeUnits(game.human)
+                .sort((a, b) => game.mapboard.locationOf(b).id - game.mapboard.locationOf(a).id),
+            n = humanUnits.length;
         var i;
         if (lastid) {
-            i = german.findIndex(u => u.id == lastid);
+            i = humanUnits.findIndex(u => u.id == lastid);
             if (i < 0) {
                 // if last unit no longer active, find the nearest active unit
-                let locid = Location.of(oob[lastid]).id;
-                while (++i < german.length && Location.of(german[i]).id > locid) {/**/}
+                let locid = game.mapboard.locationOf(oob[lastid]).id;
+                while (++i < humanUnits.length && game.mapboard.locationOf(humanUnits[i]).id > locid) {/**/}
             }
         } else {
             i = offset > 0 ? -1: 0;
         }
         i = (i + n + offset) % n;
-        focusUnit(german[i]);
+        focusUnit(humanUnits[i]);
     }
 
     function unfocusUnit() {
@@ -21487,865 +21249,19 @@ var ef1941 = (function (exports) {
         putlines(selector, [[u]], u => players[u.player].color, '02', u => u.icon);
     }
 
-    // order-of-battle table with 159 units (55 german) comes from D.ASM:0x5400
-    // in the original game each column is stored separately,
-    // we've transposed into a list of rows which we map to unit objects
-    const oobVariants = {
-        apx: [
-            // CORPSX, CORPSY, MSTRNG, SWAP, ARRIVE, CORPT, CORPNO
-            // German
-            [0, 0, 0, 0, 255, 0, 0],
-            [40, 20, 203, 126, 0, 3, 24],
-            [40, 19, 205, 126, 255, 3, 39],
-            [40, 18, 192, 126, 0, 3, 46],
-            [40, 17, 199, 126, 0, 3, 47],
-            [40, 16, 184, 126, 0, 3, 57],
-            [41, 20, 136, 125, 0, 0, 5],
-            [40, 19, 127, 125, 0, 0, 6],
-            [41, 18, 150, 125, 0, 0, 7],
-            [41, 17, 129, 125, 0, 0, 8],
-            [41, 16, 136, 125, 0, 0, 9],
-            [42, 20, 109, 125, 255, 0, 12],
-            [42, 19, 72, 125, 255, 0, 13],
-            [42, 18, 70, 125, 255, 0, 20],
-            [42, 17, 81, 125, 255, 0, 42],
-            [43, 19, 131, 125, 255, 0, 43],
-            [43, 18, 102, 125, 255, 0, 53],
-            [43, 17, 53, 125, 255, 64, 3],
-            [41, 23, 198, 126, 0, 3, 41],
-            [40, 22, 194, 126, 0, 3, 56],
-            [40, 21, 129, 125, 0, 0, 1],
-            [41, 21, 123, 125, 0, 0, 2],
-            [41, 22, 101, 125, 0, 0, 10],
-            [42, 22, 104, 125, 0, 0, 26],
-            [42, 23, 112, 125, 0, 0, 28],
-            [42, 24, 120, 125, 0, 0, 38],
-            [40, 15, 202, 126, 0, 3, 3],
-            [41, 14, 195, 126, 0, 3, 14],
-            [42, 13, 191, 126, 0, 3, 48],
-            [41, 15, 72, 126, 255, 3, 52],
-            [42, 14, 140, 125, 0, 0, 49],
-            [42, 12, 142, 125, 0, 0, 4],
-            [43, 13, 119, 125, 0, 0, 17],
-            [41, 15, 111, 125, 0, 0, 29],
-            [42, 16, 122, 125, 255, 0, 44],
-            [43, 16, 77, 125, 255, 0, 55],
-            [30, 2, 97, 125, 0, 48, 1],
-            [30, 3, 96, 125, 0, 48, 2],
-            [31, 4, 92, 125, 0, 48, 4],
-            [33, 6, 125, 125, 0, 0, 11],
-            [35, 7, 131, 125, 0, 0, 30],
-            [37, 8, 106, 125, 0, 0, 54],
-            [35, 38, 112, 125, 0, 32, 2],
-            [36, 37, 104, 125, 0, 32, 4],
-            [36, 38, 101, 125, 255, 32, 6],
-            [45, 20, 210, 126, 2, 3, 40],
-            [45, 15, 97, 125, 255, 0, 27],
-            [38, 8, 98, 126, 2, 83, 1],
-            [45, 16, 95, 125, 5, 0, 23],
-            [31, 1, 52, 125, 6, 48, 5],
-            [45, 20, 98, 125, 9, 0, 34],
-            [45, 19, 96, 125, 10, 0, 35],
-            [32, 1, 55, 125, 11, 64, 4],
-            [45, 17, 104, 125, 20, 0, 51],
-            [45, 18, 101, 126, 24, 7, 50],
-            // Russian
-            [29, 32, 100, 253, 4, 4, 7],
-            [27, 31, 103, 253, 5, 4, 11],
-            [24, 38, 110, 253, 7, 0, 41],
-            [23, 38, 101, 253, 9, 0, 42],
-            [20, 38, 92, 253, 11, 0, 43],
-            [15, 38, 103, 253, 13, 0, 44],
-            [0, 20, 105, 253, 7, 0, 45],
-            [0, 8, 107, 253, 12, 0, 46],
-            [0, 18, 111, 253, 8, 0, 47],
-            [0, 10, 88, 253, 10, 0, 48],
-            [0, 14, 117, 254, 10, 1, 9],
-            [0, 33, 84, 254, 14, 1, 13],
-            [0, 11, 109, 254, 15, 1, 14],
-            [0, 15, 89, 254, 16, 1, 15],
-            [0, 20, 105, 254, 18, 1, 16],
-            [0, 10, 93, 254, 7, 2, 7],
-            [21, 28, 62, 254, 0, 1, 2],
-            [21, 27, 104, 253, 0, 0, 19],
-            [30, 14, 101, 253, 0, 0, 18],
-            [30, 13, 67, 254, 0, 2, 1],
-            [39, 28, 104, 253, 0, 0, 27],
-            [38, 28, 84, 254, 0, 1, 10],
-            [23, 31, 127, 253, 0, 0, 22],
-            [19, 24, 112, 253, 0, 0, 21],
-            [34, 22, 111, 253, 0, 0, 13],
-            [34, 21, 91, 254, 0, 1, 6],
-            [31, 34, 79, 253, 0, 4, 9],
-            [27, 6, 69, 253, 0, 0, 2],
-            [33, 37, 108, 253, 0, 4, 1],
-            [41, 24, 118, 253, 0, 0, 8],
-            [40, 23, 137, 253, 0, 0, 11],
-            [39, 23, 70, 254, 0, 1, 1],
-            [42, 25, 85, 254, 0, 1, 7],
-            [39, 20, 130, 253, 0, 0, 3],
-            [39, 22, 91, 253, 0, 0, 4],
-            [39, 18, 131, 253, 0, 0, 10],
-            [39, 17, 71, 254, 0, 1, 5],
-            [39, 21, 86, 254, 0, 1, 8],
-            [37, 20, 75, 254, 0, 2, 3],
-            [39, 19, 90, 254, 0, 2, 6],
-            [39, 16, 123, 253, 0, 0, 5],
-            [39, 15, 124, 253, 0, 0, 6],
-            [40, 14, 151, 253, 0, 0, 12],
-            [41, 13, 128, 253, 0, 0, 26],
-            [41, 12, 88, 254, 0, 1, 3],
-            [39, 11, 77, 254, 0, 1, 4],
-            [36, 9, 79, 254, 0, 1, 11],
-            [34, 8, 80, 254, 0, 2, 5],
-            [32, 6, 126, 253, 0, 0, 9],
-            [35, 9, 79, 254, 0, 1, 12],
-            [30, 4, 91, 254, 0, 2, 4],
-            [28, 2, 84, 254, 0, 2, 2],
-            [25, 6, 72, 253, 1, 0, 7],
-            [29, 14, 86, 253, 1, 4, 2],
-            [32, 22, 76, 253, 1, 0, 14],
-            [33, 36, 99, 253, 1, 4, 4],
-            [26, 23, 67, 253, 1, 0, 15],
-            [21, 8, 78, 253, 2, 0, 16],
-            [29, 33, 121, 253, 2, 0, 20],
-            [0, 28, 114, 253, 2, 0, 6],
-            [28, 30, 105, 253, 3, 0, 24],
-            [21, 20, 122, 253, 3, 0, 40],
-            [21, 28, 127, 253, 4, 0, 29],
-            [21, 33, 129, 253, 4, 0, 30],
-            [20, 27, 105, 253, 5, 0, 31],
-            [20, 30, 111, 253, 5, 0, 32],
-            [12, 8, 112, 253, 6, 0, 33],
-            [0, 10, 127, 253, 6, 0, 37],
-            [0, 32, 119, 253, 7, 0, 43],
-            [0, 11, 89, 253, 8, 0, 49],
-            [0, 25, 108, 253, 8, 0, 50],
-            [0, 12, 113, 253, 8, 0, 52],
-            [0, 23, 105, 253, 9, 0, 54],
-            [0, 13, 94, 253, 9, 0, 55],
-            [21, 29, 103, 254, 5, 114, 1],
-            [25, 30, 97, 253, 5, 0, 34],
-            [0, 31, 108, 253, 2, 112, 1],
-            [0, 15, 110, 253, 9, 112, 2],
-            [0, 27, 111, 253, 10, 112, 3],
-            [0, 17, 96, 253, 10, 112, 4],
-            [0, 25, 109, 253, 6, 0, 39],
-            [0, 11, 112, 253, 11, 0, 59],
-            [0, 23, 95, 253, 5, 0, 60],
-            [0, 19, 93, 253, 17, 0, 61],
-            [0, 21, 114, 254, 2, 114, 2],
-            [0, 33, 103, 254, 11, 1, 1],
-            [0, 28, 107, 254, 20, 113, 1],
-            [0, 13, 105, 253, 21, 112, 5],
-            [0, 26, 92, 254, 22, 1, 2],
-            [0, 10, 109, 253, 23, 112, 6],
-            [0, 29, 101, 254, 24, 1, 3],
-            [0, 35, 106, 254, 26, 1, 4],
-            [0, 27, 95, 253, 28, 0, 38],
-            [0, 15, 99, 254, 30, 0, 36],
-            [38, 30, 101, 253, 2, 0, 35],
-            [21, 22, 118, 253, 3, 0, 28],
-            [12, 8, 106, 253, 3, 0, 25],
-            [20, 13, 112, 253, 3, 0, 23],
-            [21, 14, 104, 253, 3, 0, 17],
-            [20, 28, 185, 253, 6, 4, 8],
-            [15, 3, 108, 253, 6, 4, 10],
-            [21, 3, 94, 253, 4, 4, 3],
-            [20, 3, 102, 253, 4, 4, 5],
-            [19, 2, 98, 253, 4, 4, 6],
-        ],
-        cart41: [
-            // ["CORPSX", "CORPSY", "MSTRNG", "ARRIVE", "CORPT", "CORPNO"]
-            [0, 0, 0, 255, 0, 0],
-            [40, 20, 223, 0, 4, 24],
-            [40, 18, 192, 0, 4, 46],
-            [40, 17, 199, 0, 4, 47],
-            [40, 16, 184, 0, 4, 57],
-            [41, 20, 136, 0, 0, 5],
-            [40, 19, 127, 0, 0, 6],
-            [41, 18, 150, 0, 0, 7],
-            [41, 17, 129, 0, 0, 8],
-            [41, 16, 136, 0, 0, 9],
-            [41, 23, 198, 0, 4, 41],
-            [40, 22, 194, 0, 4, 56],
-            [40, 21, 129, 0, 0, 1],
-            [41, 21, 123, 0, 0, 2],
-            [41, 22, 101, 0, 0, 10],
-            [42, 22, 104, 0, 0, 26],
-            [42, 23, 112, 0, 0, 28],
-            [42, 24, 120, 0, 0, 38],
-            [40, 15, 202, 0, 4, 3],
-            [41, 14, 195, 0, 4, 14],
-            [42, 13, 191, 0, 4, 48],
-            [42, 14, 140, 0, 0, 49],
-            [42, 12, 142, 0, 0, 4],
-            [43, 13, 119, 0, 0, 17],
-            [41, 15, 111, 0, 0, 29],
-            [30, 2, 97, 0, 48, 1],
-            [30, 3, 96, 0, 48, 2],
-            [31, 4, 92, 0, 48, 4],
-            [33, 6, 125, 0, 0, 11],
-            [35, 7, 131, 0, 0, 30],
-            [37, 8, 106, 0, 0, 54],
-            [35, 38, 112, 0, 32, 2],
-            [36, 37, 104, 0, 32, 4],
-            [45, 20, 210, 2, 4, 40],
-            [38, 8, 98, 3, 84, 1],
-            [45, 15, 97, 4, 0, 27],
-            [45, 16, 95, 5, 0, 23],
-            [31, 1, 52, 6, 48, 5],
-            [45, 17, 97, 7, 0, 12],
-            [45, 18, 109, 8, 0, 13],
-            [45, 20, 98, 9, 0, 34],
-            [45, 19, 96, 10, 0, 35],
-            [32, 1, 55, 11, 64, 4],
-            [44, 20, 219, 0, 3, 1],
-            [44, 18, 183, 0, 3, 2],
-            [44, 17, 206, 0, 3, 3],
-            [44, 16, 237, 0, 3, 4],
-            [44, 14, 191, 0, 3, 5],
-            [20, 28, 185, 0, 129, 1],
-            [21, 28, 62, 0, 133, 2],
-            [21, 27, 104, 0, 128, 19],
-            [30, 14, 101, 0, 128, 18],
-            [30, 13, 67, 0, 134, 1],
-            [39, 28, 104, 0, 128, 27],
-            [38, 28, 84, 0, 133, 10],
-            [23, 31, 127, 0, 128, 22],
-            [19, 24, 112, 0, 128, 21],
-            [34, 22, 111, 0, 128, 13],
-            [34, 21, 91, 0, 133, 6],
-            [31, 34, 79, 0, 129, 9],
-            [41, 24, 118, 0, 128, 8],
-            [40, 23, 137, 0, 128, 11],
-            [39, 23, 70, 0, 133, 1],
-            [42, 25, 85, 0, 133, 7],
-            [39, 20, 130, 0, 128, 3],
-            [39, 22, 91, 0, 128, 4],
-            [39, 18, 131, 0, 128, 10],
-            [39, 17, 71, 0, 133, 5],
-            [39, 21, 86, 0, 133, 8],
-            [37, 20, 75, 0, 134, 3],
-            [39, 19, 90, 0, 134, 6],
-            [39, 16, 123, 0, 128, 5],
-            [39, 15, 124, 0, 128, 6],
-            [40, 14, 151, 0, 128, 12],
-            [41, 13, 128, 0, 128, 26],
-            [32, 22, 76, 1, 128, 14],
-            [26, 23, 97, 1, 128, 15],
-            [29, 33, 121, 2, 128, 20],
-            [28, 30, 106, 3, 128, 24],
-            [21, 20, 122, 3, 128, 40],
-            [21, 28, 127, 4, 128, 29],
-            [21, 33, 129, 4, 128, 30],
-            [20, 27, 105, 5, 128, 31],
-            [20, 30, 111, 5, 128, 32],
-            [27, 6, 84, 0, 128, 2],
-            [33, 37, 108, 0, 129, 8],
-            [41, 12, 89, 0, 133, 3],
-            [39, 11, 94, 0, 133, 4],
-            [36, 9, 98, 0, 133, 11],
-            [34, 8, 82, 0, 134, 5],
-            [32, 6, 126, 0, 128, 9],
-            [35, 9, 101, 0, 133, 12],
-            [30, 4, 91, 0, 134, 4],
-            [28, 2, 84, 0, 134, 2],
-            [25, 6, 88, 1, 128, 7],
-            [29, 14, 91, 1, 129, 2],
-            [33, 36, 99, 1, 129, 4],
-            [24, 38, 110, 6, 128, 41],
-            [23, 38, 105, 8, 128, 42],
-            [20, 38, 97, 10, 128, 43],
-            [21, 8, 126, 2, 128, 16],
-            [0, 28, 119, 2, 128, 56],
-            [12, 8, 122, 6, 128, 33],
-            [21, 29, 113, 5, 246, 1],
-            [25, 30, 97, 5, 128, 34],
-            [38, 30, 99, 2, 128, 35],
-            [21, 22, 121, 3, 128, 28],
-            [12, 8, 118, 3, 128, 25],
-            [20, 13, 112, 3, 128, 23],
-            [29, 32, 108, 4, 129, 7],
-            [27, 31, 123, 5, 129, 11],
-            [15, 3, 138, 6, 129, 10],
-            [21, 3, 126, 2, 129, 3],
-            [20, 3, 119, 2, 129, 5],
-            [21, 14, 144, 9, 128, 17],
-            [15, 38, 133, 12, 128, 44],
-            [0, 20, 135, 10, 128, 45],
-            [0, 8, 137, 18, 128, 46],
-            [0, 18, 141, 11, 128, 47],
-            [0, 10, 128, 15, 128, 48],
-            [0, 14, 157, 13, 133, 9],
-            [0, 33, 124, 19, 133, 13],
-            [0, 11, 159, 20, 133, 14],
-            [0, 15, 129, 22, 133, 15],
-            [0, 20, 135, 24, 133, 16],
-            [0, 10, 123, 11, 134, 7],
-            [0, 10, 167, 10, 128, 37],
-            [0, 32, 149, 7, 128, 43],
-            [0, 11, 139, 6, 128, 49],
-            [0, 25, 138, 8, 128, 50],
-            [0, 12, 153, 11, 128, 52],
-            [0, 23, 165, 9, 128, 54],
-            [0, 13, 124, 12, 128, 55],
-            [0, 31, 178, 3, 240, 1],
-            [0, 15, 150, 9, 240, 2],
-            [0, 27, 141, 13, 240, 3],
-            [0, 17, 206, 14, 240, 4],
-            [0, 7, 130, 1, 128, 79],
-            [0, 10, 112, 2, 133, 18],
-            [0, 8, 139, 3, 133, 19],
-            [0, 9, 113, 4, 128, 95],
-            [0, 18, 152, 5, 133, 20],
-            [0, 16, 131, 6, 128, 67],
-            [0, 12, 127, 7, 128, 66],
-            [0, 14, 166, 8, 133, 28],
-            [0, 25, 219, 7, 128, 39],
-            [0, 11, 202, 12, 128, 59],
-            [0, 23, 185, 6, 128, 60],
-            [0, 19, 233, 10, 128, 61],
-            [0, 21, 244, 11, 246, 2],
-            [0, 33, 223, 12, 133, 31],
-            [0, 28, 237, 13, 245, 1],
-            [0, 13, 245, 14, 240, 5],
-            [0, 26, 242, 15, 133, 32],
-            [0, 10, 239, 16, 240, 6],
-            [0, 29, 251, 17, 133, 33],
-            [0, 35, 246, 18, 133, 34],
-            [0, 27, 235, 19, 128, 38],
-            [0, 22, 247, 20, 128, 36],
-            [0, 32, 241, 21, 133, 8],
-            [0, 26, 236, 21, 133, 12],
-            [0, 8, 223, 22, 240, 7],
-            [0, 28, 202, 23, 240, 8],
-            [0, 16, 222, 23, 133, 11],
-            [0, 12, 224, 24, 240, 9],
-            [0, 30, 235, 25, 240, 10],
-            [0, 24, 225, 25, 133, 7],
-        ],
-        cart42: [
-            // ["CORPSX42", "CORPSY42", "MSTRNG42", "ARRIVE", "CORPT", "CORPNO"]
-            [0, 0, 0, 255, 0, 0],
-            [20, 20, 150, 0, 4, 24],
-            [35, 29, 131, 0, 4, 46],
-            [26, 26, 108, 0, 4, 47],
-            [20, 21, 146, 0, 4, 57],
-            [32, 36, 90, 0, 0, 5],
-            [32, 35, 116, 0, 0, 6],
-            [32, 34, 120, 0, 0, 7],
-            [32, 32, 96, 0, 0, 8],
-            [33, 31, 82, 0, 0, 9],
-            [20, 19, 142, 0, 4, 41],
-            [19, 16, 169, 0, 4, 56],
-            [33, 29, 87, 0, 0, 1],
-            [32, 28, 91, 0, 0, 2],
-            [30, 28, 101, 0, 0, 10],
-            [28, 28, 104, 0, 0, 26],
-            [26, 28, 112, 0, 0, 28],
-            [24, 27, 120, 0, 0, 38],
-            [17, 12, 182, 0, 4, 3],
-            [14, 11, 130, 0, 4, 14],
-            [14, 9, 142, 0, 4, 48],
-            [24, 28, 140, 0, 0, 49],
-            [24, 26, 124, 0, 0, 4],
-            [24, 24, 119, 0, 0, 17],
-            [23, 23, 111, 0, 0, 29],
-            [19, 15, 97, 0, 48, 1],
-            [19, 13, 96, 0, 48, 2],
-            [18, 12, 92, 0, 48, 4],
-            [14, 12, 125, 0, 0, 11],
-            [14, 10, 131, 0, 0, 30],
-            [14, 8, 106, 0, 0, 54],
-            [35, 38, 112, 0, 32, 2],
-            [36, 37, 104, 0, 32, 4],
-            [19, 14, 201, 2, 4, 40],
-            [20, 18, 98, 3, 84, 1],
-            [22, 23, 110, 4, 0, 27],
-            [21, 22, 95, 5, 0, 23],
-            [16, 12, 52, 6, 48, 5],
-            [20, 17, 97, 7, 0, 12],
-            [20, 1, 106, 8, 0, 13],
-            [19, 0, 101, 9, 0, 34],
-            [18, 3, 96, 10, 0, 35],
-            [17, 2, 55, 11, 64, 4],
-            [27, 26, 102, 0, 3, 1],
-            [22, 20, 138, 0, 3, 2],
-            [16, 10, 142, 0, 3, 3],
-            [20, 2, 124, 0, 3, 4],
-            [20, 15, 115, 0, 3, 5],
-            [20, 28, 242, 0, 129, 1],
-            [21, 29, 128, 0, 133, 2],
-            [32, 37, 104, 0, 128, 19],
-            [31, 34, 92, 0, 128, 18],
-            [31, 35, 84, 0, 134, 1],
-            [31, 32, 138, 0, 128, 27],
-            [31, 33, 114, 0, 133, 10],
-            [31, 31, 147, 0, 128, 22],
-            [32, 31, 132, 0, 128, 21],
-            [32, 30, 136, 0, 128, 13],
-            [28, 30, 141, 0, 133, 6],
-            [33, 36, 236, 0, 129, 9],
-            [32, 29, 141, 0, 128, 8],
-            [31, 29, 137, 0, 128, 11],
-            [30, 29, 125, 0, 133, 1],
-            [29, 29, 135, 0, 133, 7],
-            [28, 29, 130, 0, 128, 3],
-            [27, 29, 122, 0, 128, 4],
-            [26, 29, 105, 0, 128, 10],
-            [25, 29, 101, 0, 133, 5],
-            [24, 29, 126, 0, 133, 8],
-            [23, 29, 115, 0, 134, 3],
-            [23, 28, 119, 0, 134, 6],
-            [23, 27, 123, 0, 128, 5],
-            [23, 26, 124, 0, 128, 6],
-            [23, 25, 118, 0, 128, 12],
-            [23, 24, 128, 0, 128, 26],
-            [22, 24, 136, 1, 128, 14],
-            [21, 24, 137, 1, 128, 15],
-            [21, 23, 121, 2, 128, 20],
-            [20, 23, 126, 3, 128, 24],
-            [20, 22, 122, 3, 128, 40],
-            [19, 22, 113, 4, 128, 29],
-            [19, 21, 112, 4, 128, 30],
-            [19, 20, 121, 5, 128, 31],
-            [19, 19, 111, 5, 128, 32],
-            [19, 18, 104, 0, 128, 2],
-            [33, 37, 108, 0, 129, 8],
-            [19, 17, 115, 0, 133, 3],
-            [18, 16, 112, 0, 133, 4],
-            [18, 15, 108, 0, 133, 11],
-            [14, 19, 112, 0, 134, 5],
-            [13, 16, 126, 0, 128, 9],
-            [17, 14, 136, 0, 133, 12],
-            [16, 14, 108, 0, 134, 4],
-            [15, 14, 119, 0, 134, 2],
-            [14, 14, 117, 1, 128, 7],
-            [31, 37, 121, 1, 129, 2],
-            [31, 36, 110, 1, 129, 4],
-            [13, 13, 110, 6, 128, 41],
-            [13, 12, 105, 8, 128, 42],
-            [13, 11, 127, 10, 128, 43],
-            [13, 10, 126, 2, 128, 16],
-            [13, 9, 119, 2, 128, 56],
-            [13, 8, 122, 6, 128, 33],
-            [13, 7, 113, 5, 246, 1],
-            [30, 30, 123, 5, 128, 34],
-            [19, 25, 124, 2, 128, 35],
-            [17, 23, 121, 3, 128, 28],
-            [14, 18, 118, 3, 128, 25],
-            [15, 21, 112, 3, 128, 23],
-            [20, 0, 70, 4, 129, 7],
-            [12, 4, 160, 5, 129, 11],
-            [12, 8, 138, 6, 129, 10],
-            [6, 15, 230, 2, 129, 3],
-            [16, 3, 192, 2, 129, 5],
-            [0, 20, 144, 9, 128, 17],
-            [0, 12, 133, 12, 128, 44],
-            [0, 30, 135, 10, 128, 45],
-            [0, 10, 137, 18, 128, 46],
-            [0, 6, 141, 11, 128, 47],
-            [0, 22, 128, 15, 128, 48],
-            [0, 15, 157, 13, 133, 9],
-            [0, 24, 124, 19, 133, 13],
-            [0, 16, 159, 20, 133, 14],
-            [0, 18, 129, 22, 133, 15],
-            [0, 35, 135, 24, 133, 16],
-            [0, 10, 123, 11, 134, 7],
-            [0, 20, 167, 10, 128, 37],
-            [0, 26, 149, 7, 128, 43],
-            [0, 5, 139, 6, 128, 49],
-            [0, 11, 138, 8, 128, 50],
-            [0, 14, 153, 11, 128, 52],
-            [0, 22, 165, 9, 128, 54],
-            [0, 33, 124, 12, 128, 55],
-            [0, 19, 178, 3, 240, 1],
-            [0, 8, 150, 9, 240, 2],
-            [0, 28, 141, 13, 240, 3],
-            [0, 15, 206, 14, 240, 4],
-            [0, 13, 150, 1, 128, 79],
-            [0, 35, 132, 2, 133, 18],
-            [0, 6, 149, 3, 133, 19],
-            [0, 10, 161, 4, 128, 95],
-            [0, 30, 152, 5, 133, 20],
-            [0, 15, 141, 6, 128, 67],
-            [0, 25, 137, 7, 128, 66],
-            [0, 11, 176, 8, 133, 28],
-            [0, 22, 219, 7, 128, 39],
-            [0, 19, 192, 12, 128, 59],
-            [0, 30, 195, 6, 128, 60],
-            [0, 21, 233, 10, 128, 61],
-            [0, 15, 244, 11, 246, 2],
-            [0, 7, 223, 12, 133, 31],
-            [0, 28, 227, 13, 245, 1],
-            [0, 10, 245, 14, 240, 5],
-            [0, 33, 242, 15, 133, 32],
-            [0, 12, 229, 16, 240, 6],
-            [0, 26, 251, 17, 133, 33],
-            [0, 14, 246, 18, 133, 34],
-            [0, 24, 235, 19, 128, 38],
-            [0, 16, 237, 20, 128, 36],
-            [0, 6, 221, 21, 133, 8],
-            [0, 35, 236, 21, 133, 12],
-            [0, 10, 203, 22, 240, 7],
-            [0, 30, 202, 23, 240, 8],
-            [0, 19, 222, 23, 133, 11],
-            [0, 37, 204, 24, 240, 9],
-            [0, 23, 215, 25, 240, 10],
-            [0, 31, 245, 25, 133, 7],
-        ],
-    };
-
-    const
-        types = [
-            {key: 'infantry', kind: UnitKind.infantry},
-            {key: 'militia',  kind: UnitKind.infantry, canMove: 0},
-            {key: 'unused'},  // apx had unused labels for shock and paratrp
-            {key: 'flieger',  kind: UnitKind.air},   // cart only
-            {key: 'panzer',   kind: UnitKind.armor},
-            {key: 'tank',     kind: UnitKind.armor},
-            {key: 'cavalry',  kind: UnitKind.armor},
-            {key: 'pzgrndr',  kind: UnitKind.armor},   // apx only
-        ],
-        Type = enumFor(types),
-        apxXref = {
-            0: Type.infantry, 1: Type.tank, 2: Type.cavalry, 3: Type.panzer,
-            4: Type.militia, 5: Type.unused /* shock */, 6: Type.unused /* paratrp */, 7: Type.pzgrndr,
-        },
-        modifiers = [
-            {key: ''},
-            {key: 'ss'}, // unused
-            {key: 'finnish',  canAttack: 0},
-            {key: 'rumanian'},
-            {key: 'italian'},
-            {key: 'hungarian'},
-            {key: 'mountain'},  //  unused
-            {key: 'guards'},
-        ];
-
-    function Unit(...args) {
-        let corpsx, corpsy, mstrng, arrive, corpt, corpno;
-
-        if (args.length == 7) {     // apx
-            let swap, corptapx;
-            [corpsx, corpsy, mstrng, swap, arrive, corptapx, corpno] = args;
-            // translate apx => cart format
-            corpt = (swap & 0x80) | (corptapx & 0x70) | apxXref[corptapx & 0x7];
-        } else {                    // cart
-            [corpsx, corpsy, mstrng, arrive, corpt, corpno] = args;
-        }
-        const
-            modifier = (corpt >> 4) & 0x7,
-            type = corpt & 0x7,
-            kind = types[type].kind;
-
-        let u = Object.assign(
-            {
-                id: Unit.id++,
-                player: (corpt & 0x80) ? Player.russian : Player.german,  // german=0, russian=1; equiv i >= 55
-                unitno: corpno,
-                kind,
-                type,
-                modifier,
-                canMove: 1,
-                canAttack: 1,
-                resolute: 0,
-                arrive,
-                lon: corpsx,
-                lat: corpsy,
-                mstrng,
-                cstrng: mstrng,
-                orders: [],      // WHORDRS, HMORDS
-            },
-            unitkinds[kind],
-            types[type],
-            modifiers[modifier],
-            {
-                isActive: Unit.isActive,
-                path: Unit.path,
-                addOrder: Unit.addOrder,
-                resetOrders: Unit.resetOrders,
-                moveCost: Unit.moveCost,
-                scheduleOrder: Unit.scheduleOrder,
-                bestPath: Unit.bestPath,
-                reach: Unit.reach,
-                moveTo: Unit.moveTo,
-                tryOrder: Unit.tryOrder,
-                resolveCombat: Unit.resolveCombat,
-                takeDamage: Unit.takeDamage,
-                recover: Unit.recover,
-                traceSupply: Unit.traceSupply,
-                score: Unit.score,
-            },
-        );
-        delete u.key;
-
-        u.resolute = u.player == Player.german && !u.modifier ? 1: 0;
-        u.label = [
-            u.unitno,
-            modifiers[u.modifier].key,
-            types[u.type].key,
-            players[u.player].unit
-        ].filter(Boolean).join(' ').toUpperCase().trim();
-
-        return u;
-    }
-    Unit.id = 0;
-    Unit.isActive = function() { return this.arrive <= gameState.turn && this.cstrng > 0; };
-    Unit.path = function() {
-        let loc = Location.of(this),
-            path = [loc];
-        this.orders.forEach(dir => {
-            let dst = loc.neighbor(dir);
-            if (!dst) return;
-            path.push(loc = dst);
-        });
-        return path;
-    };
-    Unit.addOrder = function(dir) {
-        let dst = null;
-        if (!this.canMove) {
-            errmsg("MILITIA UNITS CAN'T MOVE!");
-        } else if (this.orders.length == 8) {
-            errmsg("ONLY 8 ORDERS ARE ALLOWED!");
-        } else {
-            let path = this.path();
-            dst = path.pop().neighbor(dir);
-            if (dst) {
-                this.orders.push(dir);
-            } else {
-                errmsg("IMPASSABLE!");
-            }
-        }
-        return dst;
-    };
-    Unit.resetOrders = function() { this.orders = []; this.tick = 255;};
-    Unit.moveCost = function(dir) {
-        if (!this.canMove) return 255;
-        let dst = Location.of(this).neighbor(dir);
-        if (!dst) return 255;
-        return moveCost(dst.terrain, this.kind, gameState.weather);
-    };
-    Unit.scheduleOrder = function(reset) {
-        if (reset) this.tick = 0;
-        if (this.orders.length) this.tick += this.moveCost(this.orders[0]);
-        else this.tick = 255;
-    };
-    Unit.bestPath = function(goal) {
-        //TODO config directPath for comparison
-        return bestPath(Location.of(this), goal, moveCosts(this.kind, gameState.weather));
-    };
-    Unit.reach = function(range) {
-        return reach(this, range || 32, moveCosts(this.kind, gameState.weather));
-    };
-    Unit.moveTo = function(dst) {
-        // move the unit
-        Location.of(this).unitid = null;
-        if (dst != null) {
-            dst.unitid = this.id;
-            if (dst.cityid != null) cities[dst.cityid].owner = this.player;
-            dst.put(this);
-            this.show(true);
-        } else {
-            this.hide(true);
-        }
-    };
-    Unit.tryOrder = function() {
-        let src = Location.of(this),
-            dst = src.neighbor(this.orders[0]);  // assumes legal
-
-        if (dst.unitid != null) {
-            let opp = oob[dst.unitid];
-            if (opp.player != this.player) {
-                if (!this.resolveCombat(opp)) {
-                    this.tick++;
-                    return;
-                }
-                // otherwise fall through to advance after combat, ignoring ZoC
-            } else {
-                // traffic jam
-                this.tick += 2;
-                return;
-            }
-        } else if (zocBlocked(this.player, src, dst)) {
-            // moving between enemy ZOC M.ASM:5740
-            this.tick += 2;
-            return;
-        }
-
-        this.orders.shift();
-        this.moveTo(dst);
-        this.scheduleOrder();
-    };
-    Unit.resolveCombat = function(opp) {
-        // return 1 if target square is vacant
-        if (!this.canAttack) return 0;
-
-        this.flash(true);
-        opp.flash(false);
-
-        let modifier = terraintypes[Location.of(opp).terrain].defence;
-        if (opp.orders.length) modifier--;  // movement penalty
-
-        // opponent attacks
-        let str = modifyStrength(opp.cstrng, modifier);
-        // note APX doesn't skip attacker if break, but cart does
-        if (str >= randbyte()) {
-            this.takeDamage(1, 5, true);
-            if (!this.orders) return 0;
-        }
-        modifier = terraintypes[Location.of(opp).terrain].offence;
-        str = modifyStrength(this.cstrng, modifier);
-        if (str >= randbyte()) {
-            return opp.takeDamage(1, 5, true, this.orders[0]);
-        } else {
-            return 0;
-        }
-    };
-    Unit.takeDamage = function(mdmg, cdmg, checkBreak, retreatDir) {
-        // return 1 if this square is vacated, 0 otherwise
-
-        // apply mdmg/cdmg to unit
-        this.mstrng -= mdmg;
-        this.cstrng -= cdmg;
-
-        // dead?
-        if (this.cstrng <= 0) {
-            console.log(`${this.label} eliminated`);
-            this.mstrng = 0;
-            this.cstrng = 0;
-            this.arrive = 255;
-            this.resetOrders();
-            this.moveTo(null);
-            return 1;
-        }
-        this.showStats(); // update strength
-
-        if (!checkBreak) return 0;
-
-        // russian (& ger allies) break if cstrng <= 7/8 mstrng
-        // german regulars break if cstrng < 1/2 mstrng
-        let brkpt = this.mstrng - (this.mstrng >> (this.resolute ? 1: 3));
-        if (this.cstrng < brkpt) {
-            this.resetOrders();
-
-            if (retreatDir !== null) {
-                const homedir = players[this.player].homedir,
-                    nxtdir = (randbyte() & 0x1) ? Direction.north : Direction.south,
-                    dirs = [retreatDir, homedir,  nxtdir, (nxtdir + 2) % 4, (homedir + 2) % 4];
-
-                for (let dir of dirs) {
-                    let src = Location.of(this),
-                        dst = src.neighbor(dir);
-                    if (!dst || dst.unitid != null || zocBlocked(this.player, src, dst)) {
-                        if (this.takeDamage(0, 5)) return 1;  // dead
-                    } else {
-                        this.moveTo(dst);
-                        return 1;
-                    }
-                }
-            }
-        }
-        // otherwise square still occupied (no break or all retreats blocked but defender remains)
-        return 0;
-    };
-    Unit.recover = function() {
-        // M.ASM:5070  recover combat strength
-        if (this.mstrng - this.cstrng >= 2) this.cstring += 1 + (randbyte() & 0x1);
-    };
-    Unit.traceSupply = function(weather) {
-        // implement the supply check from C.ASM:3430, returns 0 if supplied, 1 if not
-        const player = players[this.player],
-            supply = player.supply;
-        let fail = 0,
-            loc = Location.of(this),
-            dir = player.homedir;
-
-        if (supply.freeze && weather == Weather.snow) {
-            // C.ASM:3620
-            if (randbyte() >= 74 + 4*(dir == Direction.west ? this.lon: mapboard.maxlon-this.lon)) {
-                return 0;
-            }
-        }
-        while(fail < supply.maxfail[weather]) {
-            let dst = loc.neighbor(dir, true),
-                cost = 0;
-
-            if (dst.lon < 0 || dst.lon >= mapboard.maxlon) {
-                return 1;
-            } else if (dst.terrain == Terrain.impassable && (supply.sea == 0 || dst.alt == 1)) {
-                cost = 1;
-            } else if (zocAffecting(this.player, dst) >= 2) {
-                cost = 2;
-            } else {
-                loc = dst;
-            }
-            if (cost) {
-                fail += cost;
-                dir = (randbyte() & 0x1) ? Direction.north : Direction.south;
-            } else {
-                dir = player.homedir;
-            }
-        }
-        return 0;
-    };
-    Unit.score = function() {
-        let v = 0;
-        // see M.ASM:4050 - note even inactive units are scored based on future arrival/strength
-        if (this.player == Player.german) {
-            // maxlon + 2 == #$30 per M.ASM:4110
-            v = (mapboard.maxlon + 2 - this.lon) * (this.mstrng >> 1);
-        } else {
-            v = this.lon * (this.cstrng >> 3);
-        }
-        return v >> 8;
-    };
-
-    function zocAffecting(player, loc) {
-        // evaluate zoc experienced by player (eg. exerted by !player) in square at pt
-        let zoc = 0;
-        // same player in target square exerts 4, enemy negates zoc
-        if (loc.unitid != null) {
-            if (oob[loc.unitid].player == player) return zoc;
-            zoc += 4;
-        }
-        squareSpiral(loc, 3).slice(1).forEach((d, i) => {
-            // even steps in the spiral exert 2, odd steps exert 1
-            if (d.unitid != null && oob[d.unitid].player != player) zoc += (i % 2) ? 1: 2;
-        });
-        return zoc;
-    }
-
-    function zocBlocked(player, src, dst) {
-        // does enemy ZoC block player move from src to dst?
-        return zocAffecting(player, src) >= 2 && zocAffecting(player, dst) >= 2;
-    }
-
-    function modifyStrength(strength, modifier) {
-        if (modifier > 0) {
-            while (modifier-- > 0) strength = Math.min(strength << 1, 255);
-        } else {
-            while (modifier++ < 0) strength = Math.max(strength >> 1, 1);
-        }
-        return strength;
-    }
-
-    //TODO set up oob after choosing variant
-    const oob = oobVariants.apx.map(vs => Unit(...vs));
-
-    function _think(player, firstpass) {
+    function _think(game, player, firstpass) {
         const
             pinfo = players[player],
-            friends = oob.filter(u => u.player == player && u.isActive()),
-            foes = oob.filter(u => u.player != player && u.isActive());
+            friends = game.oob.activeUnits(player),
+            foes = game.oob.activeUnits(1-player),
+            m = game.oob.m;
 
         // set up the ghost army
         var ofr = 0;  // only used in first pass
         if (firstpass) {
-            ofr = calcForceRatios(player).ofr;
+            ofr = calcForceRatios(game.oob, player).ofr;
             console.log('Overall force ratio (OFR) is', ofr);
-            friends.forEach(u => {u.objective = Location.of(u);});
+            friends.forEach(u => {u.objective = m.locationOf(u);});
         }
 
         friends.filter(u => u.canMove).forEach(u => {
@@ -22353,19 +21269,19 @@ var ef1941 = (function (exports) {
             if (firstpass && u.ifr == (ofr >> 1)) {
                 // head to reinforce if no local threat since (Local + OFR) / 2 = OFR / 2
                 //TODO this tends to send most units to same beleagured square
-                u.objective = Location.of(findBeleaguered(u, friends));
+                u.objective = m.locationOf(findBeleaguered(m, u, friends));
             } else if (firstpass && (u.cstrng <= (u.mstrng >> 1) || u.ifrdir[pinfo.homedir] >= 16)) {
                 // run home if hurting or blocked towards home
                 //TODO could look for farthest legal square (valid & not impassable) 5, 4, ...
                 u.objective = Location(u.lon + 5 * directions[pinfo.homedir].dlon, u.lat);
             } else {
                 // find nearest best square
-                let start = Location.of(u.objective),
-                    bestval = evalLocation(u, start, friends, foes);
+                let start = m.locationOf(u.objective),
+                    bestval = evalLocation(m, u, start, friends, foes);
                 directions.forEach((_, i) => {
-                    let loc = start.neighbor(i);
+                    let loc = m.neighbor(start, i);
                     if (!loc) return;
-                    let sqval = evalLocation(u, loc, friends, foes);
+                    let sqval = evalLocation(m, u, loc, friends, foes);
                     if (sqval > bestval) {
                         bestval = sqval;
                         u.objective = loc;
@@ -22381,7 +21297,7 @@ var ef1941 = (function (exports) {
         return friends.filter(u => u.objective);
     }
 
-    function think(player, train) {
+    function think(game, player, train) {
         if (train == null) {
             think.delay = 250;
             think.depth = 0;
@@ -22395,7 +21311,7 @@ var ef1941 = (function (exports) {
 
         const t0 = performance.now();
 
-        _think(player, think.depth == 1).forEach(u => u.show());
+        _think(game, player, think.depth == 1).forEach(u => u.show());
 
         const dt = performance.now() - t0;
 
@@ -22408,30 +21324,30 @@ var ef1941 = (function (exports) {
     think.trainOfThought = {[Player.german]: 0, [Player.russian]: 0};
 
 
-    function conclude(player) {
+    function conclude(game, player) {
         console.debug("Concluding...");
         think.trainOfThought[player]++;
         think.concluded = true;
 
-        oob.filter(u => u.player == player).forEach(u => {u.orders = u.orders.slice(0, 8);});
+        game.oob.activeUnits(player).forEach(u => {u.orders = u.orders.slice(0, 8);});
     }
 
-    function calcForceRatios(player) {
-        let active = oob.filter(u => u.isActive()),
+    function calcForceRatios(oob, player) {
+        let active = oob.activeUnits(),
             friend = sum$3(active.filter(u => u.player == player).map(u => u.cstrng)),
             foe = sum$3(active.filter(u => u.player != player).map(u => u.cstrng)),
             ofr = Math.floor((foe << 4) / friend),
             ofropp = Math.floor((friend << 4) / foe);
 
         active.forEach(u => {
-            let nearby = active.filter(v => manhattanDistance(u, v) <= 8),
+            let nearby = active.filter(v => oob.m.manhattanDistance(u, v) <= 8),
                 friend = 0,
-                loc = Location.of(u);
+                loc = oob.m.locationOf(u);
             u.ifrdir = [0, 0, 0, 0];
             nearby.forEach(v => {
                 let inc = v.cstrng >> 4;
                 if (v.player == u.player) friend += inc;
-                else u.ifrdir[directionFrom(loc, Location.of(v))] += inc;
+                else u.ifrdir[oob.m.directionFrom(loc, oob.m.locationOf(v))] += inc;
             });
             // individual and overall ifr max 255
             let ifr = Math.floor((sum$3(u.ifrdir) << 4) / friend);
@@ -22441,10 +21357,10 @@ var ef1941 = (function (exports) {
         return {ofr, friend, foe};
     }
 
-    function findBeleaguered(u, friends) {
+    function findBeleaguered(m, u, friends) {
         let best = null, score = 0;
         friends.filter(v => v.ifr > u.ifr).forEach(v => {
-                let d = manhattanDistance(u, v);
+                let d = m.manhattanDistance(u, v);
                 if (d <= 8) return;  // APX code does weird bit 3 check
                 let s = v.ifr - (d >> 3);
                 if (s > score) {
@@ -22455,14 +21371,14 @@ var ef1941 = (function (exports) {
         return best;
     }
 
-    function evalLocation(u, loc, friends, foes) {
+    function evalLocation(m, u, loc, friends, foes) {
         let ghosts = {},
-            range = manhattanDistance(u, loc);
+            range = m.manhattanDistance(u, loc);
 
         // too far, early exit
         if (range >= 8) return 0;
 
-        const nbval = Math.min(...foes.map(v => manhattanDistance(loc, v)));
+        const nbval = Math.min(...foes.map(v => m.manhattanDistance(loc, v)));
 
         // on the defensive and square is occupied by an enemy
         if (u.ifr >= 16 && nbval == 0) return 0;
@@ -22476,7 +21392,7 @@ var ef1941 = (function (exports) {
         if (isOccupied(loc)) dibs = true;      // someone else have dibs already?
         else ghosts[loc.id] = u.id;
 
-        const square = squareSpiral(loc, 5),
+        const square = m.squareSpiral(loc, 5),
             linepts = directions.map(
                 (_, i) => linePoints(sortSquareFacing(loc, 5, i, square), 5, isOccupied)
             ),
@@ -22704,15 +21620,14 @@ var ef1941 = (function (exports) {
         // stop thinking and collect orders
         Object.values(Player).forEach(player => { if (player != gameState.human) conclude(player); });
 
-        // M.asm:4950 movement execution
-        oob.forEach(u => u.scheduleOrder(true));
+        oob.scheduleOrders();
 
         let tick = 0;
         function tickTock() {
             // original code processes movement in reverse-oob order
             // could be interesting to randomize, or support a 'pause' order to handle traffic
             stopUnitsFlashing();
-            oob.filter(u => u.tick == tick).reverse().forEach(u => u.tryOrder());
+            oob.executeOrders(tick);
             //TODO should this be ++tick or <= 32?
             setTimeout(tick++ < 32 ? tickTock: nextTurn, delay);
         }
@@ -22726,21 +21641,9 @@ var ef1941 = (function (exports) {
         errmsg('PLEASE ENTER YOUR ORDERS NOW');
         stopUnitsFlashing();
 
-        // regroup, reinforce, recover...
-        oob.filter(u => u.isActive()).forEach(u => u.recover());
-
+        oob.regroup();
         // TODO trace supply, with CSTR >> 1 if not, russian MSTR+2 (for apx)
-
-        // M.ASM:3720  delay reinforcements scheduled for an occuplied square
-        oob.filter(u => u.arrive == gameState.turn)
-            .forEach(u => {
-                const loc = Location.of(u);
-                if (loc.unitid != null) {
-                    u.arrive++;
-                } else {
-                    u.moveTo(loc);   // reveal unit and link to the map square
-                }
-            });
+        oob.reinforce();
 
         let dt = new Date(gameState.startDate);
         dt.setDate(dt.getDate() + 7 * gameState.turn);
@@ -22751,20 +21654,19 @@ var ef1941 = (function (exports) {
 
         gameState.weather = minfo.weather;
 
-        if (minfo.water != null) moveIceLine(minfo.water);
+        if (minfo.water != null) game.mapboard.freezeThaw(minfo.water);
 
         // update the tree color in place in the terrain data :grimace:
         terraintypes[Terrain.mountain_forest].altcolor = minfo.trees;
 
         // paint the current map colors
-        repaintMap(mapForegroundColor, weatherdata[minfo.weather].earth, minfo.weather == Weather.snow ? '04': '08');
+        repaintMap(game.mapboard.fgcolor, weatherdata[minfo.weather].earth, minfo.weather == Weather.snow ? '04': '08');
 
         // start thinking...
         players.forEach((_, player) => { if (player != gameState.human) think(player); });
     }
 
     exports.d3 = index;
-    exports.oob = oob;
     exports.putIcon = putIcon;
     exports.start = start;
 

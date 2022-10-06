@@ -1,13 +1,17 @@
-import {directions, Player, gameState, sum} from './game.js';
-import {Location, squareSpiral} from './map.js';
-import {oob} from './unit.js';
+import {directions, Player} from './defs.js';
+import {Mapboard, Location} from './map.js';
+import {Oob} from './oob.js';
+import {Game} from './game.js';
 import {linePoints, sortSquareFacing, privateExports} from './think.js';
+
+
+const game = Game();
 
 
 test("Unexpected linePoints() values", () => {
     // set up the linepts position from the PDF diagram, and test from all directions
     let p = Location(102, 102),
-        sq = squareSpiral(p, 5),
+        sq = game.mapboard.squareSpiral(p, 5),
         occ = [[103, 103], [103, 101], [103, 100], [102, 102], [101, 101]];
     sq.forEach(loc => {
         loc.v = 0;
@@ -24,17 +28,17 @@ function hexvals(s) {
 }
 
 test("AI metrics", () => {
-    gameState.turn = 0;  //TODO ick
-    oob.filter(u => u.arrive == 0).forEach(u => Location.of(u).unitid = u.id);
+    game.turn = 0;
+    game.oob.filter(u => u.arrive == 0).forEach(u => game.mapboard.locationOf(u).unitid = u.id);
 
-    let {ofr, friend, foe} = privateExports.calcForceRatios(Player.russian);
+    let {ofr, friend, foe} = privateExports.calcForceRatios(game.oob, Player.russian);
     expect(friend).toBe(3533);          // $0d04 => 3332  actual 3533
     expect(foe).toBe(4705 - 205);       // $1261 => 4705  actual is 4500  but 205 gets double-counted
     // apx calculates ($12 << 3) / ($d >> 1) == 144 / 6 == 24 == $18
     // but we have 4500/3533*16 => 20
     expect(ofr).toBe(20);
 
-    let units = privateExports._think(Player.russian, true),
+    let units = privateExports._think(game, Player.russian, true),
         withobj = units.filter(u => u.objective),
         expected = {
             ids: [...Array(36).keys()].map(i => i + 55 + 16),
@@ -64,6 +68,8 @@ test("AI metrics", () => {
 
     let actual = withobj.map(u => u.ifr),
         wanted = hexvals(expected.ifrs);
+/*
+    // TODO test outcomes if we set APX IFRs to match
     console.log('ifr')
     console.log(actual)
     console.log(wanted)
@@ -75,7 +81,6 @@ test("AI metrics", () => {
     console.log('objy')
     console.log('act', withobj.map(u => u.objective.lat));
     console.log('exp', hexvals(expected.objy));
-
-    gameState.turn = -1;
+*/
 });
 

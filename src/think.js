@@ -1,20 +1,20 @@
-import {players, Player, directions, terraintypes, sum} from './game.js';
-import {Location, manhattanDistance, directionFrom, squareSpiral} from './map.js';
-import {oob} from './unit.js';
+import {players, Player, directions, terraintypes, sum} from './defs.js';
+import {Location} from './map.js';
 
 
-function _think(player, firstpass) {
+function _think(game, player, firstpass) {
     const
         pinfo = players[player],
-        friends = oob.filter(u => u.player == player && u.isActive()),
-        foes = oob.filter(u => u.player != player && u.isActive());
+        friends = game.oob.activeUnits(player),
+        foes = game.oob.activeUnits(1-player),
+        m = game.oob.m;
 
     // set up the ghost army
     var ofr = 0;  // only used in first pass
     if (firstpass) {
-        ofr = calcForceRatios(player).ofr;
+        ofr = calcForceRatios(game.oob, player).ofr;
         console.log('Overall force ratio (OFR) is', ofr);
-        friends.forEach(u => {u.objective = Location.of(u)});
+        friends.forEach(u => {u.objective = m.locationOf(u)});
     }
 
     friends.filter(u => u.canMove).forEach(u => {
@@ -22,19 +22,19 @@ function _think(player, firstpass) {
         if (firstpass && u.ifr == (ofr >> 1)) {
             // head to reinforce if no local threat since (Local + OFR) / 2 = OFR / 2
             //TODO this tends to send most units to same beleagured square
-            u.objective = Location.of(findBeleaguered(u, friends));
+            u.objective = m.locationOf(findBeleaguered(m, u, friends));
         } else if (firstpass && (u.cstrng <= (u.mstrng >> 1) || u.ifrdir[pinfo.homedir] >= 16)) {
             // run home if hurting or blocked towards home
             //TODO could look for farthest legal square (valid & not impassable) 5, 4, ...
             u.objective = Location(u.lon + 5 * directions[pinfo.homedir].dlon, u.lat);
         } else {
             // find nearest best square
-            let start = Location.of(u.objective),
-                bestval = evalLocation(u, start, friends, foes);
+            let start = m.locationOf(u.objective),
+                bestval = evalLocation(m, u, start, friends, foes);
             directions.forEach((_, i) => {
-                let loc = start.neighbor(i);
+                let loc = m.neighbor(start, i);
                 if (!loc) return;
-                let sqval = evalLocation(u, loc, friends, foes);
+                let sqval = evalLocation(m, u, loc, friends, foes);
                 if (sqval > bestval) {
                     bestval = sqval;
                     u.objective = loc;
@@ -50,7 +50,7 @@ function _think(player, firstpass) {
     return friends.filter(u => u.objective);
 }
 
-function think(player, train) {
+function think(game, player, train) {
     if (train == null) {
         think.delay = 250;
         think.depth = 0;
@@ -64,7 +64,7 @@ function think(player, train) {
 
     const t0 = performance.now();
 
-    _think(player, think.depth == 1).forEach(u => u.show());
+    _think(game, player, think.depth == 1).forEach(u => u.show());
 
     const dt = performance.now() - t0;
 
@@ -77,30 +77,30 @@ function think(player, train) {
 think.trainOfThought = {[Player.german]: 0, [Player.russian]: 0};
 
 
-function conclude(player) {
+function conclude(game, player) {
     console.debug("Concluding...")
     think.trainOfThought[player]++;
     think.concluded = true;
 
-    oob.filter(u => u.player == player).forEach(u => {u.orders = u.orders.slice(0, 8)});
+    game.oob.activeUnits(player).forEach(u => {u.orders = u.orders.slice(0, 8)});
 }
 
-function calcForceRatios(player) {
-    let active = oob.filter(u => u.isActive()),
+function calcForceRatios(oob, player) {
+    let active = oob.activeUnits(),
         friend = sum(active.filter(u => u.player == player).map(u => u.cstrng)),
         foe = sum(active.filter(u => u.player != player).map(u => u.cstrng)),
         ofr = Math.floor((foe << 4) / friend),
         ofropp = Math.floor((friend << 4) / foe);
 
     active.forEach(u => {
-        let nearby = active.filter(v => manhattanDistance(u, v) <= 8),
+        let nearby = active.filter(v => oob.m.manhattanDistance(u, v) <= 8),
             friend = 0,
-            loc = Location.of(u);
+            loc = oob.m.locationOf(u);
         u.ifrdir = [0, 0, 0, 0];
         nearby.forEach(v => {
             let inc = v.cstrng >> 4;
             if (v.player == u.player) friend += inc;
-            else u.ifrdir[directionFrom(loc, Location.of(v))] += inc;
+            else u.ifrdir[oob.m.directionFrom(loc, oob.m.locationOf(v))] += inc;
         })
         // individual and overall ifr max 255
         let ifr = Math.floor((sum(u.ifrdir) << 4) / friend);
@@ -110,10 +110,10 @@ function calcForceRatios(player) {
     return {ofr, friend, foe};
 }
 
-function findBeleaguered(u, friends) {
+function findBeleaguered(m, u, friends) {
     let best = null, score = 0;
     friends.filter(v => v.ifr > u.ifr).forEach(v => {
-            let d = manhattanDistance(u, v);
+            let d = m.manhattanDistance(u, v);
             if (d <= 8) return;  // APX code does weird bit 3 check
             let s = v.ifr - (d >> 3);
             if (s > score) {
@@ -124,14 +124,14 @@ function findBeleaguered(u, friends) {
     return best;
 }
 
-function evalLocation(u, loc, friends, foes) {
+function evalLocation(m, u, loc, friends, foes) {
     let ghosts = {},
-        range = manhattanDistance(u, loc);
+        range = m.manhattanDistance(u, loc);
 
     // too far, early exit
     if (range >= 8) return 0;
 
-    const nbval = Math.min(...foes.map(v => manhattanDistance(loc, v)));
+    const nbval = Math.min(...foes.map(v => m.manhattanDistance(loc, v)));
 
     // on the defensive and square is occupied by an enemy
     if (u.ifr >= 16 && nbval == 0) return 0;
@@ -145,7 +145,7 @@ function evalLocation(u, loc, friends, foes) {
     if (isOccupied(loc)) dibs = true;      // someone else have dibs already?
     else ghosts[loc.id] = u.id;
 
-    const square = squareSpiral(loc, 5),
+    const square = m.squareSpiral(loc, 5),
         linepts = directions.map(
             (_, i) => linePoints(sortSquareFacing(loc, 5, i, square), 5, isOccupied)
         ),

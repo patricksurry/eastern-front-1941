@@ -1,6 +1,5 @@
-import {anticColor, players, directions, cities, gameState, score} from './game.js';
+import {anticColor, players, directions} from './defs.js';
 import {Location} from './map.js';
-import {oob} from './unit.js';
 
 import * as d3 from 'd3';
 
@@ -64,7 +63,7 @@ function setupDisplay(help, mapchrs, units) {
         .classed('label', true)
         .classed('extra', true)
         .text(d => d.label)
-        .each(function(d) { d3.select(this).call(showAt, Location.of(d), 4, -4); })
+        .each(function(d) { d3.select(this).call(showAt, game.mapboard.locationOf(d), 4, -4); })
 
     // create a layer to show paths with unit orders
     d3.select('#orders').append('svg')
@@ -91,7 +90,7 @@ function setupDisplay(help, mapchrs, units) {
             // set up some callbacks for units to manage their display state
             u.show = function(animate) {
                 let chr = d3.select(`#unit-${this.id}`),
-                    loc = Location.of(this),
+                    loc = game.mapboard.locationOf(this),
                     path = d3.select(`#path-${this.id}`);
                 if (animate) chr = chr.transition().duration(250).ease(d3.easeLinear);
                 chr.call(showAt, loc);
@@ -257,23 +256,22 @@ function focusUnit(u) {
 
 function focusUnitRelative(offset) {
     // sort active germans descending by location id (right => left reading order)
-    let german = oob
-            .filter(u => u.player == gameState.human && u.isActive())
-            .sort((a, b) => Location.of(b).id - Location.of(a).id),
-        n = german.length;
+    let humanUnits = oob.activeUnits(game.human)
+            .sort((a, b) => game.mapboard.locationOf(b).id - game.mapboard.locationOf(a).id),
+        n = humanUnits.length;
     var i;
     if (lastid) {
-        i = german.findIndex(u => u.id == lastid);
+        i = humanUnits.findIndex(u => u.id == lastid);
         if (i < 0) {
             // if last unit no longer active, find the nearest active unit
-            let locid = Location.of(oob[lastid]).id;
-            while (++i < german.length && Location.of(german[i]).id > locid) {/**/}
+            let locid = game.mapboard.locationOf(oob[lastid]).id;
+            while (++i < humanUnits.length && game.mapboard.locationOf(humanUnits[i]).id > locid) {/**/}
         }
     } else {
         i = offset > 0 ? -1: 0;
     }
     i = (i + n + offset) % n;
-    focusUnit(german[i]);
+    focusUnit(humanUnits[i]);
 }
 
 function unfocusUnit() {

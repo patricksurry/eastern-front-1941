@@ -217,20 +217,13 @@ high nibble low 3 bits gives first word, high bit gives player (0=german, 1=russ
 
 - overlapping data structures, phantom offsets
 
-- variable precision division sliding scale
-
-- square spirals 2 * n(n-1)/2 + n = n^2
 
 - cartridge changes
     - refactoring w subroutines
     - difficulty level, start date
-    - map tweaks (for flieger)
     - flieger units, difficulty levels (vs handicap)
     - fogofwar using code as seed
-    - run length coding for map
     - attack even if defender wins first?
-    - division
-    - dnumbr rewritten from 768 bytes of lookup tables to 39 bytes of code
 
 
 anatomy of a bug
@@ -316,17 +309,19 @@ _COMBAT_7:  ldx HMORDS,x     ; ad29 bed232  how many orders queued for each unit
 
 ### Things TODO
 
-- Loc by ref issue??
-
-- debug console group for specific unit
+- Game(options) containing mapboard etc; each object emit enought state to recover itself
 
 - change fontmap with apx/cart choice, via css variable?
 
 - toggle x twice reveals debug.  refactor toggles as shared routine?
 
+- Loc by ref issue??
+
+- debug console group for specific unit
+
 - fogofwar option for enemy unit strength a la cartridge
 
-- russians don't all retreat in playthru video
+- russians don't all retreat in playthru video [no orders on first turn, how does ARRIVE/TURN/THINK relate?]
 
 - can air fly over impassable?
 
@@ -334,11 +329,9 @@ _COMBAT_7:  ldx HMORDS,x     ; ad29 bed232  how many orders queued for each unit
 
 - have think() track a current unit and bail out once it uses a certain amount of time
 
-- * for reinforcements
+- display * for reinforcements
 
 - zocAffecting needs different option for whether to ignore central unit (eg. supply check vs move)
-
-- guide.html with cc notes + commentary boxes
 
 - scrollmsg() to report more death & destruction during combat
 

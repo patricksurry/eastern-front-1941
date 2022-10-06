@@ -2,7 +2,7 @@
 // in the original game each column is stored separately,
 // we've transposed into a list of rows which we map to unit objects
 const oobVariants = {
-    apx: [
+    apx41: [
         // CORPSX, CORPSY, MSTRNG, SWAP, ARRIVE, CORPT, CORPNO
         // German
         [0, 0, 0, 0, 255, 0, 0],

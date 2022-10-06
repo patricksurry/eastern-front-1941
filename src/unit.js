@@ -1,13 +1,14 @@
 import {
-    enumFor, cities,
+    enumFor,
     players, Player, terraintypes, Terrain, Direction, Weather,
-    unitkinds, UnitKind,
-    randbyte, gameState
-} from './game.js';
-import {Location, mapboard, squareSpiral, bestPath, reach, moveCost, moveCosts} from './map.js';
-import {errmsg} from './display.js';
+    unitkinds, UnitKind, moveCost, moveCosts, randbyte,
+    variants, scenarios,
+} from './defs.js';
 
 import {oobVariants} from './unit-data.js';
+
+import {errmsg} from './display.js';
+
 
 const
     types = [
@@ -36,7 +37,7 @@ const
         {key: 'guards'},
     ];
 
-function Unit(...args) {
+function Unit(game, ...args) {
     let corpsx, corpsy, mstrng, arrive, corpt, corpno;
 
     if (args.length == 7) {     // apx
@@ -45,6 +46,7 @@ function Unit(...args) {
         // translate apx => cart format
         corpt = (swap & 0x80) | (corptapx & 0x70) | apxXref[corptapx & 0x7];
     } else {                    // cart
+        console.assert(args.length == 6, "Expected 6 or 7 args for cartridge or apx unit def respectively");
         [corpsx, corpsy, mstrng, arrive, corpt, corpno] = args;
     }
     const
@@ -64,6 +66,7 @@ function Unit(...args) {
             canAttack: 1,
             resolute: 0,
             arrive,
+            scheduled: arrive,
             lon: corpsx,
             lat: corpsy,
             mstrng,
@@ -74,6 +77,8 @@ function Unit(...args) {
         types[type],
         modifiers[modifier],
         {
+            game: game,
+            m: game.mapboard,
             isActive: Unit.isActive,
             path: Unit.path,
             addOrder: Unit.addOrder,
@@ -104,12 +109,12 @@ function Unit(...args) {
     return u;
 }
 Unit.id = 0;
-Unit.isActive = function() { return this.arrive <= gameState.turn && this.cstrng > 0; }
+Unit.isActive = function() { return this.arrive <= this.game.turn && this.cstrng > 0; }
 Unit.path = function() {
-    let loc = Location.of(this),
+    let loc = this.m.locationOf(this),
         path = [loc];
     this.orders.forEach(dir => {
-        let dst = loc.neighbor(dir);
+        let dst = this.m.neighbor(loc, dir);
         if (!dst) return;
         path.push(loc = dst)
     });
@@ -123,7 +128,7 @@ Unit.addOrder = function(dir) {
         errmsg("ONLY 8 ORDERS ARE ALLOWED!")
     } else {
         let path = this.path();
-        dst = path.pop().neighbor(dir);
+        dst = this.m.neighbor(path.pop(), dir);
         if (dst) {
             this.orders.push(dir);
         } else {
@@ -135,9 +140,9 @@ Unit.addOrder = function(dir) {
 Unit.resetOrders = function() { this.orders = []; this.tick = 255;}
 Unit.moveCost = function(dir) {
     if (!this.canMove) return 255;
-    let dst = Location.of(this).neighbor(dir);
+    let dst = this.m.neighbor(this, dir);
     if (!dst) return 255;
-    return moveCost(dst.terrain, this.kind, gameState.weather);
+    return moveCost(dst.terrain, this.kind, this.game.weather);
 }
 Unit.scheduleOrder = function(reset) {
     if (reset) this.tick = 0;
@@ -146,26 +151,26 @@ Unit.scheduleOrder = function(reset) {
 }
 Unit.bestPath = function(goal) {
     //TODO config directPath for comparison
-    return bestPath(Location.of(this), goal, moveCosts(this.kind, gameState.weather));
+    return this.m.bestPath(this, goal, moveCosts(this.kind, this.game.weather));
 }
 Unit.reach = function(range) {
-    return reach(this, range || 32, moveCosts(this.kind, gameState.weather));
+    return this.m.reach(this, range || 32, moveCosts(this.kind, this.game.weather));
 }
 Unit.moveTo = function(dst) {
-    // move the unit
-    Location.of(this).unitid = null;
+    this.m.locationOf(this).unitid = null;  // leave the current location
     if (dst != null) {
-        dst.unitid = this.id;
-        if (dst.cityid != null) cities[dst.cityid].owner = this.player;
+        // occupy the new one and repaint
         dst.put(this);
-        this.show(true);
+        dst.unitid = this.id;
+        this.m.occupy(dst, this.player);
+        if (this.show) this.show(true);  //TODO for testing these callbacks might not exist
     } else {
-        this.hide(true);
+        if (this.hide) this.hide(true);
     }
 }
 Unit.tryOrder = function() {
-    let src = Location.of(this),
-        dst = src.neighbor(this.orders[0]);  // assumes legal
+    let src = this.m.locationOf(this),
+        dst = this.m.neighbor(src, this.orders[0]);  // assumes legal
 
     if (dst.unitid != null) {
         let opp = oob[dst.unitid];
@@ -197,7 +202,7 @@ Unit.resolveCombat = function(opp) {
     this.flash(true);
     opp.flash(false);
 
-    let modifier = terraintypes[Location.of(opp).terrain].defence;
+    let modifier = terraintypes[this.m.locationOf(opp).terrain].defence;
     if (opp.orders.length) modifier--;  // movement penalty
 
     // opponent attacks
@@ -207,7 +212,7 @@ Unit.resolveCombat = function(opp) {
         this.takeDamage(1, 5, true);
         if (!this.orders) return 0;
     }
-    modifier = terraintypes[Location.of(opp).terrain].offence;
+    modifier = terraintypes[this.m.locationOf(opp).terrain].offence;
     str = modifyStrength(this.cstrng, modifier);
     if (str >= randbyte()) {
         return opp.takeDamage(1, 5, true, this.orders[0]);
@@ -224,6 +229,7 @@ Unit.takeDamage = function(mdmg, cdmg, checkBreak, retreatDir) {
 
     // dead?
     if (this.cstrng <= 0) {
+        // TODO show as scrolling status window
         console.log(`${this.label} eliminated`)
         this.mstrng = 0;
         this.cstrng = 0;
@@ -248,7 +254,7 @@ Unit.takeDamage = function(mdmg, cdmg, checkBreak, retreatDir) {
                 dirs = [retreatDir, homedir,  nxtdir, (nxtdir + 2) % 4, (homedir + 2) % 4];
 
             for (let dir of dirs) {
-                let src = Location.of(this),
+                let src = this.m.locationOf(this),
                     dst = src.neighbor(dir);
                 if (!dst || dst.unitid != null || zocBlocked(this.player, src, dst)) {
                     if (this.takeDamage(0, 5)) return 1;  // dead
@@ -266,25 +272,25 @@ Unit.recover = function() {
     // M.ASM:5070  recover combat strength
     if (this.mstrng - this.cstrng >= 2) this.cstring += 1 + (randbyte() & 0x1);
 }
-Unit.traceSupply = function(weather) {
+Unit.traceSupply = function() {
     // implement the supply check from C.ASM:3430, returns 0 if supplied, 1 if not
     const player = players[this.player],
         supply = player.supply;
     let fail = 0,
-        loc = Location.of(this),
+        loc = this.m.locationOf(this),
         dir = player.homedir;
 
-    if (supply.freeze && weather == Weather.snow) {
+    if (supply.freeze && this.game.weather == Weather.snow) {
         // C.ASM:3620
-        if (randbyte() >= 74 + 4*(dir == Direction.west ? this.lon: mapboard.maxlon-this.lon)) {
+        if (randbyte() >= 74 + 4*(this.m.boundaryDistance(loc, dir) + (dir == Direction.east ? 1 : 0))) {
             return 0;
         }
     }
-    while(fail < supply.maxfail[weather]) {
-        let dst = loc.neighbor(dir, true),
+    while(fail < supply.maxfail[this.game.weather]) {
+        let dst = this.m.neighbor(loc, dir, true),
             cost = 0;
 
-        if (dst.lon < 0 || dst.lon >= mapboard.maxlon) {
+        if (this.m.boundaryDistance(this, player.homedir) < 0) {
             return 1;
         } else if (dst.terrain == Terrain.impassable && (supply.sea == 0 || dst.alt == 1)) {
             cost = 1;
@@ -295,7 +301,9 @@ Unit.traceSupply = function(weather) {
         }
         if (cost) {
             fail += cost;
-            dir = (randbyte() & 0x1) ? Direction.north : Direction.south;
+            // either flip a coin or try the opposite direction (potentially repeatedly until failure)
+            if (dir != player.homedir) dir = (dir + 2) % 4;
+            else dir = (randbyte() & 0x1) ? Direction.north : Direction.south;
         } else {
             dir = player.homedir;
         }
@@ -303,35 +311,16 @@ Unit.traceSupply = function(weather) {
     return 0;
 }
 Unit.score = function() {
-    let v = 0;
+    let v = 0,
+        dist = this.m.boundaryDistance(this, players[this.player].homedir);
     // see M.ASM:4050 - note even inactive units are scored based on future arrival/strength
     if (this.player == Player.german) {
         // maxlon + 2 == #$30 per M.ASM:4110
-        v = (mapboard.maxlon + 2 - this.lon) * (this.mstrng >> 1);
+        v = (dist + 3) * (this.mstrng >> 1);
     } else {
-        v = this.lon * (this.cstrng >> 3);
+        v = dist * (this.cstrng >> 3);
     }
     return v >> 8;
-}
-
-function zocAffecting(player, loc) {
-    // evaluate zoc experienced by player (eg. exerted by !player) in square at pt
-    let zoc = 0;
-    // same player in target square exerts 4, enemy negates zoc
-    if (loc.unitid != null) {
-        if (oob[loc.unitid].player == player) return zoc;
-        zoc += 4;
-    }
-    squareSpiral(loc, 3).slice(1).forEach((d, i) => {
-        // even steps in the spiral exert 2, odd steps exert 1
-        if (d.unitid != null && oob[d.unitid].player != player) zoc += (i % 2) ? 1: 2;
-    });
-    return zoc;
-}
-
-function zocBlocked(player, src, dst) {
-    // does enemy ZoC block player move from src to dst?
-    return zocAffecting(player, src) >= 2 && zocAffecting(player, dst) >= 2;
 }
 
 function modifyStrength(strength, modifier) {
@@ -343,13 +332,4 @@ function modifyStrength(strength, modifier) {
     return strength;
 }
 
-//TODO set up oob after choosing variant
-const oob = oobVariants.apx.map(vs => Unit(...vs));
-
-export {
-    Unit,
-    oob,
-    zocAffecting,
-    zocBlocked,
-    modifyStrength,
-};
+export {Unit};

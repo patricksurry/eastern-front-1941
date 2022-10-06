@@ -1,9 +1,7 @@
 import {
     players, Player, terraintypes, Terrain, directions, Direction, weatherdata, Weather,
-    monthdata, cities, anticColor, gameState
-} from './game.js';
-import {oob} from './unit.js';
-import {mapboard, Location, mapForegroundColor, moveIceLine} from './map.js';
+    monthdata, anticColor
+} from './defs.js';
 import {
     centered, errmsg, infomsg,
     focusUnit, focusUnitRelative, getFocusedUnit, unfocusUnit, showNewOrder, stopUnitsFlashing,
@@ -180,15 +178,14 @@ function endTurn() {
     // stop thinking and collect orders
     Object.values(Player).forEach(player => { if (player != gameState.human) conclude(player) });
 
-    // M.asm:4950 movement execution
-    oob.forEach(u => u.scheduleOrder(true));
+    oob.scheduleOrders();
 
     let tick = 0;
     function tickTock() {
         // original code processes movement in reverse-oob order
         // could be interesting to randomize, or support a 'pause' order to handle traffic
         stopUnitsFlashing();
-        oob.filter(u => u.tick == tick).reverse().forEach(u => u.tryOrder());
+        oob.executeOrders(tick);
         //TODO should this be ++tick or <= 32?
         setTimeout(tick++ < 32 ? tickTock: nextTurn, delay);
     }
@@ -202,21 +199,9 @@ function nextTurn() {
     errmsg('PLEASE ENTER YOUR ORDERS NOW');
     stopUnitsFlashing();
 
-    // regroup, reinforce, recover...
-    oob.filter(u => u.isActive()).forEach(u => u.recover());
-
+    oob.regroup();
     // TODO trace supply, with CSTR >> 1 if not, russian MSTR+2 (for apx)
-
-    // M.ASM:3720  delay reinforcements scheduled for an occuplied square
-    oob.filter(u => u.arrive == gameState.turn)
-        .forEach(u => {
-            const loc = Location.of(u);
-            if (loc.unitid != null) {
-                u.arrive++;
-            } else {
-                u.moveTo(loc);   // reveal unit and link to the map square
-            }
-        });
+    oob.reinforce();
 
     let dt = new Date(gameState.startDate);
     dt.setDate(dt.getDate() + 7 * gameState.turn);
@@ -227,16 +212,16 @@ function nextTurn() {
 
     gameState.weather = minfo.weather;
 
-    if (minfo.water != null) moveIceLine(minfo.water);
+    if (minfo.water != null) game.mapboard.freezeThaw(minfo.water);
 
     // update the tree color in place in the terrain data :grimace:
     terraintypes[Terrain.mountain_forest].altcolor = minfo.trees;
 
     // paint the current map colors
-    repaintMap(mapForegroundColor, weatherdata[minfo.weather].earth, minfo.weather == Weather.snow ? '04': '08');
+    repaintMap(game.mapboard.fgcolor, weatherdata[minfo.weather].earth, minfo.weather == Weather.snow ? '04': '08');
 
     // start thinking...
     players.forEach((_, player) => { if (player != gameState.human) think(player); });
 }
 
-export {start, oob, d3, putIcon};
+export {start, d3, putIcon};

@@ -1,141 +1,186 @@
-import {mapVariants} from './map-data.js';
 import {
     directions, Direction,
     terraintypes, Terrain,
     waterstate, Water,
-    UnitKind,
-    cities,
-    randbyte, gameState,
-} from './game.js';
+    randbyte,
+} from './defs.js';
+import {mapVariants, blocked} from './map-data.js';
 
-
-// D.ASM:5500 BHX1 .BYTE ... / BHY1 / BHX2 / BHY2
-// there are 11 impassable square-sides
-// the original game stores 22 sets of (x1,y1),(x2,y2) coordinates
-// to enumerate the to/from coordinates in both senses
-// but we can reduce from 88 to 22 bytes by storing a list of
-// squares you can't move north from (or south to), and likewise west from (or east to)
-const blocked = [
-    // can't move north from here (or south into here)
-    [
-        {lon: 40, lat: 35},
-        {lon: 39, lat: 35},
-        {lon: 38, lat: 35},
-        {lon: 35, lat: 36},
-        {lon: 34, lat: 36},
-        {lon: 22, lat: 3},
-        {lon: 15, lat: 6},
-        {lon: 14, lat: 7},
-        {lon: 19, lat: 3}
-    ],
-    // can't move west from here (or east into here)
-    [
-        {lon: 35, lat: 33},
-        {lon: 14, lat: 7},
-    ]
-];
 
 // the map is made up of locations, each with a lon and lat
 function Location(lon, lat, ...data) {
-    if (!Number.isInteger(lon) || !Number.isInteger(lat)) throw("bad Location(lon: int, lat: int, ...data)")
+    if (!Number.isInteger(lon) || !Number.isInteger(lat))
+        throw(`bad Location(lon: int, lat: int, ...data), got lon=${lon}, lat=${lat}`)
     return Object.assign({
             lon,
             lat,
-            valid: lat >= 0 && lat < maxlat && lon >= 0 && lon < maxlon,
-            id:  (lat << 8) + lon,
-            row: maxlat - lat,
-            col: maxlon - lon,
             put: Location.put,
-            neighbor: Location.neighbor,
         }, ...data);
 }
-Location.of = d => {
-    let loc = Location(d.lon, d.lat);
-    return loc.valid ? mapboard[loc.row][loc.col]: loc;
+Location.put = function(d) {
+    d.lon = this.lon;
+    d.lat = this.lat;
+    return d;
 }
-Location.fromid = x => Location.of({lon: x & 0xff, lat: x >> 8});
-Location.put = function(d) { d.lon = this.lon; d.lat = this.lat; return d; }
-Location.neighbor = function(dir, skipcheck) {
-    let d = directions[dir],
-        lon = this.lon + d.dlon,
-        lat = this.lat + d.dlat,
-        loc = Location.of({lon, lat});
 
-    if (skipcheck) return loc;
-    if (!loc.valid) return null;
+
+// mapboard constructor, used as a container of Locations
+function Mapboard(options, memento) {
+    const variant = mapVariants[options && options.variant || 'apx'],
+        mapencoding = variant.encoding.map((enc, i) => {
+            // convert the encoding table into a lookup of char => [icon, terraintype, alt-flag]
+            let lookup = {}, ch=0;
+            enc.split('|').forEach((s, t) =>
+                s.split('').forEach(c => {
+                    let alt = ((t == 1 && i == 0) || ch == 0x40) ? 1 : 0;
+                    if (ch==0x40) ch--;
+                    lookup[c] = {
+                        icon: 0x80 + i * 0x40 + ch++,
+                        terrain: t,
+                        alt: alt
+                    };
+                })
+            );
+            return lookup;
+        }),
+        // decode the map into a 2-d array of rows x cols of  {lon: , lat:, icon:, terrain:, alt:}
+        mapdata = variant.ascii.split(/\n/).slice(1,-1).map(
+                (row, i) =>
+                row.split('').map(
+                    c => Object.assign({}, mapencoding[i <= 25 ? 0: 1][c])
+                )
+            ),
+        maxlon = mapdata[0].length-2,       // excluding the impassable border valid is 0..maxlon-1, 0..maxlat-1
+        maxlat = mapdata.length-2,
+        mapboard = {
+            locations: mapdata.map(
+                (row, i) => row.map(
+                    (data, j) => {
+                        let lon = maxlon - j,
+                            lat = maxlat - i,
+                            id = (lat << 8) + lon;
+                        return Location(lon, lat, data, {id, row: i, col: j})
+                    }
+                )
+            ),
+            maxlon,
+            maxlat,
+            icelat: 39,     // via M.ASM:8600 PSXVAL initial value is 0x27
+            cities: variant.cities.map(c => {return {...c}}),
+
+            memento: Mapboard.memento,
+            locationOf: Mapboard.locationOf,
+            fromid: Mapboard.fromid,
+            valid: Mapboard.valid,
+            neighbor: Mapboard.neighbor,
+            fgcolor: Mapboard.fgcolor,
+            moveIceLine: Mapboard.freezeThaw,
+            occupy: Mapboard.occupy,
+            manhattanDistance: Mapboard.manhattanDistance,
+            boundaryDistance: Mapboard.boundaryDistance,
+            directionFrom: Mapboard.directionFrom,
+            squareSpiral: Mapboard.squareSpiral,
+            directPath: Mapboard.directPath,
+            bestPath: Mapboard.bestPath,
+            reach: Mapboard.reach,
+        };
+
+    mapboard.cities.forEach((city, i) => {
+        city.points ||= 0;
+        let loc = mapboard.locationOf(city);
+        loc.cityid = i;
+    });
+    if (memento) {
+        mapboard.icelat = memento.shift();
+        //TODO freezethaw between old icelat and this
+        mapboard.cities.forEach(c => c.owner = memento.shift())
+    }
+    return mapboard;
+}
+Mapboard.memento = function() {
+    return [].concat(
+        [this.icelat],
+        this.cities.map(c => c.owner)
+    )
+}
+Mapboard.valid = function(loc) {
+    return loc.lat >= 0 && loc.lat < this.maxlat && loc.lon >= 0 && loc.lon < this.maxlon;
+}
+Mapboard.locationOf = function(d) {
+    let loc = Location(d.lon, d.lat);
+    return this.valid(loc) ? this.locations[this.maxlat - loc.lat][this.maxlon - loc.lon]: loc;
+}
+Mapboard.fromid = function(x) {
+    return this.locationOf({lon: x & 0xff, lat: x >> 8});
+}
+Mapboard.boundaryDistance = function(loc, dir) {
+    switch (dir) {
+        case Direction.north: return this.maxlat - 1 - loc.lat;
+        case Direction.south: return loc.lat;
+        case Direction.east: return loc.lon;
+        case Direction.west: return this.maxlon - 1 - loc.lon;
+    }
+}
+Mapboard.neighbor = function(loc, dir, skipcheck) {
+    let d = directions[dir],
+        lon = loc.lon + d.dlon,
+        lat = loc.lat + d.dlat,
+        nbr = this.locationOf({lon, lat});
+
+    if (skipcheck) return nbr;
+    if (!this.valid(nbr)) return null;
 
     let legal = (
-            loc.terrain != Terrain.impassable
+            nbr.terrain != Terrain.impassable
             && !(
                 (dir == Direction.north || dir == Direction.south)
-                ? blocked[0].find(d => d.lon == this.lon && d.lat == (dir == Direction.north ? this.lat : loc.lat))
-                : blocked[1].find(d => d.lon == (dir == Direction.west ? this.lon : loc.lon) && d.lat == this.lat)
+                ? blocked[0].find(d => d.lon == loc.lon && d.lat == (dir == Direction.north ? loc.lat : nbr.lat))
+                : blocked[1].find(d => d.lon == (dir == Direction.west ? loc.lon : nbr.lon) && d.lat == loc.lat)
             )
         );
-    return legal ? loc: null;
+    return legal ? nbr: null;
 }
-
-function mapForegroundColor(loc) {
+Mapboard.fgcolor = function(loc) {
     // return the antic fg color for a given location
     let tinfo = terraintypes[loc.terrain],
-        alt = (loc.terrain == Terrain.city) ? cities[loc.cityid].owner : loc.alt;
+        alt = (loc.terrain == Terrain.city) ? this.cities[loc.cityid].owner : loc.alt;
     return alt ? tinfo.altcolor : tinfo.color;
 }
-
-function moveIceLine(w) {
+Mapboard.freezeThaw = function(w) {
     // move ice by freeze/thaw rivers and swamps, where w is Water.freeze or Water.thaw
     // ICELAT -= [7,14] incl]; clamp 1-39 incl
     // small bug in APX code? freeze chrs $0B - $29 (exclusive, seems like it could freeze Kerch straight?)
     let state = waterstate[w],
         other = waterstate[1-w],
-        oldlat = gameState.icelat,
+        oldlat = this.icelat,
         dlat = directions[state.dir].dlat,
         change = (randbyte() & 0x8) + 7;
 
-    gameState.icelat = Math.min(maxlat, Math.max(1, oldlat + dlat * change));
+    this.icelat = Math.min(this.maxlat, Math.max(1, oldlat + dlat * change));
 
-    let skip = (w == Water.freeze) ? oldlat: gameState.icelat;  // for freeze skip old line, for thaw skip new new
-    for (let i = oldlat; i != gameState.icelat + dlat; i += dlat) {
+    let skip = (w == Water.freeze) ? oldlat: this.icelat;  // for freeze skip old line, for thaw skip new new
+    for (let i = oldlat; i != this.icelat + dlat; i += dlat) {
         if (i == skip) continue;
-        mapboard[maxlat - i].forEach(d => {
+        this.locations[this.maxlat - i].forEach(d => {
             let k = other.terrain.indexOf(d.terrain);
             if (k != -1) d.terrain = state.terrain[k];
         });
     }
 }
-
-function moveCost(terrain, kind, weather) {
-    return kind == UnitKind.air ? 4: (terraintypes[terrain].movecost[kind][weather] || 255);
+Mapboard.occupy = function(loc, player) {
+    if (loc.cityid != null) this.cities[loc.cityid].owner = player;
+    //TODO repaint this square
 }
-
-function moveCosts(kind, weather) {
-    // return a table of movement costs based on armor/inf and weather
-    return terraintypes.map((_, i) => moveCost(i, kind, weather));
-}
-
-function manhattanDistance(p, q) {
+Mapboard.manhattanDistance = function(p, q) {
     // calculate the taxicab metric between two locations
     return Math.abs(p.lat - q.lat) + Math.abs(p.lon - q.lon);
 }
-
-function _directionsFrom(p, q) {
-    // project all directions from p to q and rank them, ensuring tie breaking has no bias
-    let dlat = (q.lat - p.lat),
-        dlon = (q.lon - p.lon);
-    if (!dlat && !dlon) return null;
-    return directions
-        .map((d, i) => [d.dlon * dlon + d.dlat * dlat, i])
-        // in case tied dirs (which will be neighbors) pick the  the clockwise leader
-        .sort(([a, i], [b, j]) => (b - a) || ((j - i + 4 + 2)%4) - 2);
-}
-
-function directionFrom(p, q) {
+Mapboard.directionFrom = function(p, q) {
     // return the index of the winning direction
     let projections = _directionsFrom(p, q);
     return projections && projections[0][1];
 }
-
-function squareSpiral(center, diameter) {
+Mapboard.squareSpiral = function(center, diameter) {
     // return list of the diameter^2 locations spiraling out from loc
     // which form a square of 'radius' (diameter-1)/2, based on a spiralpattern
     // that looks like N, E, S,S, W,W, N,N,N, E,E,E, S,S,S,S, W,W,W,W, ...
@@ -148,7 +193,7 @@ function squareSpiral(center, diameter) {
         side = 1;
 
     while (++i < diameter) {
-        loc = loc.neighbor(dir, true);
+        loc = this.neighbor(loc, dir, true);
         locs.push(loc);
         if (i == side) {
             side += dir % 2;
@@ -158,8 +203,7 @@ function squareSpiral(center, diameter) {
     }
     return locs;
 }
-
-function directPath(p, q, costs) {
+Mapboard.directPath = function(p, q, costs) {
     /*
     implements a variation of Bresenham's algorith to get direct path from p to q
     returns the list of directions to step from p to q, along with the terrain cost
@@ -173,8 +217,8 @@ function directPath(p, q, costs) {
     so we just keep choosing the step that moves E back towards zero.
     */
 
-    let loc = Location.of(p),
-        goal = Location.of(q);
+    let loc = this.locationOf(p),
+        goal = this.locationOf(q);
     if (loc.id == goal.id) return {cost: 0, orders: []};
 
     const
@@ -195,20 +239,19 @@ function directPath(p, q, costs) {
         let [k, de] = Math.abs(err + ds) < Math.abs(err + dt) ? [i, ds]: [j, dt];
         err += de;
         orders.push(k);
-        loc = loc.neighbor(k, true);
+        loc = this.neighbor(loc, k, true);
         cost += costs ? costs[loc.terrain]: 1;
     }
 
     return {cost, orders}
 }
-
-function bestPath(p, q, costs) {
+Mapboard.bestPath = function (p, q, costs) {
     // implements A* shortest path, e.g. see https://www.redblobgames.com/pathfinding/a-star/introduction.html
     // returns {cost: , orders: []} where cost is the movement cost (ticks), and orders is a seq of dir indices
     // or null if goal is unreachable
     const minCost = Math.min(...costs);
-    let src = Location.of(p),
-        goal = Location.of(q),
+    let src = this.locationOf(p),
+        goal = this.locationOf(q),
         frontEst = {_: 0},              // estimated total cost via this square, _ is head
         frontNext = {_: src.id},        // linked list with next best frontier square to check
         dirTo = {[src.id]: null},       // direction index which arrived at keyed square
@@ -216,20 +259,20 @@ function bestPath(p, q, costs) {
 
     while (frontNext._) {
         let next = frontNext._;
-        src = Location.fromid(next);
+        src = this.fromid(next);
         if (src.id == goal.id) break;
         frontNext._ = frontNext[next];
         frontEst._ = frontEst[next];
         delete frontNext[next], frontEst[next]
 
         directions.forEach((_, i) => {
-            let dst = src.neighbor(i);
+            let dst = this.neighbor(src, i);
             if (!dst) return;
             let cost = costTo[src.id] + costs[dst.terrain];
             if (!(dst.id in costTo)) {  // with consistent estimate we always find best first
                 costTo[dst.id] = cost;
                 dirTo[dst.id] = i;
-                let est = cost + minCost * manhattanDistance(src, dst),
+                let est = cost + minCost * this.manhattanDistance(src, dst),
                     at = '_';
                 while (frontNext[at] && frontEst[at] < est) at = frontNext[at];
                 next = frontNext[at];
@@ -246,23 +289,22 @@ function bestPath(p, q, costs) {
         let dir = dirTo[src.id];
         if (dir == null) break;
         orders.unshift(dir);
-        src = src.neighbor((dir + 2) % 4);
+        src = this.neighbor(src, (dir + 2) % 4);    // walk back in reverse direction
     }
     return {cost: costTo[goal.id], orders: orders}
 }
-
-function reach(src, range, costs) {
+Mapboard.reach = function(src, range, costs) {
     // find all squares accessible to unit within range, ignoring other units, zoc
     let cost = 0,
-        start = Location.of(src),
+        start = this.locationOf(src),
         locs = {[start.id]: 0};
 
     while (cost < range) {
         // eslint-disable-next-line no-unused-vars
         Object.entries(locs).filter(([_,v]) => v == cost).forEach(([k,_]) => {
-            let src = Location.fromid(k);
+            let src = this.fromid(k);
             Object.values(Direction).forEach(i => {
-                let dst = src.neighbor(i);
+                let dst = this.neighbor(src, i);
                 if (!dst) return;
                 let curr = dst.id in locs ? locs[dst.id] : 255;
                 if (curr <= cost) return;
@@ -275,61 +317,15 @@ function reach(src, range, costs) {
     return locs;
 }
 
+function _directionsFrom(p, q) {
+    // project all directions from p to q and rank them, ensuring tie breaking has no bias
+    let dlat = (q.lat - p.lat),
+        dlon = (q.lon - p.lon);
+    if (!dlat && !dlon) return null;
+    return directions
+        .map((d, i) => [d.dlon * dlon + d.dlat * dlat, i])
+        // in case tied dirs (which will be neighbors) pick the  the clockwise leader
+        .sort(([a, i], [b, j]) => (b - a) || ((j - i + 4 + 2)%4) - 2);
+}
 
-//TOOD bundle as functions to build mapboard from variant
-const variant = mapVariants.apx,
-    mapencoding = variant.encoding.map((enc, i) => {
-        // convert the encoding table into a lookup of char => [icon, terraintype, alt-flag]
-        let lookup = {}, ch=0;
-        enc.split('|').forEach((s, t) =>
-            s.split('').forEach(c => {
-                let alt = ((t == 1 && i == 0) || ch == 0x40) ? 1 : 0;
-                if (ch==0x40) ch--;
-                lookup[c] = {
-                    icon: 0x80 + i * 0x40 + ch++,
-                    terrain: t,
-                    alt: alt
-                };
-            })
-        );
-        return lookup;
-    }),
-    // decode the map into a 2-d array of rows x cols of  {lon: , lat:, icon:, terrain:, alt:}
-    mapdata = variant.ascii.split(/\n/).slice(1,-1).map(
-            (row, i) =>
-            row.split('').map(
-                c => Object.assign({}, mapencoding[i <= 25 ? 0: 1][c])
-            )
-        ),
-    maxlon = mapdata[0].length-2,
-    maxlat = mapdata.length-2,
-    mapboard = mapdata.map(
-        (row, i) => row.map(
-            (data, j) => Location(maxlon - j, maxlat - i, data, {unitid: null})
-        )
-    );
-mapboard.maxlon = maxlon;
-mapboard.maxlat = maxlat;
-
-cities.forEach((city, i) => {
-    city.points ||= 0;
-    let loc = Location.of(city);
-    console.assert(loc.terrain == Terrain.city, `Expected city terrain for ${city}`);
-    loc.cityid = i;
-});
-
-
-export {
-    Location,
-    mapboard,
-    mapForegroundColor,
-    moveIceLine,
-    moveCost,
-    moveCosts,
-    manhattanDistance,
-    directionFrom,
-    squareSpiral,
-    directPath,
-    bestPath,
-    reach,
-};
+export {Location, Mapboard};
