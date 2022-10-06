@@ -73,7 +73,8 @@ Game.memento = function() {
     )
 }
 Game.token = function() {
-    return encode(this.memento())
+    // TODO get/set window.location.href
+    return encode(this.memento());
 }
 
 export {Game};

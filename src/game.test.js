@@ -20,8 +20,9 @@ test("Game roundtrip", () => {
     game.oob.reinforce();
     game.weather = Weather.dry;
 
-    let token = game.token();
-    console.log(token);
+    let arr = game.memento(),
+        token = game.token();
+    console.log('state array of', arr.length, 'ints =>', token.length, 'byte token:', token);
 
     let game2 = Game(token);
 

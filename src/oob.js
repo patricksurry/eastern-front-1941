@@ -36,23 +36,28 @@ function Oob(game, memento) {
                 }
             });
         let active = o.activeUnits(),
+            human = active.filter(u => u.player == game.human),
             lats = zagzig(memento.splice(0, active.length)),
             lons = zagzig(memento.splice(0, active.length)),
             mstrs = zagzig(memento.splice(0, active.length)),
             cdmgs = memento.splice(0, active.length),
+            nords = memento.splice(0, human.length),
             lat = 0, lon = 0, mstr = 255;
         active.forEach(u => {
             u.lat = lat + lats.shift();
             u.lon = lon + lons.shift();
             u.mstrng = mstr + mstrs.shift();
-            u.cstrng = u.mstrng - cdmgs.shift();
             [lat, lon, mstr] = [u.lat, u.lon, u.mstrng];
+            u.cstrng = u.mstrng - cdmgs.shift();
+        });
+        human.forEach(u => {
+            u.orders = memento.splice(0, nords.shift());
         });
     }
     return o;
 }
 Oob.memento = function() {
-    let lats = [], lons = [], mstrs = [], cdmgs = [],
+    let lats = [], lons = [], mstrs = [], cdmgs = [], nords = [], ords = [],
         lat = 0, lon = 0, mstr = 255,
         active = this.activeUnits();
 
@@ -64,11 +69,16 @@ Oob.memento = function() {
         lats.push(u.lat - lat);
         lons.push(u.lon - lon);
         mstrs.push(u.mstrng - mstr);
-        cdmgs.push(u.mstrng - u.cstrng);
         [lat, lon, mstr] = [u.lat, u.lon, u.mstrng];
+
+        cdmgs.push(u.mstrng - u.cstrng);
+        if (u.player == this.game.human) {
+            nords.push(u.orders.length);
+            ords = ords.concat(u.orders);
+        }
     });
 
-    return status.concat(zigzag(lats), zigzag(lons), zigzag(mstrs), cdmgs);
+    return status.concat(zigzag(lats), zigzag(lons), zigzag(mstrs), cdmgs, nords, ords);
 }
 Oob.activeUnits = function(player) {
     return this.filter(u => u.isActive() && (player == null || u.player == player));
@@ -114,6 +124,5 @@ Oob.zocBlocked = function(player, src, dst) {
     // does enemy ZoC block player move from src to dst?
     return this.zocAffecting(player, src) >= 2 && this.zocAffecting(player, dst) >= 2;
 }
-
 
 export {Oob};

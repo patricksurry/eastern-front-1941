@@ -1,6 +1,4 @@
 import {oobVariants} from './unit-data.js';
-import {Oob} from './oob.js';
-import {Mapboard} from './map.js';
 import {Game} from './game.js';
 
 
@@ -31,7 +29,7 @@ test("ZoC is calculated correctly", () => {
         X X .       6 7 4
     */
 
-    let locs = game.mapboard.squareSpiral({lon: 20, lat: 20}, 3),
+    let locs = oob.m.squareSpiral({lon: 20, lat: 20}, 3),
         p0 = 0, p1 = 0;
 
     while(oob[p0].player != 0) p0++;

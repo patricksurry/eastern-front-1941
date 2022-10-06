@@ -55,18 +55,3 @@ test("run length coding roundtrip", () => {
     let run = [0, 1, 1, 1, 1, 2];
     expect(decode(encode(run))).toEqual(run);
 })
-
-test("vanilla oob roundtrip", () => {
-    let vs = oobVariants.apx41, xs = [], ys = [], ms = [], x = 0, y = 0, m = 0;
-    vs.forEach(v => {
-        xs.push(v[0] - x);
-        ys.push(v[1] - y);
-        ms.push(v[2] - m);
-        [x, y, m] = v.slice(0, 3);
-    });
-    let seq = [].concat(xs, ys, ms),
-        s = encode(zigzag(seq));
-
-    console.log(`oob array length ${seq.length} => ${s.length} character string`);
-    expect(zagzig(decode(s))).toEqual(seq);
-})
