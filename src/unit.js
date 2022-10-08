@@ -1,13 +1,8 @@
 import {
     enumFor,
-    players, Player, terraintypes, Terrain, Direction, Weather,
+    players, Player, terraintypes, Terrain, Direction, directions, Weather,
     unitkinds, UnitKind, moveCost, moveCosts, randbyte,
-    variants, scenarios,
 } from './defs.js';
-
-import {oobVariants} from './unit-data.js';
-
-import {errmsg} from './display.js';
 
 
 const
@@ -94,6 +89,7 @@ function Unit(game, ...args) {
             recover: Unit.recover,
             traceSupply: Unit.traceSupply,
             score: Unit.score,
+            describe: Unit.describe,
         },
     );
     delete u.key;
@@ -123,16 +119,16 @@ Unit.path = function() {
 Unit.addOrder = function(dir) {
     let dst = null;
     if (!this.canMove) {
-        errmsg("MILITIA UNITS CAN'T MOVE!");
+        this.game.errmsg("MILITIA UNITS CAN'T MOVE!");
     } else if (this.orders.length == 8) {
-        errmsg("ONLY 8 ORDERS ARE ALLOWED!")
+        this.game.errmsg("ONLY 8 ORDERS ARE ALLOWED!")
     } else {
         let path = this.path();
         dst = this.m.neighbor(path.pop(), dir);
         if (dst) {
             this.orders.push(dir);
         } else {
-            errmsg("IMPASSABLE!");
+            this.game.errmsg("IMPASSABLE!");
         }
     }
     return dst;
@@ -148,6 +144,7 @@ Unit.scheduleOrder = function(reset) {
     if (reset) this.tick = 0;
     if (this.orders.length) this.tick += this.moveCost(this.orders[0]);
     else this.tick = 255;
+    this.game.changed('unit', this, {event: 'resolving'});
 }
 Unit.bestPath = function(goal) {
     //TODO config directPath for comparison
@@ -163,17 +160,15 @@ Unit.moveTo = function(dst) {
         dst.put(this);
         dst.unitid = this.id;
         this.m.occupy(dst, this.player);
-        if (this.show) this.show(true);  //TODO for testing these callbacks might not exist
-    } else {
-        if (this.hide) this.hide(true);
     }
+    this.game.changed('unit', this, {event: dst ? 'moved': 'removed'});
 }
 Unit.tryOrder = function() {
     let src = this.m.locationOf(this),
         dst = this.m.neighbor(src, this.orders[0]);  // assumes legal
 
     if (dst.unitid != null) {
-        let opp = oob[dst.unitid];
+        let opp = this.game.oob[dst.unitid];
         if (opp.player != this.player) {
             if (!this.resolveCombat(opp)) {
                 this.tick++;
@@ -185,7 +180,7 @@ Unit.tryOrder = function() {
             this.tick += 2;
             return;
         }
-    } else if (zocBlocked(this.player, src, dst)) {
+    } else if (this.game.oob.zocBlocked(this.player, src, dst)) {
         // moving between enemy ZOC M.ASM:5740
         this.tick += 2;
         return;
@@ -238,7 +233,7 @@ Unit.takeDamage = function(mdmg, cdmg, checkBreak, retreatDir) {
         this.moveTo(null);
         return 1;
     }
-    this.showStats(); // update strength
+    this.game.changed('unit', this, {event: 'stats'});
 
     if (!checkBreak) return 0;
 
@@ -256,7 +251,7 @@ Unit.takeDamage = function(mdmg, cdmg, checkBreak, retreatDir) {
             for (let dir of dirs) {
                 let src = this.m.locationOf(this),
                     dst = src.neighbor(dir);
-                if (!dst || dst.unitid != null || zocBlocked(this.player, src, dst)) {
+                if (!dst || dst.unitid != null || this.game.oob.zocBlocked(this.player, src, dst)) {
                     if (this.takeDamage(0, 5)) return 1;  // dead
                 } else {
                     this.moveTo(dst);
@@ -294,7 +289,7 @@ Unit.traceSupply = function() {
             return 1;
         } else if (dst.terrain == Terrain.impassable && (supply.sea == 0 || dst.alt == 1)) {
             cost = 1;
-        } else if (zocAffecting(this.player, dst) >= 2) {
+        } else if (this.game.oob.zocAffecting(this.player, dst) >= 2) {
             cost = 2;
         } else {
             loc = dst;
@@ -321,6 +316,20 @@ Unit.score = function() {
         v = dist * (this.cstrng >> 3);
     }
     return v >> 8;
+}
+Unit.describe = function(debug) {
+    let s = `[${this.id}] ${this.mstrng} / ${this.cstrng}\n`;
+    s += `${this.label}\n`;
+    if (this.orders) s += 'orders: ' + this.orders.map(d => directions[d].key[0].toUpperCase()).join('');
+
+    if (this.ifr && debug) {
+        s += `ifr: ${this.ifr}; `;
+        s += directions.map((d, i) => `${d.key[0]}: ${this.ifrdir[i]}`).join(' ') + '\n';
+        s += this.objective
+            ? `obj: lon ${this.objective.lon} lat ${this.objective.lat}\n`
+            : 'no objective\n'
+    }
+    return s;
 }
 
 function modifyStrength(strength, modifier) {

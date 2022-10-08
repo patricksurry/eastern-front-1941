@@ -29,12 +29,12 @@ function zigzag(vs) {
     if (typeof vs === 'number') return zigzag([vs])[0];
 
     if (!vs.every(Number.isInteger)) throw new Error('Expected list of integers', vs);
-    return vs.map(v => v < 0 ? ((-v) << 1) + 1 : v << 1);
+    return vs.map(v => v < 0 ? ((-v) << 1) - 1: v << 1);
 }
 
 function zagzig(vs) {
     if (!vs.every(isuint)) throw new Error('Expected list of unsigned integers', vs);
-    return vs.map(v => v & 0x1 ? -(v >> 1): v >> 1);
+    return vs.map(v => v & 0x1 ? -((v + 1) >> 1): v >> 1);
 }
 
 // encode an array of unsigned ints, or a singleton
@@ -58,14 +58,19 @@ function encode(value) {
 function encode_uint(n) {
     if (!isuint(n)) throw new Error(`Invalid unsigned integer: ${n}`)
 
-    let s = '';
+    let s = '',
+        has_continuation_bit = 1;
 
-    do {
+    while (has_continuation_bit) {
         let clamped = n & 0x1f;
         n >>= 5;
-        if (n > 0) clamped |= 0x20;
+        has_continuation_bit = (n > 0);
+        if (has_continuation_bit) {
+            clamped |= 0x20;
+            n--;             // remove redundancy since continuation_bit tells us n > clamped
+        }
         s += int2chr[clamped];
-    } while (n > 0);
+    }
 
     return s;
 }
@@ -85,6 +90,8 @@ function decode(s) {
                 u = chr2int[c];
 
             if (u === undefined) throw new Error(`Invalid character: ${c} as position ${i} of ${s}`);
+
+            if (has_continuation_bit) u++;
 
             has_continuation_bit = u & 0x20;
             u &= 0x1f;

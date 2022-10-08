@@ -24,7 +24,7 @@ function _think(game, player, firstpass) {
             //TODO this tends to send most units to same beleagured square
             u.objective = m.locationOf(findBeleaguered(m, u, friends));
         } else if (firstpass && (u.cstrng <= (u.mstrng >> 1) || u.ifrdir[pinfo.homedir] >= 16)) {
-            // run home if hurting or blocked towards home
+            // run home if hurting or outnumbered in the rear
             //TODO could look for farthest legal square (valid & not impassable) 5, 4, ...
             u.objective = Location(u.lon + 5 * directions[pinfo.homedir].dlon, u.lat);
         } else {

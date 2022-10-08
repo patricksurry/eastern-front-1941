@@ -11,6 +11,7 @@ function Oob(game, memento) {
             {
                 game: game,
                 m: game.mapboard,
+                nextTurn: Oob.nextTurn,
                 memento: Oob.memento,
                 activeUnits: Oob.activeUnits,
                 scheduleOrders: Oob.scheduleOrders,
@@ -55,6 +56,11 @@ function Oob(game, memento) {
         });
     }
     return o;
+}
+Oob.nextTurn = function() {
+    this.regroup();
+    // TODO trace supply, with CSTR >> 1 if not, russian MSTR+2 (for apx)
+    this.reinforce();
 }
 Oob.memento = function() {
     let lats = [], lons = [], mstrs = [], cdmgs = [], nords = [], ords = [],

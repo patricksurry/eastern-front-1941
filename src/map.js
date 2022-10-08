@@ -2,6 +2,8 @@ import {
     directions, Direction,
     terraintypes, Terrain,
     waterstate, Water,
+    monthdata,
+    Weather, weatherdata,
     randbyte,
 } from './defs.js';
 import {mapVariants, blocked} from './map-data.js';
@@ -25,8 +27,8 @@ Location.put = function(d) {
 
 
 // mapboard constructor, used as a container of Locations
-function Mapboard(options, memento) {
-    const variant = mapVariants[options && options.variant || 'apx'],
+function Mapboard(game, memento) {
+    const variant = mapVariants[game.variant || 'apx'],
         mapencoding = variant.encoding.map((enc, i) => {
             // convert the encoding table into a lookup of char => [icon, terraintype, alt-flag]
             let lookup = {}, ch=0;
@@ -53,6 +55,7 @@ function Mapboard(options, memento) {
         maxlon = mapdata[0].length-2,       // excluding the impassable border valid is 0..maxlon-1, 0..maxlat-1
         maxlat = mapdata.length-2,
         mapboard = {
+            game: game,
             locations: mapdata.map(
                 (row, i) => row.map(
                     (data, j) => {
@@ -68,6 +71,7 @@ function Mapboard(options, memento) {
             icelat: 39,     // via M.ASM:8600 PSXVAL initial value is 0x27
             cities: variant.cities.map(c => {return {...c}}),
 
+            nextTurn: Mapboard.nextTurn,
             memento: Mapboard.memento,
             locationOf: Mapboard.locationOf,
             fromid: Mapboard.fromid,
@@ -83,6 +87,7 @@ function Mapboard(options, memento) {
             directPath: Mapboard.directPath,
             bestPath: Mapboard.bestPath,
             reach: Mapboard.reach,
+            describe: Mapboard.describe,
         };
 
     mapboard.cities.forEach((city, i) => {
@@ -96,6 +101,21 @@ function Mapboard(options, memento) {
         mapboard.cities.forEach(c => c.owner = memento.shift())
     }
     return mapboard;
+}
+Mapboard.nextTurn = function() {
+    let mdata = monthdata[this.game.month],
+        earth = weatherdata[mdata.weather].earth;
+
+    // update the tree color in place in the terrain data :grimace:
+    terraintypes[Terrain.mountain_forest].altcolor = mdata.trees;
+
+    if (mdata.water != null) this.freezeThaw(mdata.water);
+
+    this.game.changed('map', this, {
+        fgcolorfn: (loc) => this.fgcolor(loc),
+        bgcolor: earth,
+        labelcolor: mdata.weather == Weather.snow ? '04': '08'
+    });
 }
 Mapboard.memento = function() {
     return [].concat(
@@ -315,6 +335,10 @@ Mapboard.reach = function(src, range, costs) {
         cost++;
     }
     return locs;
+}
+Mapboard.describe = function(loc) {
+    return `[${loc.id}] ${terraintypes[loc.terrain].key}${loc.alt ? "-alt": ""}\n`
+        + `lon ${loc.lon}, lat ${loc.lat}`;
 }
 
 function _directionsFrom(p, q) {

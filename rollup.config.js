@@ -8,7 +8,7 @@ import eslint from '@rollup/plugin-eslint';
 const production = !process.env.ROLLUP_WATCH;
 
 export default {
-    input: 'src/main.js',
+    input: 'src/ui.js',
     output: {
         file: 'static/ef1941.js',
         name: 'ef1941',

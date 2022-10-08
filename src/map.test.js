@@ -5,7 +5,7 @@ import {Location, Mapboard} from './map.js';
 //TODO test cities <=> city terrain       console.assert(loc.terrain == Terrain.city, `Expected city terrain for ${city}`);
 
 const
-    mapboard = Mapboard(),
+    mapboard = Mapboard({}),
     loc34 = mapboard.locationOf(Location(3, 4));
 
 test("Invalid lon arg should throw", () => {
