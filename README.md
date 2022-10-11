@@ -309,13 +309,11 @@ _COMBAT_7:  ldx HMORDS,x     ; ad29 bed232  how many orders queued for each unit
 
 ### Things TODO
 
-- Game(options) containing mapboard etc; each object emit enought state to recover itself
+- 'resolving' doesn't capture prior defenders
 
-- change fontmap with apx/cart choice, via css variable?
+- key for toggling level / variant / start / apx
 
-- toggle x twice reveals debug.  refactor toggles as shared routine?
-
-- Loc by ref issue??
+- toggle x twice reveals debug (because doubly classed, and visibility is local not children vs display)
 
 - debug console group for specific unit
 
@@ -324,8 +322,6 @@ _COMBAT_7:  ldx HMORDS,x     ; ad29 bed232  how many orders queued for each unit
 - russians don't all retreat in playthru video [no orders on first turn, how does ARRIVE/TURN/THINK relate?]
 
 - can air fly over impassable?
-
-- save/load game - turn, city control, unit mstrng/cstrng/lat/lon/arr (0 if dead, skip if not arrive)
 
 - have think() track a current unit and bail out once it uses a certain amount of time
 

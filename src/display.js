@@ -1,4 +1,4 @@
-import {players, directions} from './defs.js';
+import {players, directions, variants} from './defs.js';
 
 import * as d3 from 'd3';
 
@@ -21,7 +21,7 @@ const
         "#003c00",  "#205c20",  "#407c40",  "#5c9c5c",  "#74b474",  "#8cd08c",  "#a4e4a4",  "#b8fcb8",
         "#143800",  "#345c1c",  "#507c38",  "#6c9850",  "#84b468",  "#9ccc7c",  "#b4e490",  "#c8fca4",
         "#2c3000",  "#4c501c",  "#687034",  "#848c4c",  "#9ca864",  "#b4c078",  "#ccd488",  "#e0ec9c",
-        "#442800",  "#644818",  "#846830",  "#a08444",  "#b89c58",  "#d0b46c",  "#e8cc7c",  "#fce08c"
+        "#442800",  "#644818",  "#846830",  "#a08444",  "#b89c58",  "#d0b46c",  "#e8cc7c",  "#fce08c",
     ];
 
 function centered(s, width) {
@@ -101,201 +101,24 @@ function showAt(sel, loc, dx, dy) {
         .style('opacity', 1);
 }
 
-function Display(help, game) {
-
-    const icon = (d) => d.icon,
-        unitcolor = (u) => players[u.player].color;
-
-/*
-    var r = document.querySelector(':root');
-    r.style.setProperty('--fontmap', 'url(fontmap-cart.png)');
-*/
-
-    // set up background colors
-    setclr('body', 'D4');
-    setclr('.date-rule', '1A');
-    setclr('.info-rule', '02');  // same as map
-    setclr('.err-rule', '8A');
-
-    // set up info, error and help
-    putlines('#help-window', help, '04', '0e');
-    putlines('#date-window', [''], '6A', 'B0');
-    putlines('#info-window', [''], '28', '22');
-    putlines('#err-window', [''], c => c == "}" ? '94': '22', '3A');
-
-    _datemsg(centered("EASTERN FRONT 1941", 20))
-    _infomsg(centered('COPYRIGHT 1982 ATARI'), centered('ALL RIGHTS RESERVED'));
-
-    // draw the map characters with a semi-transparent dimming layer which we can hide/show
-    putlines('#map', game.mapboard.locations, 'ff', '00', icon, m => `map-${m.id}`)
-        .append('div')
-        .classed('chr-dim', true)
-        .classed('extra', true);
-
-    // add the city labels
-    d3.select('#labels')
-        .selectAll('div.label')
-        .data(game.mapboard.cities)
-      .join('div')
-        .classed('label', true)
-        .classed('extra', true)
-        .text(d => d.label)
-        .each(function(d) { d3.select(this).call(showAt, game.mapboard.locationOf(d), 4, -4); })
-
-    // create a layer to show paths with unit orders
-    d3.select('#orders').append('svg')
-        .attr('width', 48*8)
-        .attr('height', 41*8)
-        .append('g')
-        .attr('transform', 'scale(8)')
-        .selectAll('.unit-path')
-        .data(game.oob)
-      .join('g')
-        .attr('id', u => `path-${u.id}`)
-        .classed('unit-path', true)
-        .classed('extra', true)
-        .classed('debug', u => u.player != game.human)
-        .attr('style', u => {
-            const c = anticColor(unitcolor(u));
-            return `stroke: ${c}; fill: ${c};`
-        });
-
-    // draw all of the units
-    putlines('#units', [game.oob], unitcolor, '00', icon, u => `unit-${u.id}`)
-        .each(function(u) { d3.select(this).call(showAt, game.mapboard.locationOf(u)); })
-        .style('opacity', 0)
-        .append('div')
-        .attr('class', 'chr-overlay extra')
-        .append('div')
-        .classed('chr-mstrng', true)
-        .append('div')
-        .classed('chr-cstrng', true);
-
-    // put arrows and kreuze in layer for path animation
-    putlines(
-        '#arrows', [[256], directions.map(icon)],
-        d => d == 256 ? '1A': 'DC', null, c => c, (d, i) => d == 256 ? 'kreuze': `arrow-${i-1}`)
-        .style('opacity', 0);
-
-    let display = {
-        _datemsg,
-        _infomsg,
-        _errmsg,
-        nextTurn,
-        setZoom,
-        setVisibility,
-        paintMap,
-        paintUnit,
-        animateUnitPath
-    }
-    game.display = display;
-    return display;
-}
-
-function _datemsg(line2, line1) {  // by default put on second line
-    putlines('#date-window', [line1 || "", line2 || ""]);
-}
-
-function _infomsg(line1, line2) {
-    putlines('#info-window', [line1 || "", line2 || ""]);
-}
-
-function _errmsg(score, text) {
-    let s = score.toString().padStart(3).padEnd(4);
-    s += centered(text || "", 36);
-    putlines('#err-window', [s])
-}
-
-function setZoom(zoomed, focus) {
-    var elt;
-    if (focus) {
-        elt = d3.select('#kreuze').node();
-    } else {
-        let x = 320/2,
-            y = 144/2 + d3.select('#map-window').node().offsetTop - window.scrollY;
-        elt = document.elementFromPoint(x*4, y*4);
-    }
-    // toggle zoom level, apply it, and re-center target eleemnt
-    d3.select('#map-window .container').classed('doubled', zoomed);
-    elt.scrollIntoView({block: "center", inline: "center"})
-}
-
-function setVisibility(sel, visible) {
-    d3.selectAll(sel).style('visibility', visible ? 'visible': 'hidden')
-}
-
-function nextTurn(date) {
-    // clear error, show score for this turn
-    _errmsg('PLEASE ENTER YOUR ORDERS NOW');
-    _datemsg(" " + date.toLocaleDateString("en-US", {year: 'numeric', month: 'long', day: 'numeric'}));
-}
-
-function paintMap(opts)  {
-    // apply current fg/bg colors to map and unit background
-    d3.selectAll('#map .chr-bg, #units .chr-bg')
-        .style('background-color', anticColor(opts.bgcolor));
-
-    d3.selectAll('#map .chr-fg')
-        .style('background-color', d => anticColor(opts.fgcolorfn(d)))
-
-    // contrasting label colors
-    d3.selectAll('.label')
-        .style('color', anticColor(opts.labelcolor));
-}
-
-function paintUnit(u, opts) {
-    let chr = d3.select(`#unit-${u.id}`),
-        path = d3.select(`#path-${u.id}`),
-        loc = u.m.locationOf(u);
-
-    if (['moved', 'removed'].includes(opts.event)) {
-        chr = chr.transition().duration(250).ease(d3.easeLinear);
-    }
-    switch (opts.event) {
-        case 'moved':
-            chr.call(showAt, loc);
-            path.attr('transform', `translate(${loc.col + 0.5},${loc.row + 0.5}) scale(-1)`)
-                .html(pathSVG(u.orders));
-        // eslint-disable-next-line no-fallthrough
-        case 'stats':
-            chr.select('.chr-mstrng').style('width', (90 * u.mstrng/255) + '%');
-            chr.select('.chr-cstrng').style('width', (100 * u.cstrng/u.mstrng) + '%');
-            break;
-        case 'removed':
-            chr.style('opacity', 0);
-            break;
-        case 'attacking':
-        case 'defending':
-        case 'resolving':
-            chr.select('.chr-fg')
-                .classed('flash', opts.event != 'resolved')
-                .style('animation-direction', opts.event == 'defending' ? 'reverse': 'normal');
-            break;
-        case 'selected':
-        case 'unselected':
-            chr.classed('blink', opts.event == 'selected');
-    }
-}
-
 function animateUnitPath(u) {
     d3.selectAll('#arrows .chr').interrupt().style('opacity', 0);
     if (!u) return;
 
-    let path = u.path(),
-        loc = path.pop();
+    let path = u.path;
 
     d3.select('#kreuze')
-        .call(showAt, loc)
+        .call(showAt, path[path.length-1])
         .node()
         .scrollIntoView({block: "center", inline: "center"});
 
-    if (!path.length) return;
+    if (path.length < 2) return;
 
     let i = 0;
     function animateStep() {
         let loc = path[i],
+            dst = path[i+1],
             dir = u.orders[i],
-            dst = u.m.neighbor(loc, dir),
             interrupted = false;
         d3.select(`#arrow-${dir}`)
             .call(showAt, loc)
@@ -309,11 +132,10 @@ function animateUnitPath(u) {
             .style('opacity', 0)
         .on("interrupt", () => { interrupted = true; })
         .on("end", () => {
-            i = (i+1) % path.length;
+            i = (i+1) % (path.length-1);
             if (!interrupted) animateStep();
         });
     }
-
     animateStep();
 }
 
@@ -350,11 +172,198 @@ function pathSVG(orders) {
     return svg;
 }
 
-function putIcon(selector, u) {
-    putlines(selector, [[u]], u => players[u.player].color, '02', u => u.icon)
+function paintMap(opts)  {
+    // apply current fg/bg colors to map and unit background
+    d3.selectAll('#map .chr-bg, #units .chr-bg')
+        .style('background-color', anticColor(opts.bgcolor));
+
+    d3.selectAll('#map .chr-fg')
+        .style('background-color', d => anticColor(opts.fgcolorfn(d)))
+
+    // contrasting label colors
+    d3.selectAll('.label')
+        .style('color', anticColor(opts.labelcolor));
 }
 
-export {
-    centered,
-    Display,
-};
+function paintUnit(u, event) {
+    let chr = d3.select(`#unit-${u.id}`),
+        path = d3.select(`#path-${u.id}`),
+        loc = u.location;
+
+    if (['moved', 'removed'].includes(event)) {
+        chr = chr.transition().duration(250).ease(d3.easeLinear);
+    }
+    switch (event) {
+        case 'moved':
+            chr.call(showAt, loc);
+        // eslint-disable-next-line no-fallthrough
+        case 'orders':
+            path.attr('transform', `translate(${loc.col + 0.5},${loc.row + 0.5}) scale(-1)`)
+                .html(pathSVG(u.orders));
+        // eslint-disable-next-line no-fallthrough
+        case 'stats':
+            chr.select('.chr-mstrng').style('width', (90 * u.mstrng/255) + '%');
+            chr.select('.chr-cstrng').style('width', (100 * u.cstrng/u.mstrng) + '%');
+            break;
+        case 'removed':
+            chr.style('opacity', 0);
+            break;
+        case 'attacking':
+        case 'defending':
+        case 'resolving':
+            chr.select('.chr-fg')
+                .classed('flash', event != 'resolving')
+                .style('animation-direction', event == 'defending' ? 'reverse': 'normal');
+            break;
+        case 'selected':
+        case 'unselected':
+            chr.classed('blink', event == 'selected');
+            animateUnitPath(event == 'selected' && u.human ? u : null);
+            break;
+        default:
+            console.warn('paintUnit ignoring unknown event', event)
+    }
+}
+
+class Display {
+    #score;
+
+    constructor(help, game) {
+
+        const icon = (d) => d.icon,
+            unitcolor = (u) => players[u.player].color,
+            root = document.querySelector(':root'),
+            variant = variants[game.variant].key;
+
+        // pick the right fontmap
+        root.style.setProperty('--fontmap', `url(fontmap-${variant}.png)`);
+
+        // set up background colors
+        setclr('body', 'D4');
+        setclr('.date-rule', '1A');
+        setclr('.info-rule', '02');  // same as map
+        setclr('.err-rule', '8A');
+
+        // set up info, error and help
+        putlines('#help-window', help, c => c == "}" ? '94': '04', '0e');
+        putlines('#date-window', [''], '6A', 'B0');
+        putlines('#info-window', [''], '28', '22');
+        putlines('#err-window', [''], '22', '3A');
+
+        this.datemsg(centered("EASTERN FRONT 1941", 20))
+        this.infomsg(centered('COPYRIGHT 1982 ATARI'), centered('ALL RIGHTS RESERVED'));
+
+        // draw the map characters with a semi-transparent dimming layer which we can hide/show
+        putlines('#map', game.mapboard.locations, 'ff', '00', icon, m => `map-${m.id}`)
+            .append('div')
+            .classed('chr-dim', true)
+            .classed('extra', true);
+
+        // add the city labels
+        d3.select('#labels')
+            .selectAll('div.label')
+            .data(game.mapboard.cities)
+          .join('div')
+            .classed('label', true)
+            .classed('extra', true)
+            .text(d => d.label)
+            .each(function(d) { d3.select(this).call(showAt, game.mapboard.locationOf(d), 4, -4); })
+
+        // create a layer to show paths with unit orders
+        d3.select('#orders')
+            .append('svg')
+            .attr('width', 48*8)
+            .attr('height', 41*8)
+            .append('g')
+            .attr('transform', 'scale(8)')
+            .selectAll('.unit-path')
+            .data(game.oob.slice())
+          .join('g')
+            .attr('id', u => `path-${u.id}`)
+            .classed('unit-path', true)
+            .classed('debug', u => !u.human)
+            .classed('extra', true)
+            .attr('style', u => {
+                const c = anticColor(unitcolor(u));
+                return `stroke: ${c}; fill: ${c};`
+            });
+
+        // draw all of the units
+        putlines('#units', [game.oob], unitcolor, '00', icon, u => `unit-${u.id}`)
+            .each(function(u) { d3.select(this).call(showAt, u.location); })
+            .style('opacity', 0)
+            .append('div')
+            .attr('class', 'chr-overlay extra')
+            .append('div')
+            .classed('chr-mstrng', true)
+            .append('div')
+            .classed('chr-cstrng', true);
+
+        // put arrows and kreuze in layer for path animation
+        putlines(
+            '#arrows', [[256], directions.map(icon)],
+            d => d == 256 ? '1A': 'DC', null, c => c, (d, i) => d == 256 ? 'kreuze': `arrow-${i-1}`)
+            .style('opacity', 0);
+
+        game.addListener(this.changeListener);
+
+    }
+    changeListener(typ, event, obj, options) {
+        // console.debug(`Display.changeListener got ${typ}.${event}`);
+
+        switch (typ) {
+            case 'map':
+                paintMap(options);
+                break;
+            case 'unit':
+                paintUnit(obj, event);
+                break;
+            case 'msg':
+                switch (event) {
+                    case 'info': this.infomsg(...obj); break;
+                    case 'date': this.datemsg(...obj); break;
+                    case 'err': this.errmsg(obj); break;
+                }
+                break;
+            default:
+                console.warn(`Display.changeListener ignoring ${typ}.${event}`);
+        }
+    }
+    datemsg(line2, line1) {  // by default put on second line
+        putlines('#date-window', [line1 || "", line2 || ""]);
+    }
+    infomsg(line1, line2) {
+        putlines('#info-window', [line1 || "", line2 || ""]);
+    }
+    errmsg(text) {
+        let s = (this.#score || '').toString().padStart(3).padEnd(4);
+        s += centered(text || "", 36);
+        putlines('#err-window', [s])
+    }
+    setZoom(zoomed, focus) {
+        var elt;
+        if (focus) {
+            elt = d3.select('#kreuze').node();
+        } else {
+            let x = 320/2,
+                y = 144/2 + d3.select('#map-window').node().offsetTop - window.scrollY;
+            elt = document.elementFromPoint(x*4, y*4);
+        }
+        // toggle zoom level, apply it, and re-center target eleemnt
+        d3.select('#map-window .container').classed('doubled', zoomed);
+        elt.scrollIntoView({block: "center", inline: "center"})
+    }
+    setVisibility(sel, visible) {
+        d3.selectAll(sel).style('visibility', visible ? 'visible': 'hidden')
+    }
+    nextTurn(date, score) {
+        // clear error, show score for this turn
+        this.#score = score;
+        this.errmsg(centered('PLEASE ENTER YOUR ORDERS NOW'));
+        this.datemsg(" " + date.toLocaleDateString("en-US", {year: 'numeric', month: 'long', day: 'numeric'}));
+        this.infomsg();
+    }
+}
+Display.centered = centered;
+
+export {Display};

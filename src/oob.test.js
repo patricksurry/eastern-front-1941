@@ -2,11 +2,9 @@ import {oobVariants} from './unit-data.js';
 import {Game} from './game.js';
 
 
-const game = Game(),
+const game = new Game().nextTurn(),
     oob = game.oob;
 
-game.turn = 1;
-game.oob.reinforce();
 
 // the second last column of raw data is CORPT for both apx and cart,
 // and indexes the main unit name.  the high bit of low nibble is unused
@@ -29,11 +27,9 @@ test("ZoC is calculated correctly", () => {
         X X .       6 7 4
     */
 
-    let locs = oob.m.squareSpiral({lon: 20, lat: 20}, 3),
-        p0 = 0, p1 = 0;
-
-    while(oob[p0].player != 0) p0++;
-    while(oob[p1].player != 1) p1++;
+    let locs = game.mapboard.squareSpiral({lon: 20, lat: 20}, 3),
+        p0 = oob.findIndex(u => u.player == 0),
+        p1 = oob.findIndex(u => u.player == 1);
 
     locs[1].unitid = p0;
     locs[3].unitid = p1;

@@ -34,6 +34,7 @@ var ef1941 = (function (exports) {
                 supply: {sea: 0, replacements: 2, maxfail: [24, 24, 24], freeze: 0}
             },
         ],
+        // note we rely on Player.german = 1 - Player.russian and vice versa
         Player = enumFor(players),
         // cartridge offers selection of levels which modify various parameters:
         //  ncity:  is the number of cities that are scored - note needs bumped if Sevastopol added
@@ -159,22 +160,10 @@ var ef1941 = (function (exports) {
         return terraintypes.map((_, i) => moveCost(i, kind, weather));
     }
 
-    /*
-    simmple interface for encoding a list of integers to a url-safe string
-    adapted from https://github.com/Rich-Harris/vlq
+    // see https://en.wikipedia.org/wiki/Fibonacci_coding
 
-    the core encode/decode converts a list of unsigned integers <=> a string,
-    with integers mapped to a variable-length quantity in base-32 representation (5 bits)
-    with bit 6 used as a continuation character.   See https://en.wikipedia.org/wiki/Variable-length_quantity
-    A 65th character '~' is used as a sentinel for run-length coding,
-    with runs represented as < ~, repeat-count, value >
-
-    zigzag/zagzig provide zigzag encoding to map lists of signed integers to unsigned ints
-    */
-
-    const repeat_min = 4;
-
-    let chr2int = {}, int2chr = {};
+    let chr2int = {},
+        int2chr = {};
 
     '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'
         .split('').forEach((c, i) => {
@@ -182,102 +171,201 @@ var ef1941 = (function (exports) {
             int2chr[i] = c;
         });
 
+
+    let fib = n => (n in fib.memo) ? fib.memo[n] : (fib.memo[n] = fib(n-1) + fib(n-2));
+    fib.memo = {0: 0, 1: 1};
+
+
+    /** test v is unsigned integer */
     function isuint(v) {
         return Number.isInteger(v) && v >= 0;
     }
 
+    /** map an array (or singleton) of signed integer to an array of unsigned integers */
     function zigzag(vs) {
         if (typeof vs === 'number') return zigzag([vs])[0];
 
-        if (!vs.every(Number.isInteger)) throw new Error('Expected list of integers', vs);
+        if (!vs.every(Number.isInteger)) throw new Error('zigzag: Expected list of integers:', vs);
         return vs.map(v => v < 0 ? ((-v) << 1) - 1: v << 1);
     }
 
+    /** recover an array of signed integer from a zigzag()d array */
     function zagzig(vs) {
-        if (!vs.every(isuint)) throw new Error('Expected list of unsigned integers', vs);
+        if (!vs.every(isuint)) throw new Error('zagzig: Expected list of unsigned integers:', vs);
         return vs.map(v => v & 0x1 ? -((v + 1) >> 1): v >> 1);
     }
 
-    // encode an array of unsigned ints, or a singleton
-    function encode(value) {
-        if (typeof value === 'number') return encode([value])[0];
-        let i = 0,
-            s = "";
-        while (i < value.length) {
-            let n = value[i],
+    /** run length code an array of unsigned integer by replacing runs of consecutive
+     * values by <marker> <value> <repeat - min_repeat>, returning a new array of unsigned integer.
+     * @param {Array[uint]} vs - The list of values to encode
+     * @param {uint} marker - value to use as repeat token; existing values >= marker are incremented
+     * @param {function} vsize - Function returning the expected size of encoding a value
+     */
+    function rlencode(vs, marker, vsize) {
+        marker ??= 0;
+        vsize ??= fibencsize;
+
+        if (!vs.every(isuint)) throw new Error('rlencode: Expected list of unsigned integers:', vs);
+        if (!isuint(marker)) throw new Error('rlencode: Expected unsigned integer marker:', marker);
+
+        /*
+        for efficient run coding we want len(<marker><value><0>) < len(<value><value>...)
+        =>  len(<marker><0>) < len(<value>) * (repeat - 1)
+        =>  repeat > len(<marker><0>) / len(<value>) + 1
+        */
+
+        const rptlen = vsize(marker) + vsize(0);
+
+        let zs = [],
+            prev = -1,
+            repeat = 0,
+            seq = vs.map(v => v >= marker ? v + 1: v);
+
+        seq.push(-1);  // dummy to make sure we flush final value(s)
+        seq.forEach(v => {
+            if (v == prev) {
+                repeat++;
+            } else {
+                const prev_1 = prev > marker ? prev - 1: prev,
+                    min_repeat = repeat > 1 ? Math.ceil(rptlen/vsize(prev_1)) + 1: 2;
+                if (repeat >= min_repeat) {
+                    zs.push(marker);
+                    zs.push(prev_1);
+                    zs.push(repeat - min_repeat);
+                } else {
+                    while(repeat--) zs.push(prev);
+                }
                 repeat = 1;
-            while (++i < value.length && value[i] == n) repeat++;
-            if (repeat >= repeat_min) {
-                s += '~' + encode_uint(repeat - repeat_min) + encode_uint(n);
+                prev = v;
+            }
+        });
+        return zs;
+    }
+
+    /** run length decode an array of unsinged ints to recover the original array provided to rlencode
+     *  the marker and vsize function must match the original encoding
+     */
+    function rldecode(zs, marker, vsize) {
+        marker ??= 0;
+        vsize ??= fibencsize;
+
+        if (!zs.every(isuint)) throw new Error('rldecode: Expected list of unsigned integers:', zs);
+        if (!isuint(marker)) throw new Error('rldecode: Expected unsigned integer marker:', marker);
+
+        const rptlen = vsize(marker) + vsize(0);
+
+        let vs = [];
+        while(zs.length) {
+            let v = zs.shift();
+            if (v != marker) {
+                vs.push(v > marker ? v - 1: v);
             } else {
-                s += encode_uint(n).repeat(repeat);
+                v = zs.shift();
+                const min_repeat = Math.ceil(rptlen/vsize(v)) + 1;
+                let repeat = zs.shift() + min_repeat;
+                while(repeat--) vs.push(v);
             }
         }
+        return vs;
+    }
+
+    function fibencsize(n) {
+        return fibencode_uint(n).toString(2).length;
+    }
+
+    /** fibnonacci encode a single unsigned int to a bit pattern returned as a value >= 3 */
+    function fibencode_uint(n) {
+        if (!isuint(n)) throw new Error(`fibencode_uint: Invalid unsigned integer: ${n}`)
+
+        if (n in fibencode_uint.memo) return fibencode_uint.memo[n];
+
+        var n1 = n + 1,   // fib coding wants a natural number rather than a unit, i.e. 0 => 1
+            k,
+            bits = 1;
+        for(k=2; fib(k) <= n1; k++) /**/ ;      // k is index of largest fibonacci number in n1
+        // create the fibonacci bit pattern by flagging presence/absence of each smaller number
+        for(--k; k >= 2; k--) {
+            bits <<= 1;
+            const m = fib(k);
+            if (n1 >= m) {
+                bits |= 1;
+                n1 -= m;
+            }
+        }
+        fibencode_uint.memo[n] = bits;          // remember for future reference
+        return bits;
+    }
+    fibencode_uint.memo = {};
+
+    /** fibonacci decode an encoded bit pattern to recover the original uint value */
+    function fibdecode_uint(bits) {
+        if (!(isuint(bits) && bits >= 3)) throw new Error(`fibdecode_uint: Invalid encoded integer: ${bits.toString(2)}`)
+
+        if (bits in fibdecode_uint.memo) return fibdecode_uint.memo[bits];
+        // sum the fibonacci numbers represented by the bit pattern, ignoring the MSB flag
+        var n=0;
+        for(let k=2; bits > 1; k++) {
+            if (bits & 0x1) n += fib(k);
+            bits >>= 1;
+        }
+        fibdecode_uint.memo[bits] = n-1;
+        return n-1;
+    }
+    fibdecode_uint.memo = {};
+
+    /** encode an array of unsigned int to a base64-string using fibonacci encoding */
+    function fibencode(vs) {
+        if (typeof vs === 'number') return fibencode([vs]);
+        if (!vs.every(isuint)) throw new Error('fibencode: Expected list of unsigned integers', vs);
+        let seq = vs.map(fibencode_uint),
+            s = "",
+            bits = 0,
+            k = 0,
+            lead_bit = 0x1;
+        while (seq.length && k < 6) {
+            bits |= seq.shift() << k;
+            while (lead_bit <= bits) {
+                k++;
+                lead_bit <<= 1;
+            }
+            while (k >= 6) {
+                s += int2chr[bits & 0x3f];
+                bits >>= 6;
+                lead_bit >>= 6;
+                k -= 6;
+            }
+        }
+        if (k) s += int2chr[bits];
         return s;
     }
 
-    function encode_uint(n) {
-        if (!isuint(n)) throw new Error(`Invalid unsigned integer: ${n}`)
-
-        let s = '',
-            has_continuation_bit = 1;
-
-        while (has_continuation_bit) {
-            let clamped = n & 0x1f;
-            n >>= 5;
-            has_continuation_bit = (n > 0);
-            if (has_continuation_bit) {
-                clamped |= 0x20;
-                n--;             // remove redundancy since continuation_bit tells us n > clamped
-            }
-            s += int2chr[clamped];
-        }
-
-        return s;
-    }
-
-    function decode(s) {
-        let result = [],
-            i = 0;
-
-        function decode_uint() {
-            let shift = 0,
-                value = 0,
-                has_continuation_bit = 0;
-
-            do {
-                if (i >= s.length) throw new Error('Input ended unexpectedly while decoding run-length')
-                let c = s[i++],
-                    u = chr2int[c];
-
-                if (u === undefined) throw new Error(`Invalid character: ${c} as position ${i} of ${s}`);
-
-                if (has_continuation_bit) u++;
-
-                has_continuation_bit = u & 0x20;
-                u &= 0x1f;
-                value += u << shift;
-
-                if (!has_continuation_bit) return value;
-
-                shift += 5;
-            } while(i < s.length);
-
-            if (has_continuation_bit) throw new Error('Input ended unexpectedly while decoding multi-character value');
-        }
-
-        while (i < s.length) {
-            if (s[i] == '~') {
-                ++i;
-                let repeat = decode_uint() + repeat_min,
-                    n = decode_uint();
-                for (let k=0; k<repeat; k++) result.push(n);
-            } else {
-                result.push(decode_uint());
+    /** decode a base64 fibonnaci encoded string to recover the original unsigned int array */
+    function fibdecode(s) {
+        let vs = [],
+            seq = s.split('').map(c => chr2int[c]),
+            bitseq = 0,
+            m = 0,
+            mask = 0x3,
+            k = 2;
+        while (seq.length) {
+            bitseq |= (seq.shift() << m);
+            m += 6;
+            while (k <= m) {
+                if ((mask & bitseq) == mask) {
+                    const bits = bitseq & ((1 << k) - 1),
+                        v = fibdecode_uint(bits);
+                    vs.push(v);
+                    bitseq >>= k;
+                    m -= k;
+                    k = 2;
+                    mask = 0x3;
+                } else {
+                    k++;
+                    mask <<= 1;
+                }
             }
         }
-
-        return result;
+        return vs;
     }
 
     /*
@@ -477,346 +565,337 @@ var ef1941 = (function (exports) {
         ];
 
     // the map is made up of locations, each with a lon and lat
-    function Location(lon, lat, ...data) {
-        if (!Number.isInteger(lon) || !Number.isInteger(lat))
-            throw(`bad Location(lon: int, lat: int, ...data), got lon=${lon}, lat=${lat}`)
-        return Object.assign({
-                lon,
-                lat,
-                put: Location.put,
-            }, ...data);
+    class Location {
+        lon;
+        lat;
+
+        constructor(lon, lat, ...objs) {
+            if (!Number.isInteger(lon) || !Number.isInteger(lat)) {
+                throw(`bad Location(lon: int, lat: int, ...data), got lon=${lon}, lat=${lat}`)
+            }
+            this.lon = lon;
+            this.lat = lat;
+            Object.assign(this, ...objs);
+        }
+        put(d) {
+            d.lon = this.lon;
+            d.lat = this.lat;
+            return d;
+        }
     }
-    Location.put = function(d) {
-        d.lon = this.lon;
-        d.lat = this.lat;
-        return d;
-    };
 
 
     // mapboard constructor, used as a container of Locations
-    function Mapboard(game, memento) {
-        const variant = mapVariants[game.variant || 'apx'],
-            mapencoding = variant.encoding.map((enc, i) => {
-                // convert the encoding table into a lookup of char => [icon, terraintype, alt-flag]
-                let lookup = {}, ch=0;
-                enc.split('|').forEach((s, t) =>
-                    s.split('').forEach(c => {
-                        let alt = ((t == 1 && i == 0) || ch == 0x40) ? 1 : 0;
-                        if (ch==0x40) ch--;
-                        lookup[c] = {
-                            icon: 0x80 + i * 0x40 + ch++,
-                            terrain: t,
-                            alt: alt
-                        };
-                    })
-                );
-                return lookup;
-            }),
-            // decode the map into a 2-d array of rows x cols of  {lon: , lat:, icon:, terrain:, alt:}
-            mapdata = variant.ascii.split(/\n/).slice(1,-1).map(
+    class Mapboard {
+        locations;
+        cities;
+        #game;
+        #maxlon;
+        #maxlat;
+        #icelat = 39;       // via M.ASM:8600 PSXVAL initial value is 0x27
+
+        constructor(game, memento) {
+            const variant = mapVariants[game.variant || 'apx'],
+                mapencoding = variant.encoding.map((enc, i) => {
+                    // convert the encoding table into a lookup of char => [icon, terraintype, alt-flag]
+                    let lookup = {}, ch=0;
+                    enc.split('|').forEach((s, t) =>
+                        s.split('').forEach(c => {
+                            let alt = ((t == 1 && i == 0) || ch == 0x40) ? 1 : 0;
+                            if (ch==0x40) ch--;
+                            lookup[c] = {
+                                icon: 0x80 + i * 0x40 + ch++,
+                                terrain: t,
+                                alt: alt
+                            };
+                        })
+                    );
+                    return lookup;
+                }),
+                // decode the map into a 2-d array of rows x cols of  {lon: , lat:, icon:, terrain:, alt:}
+                mapdata = variant.ascii.split(/\n/).slice(1,-1).map(
                     (row, i) =>
                     row.split('').map(
                         c => Object.assign({}, mapencoding[i <= 25 ? 0: 1][c])
                     )
-                ),
-            maxlon = mapdata[0].length-2,       // excluding the impassable border valid is 0..maxlon-1, 0..maxlat-1
-            maxlat = mapdata.length-2,
-            mapboard = {
-                game: game,
-                locations: mapdata.map(
-                    (row, i) => row.map(
-                        (data, j) => {
-                            let lon = maxlon - j,
-                                lat = maxlat - i,
-                                id = (lat << 8) + lon;
-                            return Location(lon, lat, data, {id, row: i, col: j})
-                        }
-                    )
-                ),
-                maxlon,
-                maxlat,
-                icelat: 39,     // via M.ASM:8600 PSXVAL initial value is 0x27
-                cities: variant.cities.map(c => {return {...c}}),
+                );
 
-                nextTurn: Mapboard.nextTurn,
-                memento: Mapboard.memento,
-                locationOf: Mapboard.locationOf,
-                fromid: Mapboard.fromid,
-                valid: Mapboard.valid,
-                neighbor: Mapboard.neighbor,
-                fgcolor: Mapboard.fgcolor,
-                moveIceLine: Mapboard.freezeThaw,
-                occupy: Mapboard.occupy,
-                manhattanDistance: Mapboard.manhattanDistance,
-                boundaryDistance: Mapboard.boundaryDistance,
-                directionFrom: Mapboard.directionFrom,
-                squareSpiral: Mapboard.squareSpiral,
-                directPath: Mapboard.directPath,
-                bestPath: Mapboard.bestPath,
-                reach: Mapboard.reach,
-                describe: Mapboard.describe,
-            };
+            // excluding the impassable border valid is 0..maxlon-1, 0..maxlat-1
+            this.#maxlon = mapdata[0].length-2;
+            this.#maxlat = mapdata.length-2;
 
-        mapboard.cities.forEach((city, i) => {
-            city.points ||= 0;
-            let loc = mapboard.locationOf(city);
-            loc.cityid = i;
-        });
-        if (memento) {
-            mapboard.icelat = memento.shift();
-            //TODO freezethaw between old icelat and this
-            mapboard.cities.forEach(c => c.owner = memento.shift());
-        }
-        return mapboard;
-    }
-    Mapboard.nextTurn = function() {
-        let mdata = monthdata[this.game.month],
-            earth = weatherdata[mdata.weather].earth;
-
-        // update the tree color in place in the terrain data :grimace:
-        terraintypes[Terrain.mountain_forest].altcolor = mdata.trees;
-
-        if (mdata.water != null) this.freezeThaw(mdata.water);
-
-        this.game.changed('map', this, {
-            fgcolorfn: (loc) => this.fgcolor(loc),
-            bgcolor: earth,
-            labelcolor: mdata.weather == Weather.snow ? '04': '08'
-        });
-    };
-    Mapboard.memento = function() {
-        return [].concat(
-            [this.icelat],
-            this.cities.map(c => c.owner)
-        )
-    };
-    Mapboard.valid = function(loc) {
-        return loc.lat >= 0 && loc.lat < this.maxlat && loc.lon >= 0 && loc.lon < this.maxlon;
-    };
-    Mapboard.locationOf = function(d) {
-        let loc = Location(d.lon, d.lat);
-        return this.valid(loc) ? this.locations[this.maxlat - loc.lat][this.maxlon - loc.lon]: loc;
-    };
-    Mapboard.fromid = function(x) {
-        return this.locationOf({lon: x & 0xff, lat: x >> 8});
-    };
-    Mapboard.boundaryDistance = function(loc, dir) {
-        switch (dir) {
-            case Direction.north: return this.maxlat - 1 - loc.lat;
-            case Direction.south: return loc.lat;
-            case Direction.east: return loc.lon;
-            case Direction.west: return this.maxlon - 1 - loc.lon;
-        }
-    };
-    Mapboard.neighbor = function(loc, dir, skipcheck) {
-        let d = directions[dir],
-            lon = loc.lon + d.dlon,
-            lat = loc.lat + d.dlat,
-            nbr = this.locationOf({lon, lat});
-
-        if (skipcheck) return nbr;
-        if (!this.valid(nbr)) return null;
-
-        let legal = (
-                nbr.terrain != Terrain.impassable
-                && !(
-                    (dir == Direction.north || dir == Direction.south)
-                    ? blocked[0].find(d => d.lon == loc.lon && d.lat == (dir == Direction.north ? loc.lat : nbr.lat))
-                    : blocked[1].find(d => d.lon == (dir == Direction.west ? loc.lon : nbr.lon) && d.lat == loc.lat)
+            this.#game = game;
+            this.locations = mapdata.map(
+                (row, i) => row.map(
+                    (data, j) => {
+                        let lon = this.#maxlon - j,
+                            lat = this.#maxlat - i,
+                            id = (lat << 8) + lon;
+                        return new Location(lon, lat, data, {id, row: i, col: j})
+                    }
                 )
             );
-        return legal ? nbr: null;
-    };
-    Mapboard.fgcolor = function(loc) {
-        // return the antic fg color for a given location
-        let tinfo = terraintypes[loc.terrain],
-            alt = (loc.terrain == Terrain.city) ? this.cities[loc.cityid].owner : loc.alt;
-        return alt ? tinfo.altcolor : tinfo.color;
-    };
-    Mapboard.freezeThaw = function(w) {
-        // move ice by freeze/thaw rivers and swamps, where w is Water.freeze or Water.thaw
-        // ICELAT -= [7,14] incl]; clamp 1-39 incl
-        // small bug in APX code? freeze chrs $0B - $29 (exclusive, seems like it could freeze Kerch straight?)
-        let state = waterstate[w],
-            other = waterstate[1-w],
-            oldlat = this.icelat,
-            dlat = directions[state.dir].dlat,
-            change = (randbyte() & 0x8) + 7;
 
-        this.icelat = Math.min(this.maxlat, Math.max(1, oldlat + dlat * change));
-
-        let skip = (w == Water.freeze) ? oldlat: this.icelat;  // for freeze skip old line, for thaw skip new new
-        for (let i = oldlat; i != this.icelat + dlat; i += dlat) {
-            if (i == skip) continue;
-            this.locations[this.maxlat - i].forEach(d => {
-                let k = other.terrain.indexOf(d.terrain);
-                if (k != -1) d.terrain = state.terrain[k];
+            this.cities = variant.cities.map(c => {return {...c}});
+            this.cities.forEach((city, i) => {
+                city.points ||= 0;
+                let loc = this.locationOf(city);
+                loc.cityid = i;
             });
-        }
-    };
-    Mapboard.occupy = function(loc, player) {
-        if (loc.cityid != null) this.cities[loc.cityid].owner = player;
-        //TODO repaint this square
-    };
-    Mapboard.manhattanDistance = function(p, q) {
-        // calculate the taxicab metric between two locations
-        return Math.abs(p.lat - q.lat) + Math.abs(p.lon - q.lon);
-    };
-    Mapboard.directionFrom = function(p, q) {
-        // return the index of the winning direction
-        let projections = _directionsFrom(p, q);
-        return projections && projections[0][1];
-    };
-    Mapboard.squareSpiral = function(center, diameter) {
-        // return list of the diameter^2 locations spiraling out from loc
-        // which form a square of 'radius' (diameter-1)/2, based on a spiralpattern
-        // that looks like N, E, S,S, W,W, N,N,N, E,E,E, S,S,S,S, W,W,W,W, ...
-
-        if (diameter % 2 != 1) throw("Diameter should be odd: 1, 3, 5, ...");
-        let loc = center,
-            locs = [loc],
-            dir = 0,
-            i = 0,
-            side = 1;
-
-        while (++i < diameter) {
-            loc = this.neighbor(loc, dir, true);
-            locs.push(loc);
-            if (i == side) {
-                side += dir % 2;
-                dir = (dir + 1) % 4;
-                i = 0;
+            if (memento) {
+                this.#freezeThaw(Water.freeze, memento.shift());
+                this.cities.forEach(c => c.owner = memento.shift());
             }
         }
-        return locs;
-    };
-    Mapboard.directPath = function(p, q, costs) {
-        /*
-        implements a variation of Bresenham's algorith to get direct path from p to q
-        returns the list of directions to step from p to q, along with the terrain cost
-        similar to the original path algorithm described in the APX notes
+        nextTurn(initialSetup) {
+            let mdata = monthdata[this.#game.month],
+                earth = weatherdata[mdata.weather].earth;
 
-        The straight line can be described by the equation A x + B y + C = 0 where
-        A = (y1 - y0), B = -(x1 - x0) and C = x1 y0 - x0 y1.  (Here x is lon, y is lat)
-        To follow the line most closely using grid point x*, y* we keep the error E = A x* + B y* + C
-        as close to zero as possible.
-        Taking a step in direction dx, dy will change E by A dx + B dy
-        so we just keep choosing the step that moves E back towards zero.
-        */
+            // update the tree color in place in the terrain data :grimace:
+            terraintypes[Terrain.mountain_forest].altcolor = mdata.trees;
 
-        let loc = this.locationOf(p),
-            goal = this.locationOf(q);
-        if (loc.id == goal.id) return {cost: 0, orders: []};
+            if (!initialSetup && mdata.water != null) this.#freezeThaw(mdata.water);
 
-        const
-            A = q.lat - p.lat,
-            B = - (q.lon - p.lon),
-            // C = q.lon * p.lat - q.lat * p.lon,
-            projections = _directionsFrom(p, q),
-            i = projections[0][1], j = projections[1][1], // best two directinoe
-            s = directions[i], t = directions[j],
-            ds = A * s.dlon + B * s.dlat,
-            dt = A * t.dlon + B * t.dlat;
-
-        let err = 0,
-            cost = 0,
-            orders = [];
-
-        while (loc.id != goal.id) {
-            let [k, de] = Math.abs(err + ds) < Math.abs(err + dt) ? [i, ds]: [j, dt];
-            err += de;
-            orders.push(k);
-            loc = this.neighbor(loc, k, true);
-            cost += costs ? costs[loc.terrain]: 1;
-        }
-
-        return {cost, orders}
-    };
-    Mapboard.bestPath = function (p, q, costs) {
-        // implements A* shortest path, e.g. see https://www.redblobgames.com/pathfinding/a-star/introduction.html
-        // returns {cost: , orders: []} where cost is the movement cost (ticks), and orders is a seq of dir indices
-        // or null if goal is unreachable
-        const minCost = Math.min(...costs);
-        let src = this.locationOf(p),
-            goal = this.locationOf(q),
-            frontEst = {_: 0},              // estimated total cost via this square, _ is head
-            frontNext = {_: src.id},        // linked list with next best frontier square to check
-            dirTo = {[src.id]: null},       // direction index which arrived at keyed square
-            costTo = {[src.id]: 0};         // actual cost to get to keyed square
-
-        while (frontNext._) {
-            let next = frontNext._;
-            src = this.fromid(next);
-            if (src.id == goal.id) break;
-            frontNext._ = frontNext[next];
-            frontEst._ = frontEst[next];
-            delete frontNext[next], frontEst[next];
-
-            directions.forEach((_, i) => {
-                let dst = this.neighbor(src, i);
-                if (!dst) return;
-                let cost = costTo[src.id] + costs[dst.terrain];
-                if (!(dst.id in costTo)) {  // with consistent estimate we always find best first
-                    costTo[dst.id] = cost;
-                    dirTo[dst.id] = i;
-                    let est = cost + minCost * this.manhattanDistance(src, dst),
-                        at = '_';
-                    while (frontNext[at] && frontEst[at] < est) at = frontNext[at];
-                    next = frontNext[at];
-                    frontNext[at] = dst.id;
-                    frontNext[dst.id] = next;
-                    frontEst[dst.id] = est;
-                }
+            this.#game.notify('map', 'recolor', this, {
+                fgcolorfn: (loc) => this.#fgcolor(loc),
+                bgcolor: earth,
+                labelcolor: mdata.weather == Weather.snow ? '04': '08'
             });
         }
-        if (src.id != goal.id) return null;
-
-        let orders = [];
-        for(;;) {
-            let dir = dirTo[src.id];
-            if (dir == null) break;
-            orders.unshift(dir);
-            src = this.neighbor(src, (dir + 2) % 4);    // walk back in reverse direction
+        get memento() {
+            return [].concat(
+                [this.#icelat],
+                this.cities.map(c => c.owner)
+            )
         }
-        return {cost: costTo[goal.id], orders: orders}
-    };
-    Mapboard.reach = function(src, range, costs) {
-        // find all squares accessible to unit within range, ignoring other units, zoc
-        let cost = 0,
-            start = this.locationOf(src),
-            locs = {[start.id]: 0};
+        valid(loc) {
+            return loc.lat >= 0 && loc.lat < this.#maxlat && loc.lon >= 0 && loc.lon < this.#maxlon;
+        }
+        locationOf(d) {
+            let loc = new Location(d.lon, d.lat);
+            return this.valid(loc) ? this.locations[this.#maxlat - loc.lat][this.#maxlon - loc.lon]: loc;
+        }
+        fromid(x) {
+            return this.locationOf({lon: x & 0xff, lat: x >> 8});
+        }
+        boundaryDistance(loc, dir) {
+            switch (dir) {
+                case Direction.north: return this.#maxlat - 1 - loc.lat;
+                case Direction.south: return loc.lat;
+                case Direction.east: return loc.lon;
+                case Direction.west: return this.#maxlon - 1 - loc.lon;
+            }
+        }
+        neighbor(loc, dir, skipcheck) {
+            let d = directions[dir],
+                lon = loc.lon + d.dlon,
+                lat = loc.lat + d.dlat,
+                nbr = this.locationOf({lon, lat});
 
-        while (cost < range) {
-            // eslint-disable-next-line no-unused-vars
-            Object.entries(locs).filter(([_,v]) => v == cost).forEach(([k,_]) => {
-                let src = this.fromid(k);
-                Object.values(Direction).forEach(i => {
+            if (skipcheck) return nbr;
+            if (!this.valid(nbr)) return null;
+
+            let legal = (
+                    nbr.terrain != Terrain.impassable
+                    && !(
+                        (dir == Direction.north || dir == Direction.south)
+                        ? blocked[0].find(d => d.lon == loc.lon && d.lat == (dir == Direction.north ? loc.lat : nbr.lat))
+                        : blocked[1].find(d => d.lon == (dir == Direction.west ? loc.lon : nbr.lon) && d.lat == loc.lat)
+                    )
+                );
+            return legal ? nbr: null;
+        }
+        #fgcolor(loc) {
+            // return the antic fg color for a given location
+            let tinfo = terraintypes[loc.terrain],
+                alt = (loc.terrain == Terrain.city) ? this.cities[loc.cityid].owner : loc.alt;
+            return alt ? tinfo.altcolor : tinfo.color;
+        }
+        #freezeThaw(w, newlat) {
+            // move ice by freeze/thaw rivers and swamps, where w is Water.freeze or Water.thaw
+            // ICELAT -= [7,14] incl]; clamp 1-39 incl
+            // small bug in APX code? freeze chrs $0B - $29 (exclusive, seems like it could freeze Kerch straight?)
+            let state = waterstate[w],
+                other = waterstate[1-w],
+                oldlat = this.#icelat,
+                dlat = directions[state.dir].dlat,
+                change = (randbyte() & 0x8) + 7;
+
+            this.#icelat = newlat ?? Math.min(this.#maxlat, Math.max(1, oldlat + dlat * change));
+
+            let skip = (w == Water.freeze) ? oldlat: this.#icelat;  // for freeze skip old line, for thaw skip new new
+            for (let i = oldlat; i != this.#icelat + dlat; i += dlat) {
+                if (i == skip) continue;
+                this.locations[this.#maxlat - i].forEach(d => {
+                    let k = other.terrain.indexOf(d.terrain);
+                    if (k != -1) d.terrain = state.terrain[k];
+                });
+            }
+        }
+        occupy(loc, player) {
+            if (loc.cityid != null) this.cities[loc.cityid].owner = player;
+            //TODO repaint this square
+        }
+        squareSpiral(center, diameter) {
+            // return list of the diameter^2 locations spiraling out from loc
+            // which form a square of 'radius' (diameter-1)/2, based on a spiralpattern
+            // that looks like N, E, S,S, W,W, N,N,N, E,E,E, S,S,S,S, W,W,W,W, ...
+
+            if (diameter % 2 != 1) throw("Diameter should be odd: 1, 3, 5, ...");
+            let loc = center,
+                locs = [loc],
+                dir = 0,
+                i = 0,
+                side = 1;
+
+            while (++i < diameter) {
+                loc = this.neighbor(loc, dir, true);
+                locs.push(loc);
+                if (i == side) {
+                    side += dir % 2;
+                    dir = (dir + 1) % 4;
+                    i = 0;
+                }
+            }
+            return locs;
+        }
+        directPath(p, q, costs) {
+            /*
+            implements a variation of Bresenham's algorith to get direct path from p to q
+            returns the list of directions to step from p to q, along with the terrain cost
+            similar to the original path algorithm described in the APX notes
+
+            The straight line can be described by the equation A x + B y + C = 0 where
+            A = (y1 - y0), B = -(x1 - x0) and C = x1 y0 - x0 y1.  (Here x is lon, y is lat)
+            To follow the line most closely using grid point x*, y* we keep the error E = A x* + B y* + C
+            as close to zero as possible.
+            Taking a step in direction dx, dy will change E by A dx + B dy
+            so we just keep choosing the step that moves E back towards zero.
+            */
+
+            let loc = this.locationOf(p),
+                goal = this.locationOf(q);
+            if (loc.id == goal.id) return {cost: 0, orders: []};
+
+            const
+                A = q.lat - p.lat,
+                B = - (q.lon - p.lon),
+                // C = q.lon * p.lat - q.lat * p.lon,
+                projections = Mapboard.#directionsFrom(p, q),
+                i = projections[0][1], j = projections[1][1], // best two directinoe
+                s = directions[i], t = directions[j],
+                ds = A * s.dlon + B * s.dlat,
+                dt = A * t.dlon + B * t.dlat;
+
+            let err = 0,
+                cost = 0,
+                orders = [];
+
+            while (loc.id != goal.id) {
+                let [k, de] = Math.abs(err + ds) < Math.abs(err + dt) ? [i, ds]: [j, dt];
+                err += de;
+                orders.push(k);
+                loc = this.neighbor(loc, k, true);
+                cost += costs ? costs[loc.terrain]: 1;
+            }
+
+            return {cost, orders}
+        }
+        bestPath(p, q, costs) {
+            // implements A* shortest path, e.g. see https://www.redblobgames.com/pathfinding/a-star/introduction.html
+            // returns {cost: , orders: []} where cost is the movement cost (ticks), and orders is a seq of dir indices
+            // or null if goal is unreachable
+            const minCost = Math.min(...costs);
+            let src = this.locationOf(p),
+                goal = this.locationOf(q),
+                frontEst = {_: 0},              // estimated total cost via this square, _ is head
+                frontNext = {_: src.id},        // linked list with next best frontier square to check
+                dirTo = {[src.id]: null},       // direction index which arrived at keyed square
+                costTo = {[src.id]: 0};         // actual cost to get to keyed square
+
+            while (frontNext._) {
+                let next = frontNext._;
+                src = this.fromid(next);
+                if (src.id == goal.id) break;
+                frontNext._ = frontNext[next];
+                frontEst._ = frontEst[next];
+                delete frontNext[next], frontEst[next];
+
+                directions.forEach((_, i) => {
                     let dst = this.neighbor(src, i);
                     if (!dst) return;
-                    let curr = dst.id in locs ? locs[dst.id] : 255;
-                    if (curr <= cost) return;
-                    let c = cost + costs[dst.terrain];
-                    if (c <= range && c < curr) locs[dst.id] = c;
+                    let cost = costTo[src.id] + costs[dst.terrain];
+                    if (!(dst.id in costTo)) {  // with consistent estimate we always find best first
+                        costTo[dst.id] = cost;
+                        dirTo[dst.id] = i;
+                        let est = cost + minCost * Mapboard.manhattanDistance(src, dst),
+                            at = '_';
+                        while (frontNext[at] && frontEst[at] < est) at = frontNext[at];
+                        next = frontNext[at];
+                        frontNext[at] = dst.id;
+                        frontNext[dst.id] = next;
+                        frontEst[dst.id] = est;
+                    }
                 });
-            });
-            cost++;
-        }
-        return locs;
-    };
-    Mapboard.describe = function(loc) {
-        return `[${loc.id}] ${terraintypes[loc.terrain].key}${loc.alt ? "-alt": ""}\n`
-            + `lon ${loc.lon}, lat ${loc.lat}`;
-    };
+            }
+            if (src.id != goal.id) return null;
 
-    function _directionsFrom(p, q) {
-        // project all directions from p to q and rank them, ensuring tie breaking has no bias
-        let dlat = (q.lat - p.lat),
-            dlon = (q.lon - p.lon);
-        if (!dlat && !dlon) return null;
-        return directions
-            .map((d, i) => [d.dlon * dlon + d.dlat * dlat, i])
-            // in case tied dirs (which will be neighbors) pick the  the clockwise leader
-            .sort(([a, i], [b, j]) => (b - a) || ((j - i + 4 + 2)%4) - 2);
+            let orders = [];
+            for(;;) {
+                let dir = dirTo[src.id];
+                if (dir == null) break;
+                orders.unshift(dir);
+                src = this.neighbor(src, (dir + 2) % 4);    // walk back in reverse direction
+            }
+            return {cost: costTo[goal.id], orders: orders}
+        }
+        reach(src, range, costs) {
+            // find all squares accessible to unit within range, ignoring other units, zoc
+            let cost = 0,
+                start = this.locationOf(src),
+                locs = {[start.id]: 0};
+
+            while (cost < range) {
+                // eslint-disable-next-line no-unused-vars
+                Object.entries(locs).filter(([_,v]) => v == cost).forEach(([k,_]) => {
+                    let src = this.fromid(k);
+                    Object.values(Direction).forEach(i => {
+                        let dst = this.neighbor(src, i);
+                        if (!dst) return;
+                        let curr = dst.id in locs ? locs[dst.id] : 255;
+                        if (curr <= cost) return;
+                        let c = cost + costs[dst.terrain];
+                        if (c <= range && c < curr) locs[dst.id] = c;
+                    });
+                });
+                cost++;
+            }
+            return locs;
+        }
+        describe(loc) {
+            return `[${loc.id}] ${terraintypes[loc.terrain].key}${loc.alt ? "-alt": ""}\n`
+                + `lon ${loc.lon}, lat ${loc.lat}`;
+        }
+
+        static manhattanDistance = function(p, q) {
+            // calculate the taxicab metric between two locations
+            return Math.abs(p.lat - q.lat) + Math.abs(p.lon - q.lon);
+        }
+        static directionFrom = function(p, q) {
+            // return the index of the winning direction
+            let projections = Mapboard.#directionsFrom(p, q);
+            return projections && projections[0][1];
+        }
+        static #directionsFrom(p, q) {
+            // project all directions from p to q and rank them, ensuring tie breaking has no bias
+            let dlat = (q.lat - p.lat),
+                dlon = (q.lon - p.lon);
+            if (!dlat && !dlon) return null;
+            return directions
+                .map((d, i) => [d.dlon * dlon + d.dlat * dlat, i])
+                // in case tied dirs (which will be neighbors) pick the  the clockwise leader
+                .sort(([a, i], [b, j]) => (b - a) || ((j - i + 4 + 2)%4) - 2);
+        }
     }
 
     const
@@ -846,305 +925,303 @@ var ef1941 = (function (exports) {
             {key: 'guards'},
         ];
 
-    function Unit(game, ...args) {
-        let corpsx, corpsy, mstrng, arrive, corpt, corpno;
+    class Unit {
+        id;
+        player;
+        unitno;
+        kind;
+        type;
+        modifier;
+        canMove = 1;
+        canAttack = 1;
+        resolute = 0;
+        arrive;
+        scheduled;
+        lon;
+        lat;
+        mstrng;
+        cstrng;
+        orders = [];      // WHORDRS, HMORDS
 
-        if (args.length == 7) {     // apx
-            let swap, corptapx;
-            [corpsx, corpsy, mstrng, swap, arrive, corptapx, corpno] = args;
-            // translate apx => cart format
-            corpt = (swap & 0x80) | (corptapx & 0x70) | apxXref[corptapx & 0x7];
-        } else {                    // cart
-            console.assert(args.length == 6, "Expected 6 or 7 args for cartridge or apx unit def respectively");
-            [corpsx, corpsy, mstrng, arrive, corpt, corpno] = args;
-        }
-        const
-            modifier = (corpt >> 4) & 0x7,
-            type = corpt & 0x7,
-            kind = types[type].kind;
+        #game;
 
-        let u = Object.assign(
-            {
-                id: Unit.id++,
-                player: (corpt & 0x80) ? Player.russian : Player.german,  // german=0, russian=1; equiv i >= 55
-                unitno: corpno,
-                kind,
-                type,
-                modifier,
-                canMove: 1,
-                canAttack: 1,
-                resolute: 0,
-                arrive,
-                scheduled: arrive,
-                lon: corpsx,
-                lat: corpsy,
-                mstrng,
-                cstrng: mstrng,
-                orders: [],      // WHORDRS, HMORDS
-            },
-            unitkinds[kind],
-            types[type],
-            modifiers[modifier],
-            {
-                game: game,
-                m: game.mapboard,
-                isActive: Unit.isActive,
-                path: Unit.path,
-                addOrder: Unit.addOrder,
-                resetOrders: Unit.resetOrders,
-                moveCost: Unit.moveCost,
-                scheduleOrder: Unit.scheduleOrder,
-                bestPath: Unit.bestPath,
-                reach: Unit.reach,
-                moveTo: Unit.moveTo,
-                tryOrder: Unit.tryOrder,
-                resolveCombat: Unit.resolveCombat,
-                takeDamage: Unit.takeDamage,
-                recover: Unit.recover,
-                traceSupply: Unit.traceSupply,
-                score: Unit.score,
-                describe: Unit.describe,
-            },
-        );
-        delete u.key;
+        constructor(game, id, ...args) {
+            let corpsx, corpsy, mstrng, arrive, corpt, corpno;
 
-        u.resolute = u.player == Player.german && !u.modifier ? 1: 0;
-        u.label = [
-            u.unitno,
-            modifiers[u.modifier].key,
-            types[u.type].key,
-            players[u.player].unit
-        ].filter(Boolean).join(' ').toUpperCase().trim();
-
-        return u;
-    }
-    Unit.id = 0;
-    Unit.isActive = function() { return this.arrive <= this.game.turn && this.cstrng > 0; };
-    Unit.path = function() {
-        let loc = this.m.locationOf(this),
-            path = [loc];
-        this.orders.forEach(dir => {
-            let dst = this.m.neighbor(loc, dir);
-            if (!dst) return;
-            path.push(loc = dst);
-        });
-        return path;
-    };
-    Unit.addOrder = function(dir) {
-        let dst = null;
-        if (!this.canMove) {
-            this.game.errmsg("MILITIA UNITS CAN'T MOVE!");
-        } else if (this.orders.length == 8) {
-            this.game.errmsg("ONLY 8 ORDERS ARE ALLOWED!");
-        } else {
-            let path = this.path();
-            dst = this.m.neighbor(path.pop(), dir);
-            if (dst) {
-                this.orders.push(dir);
-            } else {
-                this.game.errmsg("IMPASSABLE!");
+            if (args.length == 7) {     // apx
+                let swap, corptapx;
+                [corpsx, corpsy, mstrng, swap, arrive, corptapx, corpno] = args;
+                // translate apx => cart format
+                corpt = (swap & 0x80) | (corptapx & 0x70) | apxXref[corptapx & 0x7];
+            } else {                    // cart
+                console.assert(args.length == 6, "Expected 6 or 7 args for cartridge or apx unit def respectively");
+                [corpsx, corpsy, mstrng, arrive, corpt, corpno] = args;
             }
-        }
-        return dst;
-    };
-    Unit.resetOrders = function() { this.orders = []; this.tick = 255;};
-    Unit.moveCost = function(dir) {
-        if (!this.canMove) return 255;
-        let dst = this.m.neighbor(this, dir);
-        if (!dst) return 255;
-        return moveCost(dst.terrain, this.kind, this.game.weather);
-    };
-    Unit.scheduleOrder = function(reset) {
-        if (reset) this.tick = 0;
-        if (this.orders.length) this.tick += this.moveCost(this.orders[0]);
-        else this.tick = 255;
-        this.game.changed('unit', this, {event: 'resolving'});
-    };
-    Unit.bestPath = function(goal) {
-        //TODO config directPath for comparison
-        return this.m.bestPath(this, goal, moveCosts(this.kind, this.game.weather));
-    };
-    Unit.reach = function(range) {
-        return this.m.reach(this, range || 32, moveCosts(this.kind, this.game.weather));
-    };
-    Unit.moveTo = function(dst) {
-        this.m.locationOf(this).unitid = null;  // leave the current location
-        if (dst != null) {
-            // occupy the new one and repaint
-            dst.put(this);
-            dst.unitid = this.id;
-            this.m.occupy(dst, this.player);
-        }
-        this.game.changed('unit', this, {event: dst ? 'moved': 'removed'});
-    };
-    Unit.tryOrder = function() {
-        let src = this.m.locationOf(this),
-            dst = this.m.neighbor(src, this.orders[0]);  // assumes legal
+            this.id = id;
+            this.player = (corpt & 0x80) ? Player.russian : Player.german;  // german=0, russian=1; equiv i >= 55
+            this.unitno = corpno;
+            this.type = corpt & 0x7;
+            this.kind = types[this.type].kind;
+            this.icon = unitkinds[this.kind].icon;
+            this.modifier = (corpt >> 4) & 0x7;
+            this.arrive = arrive;
+            this.scheduled = arrive;
+            this.lon = corpsx;
+            this.lat = corpsy;
+            this.mstrng = mstrng;
+            this.cstrng = mstrng;
 
-        if (dst.unitid != null) {
-            let opp = this.game.oob[dst.unitid];
-            if (opp.player != this.player) {
-                if (!this.resolveCombat(opp)) {
-                    this.tick++;
+            this.canMove = types[this.type].canMove ?? 1;
+            this.canAttack = modifiers[this.modifier] ?? 1;
+            this.resolute = this.player == Player.german && !this.modifier ? 1: 0;
+            this.label = [
+                this.unitno,
+                modifiers[this.modifier].key,
+                types[this.type].key,
+                players[this.player].unit
+            ].filter(Boolean).join(' ').toUpperCase().trim();
+
+            this.#game = game;
+        }
+        get active() {
+            return this.arrive <= this.#game.turn && this.cstrng > 0;
+        }
+        get human() {
+            return this.player == this.#game.human;
+        }
+        get location() {
+            return this.#game.mapboard.locationOf(this);
+        }
+        get path() {
+            let loc = this.location,
+                path = [loc];
+            this.orders.forEach(dir => {
+                let dst = this.#game.mapboard.neighbor(loc, dir);
+                if (!dst) return;
+                path.push(loc = dst);
+            });
+            return path;
+        }
+        addOrder(dir) {
+            let dst = null;
+            if (!this.canMove) {
+                this.#game.notify('msg', 'err', "MILITIA UNITS CAN'T MOVE!");
+            } else if (this.orders.length == 8) {
+                this.#game.notify('msg', 'err', "ONLY 8 ORDERS ARE ALLOWED!");
+            } else {
+                dst = this.#game.mapboard.neighbor(this.path.pop(), dir);
+                if (dst) {
+                    this.orders.push(dir);
+                    this.#game.notify('unit', 'orders', this);
+                } else {
+                    this.#game.notify('msg',' err', "IMPASSABLE!");
+                }
+            }
+            return dst;
+        }
+        resetOrders() {
+            this.orders = [];
+            this.tick = 255;
+        }
+        moveCost(dir) {
+            if (!this.canMove) return 255;
+            let dst = this.#game.mapboard.neighbor(this, dir);
+            if (!dst) return 255;
+            return moveCost(dst.terrain, this.kind, this.#game.weather);
+        }
+        scheduleOrder(reset) {
+            if (reset) this.tick = 0;
+            if (this.orders.length) this.tick += this.moveCost(this.orders[0]);
+            else this.tick = 255;
+            this.#game.notify('unit', 'resolving', this);
+        }
+        bestPath(goal) {
+            //TODO config directPath for comparison
+            return this.#game.mapboard.bestPath(this, goal, moveCosts(this.kind, this.#game.weather));
+        }
+        reach(range) {
+            return this.#game.mapboard.reach(this, range || 32, moveCosts(this.kind, this.#game.weather));
+        }
+        moveTo(dst) {
+            this.location.unitid = null;  // leave the current location
+            if (dst != null) {
+                // occupy the new one and repaint
+                dst.put(this);
+                dst.unitid = this.id;
+                this.#game.mapboard.occupy(dst, this.player);
+            }
+            this.#game.notify('unit', dst ? 'moved': 'removed', this);
+        }
+        tryOrder() {
+            let src = this.location,
+                dst = this.#game.mapboard.neighbor(src, this.orders[0]);  // assumes legal
+
+            if (dst.unitid != null) {
+                let opp = this.#game.oob.at(dst.unitid);
+                if (opp.player != this.player) {
+                    if (!this.#resolveCombat(opp)) {
+                        this.tick++;
+                        return;
+                    }
+                    // otherwise fall through to advance after combat, ignoring ZoC
+                } else {
+                    // traffic jam
+                    this.tick += 2;
                     return;
                 }
-                // otherwise fall through to advance after combat, ignoring ZoC
-            } else {
-                // traffic jam
+            } else if (this.#game.oob.zocBlocked(this.player, src, dst)) {
+                // moving between enemy ZOC M.ASM:5740
                 this.tick += 2;
                 return;
             }
-        } else if (this.game.oob.zocBlocked(this.player, src, dst)) {
-            // moving between enemy ZOC M.ASM:5740
-            this.tick += 2;
-            return;
+
+            this.orders.shift();
+            this.moveTo(dst);
+            this.scheduleOrder();
         }
+        #resolveCombat(opp) {
+            // return 1 if target square is vacant
+            if (!this.canAttack) return 0;
 
-        this.orders.shift();
-        this.moveTo(dst);
-        this.scheduleOrder();
-    };
-    Unit.resolveCombat = function(opp) {
-        // return 1 if target square is vacant
-        if (!this.canAttack) return 0;
+            this.#game.notify('unit', 'attacking', this);
+            this.#game.notify('unit', 'defending', opp);
 
-        this.flash(true);
-        opp.flash(false);
+            let modifier = terraintypes[this.#game.mapboard.locationOf(opp).terrain].defence;
+            if (opp.orders.length) modifier--;  // movement penalty
 
-        let modifier = terraintypes[this.m.locationOf(opp).terrain].defence;
-        if (opp.orders.length) modifier--;  // movement penalty
-
-        // opponent attacks
-        let str = modifyStrength(opp.cstrng, modifier);
-        // note APX doesn't skip attacker if break, but cart does
-        if (str >= randbyte()) {
-            this.takeDamage(1, 5, true);
-            if (!this.orders) return 0;
-        }
-        modifier = terraintypes[this.m.locationOf(opp).terrain].offence;
-        str = modifyStrength(this.cstrng, modifier);
-        if (str >= randbyte()) {
-            return opp.takeDamage(1, 5, true, this.orders[0]);
-        } else {
-            return 0;
-        }
-    };
-    Unit.takeDamage = function(mdmg, cdmg, checkBreak, retreatDir) {
-        // return 1 if this square is vacated, 0 otherwise
-
-        // apply mdmg/cdmg to unit
-        this.mstrng -= mdmg;
-        this.cstrng -= cdmg;
-
-        // dead?
-        if (this.cstrng <= 0) {
-            // TODO show as scrolling status window
-            console.log(`${this.label} eliminated`);
-            this.mstrng = 0;
-            this.cstrng = 0;
-            this.arrive = 255;
-            this.resetOrders();
-            this.moveTo(null);
-            return 1;
-        }
-        this.game.changed('unit', this, {event: 'stats'});
-
-        if (!checkBreak) return 0;
-
-        // russian (& ger allies) break if cstrng <= 7/8 mstrng
-        // german regulars break if cstrng < 1/2 mstrng
-        let brkpt = this.mstrng - (this.mstrng >> (this.resolute ? 1: 3));
-        if (this.cstrng < brkpt) {
-            this.resetOrders();
-
-            if (retreatDir !== null) {
-                const homedir = players[this.player].homedir,
-                    nxtdir = (randbyte() & 0x1) ? Direction.north : Direction.south,
-                    dirs = [retreatDir, homedir,  nxtdir, (nxtdir + 2) % 4, (homedir + 2) % 4];
-
-                for (let dir of dirs) {
-                    let src = this.m.locationOf(this),
-                        dst = src.neighbor(dir);
-                    if (!dst || dst.unitid != null || this.game.oob.zocBlocked(this.player, src, dst)) {
-                        if (this.takeDamage(0, 5)) return 1;  // dead
-                    } else {
-                        this.moveTo(dst);
-                        return 1;
-                    }
-                }
+            // opponent attacks
+            let str = modifyStrength(opp.cstrng, modifier);
+            // note APX doesn't skip attacker if break, but cart does
+            if (str >= randbyte()) {
+                this.#takeDamage(1, 5, true);
+                if (!this.orders) return 0;
             }
-        }
-        // otherwise square still occupied (no break or all retreats blocked but defender remains)
-        return 0;
-    };
-    Unit.recover = function() {
-        // M.ASM:5070  recover combat strength
-        if (this.mstrng - this.cstrng >= 2) this.cstring += 1 + (randbyte() & 0x1);
-    };
-    Unit.traceSupply = function() {
-        // implement the supply check from C.ASM:3430, returns 0 if supplied, 1 if not
-        const player = players[this.player],
-            supply = player.supply;
-        let fail = 0,
-            loc = this.m.locationOf(this),
-            dir = player.homedir;
-
-        if (supply.freeze && this.game.weather == Weather.snow) {
-            // C.ASM:3620
-            if (randbyte() >= 74 + 4*(this.m.boundaryDistance(loc, dir) + (dir == Direction.east ? 1 : 0))) {
+            modifier = terraintypes[this.#game.mapboard.locationOf(opp).terrain].offence;
+            str = modifyStrength(this.cstrng, modifier);
+            if (str >= randbyte()) {
+                return opp.#takeDamage(1, 5, true, this.orders[0]);
+            } else {
                 return 0;
             }
         }
-        while(fail < supply.maxfail[this.game.weather]) {
-            let dst = this.m.neighbor(loc, dir, true),
-                cost = 0;
+        #takeDamage(mdmg, cdmg, checkBreak, retreatDir) {
+            // return 1 if this square is vacated, 0 otherwise
 
-            if (this.m.boundaryDistance(this, player.homedir) < 0) {
+            // apply mdmg/cdmg to unit
+            this.mstrng -= mdmg;
+            this.cstrng -= cdmg;
+
+            // dead?
+            if (this.cstrng <= 0) {
+                // TODO show as scrolling status window
+                console.log(`${this.label} eliminated`);
+                this.mstrng = 0;
+                this.cstrng = 0;
+                this.arrive = 255;
+                this.resetOrders();
+                this.moveTo(null);
                 return 1;
-            } else if (dst.terrain == Terrain.impassable && (supply.sea == 0 || dst.alt == 1)) {
-                cost = 1;
-            } else if (this.game.oob.zocAffecting(this.player, dst) >= 2) {
-                cost = 2;
-            } else {
-                loc = dst;
             }
-            if (cost) {
-                fail += cost;
-                // either flip a coin or try the opposite direction (potentially repeatedly until failure)
-                if (dir != player.homedir) dir = (dir + 2) % 4;
-                else dir = (randbyte() & 0x1) ? Direction.north : Direction.south;
-            } else {
-                dir = player.homedir;
-            }
-        }
-        return 0;
-    };
-    Unit.score = function() {
-        let v = 0,
-            dist = this.m.boundaryDistance(this, players[this.player].homedir);
-        // see M.ASM:4050 - note even inactive units are scored based on future arrival/strength
-        if (this.player == Player.german) {
-            // maxlon + 2 == #$30 per M.ASM:4110
-            v = (dist + 3) * (this.mstrng >> 1);
-        } else {
-            v = dist * (this.cstrng >> 3);
-        }
-        return v >> 8;
-    };
-    Unit.describe = function(debug) {
-        let s = `[${this.id}] ${this.mstrng} / ${this.cstrng}\n`;
-        s += `${this.label}\n`;
-        if (this.orders) s += 'orders: ' + this.orders.map(d => directions[d].key[0].toUpperCase()).join('');
+            this.#game.notify('unit', 'stats', this);
 
-        if (this.ifr && debug) {
-            s += `ifr: ${this.ifr}; `;
-            s += directions.map((d, i) => `${d.key[0]}: ${this.ifrdir[i]}`).join(' ') + '\n';
-            s += this.objective
-                ? `obj: lon ${this.objective.lon} lat ${this.objective.lat}\n`
-                : 'no objective\n';
+            if (!checkBreak) return 0;
+
+            // russian (& ger allies) break if cstrng <= 7/8 mstrng
+            // german regulars break if cstrng < 1/2 mstrng
+            let brkpt = this.mstrng - (this.mstrng >> (this.resolute ? 1: 3));
+            if (this.cstrng < brkpt) {
+                this.resetOrders();
+
+                if (retreatDir != null) {
+                    const homedir = players[this.player].homedir,
+                        nxtdir = (randbyte() & 0x1) ? Direction.north : Direction.south,
+                        dirs = [retreatDir, homedir,  nxtdir, (nxtdir + 2) % 4, (homedir + 2) % 4];
+
+                    for (let dir of dirs) {
+                        let src = this.location,
+                            dst = this.#game.mapboard.neighbor(src, dir);
+                        if (!dst || dst.unitid != null || this.#game.oob.zocBlocked(this.player, src, dst)) {
+                            if (this.#takeDamage(0, 5)) return 1;  // dead
+                        } else {
+                            this.moveTo(dst);
+                            return 1;
+                        }
+                    }
+                }
+            }
+            // otherwise square still occupied (no break or all retreats blocked but defender remains)
+            return 0;
         }
-        return s;
-    };
+        recover() {
+            // M.ASM:5070  recover combat strength
+            if (this.mstrng - this.cstrng >= 2) this.cstring += 1 + (randbyte() & 0x1);
+        }
+        traceSupply() {
+            // implement the supply check from C.ASM:3430, returns 0 if supplied, 1 if not
+            const player = players[this.player],
+                supply = player.supply;
+            let fail = 0,
+                loc = this.location,
+                dir = player.homedir;
+
+            if (supply.freeze && this.#game.weather == Weather.snow) {
+                // C.ASM:3620
+                if (randbyte() >= 74 + 4*(this.#game.mapboard.boundaryDistance(loc, dir) + (dir == Direction.east ? 1 : 0))) {
+                    return 0;
+                }
+            }
+            while(fail < supply.maxfail[this.#game.weather]) {
+                let dst = this.#game.mapboard.neighbor(loc, dir, true),
+                    cost = 0;
+
+                if (this.#game.mapboard.boundaryDistance(this, player.homedir) < 0) {
+                    return 1;
+                } else if (dst.terrain == Terrain.impassable && (supply.sea == 0 || dst.alt == 1)) {
+                    cost = 1;
+                } else if (this.#game.oob.zocAffecting(this.player, dst) >= 2) {
+                    cost = 2;
+                } else {
+                    loc = dst;
+                }
+                if (cost) {
+                    fail += cost;
+                    // either flip a coin or try the opposite direction (potentially repeatedly until failure)
+                    if (dir != player.homedir) dir = (dir + 2) % 4;
+                    else dir = (randbyte() & 0x1) ? Direction.north : Direction.south;
+                } else {
+                    dir = player.homedir;
+                }
+            }
+            return 0;
+        }
+        score() {
+            let v = 0,
+                dist = this.#game.mapboard.boundaryDistance(this, players[this.player].homedir);
+            // see M.ASM:4050 - note even inactive units are scored based on future arrival/strength
+            if (this.player == Player.german) {
+                // maxlon + 2 == #$30 per M.ASM:4110
+                v = (dist + 3) * (this.mstrng >> 1);
+            } else {
+                v = dist * (this.cstrng >> 3);
+            }
+            return v >> 8;
+        }
+        describe(debug) {
+            let s = `[${this.id}] ${this.mstrng} / ${this.cstrng}\n`;
+            s += `${this.label}\n`;
+            if (this.orders) s += 'orders: ' + this.orders.map(d => directions[d].key[0].toUpperCase()).join('');
+
+            if (this.ifr && debug) {
+                s += `ifr: ${this.ifr}; `;
+                s += directions.map((d, i) => `${d.key[0]}: ${this.ifrdir[i]}`).join(' ') + '\n';
+                s += this.objective
+                    ? `obj: lon ${this.objective.lon} lat ${this.objective.lat}\n`
+                    : 'no objective\n';
+            }
+            return s;
+        }
+    }
+
 
     function modifyStrength(strength, modifier) {
         if (modifier > 0) {
@@ -1665,277 +1742,263 @@ var ef1941 = (function (exports) {
         ],
     };
 
-    function Oob(game, memento) {
-        let oob = oobVariants[variants[game.variant].key + scenarios[game.scenario].key]
-            .map(vs => Unit(game, ...vs)),
-            o = Object.assign(
-                oob,
-                {
-                    game: game,
-                    m: game.mapboard,
-                    nextTurn: Oob.nextTurn,
-                    memento: Oob.memento,
-                    activeUnits: Oob.activeUnits,
-                    scheduleOrders: Oob.scheduleOrders,
-                    executeOrders: Oob.executeOrders,
-                    regroup: Oob.regroup,
-                    reinforce: Oob.reinforce,
-                    zocAffecting: Oob.zocAffecting,
-                    zocBlocked: Oob.zocBlocked,
-                }
-            );
+    class Oob {
+        #game;
+        #units;
 
-        if (memento) {
-            o.filter(u => u.scheduled <= game.turn)
+        constructor(game, memento) {
+            const v = variants[game.variant].key + scenarios[game.scenario].key;
+
+            this.#units = oobVariants[v].map((vs, i) => new Unit(game, i, ...vs));
+
+            this.#game = game;
+            // offer read-only array convenience functions
+            [
+                'at', 'every', 'filter', 'find', 'findIndex', 'findLast', 'findLastIndex',
+                'forEach', 'map', 'reduce', 'reduceRight', 'slice', 'some'
+            ].forEach(k => {this[k] = (...args) => this.#units[k](...args);});
+
+            if (memento) {
+                this.filter(u => u.scheduled <= game.turn)
+                    .forEach(u => {
+                        let status = memento.shift();
+                        if (status == 1) { // eliminated
+                            //TODO function
+                            u.mstrng = 0;
+                            u.cstrng = 0;
+                            u.arrive = 255;
+                        } else if (status == 2) { // delayed
+                            u.arrive = game.turn + 1;
+                        }
+                    });
+                let active = this.activeUnits(),
+                    human = active.filter(u => u.human),
+                    lats = zagzig(memento.splice(0, active.length)),
+                    lons = zagzig(memento.splice(0, active.length)),
+                    mstrs = zagzig(memento.splice(0, active.length)),
+                    cdmgs = memento.splice(0, active.length),
+                    nords = memento.splice(0, human.length),
+                    lat = 0, lon = 0, mstr = 255;
+                active.forEach(u => {
+                    u.lat = lat + lats.shift();
+                    u.lon = lon + lons.shift();
+                    u.mstrng = mstr + mstrs.shift();
+                    [lat, lon, mstr] = [u.lat, u.lon, u.mstrng];
+                    u.cstrng = u.mstrng - cdmgs.shift();
+                });
+                human.forEach(u => {
+                    u.orders = memento.splice(0, nords.shift());
+                });
+            }
+        }
+        nextTurn(initialSetup) {
+            if (initialSetup) {
+                this.activeUnits().forEach(u => u.moveTo(u.location));
+            } else {
+                this.regroup();
+                // TODO trace supply, with CSTR >> 1 if not, russian MSTR+2 (for apx)
+                this.reinforce();
+            }
+        }
+        get memento() {
+            let lats = [], lons = [], mstrs = [], cdmgs = [], nords = [], ords = [],
+                lat = 0, lon = 0, mstr = 255,
+                active = this.activeUnits();
+
+            // for scheduled active units, status = 0 (active), 1 (dead), 2 (delayed)
+            let status = this.filter(u => u.scheduled <= this.#game.turn)
+                .map(u => u.active ? 0: (u.arrive <= this.#game.turn ? 1: 2));
+
+            active.forEach(u => {
+                lats.push(u.lat - lat);
+                lons.push(u.lon - lon);
+                mstrs.push(u.mstrng - mstr);
+                [lat, lon, mstr] = [u.lat, u.lon, u.mstrng];
+
+                cdmgs.push(u.mstrng - u.cstrng);
+                if (u.human) {
+                    nords.push(u.orders.length);
+                    ords = ords.concat(u.orders);
+                }
+            });
+
+            return status.concat(zigzag(lats), zigzag(lons), zigzag(mstrs), cdmgs, nords, ords);
+        }
+        activeUnits(player) {
+            return this.filter(u => u.active && (player == null || u.player == player));
+        }
+        scheduleOrders() {
+            // M.asm:4950 movement execution
+            this.forEach(u => u.scheduleOrder(true));
+        }
+        executeOrders(tick) {
+            this.filter(u => u.tick == tick).reverse().forEach(u => u.tryOrder());
+        }
+        regroup() {
+            // regroup, recover...
+            this.activeUnits().forEach(u => u.recover());
+        }
+        reinforce() {
+            // M.ASM:3720  delay reinforcements scheduled for an occuplied square
+            this.filter(u => u.arrive == this.#game.turn)
                 .forEach(u => {
-                    let status = memento.shift();
-                    if (status == 1) {
-                        //TODO function
-                        u.mstrng = 0;
-                        u.cstrng = 0;
-                        u.arrive = 255;
-                    } else if (status == 2) {
-                        u.arrive = this.game.turn + 1;
+                    const loc = u.location;
+                    if (loc.unitid != null) {
+                        u.arrive++;
+                    } else {
+                        u.moveTo(loc);   // reveal unit and link to the map square
                     }
                 });
-            let active = o.activeUnits(),
-                human = active.filter(u => u.player == game.human),
-                lats = zagzig(memento.splice(0, active.length)),
-                lons = zagzig(memento.splice(0, active.length)),
-                mstrs = zagzig(memento.splice(0, active.length)),
-                cdmgs = memento.splice(0, active.length),
-                nords = memento.splice(0, human.length),
-                lat = 0, lon = 0, mstr = 255;
-            active.forEach(u => {
-                u.lat = lat + lats.shift();
-                u.lon = lon + lons.shift();
-                u.mstrng = mstr + mstrs.shift();
-                [lat, lon, mstr] = [u.lat, u.lon, u.mstrng];
-                u.cstrng = u.mstrng - cdmgs.shift();
-            });
-            human.forEach(u => {
-                u.orders = memento.splice(0, nords.shift());
-            });
         }
-        return o;
-    }
-    Oob.nextTurn = function() {
-        this.regroup();
-        // TODO trace supply, with CSTR >> 1 if not, russian MSTR+2 (for apx)
-        this.reinforce();
-    };
-    Oob.memento = function() {
-        let lats = [], lons = [], mstrs = [], cdmgs = [], nords = [], ords = [],
-            lat = 0, lon = 0, mstr = 255,
-            active = this.activeUnits();
-
-        // for scheduled active units, status = 0 (active), 1 (dead), 2 (delayed)
-        let status = this.filter(u => u.scheduled <= this.game.turn)
-            .map(u => u.isActive() ? 0: (u.arrive <= this.game.turn ? 1: 2));
-
-        active.forEach(u => {
-            lats.push(u.lat - lat);
-            lons.push(u.lon - lon);
-            mstrs.push(u.mstrng - mstr);
-            [lat, lon, mstr] = [u.lat, u.lon, u.mstrng];
-
-            cdmgs.push(u.mstrng - u.cstrng);
-            if (u.player == this.game.human) {
-                nords.push(u.orders.length);
-                ords = ords.concat(u.orders);
+        zocAffecting(player, loc) {
+            // evaluate zoc experienced by player (eg. exerted by !player) in square at loc
+            let zoc = 0;
+            // same player in target square exerts 4, enemy negates zoc
+            if (loc.unitid != null) {
+                if (this.at(loc.unitid).player == player) return zoc;
+                zoc += 4;
             }
-        });
-
-        return status.concat(zigzag(lats), zigzag(lons), zigzag(mstrs), cdmgs, nords, ords);
-    };
-    Oob.activeUnits = function(player) {
-        return this.filter(u => u.isActive() && (player == null || u.player == player));
-    };
-    Oob.scheduleOrders = function() {
-        // M.asm:4950 movement execution
-        this.forEach(u => u.scheduleOrder(true));
-    };
-    Oob.executeOrders = function(tick) {
-        this.filter(u => u.tick == tick).reverse().forEach(u => u.tryOrder());
-    };
-    Oob.regroup = function() {
-        // regroup, recover...
-        this.activeUnits().forEach(u => u.recover());
-    };
-    Oob.reinforce = function() {
-        // M.ASM:3720  delay reinforcements scheduled for an occuplied square
-        this.filter(u => u.arrive == this.game.turn)
-            .forEach(u => {
-                const loc = this.m.locationOf(u);
-                if (loc.unitid != null) {
-                    u.arrive++;
-                } else {
-                    u.moveTo(loc);   // reveal unit and link to the map square
-                }
+            this.#game.mapboard.squareSpiral(loc, 3).slice(1).forEach((d, i) => {
+                // even steps in the spiral exert 2, odd steps exert 1
+                if (d.unitid != null && this.at(d.unitid).player != player) zoc += (i % 2) ? 1: 2;
             });
-    };
-    Oob.zocAffecting = function(player, loc) {
-        // evaluate zoc experienced by player (eg. exerted by !player) in square at loc
-        let zoc = 0;
-        // same player in target square exerts 4, enemy negates zoc
-        if (loc.unitid != null) {
-            if (this[loc.unitid].player == player) return zoc;
-            zoc += 4;
+            return zoc;
         }
-        this.m.squareSpiral(loc, 3).slice(1).forEach((d, i) => {
-            // even steps in the spiral exert 2, odd steps exert 1
-            if (d.unitid != null && this[d.unitid].player != player) zoc += (i % 2) ? 1: 2;
-        });
-        return zoc;
-    };
-    Oob.zocBlocked = function(player, src, dst) {
-        // does enemy ZoC block player move from src to dst?
-        return this.zocAffecting(player, src) >= 2 && this.zocAffecting(player, dst) >= 2;
-    };
-
-    const tokenVersion = 1;
-
-    function Game(options) {
-        let memento = typeof options === 'string' ? decode(options): null,
-            state = Object.assign(
-            {
-                score: Game.score,
-                memento: Game.memento,
-                token: Game.token,
-                nextTurn: Game.nextTurn,
-                setTurn: Game.setTurn,
-                changed: Game.changed,
-                errmsg: Game.errmsg,
-                infomsg: Game.infomsg,
-                datemsg: Game.datemsg,
-            },
-            Game.defaults,
-        );
-        if (memento) {
-            let version = memento.shift();
-            if (version != tokenVersion) throw new Error("Unrecognized save version", version);
-
-            state.variant = memento.shift();
-            state.scenario = memento.shift();
-            state.human = memento.shift();
-            state.turn = memento.shift();
-
-            state.help = memento.shift();
-            state.handicap = memento.shift();
-            state.zoom = memento.shift();
-            state.extras = memento.shift();
-            state.debug = memento.shift();
-        } else {
-            Object.assign(state, options);
+        zocBlocked(player, src, dst) {
+            // does enemy ZoC block player move from src to dst?
+            return this.zocAffecting(player, src) >= 2 && this.zocAffecting(player, dst) >= 2;
         }
-        state.mapboard = Mapboard(state, memento);
-        state.oob = Oob(state, memento);
-        if (memento && memento.length != 0) throw new Error("Unexpected save data overflow");
-        return state;
     }
-    Game.defaults = {
-        variant: Variant.apx,
-        scenario: Scenario['41'],
-        human: Player.german,
-        turn: -1,       // 0-based turn counter, -1 is pre-game
+
+    const tokenVersion = 1,
+        rlmarker = 6;  // highest 5-bit coded value, so values 0..3 (& 4,5) are unchanged by rlencode
+
+    class Game {
+        variant = Variant.apx;
+        scenario = Scenario['41'];
+        human = Player.german;
+        turn = 0;       // 0-based turn index
 
         // helpers derived from turn
-        date: null,
-        month: null,
-        weather: null,
+        date = null;
+        month = null;
+        weather = null;
 
         // flags
-        help: 0,        // after init, has 0/1 indicating help hide/show state
-        handicap: 0,    // whether the game is handicapped
-        zoom: 0,        // display zoom on or off
-        extras: 1,      // display extras like labels, health, zoc
-        debug: 0,       // whether to display debug info for Russian units
-    };
-    Game.score = function(player) {
-        // M.asm:4050
-        let eastwest = sum(this.oob.map(u => u.score(this) * (u.player == player ? 1: -1))),
-            bonus = sum(this.mapboard.cities.filter(c => c.owner == player).map(c => c.points)),
-            score = Math.max(0, eastwest) + bonus;
-        if (this.handicap) score >>= 1;
-        return score;
-    };
-    Game.setTurn = function(turn) {
-        // update turn-based helpers
-        if (!(turn == null)) this.turn = turn;
+        help = 0;        // after init, has 0/1 indicating help hide/show state
+        handicap = 0;    // whether the game is handicapped
+        zoom = 0;        // display zoom on or off
+        extras = 1;      // display extras like labels, health, zoc
+        debug = 0;       // whether to display debug info for Russian units
 
-        let dt = new Date(scenarios[this.scenario].start);
-        this.date = new Date(dt.setDate(dt.getDate() + 7 * this.turn));
-        this.month = this.date.getMonth();     // note JS getMonth is 0-indexed
-        this.weather = monthdata[this.month].weather;
+        listeners = [];
 
-        return dt;
-    };
-    Game.nextTurn = function() {
-        // start next turn, add a week to the date
-        this.turn++;
-        this.setTurn();
+        constructor(options) {
+            let memento = null;
+            if (typeof options === 'string') {
+                memento = rldecode(fibdecode(options), rlmarker);
+                const version = memento.shift();
+                if (version != tokenVersion) throw new Error("Unrecognized save version", version);
 
-        this.mapboard.nextTurn();
-        this.oob.nextTurn();
+                this.variant = memento.shift();
+                this.scenario = memento.shift();
+                this.human = memento.shift();
+                this.turn = memento.shift();
 
-        if (this.display) {
-            this.display.nextTurn(this.date);
+                this.help = memento.shift();
+                this.handicap = memento.shift();
+                this.zoom = memento.shift();
+                this.extras = memento.shift();
+                this.debug = memento.shift();
+            } else {
+                Object.assign(this, options ?? {});
+            }
+            this.mapboard = new Mapboard(this, memento);
+            this.oob = new Oob(this, memento);
 
-            // start thinking...
-            //TODO configurable delay if interactive vs headless?
-    //        players.forEach((_, player) => { if (player != this.human) think(player); });
+            if (memento && memento.length != 0) throw new Error("Unexpected save data overflow");
         }
-    };
-    Game.changed = function(typ, obj, options) {
-        if (!this.display) return;
-        switch (typ) {
-            case 'map':
-                this.display.paintMap(options);
-                break;
-            case 'unit':
-                this.display.paintUnit(obj, options);
-                break;
-            default:
-                console.warn('Ignoring game.changed', typ);
+        score(player) {
+            // M.asm:4050
+            let eastwest = sum(this.oob.map(u => u.score(this) * (u.player == player ? 1: -1))),
+                bonus = sum(this.mapboard.cities.filter(c => c.owner == player).map(c => c.points)),
+                score = Math.max(0, eastwest) + bonus;
+            if (this.handicap) score >>= 1;
+            return score;
         }
-    };
-    Game.errmsg = function(txt) {
-        let v = this.score(this.human);
-        if (this.display) this.display._errmsg(v, txt);
-        else console.warn(`[score=${v}] txt`);
-    };
-    Game.infomsg = function(...lines) {
-        if (this.display) this.display._infomsg(...lines);
-        else console.log(lines.join('\n'));
-    };
-    Game.datemsg = function(...lines) {
-        if (this.display) this.display._datemsg(...lines);
-        else console.log(lines.join('\n'));
-    };
-    Game.memento = function() {
-        // return a list of uint representing the state of the game
-        return [
-            tokenVersion,
+        nextTurn(initialSetup) {
+            // start next turn, add a week to the date
+            if (!initialSetup) this.turn++;
 
-            this.variant,
-            this.scenario,
-            this.human,
-            this.turn,
+            let dt = new Date(scenarios[this.scenario].start);
+            this.date = new Date(dt.setDate(dt.getDate() + 7 * this.turn));
+            this.month = this.date.getMonth();     // note JS getMonth is 0-indexed
+            this.weather = monthdata[this.month].weather;
 
-            this.help,
-            this.handicap,
-            this.zoom,
-            this.extras,
-            this.debug,
-        ].concat(
-            this.mapboard.memento(),
-            this.oob.memento(),
-        );
-    };
-    Game.token = function() {
-        // TODO get/set window.location.href
-        return encode(this.memento());
-    };
+            this.mapboard.nextTurn(initialSetup);
+            this.oob.nextTurn(initialSetup);
+            return this;
+        }
+        resolveTurn(callback, delay) {
+            // process the orders for this turn
+            // if `callback` is provided the turn is processed asynchronously in increments of delay (ms)
+            // and callback is called on completion.
+            // otherwise the turn is resolved immediately and returns to caller
+            const oob = this.oob;
+            let tick = 0;
+
+            oob.scheduleOrders();
+
+            // Set up a function that loops synchronously or asynchornously
+            function tickTock() {
+                // original code processes movement in reverse-oob order
+                // could be interesting to randomize, or support a 'pause' order to handle traffic
+                oob.executeOrders(tick++);
+                if (callback) {
+                    setTimeout(tick < 32 ? tickTock : callback, delay || 250);
+                } else if (tick < 32) {
+                    tickTock();
+                }
+            }
+            tickTock();
+        }
+        addListener(listener) {
+            this.listeners.push(listener);
+        }
+        notify(typ, event, obj, options) {
+            // console.debug(`game.notify: ${typ}-${event}`);
+            this.listeners.forEach(listener => listener(typ, event, obj, options));
+
+            if (typ == 'msg') {
+                let s = typeof obj === 'string' ? obj: obj.join('\n'),
+                    logger = (event == 'err' ? console.warn: console.info);
+                logger(s);
+            }
+        }
+        get memento() {
+            // return a list of uint representing the state of the game
+            return [
+                tokenVersion,
+
+                this.variant,
+                this.scenario,
+                this.human,
+                this.turn,
+
+                +this.help,
+                +this.handicap,
+                +this.zoom,
+                +this.extras,
+                +this.debug,
+            ].concat(
+                this.mapboard.memento,
+                this.oob.memento,
+            );
+        }
+        get token() {
+            return fibencode(rlencode(this.memento, rlmarker));
+        }
+    }
 
     var noop = {value: () => {}};
 
@@ -4633,7 +4696,7 @@ var ef1941 = (function (exports) {
             "#003c00",  "#205c20",  "#407c40",  "#5c9c5c",  "#74b474",  "#8cd08c",  "#a4e4a4",  "#b8fcb8",
             "#143800",  "#345c1c",  "#507c38",  "#6c9850",  "#84b468",  "#9ccc7c",  "#b4e490",  "#c8fca4",
             "#2c3000",  "#4c501c",  "#687034",  "#848c4c",  "#9ca864",  "#b4c078",  "#ccd488",  "#e0ec9c",
-            "#442800",  "#644818",  "#846830",  "#a08444",  "#b89c58",  "#d0b46c",  "#e8cc7c",  "#fce08c"
+            "#442800",  "#644818",  "#846830",  "#a08444",  "#b89c58",  "#d0b46c",  "#e8cc7c",  "#fce08c",
         ];
 
     function centered(s, width) {
@@ -4713,201 +4776,24 @@ var ef1941 = (function (exports) {
             .style('opacity', 1);
     }
 
-    function Display(help, game) {
-
-        const icon = (d) => d.icon,
-            unitcolor = (u) => players[u.player].color;
-
-    /*
-        var r = document.querySelector(':root');
-        r.style.setProperty('--fontmap', 'url(fontmap-cart.png)');
-    */
-
-        // set up background colors
-        setclr('body', 'D4');
-        setclr('.date-rule', '1A');
-        setclr('.info-rule', '02');  // same as map
-        setclr('.err-rule', '8A');
-
-        // set up info, error and help
-        putlines('#help-window', help, '04', '0e');
-        putlines('#date-window', [''], '6A', 'B0');
-        putlines('#info-window', [''], '28', '22');
-        putlines('#err-window', [''], c => c == "}" ? '94': '22', '3A');
-
-        _datemsg(centered("EASTERN FRONT 1941", 20));
-        _infomsg(centered('COPYRIGHT 1982 ATARI'), centered('ALL RIGHTS RESERVED'));
-
-        // draw the map characters with a semi-transparent dimming layer which we can hide/show
-        putlines('#map', game.mapboard.locations, 'ff', '00', icon, m => `map-${m.id}`)
-            .append('div')
-            .classed('chr-dim', true)
-            .classed('extra', true);
-
-        // add the city labels
-        select('#labels')
-            .selectAll('div.label')
-            .data(game.mapboard.cities)
-          .join('div')
-            .classed('label', true)
-            .classed('extra', true)
-            .text(d => d.label)
-            .each(function(d) { select(this).call(showAt, game.mapboard.locationOf(d), 4, -4); });
-
-        // create a layer to show paths with unit orders
-        select('#orders').append('svg')
-            .attr('width', 48*8)
-            .attr('height', 41*8)
-            .append('g')
-            .attr('transform', 'scale(8)')
-            .selectAll('.unit-path')
-            .data(game.oob)
-          .join('g')
-            .attr('id', u => `path-${u.id}`)
-            .classed('unit-path', true)
-            .classed('extra', true)
-            .classed('debug', u => u.player != game.human)
-            .attr('style', u => {
-                const c = anticColor(unitcolor(u));
-                return `stroke: ${c}; fill: ${c};`
-            });
-
-        // draw all of the units
-        putlines('#units', [game.oob], unitcolor, '00', icon, u => `unit-${u.id}`)
-            .each(function(u) { select(this).call(showAt, game.mapboard.locationOf(u)); })
-            .style('opacity', 0)
-            .append('div')
-            .attr('class', 'chr-overlay extra')
-            .append('div')
-            .classed('chr-mstrng', true)
-            .append('div')
-            .classed('chr-cstrng', true);
-
-        // put arrows and kreuze in layer for path animation
-        putlines(
-            '#arrows', [[256], directions.map(icon)],
-            d => d == 256 ? '1A': 'DC', null, c => c, (d, i) => d == 256 ? 'kreuze': `arrow-${i-1}`)
-            .style('opacity', 0);
-
-        let display = {
-            _datemsg,
-            _infomsg,
-            _errmsg,
-            nextTurn,
-            setZoom,
-            setVisibility,
-            paintMap,
-            paintUnit,
-            animateUnitPath
-        };
-        game.display = display;
-        return display;
-    }
-
-    function _datemsg(line2, line1) {  // by default put on second line
-        putlines('#date-window', [line1 || "", line2 || ""]);
-    }
-
-    function _infomsg(line1, line2) {
-        putlines('#info-window', [line1 || "", line2 || ""]);
-    }
-
-    function _errmsg(score, text) {
-        let s = score.toString().padStart(3).padEnd(4);
-        s += centered(text || "", 36);
-        putlines('#err-window', [s]);
-    }
-
-    function setZoom(zoomed, focus) {
-        var elt;
-        if (focus) {
-            elt = select('#kreuze').node();
-        } else {
-            let x = 320/2,
-                y = 144/2 + select('#map-window').node().offsetTop - window.scrollY;
-            elt = document.elementFromPoint(x*4, y*4);
-        }
-        // toggle zoom level, apply it, and re-center target eleemnt
-        select('#map-window .container').classed('doubled', zoomed);
-        elt.scrollIntoView({block: "center", inline: "center"});
-    }
-
-    function setVisibility(sel, visible) {
-        selectAll(sel).style('visibility', visible ? 'visible': 'hidden');
-    }
-
-    function nextTurn(date) {
-        // clear error, show score for this turn
-        _errmsg('PLEASE ENTER YOUR ORDERS NOW');
-        _datemsg(" " + date.toLocaleDateString("en-US", {year: 'numeric', month: 'long', day: 'numeric'}));
-    }
-
-    function paintMap(opts)  {
-        // apply current fg/bg colors to map and unit background
-        selectAll('#map .chr-bg, #units .chr-bg')
-            .style('background-color', anticColor(opts.bgcolor));
-
-        selectAll('#map .chr-fg')
-            .style('background-color', d => anticColor(opts.fgcolorfn(d)));
-
-        // contrasting label colors
-        selectAll('.label')
-            .style('color', anticColor(opts.labelcolor));
-    }
-
-    function paintUnit(u, opts) {
-        let chr = select(`#unit-${u.id}`),
-            path = select(`#path-${u.id}`),
-            loc = u.m.locationOf(u);
-
-        if (['moved', 'removed'].includes(opts.event)) {
-            chr = chr.transition().duration(250).ease(linear);
-        }
-        switch (opts.event) {
-            case 'moved':
-                chr.call(showAt, loc);
-                path.attr('transform', `translate(${loc.col + 0.5},${loc.row + 0.5}) scale(-1)`)
-                    .html(pathSVG(u.orders));
-            // eslint-disable-next-line no-fallthrough
-            case 'stats':
-                chr.select('.chr-mstrng').style('width', (90 * u.mstrng/255) + '%');
-                chr.select('.chr-cstrng').style('width', (100 * u.cstrng/u.mstrng) + '%');
-                break;
-            case 'removed':
-                chr.style('opacity', 0);
-                break;
-            case 'attacking':
-            case 'defending':
-            case 'resolving':
-                chr.select('.chr-fg')
-                    .classed('flash', opts.event != 'resolved')
-                    .style('animation-direction', opts.event == 'defending' ? 'reverse': 'normal');
-                break;
-            case 'selected':
-            case 'unselected':
-                chr.classed('blink', opts.event == 'selected');
-        }
-    }
-
     function animateUnitPath(u) {
         selectAll('#arrows .chr').interrupt().style('opacity', 0);
         if (!u) return;
 
-        let path = u.path(),
-            loc = path.pop();
+        let path = u.path;
 
         select('#kreuze')
-            .call(showAt, loc)
+            .call(showAt, path[path.length-1])
             .node()
             .scrollIntoView({block: "center", inline: "center"});
 
-        if (!path.length) return;
+        if (path.length < 2) return;
 
         let i = 0;
         function animateStep() {
             let loc = path[i],
+                dst = path[i+1],
                 dir = u.orders[i],
-                dst = u.m.neighbor(loc, dir),
                 interrupted = false;
             select(`#arrow-${dir}`)
                 .call(showAt, loc)
@@ -4921,11 +4807,10 @@ var ef1941 = (function (exports) {
                 .style('opacity', 0)
             .on("interrupt", () => { interrupted = true; })
             .on("end", () => {
-                i = (i+1) % path.length;
+                i = (i+1) % (path.length-1);
                 if (!interrupted) animateStep();
             });
         }
-
         animateStep();
     }
 
@@ -4962,87 +4847,339 @@ var ef1941 = (function (exports) {
         return svg;
     }
 
-    function _think(game, player, firstpass) {
-        const
-            pinfo = players[player],
-            friends = game.oob.activeUnits(player),
-            foes = game.oob.activeUnits(1-player),
-            m = game.oob.m;
+    function paintMap(opts)  {
+        // apply current fg/bg colors to map and unit background
+        selectAll('#map .chr-bg, #units .chr-bg')
+            .style('background-color', anticColor(opts.bgcolor));
 
-        // set up the ghost army
-        var ofr = 0;  // only used in first pass
-        if (firstpass) {
-            ofr = calcForceRatios(game.oob, player).ofr;
-            console.log('Overall force ratio (OFR) is', ofr);
-            friends.forEach(u => {u.objective = m.locationOf(u);});
+        selectAll('#map .chr-fg')
+            .style('background-color', d => anticColor(opts.fgcolorfn(d)));
+
+        // contrasting label colors
+        selectAll('.label')
+            .style('color', anticColor(opts.labelcolor));
+    }
+
+    function paintUnit(u, event) {
+        let chr = select(`#unit-${u.id}`),
+            path = select(`#path-${u.id}`),
+            loc = u.location;
+
+        if (['moved', 'removed'].includes(event)) {
+            chr = chr.transition().duration(250).ease(linear);
+        }
+        switch (event) {
+            case 'moved':
+                chr.call(showAt, loc);
+            // eslint-disable-next-line no-fallthrough
+            case 'orders':
+                path.attr('transform', `translate(${loc.col + 0.5},${loc.row + 0.5}) scale(-1)`)
+                    .html(pathSVG(u.orders));
+            // eslint-disable-next-line no-fallthrough
+            case 'stats':
+                chr.select('.chr-mstrng').style('width', (90 * u.mstrng/255) + '%');
+                chr.select('.chr-cstrng').style('width', (100 * u.cstrng/u.mstrng) + '%');
+                break;
+            case 'removed':
+                chr.style('opacity', 0);
+                break;
+            case 'attacking':
+            case 'defending':
+            case 'resolving':
+                chr.select('.chr-fg')
+                    .classed('flash', event != 'resolving')
+                    .style('animation-direction', event == 'defending' ? 'reverse': 'normal');
+                break;
+            case 'selected':
+            case 'unselected':
+                chr.classed('blink', event == 'selected');
+                animateUnitPath(event == 'selected' && u.human ? u : null);
+                break;
+            default:
+                console.warn('paintUnit ignoring unknown event', event);
+        }
+    }
+
+    class Display {
+        #score;
+
+        constructor(help, game) {
+
+            const icon = (d) => d.icon,
+                unitcolor = (u) => players[u.player].color,
+                root = document.querySelector(':root'),
+                variant = variants[game.variant].key;
+
+            // pick the right fontmap
+            root.style.setProperty('--fontmap', `url(fontmap-${variant}.png)`);
+
+            // set up background colors
+            setclr('body', 'D4');
+            setclr('.date-rule', '1A');
+            setclr('.info-rule', '02');  // same as map
+            setclr('.err-rule', '8A');
+
+            // set up info, error and help
+            putlines('#help-window', help, c => c == "}" ? '94': '04', '0e');
+            putlines('#date-window', [''], '6A', 'B0');
+            putlines('#info-window', [''], '28', '22');
+            putlines('#err-window', [''], '22', '3A');
+
+            this.datemsg(centered("EASTERN FRONT 1941", 20));
+            this.infomsg(centered('COPYRIGHT 1982 ATARI'), centered('ALL RIGHTS RESERVED'));
+
+            // draw the map characters with a semi-transparent dimming layer which we can hide/show
+            putlines('#map', game.mapboard.locations, 'ff', '00', icon, m => `map-${m.id}`)
+                .append('div')
+                .classed('chr-dim', true)
+                .classed('extra', true);
+
+            // add the city labels
+            select('#labels')
+                .selectAll('div.label')
+                .data(game.mapboard.cities)
+              .join('div')
+                .classed('label', true)
+                .classed('extra', true)
+                .text(d => d.label)
+                .each(function(d) { select(this).call(showAt, game.mapboard.locationOf(d), 4, -4); });
+
+            // create a layer to show paths with unit orders
+            select('#orders')
+                .append('svg')
+                .attr('width', 48*8)
+                .attr('height', 41*8)
+                .append('g')
+                .attr('transform', 'scale(8)')
+                .selectAll('.unit-path')
+                .data(game.oob.slice())
+              .join('g')
+                .attr('id', u => `path-${u.id}`)
+                .classed('unit-path', true)
+                .classed('debug', u => !u.human)
+                .classed('extra', true)
+                .attr('style', u => {
+                    const c = anticColor(unitcolor(u));
+                    return `stroke: ${c}; fill: ${c};`
+                });
+
+            // draw all of the units
+            putlines('#units', [game.oob], unitcolor, '00', icon, u => `unit-${u.id}`)
+                .each(function(u) { select(this).call(showAt, u.location); })
+                .style('opacity', 0)
+                .append('div')
+                .attr('class', 'chr-overlay extra')
+                .append('div')
+                .classed('chr-mstrng', true)
+                .append('div')
+                .classed('chr-cstrng', true);
+
+            // put arrows and kreuze in layer for path animation
+            putlines(
+                '#arrows', [[256], directions.map(icon)],
+                d => d == 256 ? '1A': 'DC', null, c => c, (d, i) => d == 256 ? 'kreuze': `arrow-${i-1}`)
+                .style('opacity', 0);
+
+            game.addListener(this.changeListener);
+
+        }
+        changeListener(typ, event, obj, options) {
+            // console.debug(`Display.changeListener got ${typ}.${event}`);
+
+            switch (typ) {
+                case 'map':
+                    paintMap(options);
+                    break;
+                case 'unit':
+                    paintUnit(obj, event);
+                    break;
+                case 'msg':
+                    switch (event) {
+                        case 'info': this.infomsg(...obj); break;
+                        case 'date': this.datemsg(...obj); break;
+                        case 'err': this.errmsg(obj); break;
+                    }
+                    break;
+                default:
+                    console.warn(`Display.changeListener ignoring ${typ}.${event}`);
+            }
+        }
+        datemsg(line2, line1) {  // by default put on second line
+            putlines('#date-window', [line1 || "", line2 || ""]);
+        }
+        infomsg(line1, line2) {
+            putlines('#info-window', [line1 || "", line2 || ""]);
+        }
+        errmsg(text) {
+            let s = (this.#score || '').toString().padStart(3).padEnd(4);
+            s += centered(text || "", 36);
+            putlines('#err-window', [s]);
+        }
+        setZoom(zoomed, focus) {
+            var elt;
+            if (focus) {
+                elt = select('#kreuze').node();
+            } else {
+                let x = 320/2,
+                    y = 144/2 + select('#map-window').node().offsetTop - window.scrollY;
+                elt = document.elementFromPoint(x*4, y*4);
+            }
+            // toggle zoom level, apply it, and re-center target eleemnt
+            select('#map-window .container').classed('doubled', zoomed);
+            elt.scrollIntoView({block: "center", inline: "center"});
+        }
+        setVisibility(sel, visible) {
+            selectAll(sel).style('visibility', visible ? 'visible': 'hidden');
+        }
+        nextTurn(date, score) {
+            // clear error, show score for this turn
+            this.#score = score;
+            this.errmsg(centered('PLEASE ENTER YOUR ORDERS NOW'));
+            this.datemsg(" " + date.toLocaleDateString("en-US", {year: 'numeric', month: 'long', day: 'numeric'}));
+            this.infomsg();
+        }
+    }
+    Display.centered = centered;
+
+    class Thinker {
+        #game;
+        #player;
+        #trainOfThought = 0;
+        #depth = 0;
+        #delay;
+        #concluded = false;
+
+        constructor(game, player) {
+            this.#game = game;
+            this.#player = player;
         }
 
-        friends.filter(u => u.canMove).forEach(u => {
-            //TODO these first two checks don't seem to depend on ghost army so are fixed on first pass?
-            if (firstpass && u.ifr == (ofr >> 1)) {
-                // head to reinforce if no local threat since (Local + OFR) / 2 = OFR / 2
-                //TODO this tends to send most units to same beleagured square
-                u.objective = m.locationOf(findBeleaguered(m, u, friends));
-            } else if (firstpass && (u.cstrng <= (u.mstrng >> 1) || u.ifrdir[pinfo.homedir] >= 16)) {
-                // run home if hurting or outnumbered in the rear
-                //TODO could look for farthest legal square (valid & not impassable) 5, 4, ...
-                u.objective = Location(u.lon + 5 * directions[pinfo.homedir].dlon, u.lat);
-            } else {
-                // find nearest best square
-                let start = m.locationOf(u.objective),
-                    bestval = evalLocation(m, u, start, friends, foes);
-                directions.forEach((_, i) => {
-                    let loc = m.neighbor(start, i);
-                    if (!loc) return;
-                    let sqval = evalLocation(m, u, loc, friends, foes);
-                    if (sqval > bestval) {
-                        bestval = sqval;
-                        u.objective = loc;
+        thinkRecurring(delay) {
+            this.#delay = (delay == null) ? 250: delay;
+            this.concluded = false;
+
+            this.#recur(this.#trainOfThought);
+        }
+
+        #recur(train) {
+            if (train != this.#trainOfThought) {
+                // skip pre-scheduled old train of thought
+                console.debug(`Skipped passing thought, train ${train}`);
+                return;
+            }
+            const t0 = performance.now();
+            this.think()
+                .forEach(u => this.#game.notify('unit', 'orders', u));
+            const dt = performance.now() - t0;
+
+            this.#delay *= 1.1;  // gradually back off thinking rate
+            console.debug(`Think.#recur ${train}-${this.#depth} took ${Math.round(dt)}ms; waiting ${Math.round(this.#delay)}ms`);
+            this.#depth++;
+
+            setTimeout(() => this.#recur(train), this.#delay);
+        }
+        concludeRecurring() {
+            console.debug("Concluding...");
+            this.#trainOfThought++;
+            this.#depth = 0;
+            this.concluded = true;
+            this.#game.oob.activeUnits(this.#player).forEach(u => {u.orders = u.orders.slice(0, 8);});
+        }
+        think() {
+            const
+                firstpass = this.#depth == 0,
+                pinfo = players[this.#player],
+                friends = this.#game.oob.activeUnits(this.#player),
+                foes = this.#game.oob.activeUnits(1-this.#player);
+
+            // set up the ghost army
+            var ofr = 0;  // only used in first pass
+            if (firstpass) {
+                ofr = calcForceRatios(this.#game.oob, this.#player).ofr;
+                console.log('Overall force ratio (OFR) is', ofr);
+                friends.forEach(u => {u.objective = u.location;});
+            }
+
+            friends.filter(u => u.canMove).forEach(u => {
+                //TODO these first two checks don't seem to depend on ghost army so are fixed on first pass?
+                if (firstpass && u.ifr == (ofr >> 1)) {
+                    // head to reinforce if no local threat since (Local + OFR) / 2 = OFR / 2
+                    //TODO this tends to send most units to same beleagured square
+                    let v = this.#findBeleaguered(u, friends);
+                    if (v) u.objective = v.location;
+                } else if (firstpass && (u.cstrng <= (u.mstrng >> 1) || u.ifrdir[pinfo.homedir] >= 16)) {
+                    // run home if hurting or outnumbered in the rear
+                    //TODO could look for farthest legal square (valid & not impassable) 5, 4, ...
+                    let d = directions[pinfo.homedir];
+                    u.objective = new Location(u.lon + 5 * d.dlon, u.lat + 5 * d.dlat);
+                } else {
+                    // find nearest best square
+                    let start = u.objective,
+                        bestval = this.#evalLocation(u, start, friends, foes);
+                    directions.forEach((_, i) => {
+                        let loc = this.#game.mapboard.neighbor(start, i);
+                        if (!loc) return;
+                        let sqval = this.#evalLocation(u, loc, friends, foes);
+                        if (sqval > bestval) {
+                            bestval = sqval;
+                            u.objective = loc;
+                        }
+                    });
+                }
+                if (!u.objective) return;
+                let result = u.bestPath(u.objective);
+                if (!result) return;
+                u.orders = result.orders;  // We'll prune to 8 later
+            });
+
+            return friends.filter(u => u.objective);
+        }
+        #findBeleaguered(u, friends) {
+            let best = null, score = 0;
+            friends.filter(v => v.ifr > u.ifr).forEach(v => {
+                    let d = Mapboard.manhattanDistance(u, v);
+                    if (d <= 8) return;  // APX code does weird bit 3 check
+                    let s = v.ifr - (d >> 3);
+                    if (s > score) {
+                        score = s;
+                        best = v;
                     }
                 });
-            }
-            if (!u.objective) return;
-            let result = u.bestPath(u.objective);
-            if (!result) return;
-            u.orders = result.orders;  // We'll prune to 8 later
-        });
-
-        return friends.filter(u => u.objective);
-    }
-
-    function think(game, player, train) {
-        if (train == null) {
-            think.delay = 250;
-            think.depth = 0;
-            think.concluded = false;
-        } else if (train != think.trainOfThought[player]) {
-            // skip pre-scheduled old train of thought
-            console.debug(`Skipped passing thought, train ${train}`);
-            return;
+            return best;
         }
-        think.depth++;
+        #evalLocation(u, loc, friends, foes) {
+            let ghosts = {},
+                range = Mapboard.manhattanDistance(u, loc);
 
-        const t0 = performance.now();
+            // too far, early exit
+            if (range >= 8) return 0;
 
-        _think(game, player, think.depth == 1).forEach(u => u.show());
+            const nbval = Math.min(...foes.map(v => Mapboard.manhattanDistance(loc, v)));
 
-        const dt = performance.now() - t0;
+            // on the defensive and square is occupied by an enemy
+            if (u.ifr >= 16 && nbval == 0) return 0;
 
-        think.delay *= 1.1;  // gradually back off thinking rate
+            friends.filter(v => v.id != u.id)
+                .forEach(v => { ghosts[v.objective.id] = v.id; });
 
-        console.debug(`thought ${think.trainOfThought[player]}-${think.depth} took ${Math.round(dt)}ms; waiting ${Math.round(think.delay)}ms`);
+            let isOccupied = pt => ghosts[pt.id],
+                dibs = false;
 
-        setTimeout(think, think.delay, player, think.trainOfThought[player]);
-    }
-    think.trainOfThought = {[Player.german]: 0, [Player.russian]: 0};
+            if (isOccupied(loc)) dibs = true;      // someone else have dibs already?
+            else ghosts[loc.id] = u.id;
 
+            const square = this.#game.mapboard.squareSpiral(loc, 5),
+                linepts = directions.map(
+                    (_, i) => linePoints(sortSquareFacing(loc, 5, i, square), 5, isOccupied)
+                ),
+                tadj = terraintypes[loc.terrain].defence + 2;  // our 0 adj is equiv to his 2
 
-    function conclude(game, player) {
-        console.debug("Concluding...");
-        think.trainOfThought[player]++;
-        think.concluded = true;
-
-        game.oob.activeUnits(player).forEach(u => {u.orders = u.orders.slice(0, 8);});
+            let sqval = sum(linepts.map((scr, i) => scr * u.ifrdir[i])) >> 8;
+            sqval += u.ifr >= 16 ? u.ifr * (nbval + tadj) : 2 * (15 - u.ifr) * (9 - nbval + tadj);
+            if (dibs) sqval -= 32;
+            sqval -= 1 << range;
+            return sqval < 0 ? 0 : sqval;
+        }
     }
 
     function calcForceRatios(oob, player) {
@@ -5053,14 +5190,14 @@ var ef1941 = (function (exports) {
             ofropp = Math.floor((friend << 4) / foe);
 
         active.forEach(u => {
-            let nearby = active.filter(v => oob.m.manhattanDistance(u, v) <= 8),
+            let nearby = active.filter(v => Mapboard.manhattanDistance(u, v) <= 8),
                 friend = 0,
-                loc = oob.m.locationOf(u);
+                loc = u.location;
             u.ifrdir = [0, 0, 0, 0];
             nearby.forEach(v => {
                 let inc = v.cstrng >> 4;
                 if (v.player == u.player) friend += inc;
-                else u.ifrdir[oob.m.directionFrom(loc, oob.m.locationOf(v))] += inc;
+                else u.ifrdir[Mapboard.directionFrom(loc, v.location)] += inc;
             });
             // individual and overall ifr max 255
             let ifr = Math.floor((sum(u.ifrdir) << 4) / friend);
@@ -5068,54 +5205,6 @@ var ef1941 = (function (exports) {
             u.ifr = (ifr + (u.player == player ? ofr: ofropp)) >> 1;
         });
         return {ofr, friend, foe};
-    }
-
-    function findBeleaguered(m, u, friends) {
-        let best = null, score = 0;
-        friends.filter(v => v.ifr > u.ifr).forEach(v => {
-                let d = m.manhattanDistance(u, v);
-                if (d <= 8) return;  // APX code does weird bit 3 check
-                let s = v.ifr - (d >> 3);
-                if (s > score) {
-                    score = s;
-                    best = v;
-                }
-            });
-        return best;
-    }
-
-    function evalLocation(m, u, loc, friends, foes) {
-        let ghosts = {},
-            range = m.manhattanDistance(u, loc);
-
-        // too far, early exit
-        if (range >= 8) return 0;
-
-        const nbval = Math.min(...foes.map(v => m.manhattanDistance(loc, v)));
-
-        // on the defensive and square is occupied by an enemy
-        if (u.ifr >= 16 && nbval == 0) return 0;
-
-        friends.filter(v => v.id != u.id)
-            .forEach(v => { ghosts[v.objective.id] = v.id; });
-
-        let isOccupied = pt => ghosts[pt.id],
-            dibs = false;
-
-        if (isOccupied(loc)) dibs = true;      // someone else have dibs already?
-        else ghosts[loc.id] = u.id;
-
-        const square = m.squareSpiral(loc, 5),
-            linepts = directions.map(
-                (_, i) => linePoints(sortSquareFacing(loc, 5, i, square), 5, isOccupied)
-            ),
-            tadj = terraintypes[loc.terrain].defence + 2;  // our 0 adj is equiv to his 2
-
-        let sqval = sum(linepts.map((scr, i) => scr * u.ifrdir[i])) >> 8;
-        sqval += u.ifr >= 16 ? u.ifr * (nbval + tadj) : 2 * (15 - u.ifr) * (9 - nbval + tadj);
-        if (dibs) sqval -= 32;
-        sqval -= 1 << range;
-        return sqval < 0 ? 0 : sqval;
     }
 
     function sortSquareFacing(center, diameter, dir, locs) {
@@ -5170,46 +5259,62 @@ var ef1941 = (function (exports) {
 
     var game,
         display,
+        ai,
+        initialSetup = true,
         focusid = null,  // current focused unit id
         lastid = null;   // must recent focused unit id (= focusid or null)
 
     function mapHover(ev, loc) {
         let s = game.mapboard.describe(loc);
-        if (loc.unitid != null) s += '\n' + game.oob[loc.unitid].describe(game.debug);
+        if (loc.unitid != null) s += '\n' + game.oob.at(loc.unitid).describe(game.debug);
         select(this).attr('title', s);
     }
 
     function mapClick(ev, loc) {
         let u = getFocusedUnit();
-        game.errmsg();       // clear errror window
+        display.errmsg();       // clear errror window
         if (loc.unitid == null || (u && u.id == loc.unitid)) {
             // clicking an empty square or already-focused unit unfocuses
             unfocusUnit();
-            if (loc.cityid) game.infomsg(centered(game.mapboard.cities[loc.cityid].label.toUpperCase()));
+            if (loc.cityid) {
+                const label = game.mapboard.cities[loc.cityid].label.toUpperCase();
+                display.infomsg(Display.centered(label));
+            }
         } else {
-            focusUnit(game.oob[loc.unitid]);
+            focusUnit(game.oob.at(loc.unitid));
         }
     }
 
     function toggleHelp() {
         game.help = !game.help;
         display.setVisibility('#help-window', game.help);
-        if (game.turn == -1 && !game.help) game.nextTurn();  // start the game
+        display.setVisibility('#map-scroller', !game.help);  //TODO needs to be display not visibility
+
+        if (!game.help && initialSetup) nextTurn();  // start the game
     }
 
     function toggleExtras() {
         game.extras = !game.extras;
-        display.setVisibility('.extra').style('visibility', game.extras);
+        display.setVisibility('.extra', game.extras);
     }
 
     function toggleDebug() {
         game.debug = !game.debug;
-        display.setVisibility('.debug').style('visibility', game.debug);
+        display.setVisibility('.debug', game.debug);
     }
 
     function toggleZoom() {
         game.zoom = !game.zoom;
         display.setZoom(game.zoom, getFocusedUnit());
+    }
+
+    function setLevel(key) {
+    /*
+        orginal game shows errmsg "[SELECT]: LEARNER  [START] TO BEGIN" with copyright in txt window,
+        where [] is reverse video.  could switch to "[< >]: LEARNER  [ENTER] TO BEGIN(RESUME)"
+        so < > increments level, # picks directly
+    */
+        console.log('set level', +key);
     }
 
     const keyboardCommands = {
@@ -5223,12 +5328,19 @@ var ef1941 = (function (exports) {
         Backspace:  {action: showNewOrder, args: [-1]},
         Escape:     {action: showNewOrder, help: "Cancel: [Space], [Esc]"},
         " ":        {action: showNewOrder},
-        End:        {action: endTurn, help: "Submit: [End], [Fn \x1f]"},
+        End:        {action: resolveTurn, help: "Submit: [End], [Fn \x1f]"},
         z:          {action: toggleZoom, help: "Toggle: [z]oom, e[x]tras, debu[g]"},
         x:          {action: toggleExtras},
         g:          {action: toggleDebug},
         "?":        {action: toggleHelp},
         "/":        {action: toggleHelp},
+        "1":        {action: setLevel},
+        "2":        {action: setLevel},
+        "3":        {action: setLevel},
+        "4":        {action: setLevel},
+        "5":        {action: setLevel},
+        "6":        {action: setLevel},
+        "0":        {action: setLevel},
     };
 
     function keyhandler(e) {
@@ -5238,9 +5350,12 @@ var ef1941 = (function (exports) {
             : (keyboardCommands[e.key] || keyboardCommands[e.key.toLowerCase()])
         );
         if (cmd) {
-            game.errmsg();   // clear error
-            cmd.action(...(cmd.args || []));
+            let args = [].concat(cmd.args || [], [e.key]);
+            display.errmsg();   // clear error
+            cmd.action(...args);
             e.preventDefault();     // eat event if handled
+        } else {
+            console.log(e.key);
         }
     }
 
@@ -5248,10 +5363,10 @@ var ef1941 = (function (exports) {
         [
             "",
             "",
-            centered("Welcome to Chris Crawford's"),
-            centered("Eastern Front  1941"),
+            Display.centered("Welcome to Chris Crawford's"),
+            Display.centered("Eastern Front  1941"),
             "",
-            centered("Ported by Patrick Surry }"),
+            Display.centered("Ported by Patrick Surry }"),
             "",
         ],
         Object.values(keyboardCommands)
@@ -5259,16 +5374,19 @@ var ef1941 = (function (exports) {
             .map(d => "  " + d.help),
         [
             "",
-            centered("[?] shows this help"),
+            Display.centered("[?] shows this help"),
             "",
-            centered("Press any key to play!"),
+            Display.centered("Press any key to play!"),
         ]
     );
 
     // main entry point
     function start() {
-        game = Game();
-        display = Display(helpText, game);
+        const resume = window.location.hash.slice(1) || null;
+        game = new Game(resume);
+        display = new Display(helpText, game);
+
+        ai = Object.values(Player).filter(player => player != game.human).map(player => new Thinker(game, player));
 
         // for amusement add a hyperlink on help page
         selectAll('#help-window .chr')
@@ -5277,43 +5395,42 @@ var ef1941 = (function (exports) {
 
         // set up a click handler to toggle help
         select('#help-window').on('click', toggleHelp);
+        display.setVisibility('#help-window', false);
 
         // add map square click handlers
         selectAll('#map .chr')
             .on('click', mapClick)
             .on('mouseover', mapHover);
 
-        // show the help page, which starts the game when dismissed the first time
-        toggleHelp();
+        // either show help which starts the game on dismiss, or start immediately if resuming
+        if (!resume) toggleHelp();
+        else nextTurn();
 
         // start the key handler
         if (game.human != null) document.addEventListener('keydown', keyhandler);
     }
 
-    function endTurn() {
-        const delay = 250;
+    function resolveTurn() {
+        // if some thinker is `concluded` it means we're already resolving a turn, so ignore
+        if (ai.some(t => t.concluded)) return;
 
-        if (think.concluded) return;   // ignore if not thinking yet
+        // tell thinker(s) to finalize orders
+        ai.forEach(t => t.concludeRecurring());
 
         // process movement from prior turn
+        display.errmsg('EXECUTING MOVE');
         unfocusUnit();
 
-        game.errmsg('EXECUTING MOVE');
+        game.resolveTurn(nextTurn, 250);
+    }
 
-        // stop thinking and collect orders
-        Object.values(Player).forEach(player => { if (player != game.human) conclude(player); });
-
-        game.oob.scheduleOrders();
-
-        let tick = 0;
-        function tickTock() {
-            // original code processes movement in reverse-oob order
-            // could be interesting to randomize, or support a 'pause' order to handle traffic
-            game.oob.executeOrders(tick);
-            //TODO should this be ++tick or <= 32?
-            setTimeout(tick++ < 32 ? tickTock : game.nextTurn, delay);
-        }
-        tickTock();  // loop via setTimeout then land in nextTurn
+    function nextTurn() {
+        game.nextTurn(initialSetup);
+        display.nextTurn(game.date, game.score(game.human));
+        initialSetup = false;
+        window.location.hash = game.token;
+        // start thinking...
+        ai.forEach(t => t.thinkRecurring(250));
     }
 
     function focusUnit(u) {
@@ -5323,18 +5440,14 @@ var ef1941 = (function (exports) {
         focusid = u.id;
         lastid = focusid;
 
-        game.infomsg(`     ${u.label}`, `     MUSTER: ${u.mstrng}  COMBAT: ${u.cstrng}`);
+        display.infomsg(`     ${u.label}`, `     MUSTER: ${u.mstrng}  COMBAT: ${u.cstrng}`);
 
         if (game.extras) {
             let locs = u.reach();
             selectAll('.chr-dim').filter(d => !(d.id in locs)).style('opacity', 0.5);
         }
 
-        game.changed('unit', u, {event: 'selected'});
-
-        if (u.player == game.human) {
-            display.animateUnitPath(u);
-        }
+        game.notify('unit', 'selected', u);
     }
 
     function focusUnitRelative(offset) {
@@ -5347,7 +5460,7 @@ var ef1941 = (function (exports) {
             i = humanUnits.findIndex(u => u.id == lastid);
             if (i < 0) {
                 // if last unit no longer active, find the nearest active unit
-                let locid = game.mapboard.locationOf(game.oob[lastid]).id;
+                let locid = game.mapboard.locationOf(game.oob.at(lastid)).id;
                 while (++i < humanUnits.length && game.mapboard.locationOf(humanUnits[i]).id > locid) {/**/}
             }
         } else {
@@ -5358,25 +5471,23 @@ var ef1941 = (function (exports) {
     }
 
     function getFocusedUnit() {
-        return focusid === null ? null: game.oob[focusid];
+        return focusid === null ? null: game.oob.at(focusid);
     }
 
     function unfocusUnit() {
         const u = getFocusedUnit();
-        if (u) {
-            game.changed('unit', u, {event: 'unselected'});
-            display.animateUnitPath(null);
-        }
-        game.infomsg();
+        if (u) game.notify('unit', 'unselected', u);
+        display.infomsg();
         focusid = null;
         selectAll('.chr-dim').style('opacity', 0);
+        window.location.hash = game.token;
     }
 
     function showNewOrder(dir) {
         let u = getFocusedUnit();
         if (!u) return;
-        if (u.player != game.human) {
-            game.errmsg(`THAT IS A ${players[u.player].key.toUpperCase()} UNIT!`);
+        if (!u.human) {
+            display.errmsg(`THAT IS A ${players[u.player].key.toUpperCase()} UNIT!`);
             return;
         }
         if (dir == null) {

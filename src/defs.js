@@ -32,6 +32,7 @@ const
             supply: {sea: 0, replacements: 2, maxfail: [24, 24, 24], freeze: 0}
         },
     ],
+    // note we rely on Player.german = 1 - Player.russian and vice versa
     Player = enumFor(players),
     // cartridge offers selection of levels which modify various parameters:
     //  ncity:  is the number of cities that are scored - note needs bumped if Sevastopol added

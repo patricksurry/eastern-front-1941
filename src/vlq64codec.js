@@ -39,7 +39,7 @@ function zagzig(vs) {
 
 // encode an array of unsigned ints, or a singleton
 function encode(value) {
-    if (typeof value === 'number') return encode([value])[0];
+    if (typeof value === 'number') return encode([value]);
     let i = 0,
         s = "";
     while (i < value.length) {

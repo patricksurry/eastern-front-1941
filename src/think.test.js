@@ -2,15 +2,15 @@ import {directions, Player} from './defs.js';
 import {Mapboard, Location} from './map.js';
 import {Oob} from './oob.js';
 import {Game} from './game.js';
-import {linePoints, sortSquareFacing, privateExports} from './think.js';
+import {Thinker, privateExports} from './think.js';
 
 
-const game = Game();
+const game = new Game();
 
 
 test("Unexpected linePoints() values", () => {
     // set up the linepts position from the PDF diagram, and test from all directions
-    let p = Location(102, 102),
+    let p = new Location(102, 102),
         sq = game.mapboard.squareSpiral(p, 5),
         occ = [[103, 103], [103, 101], [103, 100], [102, 102], [101, 101]];
     sq.forEach(loc => {
@@ -19,7 +19,8 @@ test("Unexpected linePoints() values", () => {
             if (loc.lon == lon && loc.lat == lat) loc.v = 1;
         })
     });
-    let linepts = directions.map((_, i) => linePoints(sortSquareFacing(p, 5, i, sq), 5, loc => loc.v));
+    let linepts = directions.map((_, i) =>
+        privateExports.linePoints(privateExports.sortSquareFacing(p, 5, i, sq), 5, loc => loc.v));
     expect(linepts).toEqual([104, 162, 16, 146]);
 });
 
@@ -38,7 +39,8 @@ test("AI metrics", () => {
     // but we have 4500/3533*16 => 20
     expect(ofr).toBe(20);
 
-    let units = privateExports._think(game, Player.russian, true),
+    let ai = new Thinker(game, Player.russian),
+        units = ai.think(),
         withobj = units.filter(u => u.objective),
         expected = {
             ids: [...Array(36).keys()].map(i => i + 55 + 16),

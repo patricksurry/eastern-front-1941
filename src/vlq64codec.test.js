@@ -1,4 +1,4 @@
-import {zigzag, zagzig, encode, decode} from './vlq64.js';
+import {zigzag, zagzig, encode, decode} from './vlq64codec.js';
 
 const fibs = [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765, 10946, 17711, 28657, 46368, 75025, 121393, 196418, 317811],
     fibs2 = [-8, 5, -3, 2, -1, 1, 0, 1, 1, 2, 3, 5, 8];
@@ -12,7 +12,12 @@ test("zigzag is reversible", () => {
 })
 
 test("zigzag is compact", () => {
-    expect(zigzag([0,-1,1,-2,2])).toEqual([0,1,2,3,4]);
+    let xs=[], ys=[];
+    for (let k=0; k<31; k++) {
+        xs.push(k-15);
+        ys.push(k);
+    }
+    expect(zigzag(xs).sort((a, b) => (a - b))).toEqual(ys);
 })
 
 test("encode throws on negative", () => {
@@ -45,6 +50,10 @@ test("codec+zigzag is reversible", () => {
 
 test("encode small vals is transparent", () => {
     expect(encode([0, 1, 2, 3])).toBe('0123');
+})
+
+test("encode is compact", () => {
+    expect(encode([...Array(31).keys()]).length).toBe(31);
 })
 
 test("encode short run", () => {
