@@ -1,8 +1,10 @@
 // order-of-battle table with 159 units (55 german) comes from D.ASM:0x5400
 // in the original game each column is stored separately,
 // we've transposed into a list of rows which we map to unit objects
-const oobVariants = {
-    apx41: [
+const enum OobVariantKey {apx, cart41, cart42};
+type OobData = readonly (readonly number[])[];
+const oobVariants: Record<OobVariantKey, OobData> = {
+    [OobVariantKey.apx]: [
         // CORPSX, CORPSY, MSTRNG, SWAP, ARRIVE, CORPT, CORPNO
         // German
         [0, 0, 0, 0, 255, 0, 0],
@@ -166,7 +168,7 @@ const oobVariants = {
         [20, 3, 102, 253, 4, 4, 5],
         [19, 2, 98, 253, 4, 4, 6],
     ],
-    cart41: [
+    [OobVariantKey.cart41]: [
         // ["CORPSX", "CORPSY", "MSTRNG", "ARRIVE", "CORPT", "CORPNO"]
         [0, 0, 0, 255, 0, 0],
         [40, 20, 223, 0, 4, 24],
@@ -336,7 +338,7 @@ const oobVariants = {
         [0, 30, 235, 25, 240, 10],
         [0, 24, 225, 25, 133, 7],
     ],
-    cart42: [
+    [OobVariantKey.cart42]: [
         // ["CORPSX42", "CORPSY42", "MSTRNG42", "ARRIVE", "CORPT", "CORPNO"]
         [0, 0, 0, 255, 0, 0],
         [20, 20, 150, 0, 4, 24],
@@ -506,6 +508,6 @@ const oobVariants = {
         [0, 23, 215, 25, 240, 10],
         [0, 31, 245, 25, 133, 7],
     ],
-};
+} as const;
 
-export {oobVariants};
+export {oobVariants, OobVariantKey};

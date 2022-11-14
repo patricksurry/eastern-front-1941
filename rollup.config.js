@@ -2,25 +2,31 @@ import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import { terser } from 'rollup-plugin-terser';
 import eslint from '@rollup/plugin-eslint';
+import nodePolyfills from 'rollup-plugin-polyfill-node';
+import typescript from '@rollup/plugin-typescript';
 
 // `npm run build` -> `production` is true
 // `npm run dev` -> `production` is false
 const production = !process.env.ROLLUP_WATCH;
 
 export default {
-    input: 'src/ui.js',
+    input: 'src/ui.ts',
     output: {
         file: 'static/ef1941.js',
         name: 'ef1941',
         format: 'iife', // immediately-invoked function expression — suitable for <script> tags
         sourcemap: true,
         exports: 'auto',
+        globals: {'node:crypto': 'window'},
     },
+    external: ['node:crypto'],
     onwarn: function (warning, warn) {
         if (warning.code === 'CIRCULAR_DEPENDENCY') return;
         warn(warning);
     },
     plugins: [
+        typescript(),
+        nodePolyfills(), // support for events etc
         eslint(),
         resolve(), // tells Rollup how to find date-fns in node_modules
         commonjs(), // converts date-fns to ES modules

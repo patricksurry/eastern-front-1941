@@ -1,36 +1,38 @@
-import {players, directions, terraintypes, sum} from './defs.js';
-import {Mapboard, Location} from './map.js';
+import {sum, players, type Point, PlayerKey, directions, DirectionKey, terraintypes} from './defs';
+import {Mapboard, MapPoint, GridPoint} from './map';
+import {type Oob} from './oob';
+import {Unit} from './unit';
 
-
+import {type Game} from './game';
 class Thinker {
-    #game;
-    #player;
+    #game: Game;
+    #player: PlayerKey;
     #trainOfThought = 0;
     #depth = 0;
-    #delay;
+    #delay = 0;
     #concluded = false;
+    finalized = true;
 
-    constructor(game, player) {
+    constructor(game: Game, player: PlayerKey) {
         this.#game = game;
         this.#player = player;
     }
 
-    thinkRecurring(delay) {
+    thinkRecurring(delay?: number) {
         this.#delay = (delay == null) ? 250: delay;
-        this.concluded = false;
+        this.finalized = false;
 
         this.#recur(this.#trainOfThought);
     }
 
-    #recur(train) {
+    #recur(train: number) {
         if (train != this.#trainOfThought) {
             // skip pre-scheduled old train of thought
             console.debug(`Skipped passing thought, train ${train}`);
             return;
         }
         const t0 = performance.now();
-        this.think()
-            .forEach(u => this.#game.notify('unit', 'orders', u));
+        this.think();
         const dt = performance.now() - t0;
 
         this.#delay *= 1.1;  // gradually back off thinking rate
@@ -39,12 +41,12 @@ class Thinker {
 
         setTimeout(() => this.#recur(train), this.#delay);
     }
-    concludeRecurring() {
-        console.debug("Concluding...")
+    finalize() {
+        console.debug("Finalizing...")
         this.#trainOfThought++;
         this.#depth = 0;
-        this.concluded = true;
-        this.#game.oob.activeUnits(this.#player).forEach(u => {u.orders = u.orders.slice(0, 8)});
+        this.finalized = true;
+        this.#game.oob.activeUnits(this.#player).forEach(u => u.setOrders(u.orders.slice(0, 8)));
     }
     think() {
         const
@@ -72,33 +74,33 @@ class Thinker {
                 // run home if hurting or outnumbered in the rear
                 //TODO could look for farthest legal square (valid & not impassable) 5, 4, ...
                 let d = directions[pinfo.homedir];
-                u.objective = new Location(u.lon + 5 * d.dlon, u.lat + 5 * d.dlat);
+                u.objective = {lon: u.lon + 5 * d.dlon, lat: u.lat + 5 * d.dlat};
             } else {
                 // find nearest best square
-                let start = u.objective,
+                let start = this.#game.mapboard.locationOf(u.objective!),
                     bestval = this.#evalLocation(u, start, friends, foes);
-                directions.forEach((_, i) => {
-                    let loc = this.#game.mapboard.neighbor(start, i);
+                Object.keys(directions).forEach(d => {
+                    let loc = this.#game.mapboard.neighborOf(start, +d as DirectionKey);
                     if (!loc) return;
                     let sqval = this.#evalLocation(u, loc, friends, foes);
                     if (sqval > bestval) {
                         bestval = sqval;
-                        u.objective = loc;
+                        loc.put(u.objective!);
                     }
                 });
             }
             if (!u.objective) return;
             let result = u.bestPath(u.objective);
             if (!result) return;
-            u.orders = result.orders;  // We'll prune to 8 later
+            u.setOrders(result.orders);  // We'll prune to 8 later
         });
 
         return friends.filter(u => u.objective);
     }
-    #findBeleaguered(u, friends) {
-        let best = null, score = 0;
+    #findBeleaguered(u: Unit, friends: Unit[]): Unit | null {
+        let best: Unit | null = null, score = 0;
         friends.filter(v => v.ifr > u.ifr).forEach(v => {
-                let d = Mapboard.manhattanDistance(u, v);
+                let d = GridPoint.manhattanDistance(u, v);
                 if (d <= 8) return;  // APX code does weird bit 3 check
                 let s = v.ifr - (d >> 3);
                 if (s > score) {
@@ -108,30 +110,30 @@ class Thinker {
             });
         return best;
     }
-    #evalLocation(u, loc, friends, foes) {
-        let ghosts = {},
-            range = Mapboard.manhattanDistance(u, loc);
+    #evalLocation(u: Unit, loc: MapPoint, friends: Unit[], foes: Unit[]) {
+        let ghosts: Record<number, number> = {},
+            range = GridPoint.manhattanDistance(u, loc);
 
         // too far, early exit
         if (range >= 8) return 0;
 
-        const nbval = Math.min(...foes.map(v => Mapboard.manhattanDistance(loc, v)));
+        const nbval = Math.min(...foes.map(v => GridPoint.manhattanDistance(loc, v)));
 
         // on the defensive and square is occupied by an enemy
         if (u.ifr >= 16 && nbval == 0) return 0;
 
         friends.filter(v => v.id != u.id)
-            .forEach(v => { ghosts[v.objective.id] = v.id; });
+            .forEach(v => { ghosts[GridPoint.get(v.objective!).id] = v.id; });
 
-        let isOccupied = pt => ghosts[pt.id],
+        let isOccupied = (pt: GridPoint) => !!ghosts[pt.id],
             dibs = false;
 
         if (isOccupied(loc)) dibs = true;      // someone else have dibs already?
         else ghosts[loc.id] = u.id;
 
-        const square = this.#game.mapboard.squareSpiral(loc, 5),
-            linepts = directions.map(
-                (_, i) => linePoints(sortSquareFacing(loc, 5, i, square), 5, isOccupied)
+        const square = GridPoint.squareSpiral(loc, 5),
+            linepts = Object.keys(directions).map(
+                d => linePoints(sortSquareFacing(loc, 5, +d, square), 5, isOccupied)
             ),
             tadj = terraintypes[loc.terrain].defence + 2;  // our 0 adj is equiv to his 2
 
@@ -143,7 +145,7 @@ class Thinker {
     }
 }
 
-function calcForceRatios(oob, player) {
+function calcForceRatios(oob: Oob, player: PlayerKey) {
     let active = oob.activeUnits(),
         friend = sum(active.filter(u => u.player == player).map(u => u.cstrng)),
         foe = sum(active.filter(u => u.player != player).map(u => u.cstrng)),
@@ -151,14 +153,14 @@ function calcForceRatios(oob, player) {
         ofropp = Math.floor((friend << 4) / foe);
 
     active.forEach(u => {
-        let nearby = active.filter(v => Mapboard.manhattanDistance(u, v) <= 8),
+        let nearby = active.filter(v => GridPoint.manhattanDistance(u, v) <= 8),
             friend = 0,
             loc = u.location;
         u.ifrdir = [0, 0, 0, 0];
         nearby.forEach(v => {
             let inc = v.cstrng >> 4;
             if (v.player == u.player) friend += inc;
-            else u.ifrdir[Mapboard.directionFrom(loc, v.location)] += inc;
+            else u.ifrdir[GridPoint.directionFrom(loc, v.location)!] += inc;
         })
         // individual and overall ifr max 255
         let ifr = Math.floor((sum(u.ifrdir) << 4) / friend);
@@ -168,13 +170,13 @@ function calcForceRatios(oob, player) {
     return {ofr, friend, foe};
 }
 
-function sortSquareFacing(center, diameter, dir, locs) {
-    if (diameter % 2 != 1) throw("Diameter should be odd: 1, 3, 5, ...");
-    if (!locs || locs.length != diameter * diameter) throw("Square diameter doesn't match length");
+function sortSquareFacing(center: Point, diameter: number, dir: DirectionKey, locs: Point[]) {
+    if (diameter % 2 != 1) throw(`sortSquareFacing: diameter should be odd, got ${diameter}`);
+    if (!locs || locs.length != diameter * diameter) throw(`sortSquareFacing: diameter : size mismatch ${locs.length} != ${diameter}^2`);
 
     let r = (diameter - 1)/2,
-        minor = directions[(dir+1)%4],
-        major = directions[(dir+2)%4],
+        minor = directions[(dir+1)%4 as DirectionKey],
+        major = directions[(dir+2)%4 as DirectionKey],
         out = new Array(locs.length);
 
     locs.forEach(loc => {
@@ -189,7 +191,7 @@ function sortSquareFacing(center, diameter, dir, locs) {
     return out;
 }
 
-function linePoints(locs, diameter, occupied) {
+function linePoints(locs: GridPoint[], diameter: number, occupied: (pt: GridPoint) => boolean) {
     // curious that this doesn't consider terrain, e.g. a line ending at the coast will get penalized heavily?
     let r = (diameter-1)/2,
         frontline = Array(diameter).fill(diameter),

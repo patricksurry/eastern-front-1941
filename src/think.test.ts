@@ -1,8 +1,7 @@
-import {directions, Player} from './defs.js';
-import {Mapboard, Location} from './map.js';
-import {Oob} from './oob.js';
-import {Game} from './game.js';
-import {Thinker, privateExports} from './think.js';
+import {directions, PlayerKey} from './defs';
+import {GridPoint} from './map';
+import {Game} from './game';
+import {Thinker, privateExports} from './think';
 
 
 const game = new Game();
@@ -10,21 +9,19 @@ const game = new Game();
 
 test("Unexpected linePoints() values", () => {
     // set up the linepts position from the PDF diagram, and test from all directions
-    let p = new Location(102, 102),
-        sq = game.mapboard.squareSpiral(p, 5),
-        occ = [[103, 103], [103, 101], [103, 100], [102, 102], [101, 101]];
-    sq.forEach(loc => {
-        loc.v = 0;
-        occ.forEach(([lon, lat]) => {
-            if (loc.lon == lon && loc.lat == lat) loc.v = 1;
-        })
-    });
-    let linepts = directions.map((_, i) =>
-        privateExports.linePoints(privateExports.sortSquareFacing(p, 5, i, sq), 5, loc => loc.v));
+    let p = new GridPoint(102, 102),
+        sq = GridPoint.squareSpiral(p, 5),
+        occ: number[] = [[103, 103], [103, 101], [103, 100], [102, 102], [101, 101]].map(
+            ([lon, lat]) => new GridPoint(lon, lat).id
+        ),
+        occfn = (pt: GridPoint) => occ.includes(pt.id);
+
+    let linepts = Object.keys(directions).map((d) =>
+        privateExports.linePoints(privateExports.sortSquareFacing(p, 5, +d, sq), 5, occfn));
     expect(linepts).toEqual([104, 162, 16, 146]);
 });
 
-function hexvals(s) {
+function hexvals(s: string): number[] {
     return s.split(' ').map(v => parseInt(v, 16));
 }
 
@@ -32,14 +29,14 @@ test("AI metrics", () => {
     game.turn = 0;
     game.oob.filter(u => u.arrive == 0).forEach(u => game.mapboard.locationOf(u).unitid = u.id);
 
-    let {ofr, friend, foe} = privateExports.calcForceRatios(game.oob, Player.russian);
+    let {ofr, friend, foe} = privateExports.calcForceRatios(game.oob, PlayerKey.Russian);
     expect(friend).toBe(3533);          // $0d04 => 3332  actual 3533
     expect(foe).toBe(4705 - 205);       // $1261 => 4705  actual is 4500  but 205 gets double-counted
     // apx calculates ($12 << 3) / ($d >> 1) == 144 / 6 == 24 == $18
     // but we have 4500/3533*16 => 20
     expect(ofr).toBe(20);
 
-    let ai = new Thinker(game, Player.russian),
+    let ai = new Thinker(game, PlayerKey.Russian),
         units = ai.think(),
         withobj = units.filter(u => u.objective),
         expected = {

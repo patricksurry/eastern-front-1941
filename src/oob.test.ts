@@ -1,15 +1,17 @@
-import {oobVariants} from './unit-data.js';
-import {Game} from './game.js';
+import {oobVariants} from './oob-data';
+import {GridPoint} from './map';
 
+import {Game} from './game';
 
-const game = new Game().nextTurn(),
+const game = new Game().start(),
     oob = game.oob;
-
 
 // the second last column of raw data is CORPT for both apx and cart,
 // and indexes the main unit name.  the high bit of low nibble is unused
 test("CORPT bit 4 is unused", () => {
-    Object.values(oobVariants).forEach(xs => expect(xs[xs.len - 2] & 0x08).toBe(0));
+    Object.values(oobVariants).forEach(
+        data => data.forEach(xs => expect(xs[xs.length - 2] & 0x08).toBe(0))
+    );
 })
 
 test("Unit counts", () => {
@@ -27,7 +29,8 @@ test("ZoC is calculated correctly", () => {
         X X .       6 7 4
     */
 
-    let locs = game.mapboard.squareSpiral({lon: 20, lat: 20}, 3),
+    let locs = GridPoint.squareSpiral({lon: 20, lat: 20}, 3)
+            .map(p => game.mapboard.locationOf(p)),
         p0 = oob.findIndex(u => u.player == 0),
         p1 = oob.findIndex(u => u.player == 1);
 

@@ -1,16 +1,17 @@
 # Eastern Front 1941
 
-This is a [playable][game] JavaScript port of [Chris Crawford][ccwiki]'s [Eastern Front 1941][efwiki] with a few optional extras.
+This is a [playable][game] JavaScript port of [Chris Crawford][ccwiki]'s [Eastern Front 1941][efwiki] with a few extras.
+Here's an annotated copy of the original manual if you just want to get to [playing](doc/playing.md).
 
 [![game](doc/preview.png)][game]
 
 ## But why?!
 
 Some of my earliest video game memories are of hanging out after school
-with a friend who had an [Atari 400][atari400] (or 800?)
+with a friend who had an [Atari 400][atari400] (maybe 800?)
 not to mention an actual pong bar table :exploding_head:...
 We played games like Pitfall, Missile Command, Defender and a rogue-like adventure game whose name I forget.
-But Eastern Front was always the "can we play...?" go-to.
+But Eastern Front was always my "can we play...?" go-to.
 It was a compelling game in itself, with a fascinating AI opponent,
 and one of my earliest introductions to wargaming.
 Oddly enough I still haven't played an emulated version of the game,
@@ -19,15 +20,16 @@ though I have watched a few [playthrough videos][apxvideo].
 When I discovered that Chris Crawford had published much of his early [source code][ccsrc],
 including the [6502 assembler][6502] code for Eastern Front,
 I couldn't resist taking it apart and trying to create a more accessible port.
-My main goal was to understand how it worked,
-have some fun reminiscing and perhaps encourage others to experiment further.
+My main goal was to understand [how it worked](doc/howitworks.md),
+reminisce about later learning 6502 assembly on an [Apple //e](apple2e),
+and perhaps encourage others to experiment further.
 Along the way I gained a new appreciation for Crawford's technical tour-de-force:
 implementing an interactive wargame with a credible AI in only 12,000 bytes
 *including* all game data and graphics. It shipped on a 16K cartridge with 4K to spare.
 
 This re-implementation tries to capture the spirit of the game -
 reusing the same raw data, font map and color scheme -
-without slavishy recreating the original.
+without slavishly recreating the original.
 (Emulators are already good at that.)
 At the same time I wanted to make the data and logic more explicit
 to make it more approachable and easier to modify.
@@ -35,7 +37,8 @@ For example data structures like the order-of-battle are still lists
 accessed by index, but I've wrapped elements as simple objects
 to attach meaningful names and methods to the content.
 Similarly most magic constants now have named enumerations like `Terrain.river`.
-Heck, my laptop has sixteen million times the memory and perhaps ten thousand times the CPU power
+Heck, my laptop has sixteen million times the memory
+and perhaps ten thousand times the CPU power
 so we can afford to be a little more verbose...
 
 
@@ -70,6 +73,7 @@ full disassembly of the APX disk image(ref) including transcribed comments/label
 [ccsrc]: http://www.erasmatazz.com/library/source-code/index.html
 [atari400]: https://en.wikipedia.org/wiki/Atari_8-bit_family
 [6502]: https://en.wikibooks.org/wiki/6502_Assembly
+[apple2e]: https://en.wikipedia.org/wiki/Apple_IIe
 
 
 ## What's what?

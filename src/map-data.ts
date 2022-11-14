@@ -1,4 +1,4 @@
-import {Player} from './defs.js';
+import {Point, PlayerKey} from './defs';
 /*
 The game map is represented as binary data using one byte per square at offset 0x6500
 the original encoding uses the high two bits to select the foreground color
@@ -19,8 +19,14 @@ Thus the internal map has longitudes 0-45 and latitudes 0-38.
 Ihe first 25 rows (incl border) are mapped with a northern charset
 which mainly uses forest rather than the mountains of the southern charset
 */
-const mapVariants = {
-    apx: {
+type City = Point & {owner: PlayerKey, points: number, label: string};
+type MapVariant = {
+    font: string, encoding: readonly [string, string], ascii: string, cities: readonly City[]
+} ;
+const enum MapVariantKey {apx, cart};
+const mapVariants: Record<MapVariantKey, MapVariant> = {
+    [MapVariantKey.apx]: {
+        font: 'apx',
         encoding: [
             ' |123456|@*0$|||,.;:|abcdefghijklmnopqrstuvwxyz|ABCDEFGHIJKLMNOPQR|{}??|~#',
             ' |123456|@*0$|||,.;:|abcdefghijklmnopqrst|ABCDEFGHIJKLMNOPQRSTUVW|{}<??|~#'
@@ -72,29 +78,30 @@ const mapVariants = {
         // oddly Sevastpol is assigned points but is not coded as a city in either version of the map?
         //TODO  create a variant that replaces F => @ in the bottom row of the map, and adds to city list
         cities: [
-            {owner: Player.russian, lon: 20, lat: 28, points: 20, label: 'Moscow'},
-            {owner: Player.russian, lon: 33, lat: 36, points: 10,  label: 'Leningrad'},
-            {owner: Player.russian, lon: 6,  lat: 15, points: 10,  label: 'Stalingrad'},
-            {owner: Player.russian, lon: 12, lat:  4, points: 0,  label: 'Krasnodar'},   // APX all others zero except Sevastopol
-            {owner: Player.russian, lon: 13, lat: 33, points: 0,  label: 'Gorky'},
-            {owner: Player.russian, lon: 7,  lat: 32, points: 0,  label: 'Kazan'},
-            {owner: Player.russian, lon: 38, lat: 30, points: 0,  label: 'Riga'},
-            {owner: Player.russian, lon: 24, lat: 28, points: 0,  label: 'Rzhev'},
-            {owner: Player.russian, lon: 26, lat: 24, points: 0,  label: 'Smolensk'},
-            {owner: Player.russian, lon: 3,  lat: 24, points: 0,  label: 'Kuibishev'},
-            {owner: Player.russian, lon: 33, lat: 22, points: 0,  label: 'Minsk'},
-            {owner: Player.russian, lon: 15, lat: 21, points: 0,  label: 'Voronezh'},
-            {owner: Player.russian, lon: 21, lat: 21, points: 0,  label: 'Orel'},
-            {owner: Player.russian, lon: 20, lat: 15, points: 0,  label: 'Kharkov'},
-            {owner: Player.russian, lon: 29, lat: 14, points: 0,  label: 'Kiev'},
-            {owner: Player.russian, lon: 12, lat:  8, points: 0,  label: 'Rostov'},
-            {owner: Player.russian, lon: 20, lat:  8, points: 0,  label: 'Dnepropetrovsk'},
-            {owner: Player.russian, lon: 26, lat:  5, points: 0,  label: 'Odessa'},
-            {owner: Player.german,  lon: 44, lat: 19, points: 0,  label: 'Warsaw'},
-    //        {owner: Player.russian, lon: 20, lat:  0, points: 10,  label: 'Sevastopol'},
+            {owner: PlayerKey.Russian, lon: 20, lat: 28, points: 20, label: 'Moscow'},
+            {owner: PlayerKey.Russian, lon: 33, lat: 36, points: 10,  label: 'Leningrad'},
+            {owner: PlayerKey.Russian, lon: 6,  lat: 15, points: 10,  label: 'Stalingrad'},
+            {owner: PlayerKey.Russian, lon: 12, lat:  4, points: 0,  label: 'Krasnodar'},   // APX all others zero except Sevastopol
+            {owner: PlayerKey.Russian, lon: 13, lat: 33, points: 0,  label: 'Gorky'},
+            {owner: PlayerKey.Russian, lon: 7,  lat: 32, points: 0,  label: 'Kazan'},
+            {owner: PlayerKey.Russian, lon: 38, lat: 30, points: 0,  label: 'Riga'},
+            {owner: PlayerKey.Russian, lon: 24, lat: 28, points: 0,  label: 'Rzhev'},
+            {owner: PlayerKey.Russian, lon: 26, lat: 24, points: 0,  label: 'Smolensk'},
+            {owner: PlayerKey.Russian, lon: 3,  lat: 24, points: 0,  label: 'Kuibishev'},
+            {owner: PlayerKey.Russian, lon: 33, lat: 22, points: 0,  label: 'Minsk'},
+            {owner: PlayerKey.Russian, lon: 15, lat: 21, points: 0,  label: 'Voronezh'},
+            {owner: PlayerKey.Russian, lon: 21, lat: 21, points: 0,  label: 'Orel'},
+            {owner: PlayerKey.Russian, lon: 20, lat: 15, points: 0,  label: 'Kharkov'},
+            {owner: PlayerKey.Russian, lon: 29, lat: 14, points: 0,  label: 'Kiev'},
+            {owner: PlayerKey.Russian, lon: 12, lat:  8, points: 0,  label: 'Rostov'},
+            {owner: PlayerKey.Russian, lon: 20, lat:  8, points: 0,  label: 'Dnepropetrovsk'},
+            {owner: PlayerKey.Russian, lon: 26, lat:  5, points: 0,  label: 'Odessa'},
+            {owner: PlayerKey.German,  lon: 44, lat: 19, points: 0,  label: 'Warsaw'},
+    //        {owner: PlayerKey.Russian, lon: 20, lat:  0, points: 10,  label: 'Sevastopol'},
         ]
     },
-    cart: {
+    [MapVariantKey.cart]: {
+        font: 'cart',
         encoding: [
             " |123456|@*0$|||,.;:|abcdefghijklmnopqrstuvwxyz|ABCDEFGHIJKLMNOPQ|{}???|~#",
             " |123456|@*0$|||,.;:|abcdefghijklmnopqrst|ABCDEFGHIJKLMNOPQRSTUV|{}<???|~#"
@@ -146,36 +153,37 @@ const mapVariants = {
         // oddly Sevastpol is assigned points but is not coded as a city in either version of the map?
         //TODO  create a variant that replaces F => @ in the bottom row of the map, and adds to city list
         cities: [
-            {owner: Player.russian, lon: 20, lat: 28, points: 10, label: 'Moscow'},
-            {owner: Player.russian, lon: 33, lat: 36, points: 5,  label: 'Leningrad'},
-            {owner: Player.russian, lon: 6,  lat: 15, points: 5,  label: 'Stalingrad'},
-            {owner: Player.russian, lon: 12, lat:  4, points: 5,  label: 'Krasnodar'},
-            {owner: Player.russian, lon: 13, lat: 33, points: 5,  label: 'Gorky'},
-            {owner: Player.russian, lon: 7,  lat: 32, points: 5,  label: 'Kazan'},
-            {owner: Player.russian, lon: 38, lat: 30, points: 2,  label: 'Riga'},
-            {owner: Player.russian, lon: 24, lat: 28, points: 2,  label: 'Rzhev'},
-            {owner: Player.russian, lon: 26, lat: 24, points: 2,  label: 'Smolensk'},
-            {owner: Player.russian, lon: 3,  lat: 24, points: 5,  label: 'Kuibishev'},
-            {owner: Player.russian, lon: 33, lat: 22, points: 2,  label: 'Minsk'},
-            {owner: Player.russian, lon: 15, lat: 21, points: 2,  label: 'Voronezh'},
-            {owner: Player.russian, lon: 21, lat: 21, points: 2,  label: 'Orel'},
-            {owner: Player.russian, lon: 20, lat: 15, points: 2,  label: 'Kharkov'},
-            {owner: Player.russian, lon: 29, lat: 14, points: 2,  label: 'Kiev'},
-            {owner: Player.russian, lon: 12, lat:  8, points: 2,  label: 'Rostov'},
-            {owner: Player.russian, lon: 20, lat:  8, points: 2,  label: 'Dnepropetrovsk'},
-            {owner: Player.russian, lon: 26, lat:  5, points: 2,  label: 'Odessa'},
-            {owner: Player.german,  lon: 44, lat: 19, points: 0,  label: 'Warsaw'},
-    //        {owner: Player.russian, lon: 20, lat:  0, points: 5,  label: 'Sevastopol'},
+            {owner: PlayerKey.Russian, lon: 20, lat: 28, points: 10, label: 'Moscow'},
+            {owner: PlayerKey.Russian, lon: 33, lat: 36, points: 5,  label: 'Leningrad'},
+            {owner: PlayerKey.Russian, lon: 6,  lat: 15, points: 5,  label: 'Stalingrad'},
+            {owner: PlayerKey.Russian, lon: 12, lat:  4, points: 5,  label: 'Krasnodar'},
+            {owner: PlayerKey.Russian, lon: 13, lat: 33, points: 5,  label: 'Gorky'},
+            {owner: PlayerKey.Russian, lon: 7,  lat: 32, points: 5,  label: 'Kazan'},
+            {owner: PlayerKey.Russian, lon: 38, lat: 30, points: 2,  label: 'Riga'},
+            {owner: PlayerKey.Russian, lon: 24, lat: 28, points: 2,  label: 'Rzhev'},
+            {owner: PlayerKey.Russian, lon: 26, lat: 24, points: 2,  label: 'Smolensk'},
+            {owner: PlayerKey.Russian, lon: 3,  lat: 24, points: 5,  label: 'Kuibishev'},
+            {owner: PlayerKey.Russian, lon: 33, lat: 22, points: 2,  label: 'Minsk'},
+            {owner: PlayerKey.Russian, lon: 15, lat: 21, points: 2,  label: 'Voronezh'},
+            {owner: PlayerKey.Russian, lon: 21, lat: 21, points: 2,  label: 'Orel'},
+            {owner: PlayerKey.Russian, lon: 20, lat: 15, points: 2,  label: 'Kharkov'},
+            {owner: PlayerKey.Russian, lon: 29, lat: 14, points: 2,  label: 'Kiev'},
+            {owner: PlayerKey.Russian, lon: 12, lat:  8, points: 2,  label: 'Rostov'},
+            {owner: PlayerKey.Russian, lon: 20, lat:  8, points: 2,  label: 'Dnepropetrovsk'},
+            {owner: PlayerKey.Russian, lon: 26, lat:  5, points: 2,  label: 'Odessa'},
+            {owner: PlayerKey.German,  lon: 44, lat: 19, points: 0,  label: 'Warsaw'},
+    //        {owner: PlayerKey.Russian, lon: 20, lat:  0, points: 5,  label: 'Sevastopol'},
         ]
-    }
-},
-    // D.ASM:5500 BHX1 .BYTE ... / BHY1 / BHX2 / BHY2
-    // there are 11 impassable square-sides
-    // the original game stores 22 sets of (x1,y1),(x2,y2) coordinates
-    // to enumerate the to/from coordinates in both senses
-    // but we can reduce from 88 to 22 bytes by storing a list of
-    // squares you can't move north from (or south to), and likewise west from (or east to)
-    blocked = [
+    },
+ } as const;
+
+// D.ASM:5500 BHX1 .BYTE ... / BHY1 / BHX2 / BHY2
+// there are 11 impassable square-sides
+// the original game stores 22 sets of (x1,y1),(x2,y2) coordinates
+// to enumerate the to/from coordinates in both senses
+// but we can reduce from 88 to 22 bytes by storing a list of
+// squares you can't move north from (or south to), and likewise west from (or east to)
+const blocked: readonly [ readonly Point[], readonly Point[]] = [
         // can't move north from here (or south into here)
         [
             {lon: 40, lat: 35},
@@ -193,6 +201,6 @@ const mapVariants = {
             {lon: 35, lat: 33},
             {lon: 14, lat: 7},
         ]
-    ];
+    ] as const;
 
-export {mapVariants, blocked};
+export {mapVariants, MapVariantKey, blocked};

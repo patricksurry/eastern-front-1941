@@ -1,4 +1,10 @@
-import {players, directions, variants} from './defs.js';
+import {players, directions, DirectionKey, AnticColor} from './defs';
+import {scenarios} from './scenarios';
+import {mapVariants} from './map-data';
+
+import {type MapPoint} from './map';
+import {type Unit} from './unit';
+import {type Game} from './game';
 
 import * as d3 from 'd3';
 
@@ -24,36 +30,38 @@ const
         "#442800",  "#644818",  "#846830",  "#a08444",  "#b89c58",  "#d0b46c",  "#e8cc7c",  "#fce08c",
     ];
 
-function centered(s, width) {
-    width ||= 40;
+function centered(s: string, width: number = 40): string {
     let pad = width - s.length;
     return s.padStart((pad >> 1) + s.length).padEnd(width) ;
 }
 
-function setclr(sel, c) {
+function setclr(sel: string, c: AnticColor) {
     //TODO support sel as existing d3 selection
     d3.selectAll(sel).style('background-color', anticColor(c));
 }
 
-function anticColor(v) {
+function anticColor(v: AnticColor) {
     return anticPaletteRGB[Math.floor(parseInt(v, 16)/2)];
 }
 
-function atascii(c) {
+function atascii(c: string): number {
     return c.charCodeAt(0) & 0x7f;
 }
 
-function maskpos(c) {
+function maskpos(c: number): string {
     return `${-(c%16)*8}px ${-Math.floor(c/16)*8}px`;
 }
 
-function putlines(win, lines, fg, bg, chrfn, idfn) {
+function putlines(
+        win: string, lines: string[] | any[][], 
+        fg?: AnticColor | ((d: any) => AnticColor), bg?: AnticColor, 
+        chrfn?: (d: any) => number, idfn?: (d: any, i: number) => string) {
     // fg color can be a function of the data element, bg should be a constant
     const w = d3.select(win);
 
-    chrfn ||= atascii;
-    fg ||= w.attr('data-fg-color');
-    bg ||= w.attr('data-bg-color');
+    chrfn ??= atascii;
+    fg ??= w.attr('data-fg-color') as AnticColor;
+    bg ??= w.attr('data-bg-color') as AnticColor;
 
     w.attr('data-fg-color', () => fg);
     if (bg) {
@@ -63,7 +71,7 @@ function putlines(win, lines, fg, bg, chrfn, idfn) {
     w.selectAll('div.chr').remove();  //TODO don't deal with enter/update yet
 
     let
-        fgfn = typeof fg == 'function' ? fg : (() => fg),
+        fgfn = typeof fg == 'string' ? ((d: any) => fg as string) : fg,
         data = [].concat(
             ...lines.map(
                 (ds, i) =>
@@ -94,23 +102,25 @@ function putlines(win, lines, fg, bg, chrfn, idfn) {
     return chrs;
 }
 
-function showAt(sel, loc, dx, dy) {
+function showAt(sel: d3.selection, loc: MapPoint, dx: number, dy: number) {
     return sel
         .style('left', `${loc.col*8 + (dx || 0)}px`)
         .style('top', `${loc.row*8 + (dy || 0)}px`)
         .style('opacity', 1);
 }
 
-function animateUnitPath(u) {
+function animateUnitPath(u: Unit | null) {
     d3.selectAll('#arrows .chr').interrupt().style('opacity', 0);
-    if (!u) return;
+    if (u == null) return;
 
     let path = u.path;
 
-    d3.select('#kreuze')
+    if (path.length < 1) return;
+
+    const elt = d3.select('#kreuze')
         .call(showAt, path[path.length-1])
-        .node()
-        .scrollIntoView({block: "center", inline: "center"});
+        .node() as HTMLElement;
+    elt.scrollIntoView({block: "center", inline: "center"});
 
     if (path.length < 2) return;
 
@@ -139,27 +149,29 @@ function animateUnitPath(u) {
     animateStep();
 }
 
-function pathSVG(orders) {
+function pathSVG(orders: DirectionKey[]) {
     const r = 0.25;
     let x = 0,
         y = 0,
-        lastd = null,
+        lastd: DirectionKey|null = null,
         s = "M0,0";
 
     orders.forEach(d => {
         let dir = directions[d],
             dx = dir.dlon,
-            dy = dir.dlat,
-            turn = (lastd-d+4) % 4;
+            dy = dir.dlat;
         // add prev corner
         if (lastd == null) {
             s = `M${dx*r},${dy*r}`;
-        } else if (turn == 0) {
-            s += ` l${dx*2*r},${dy*2*r}`;
-        } else if (turn % 2) {
-            let cx = (dx + directions[lastd].dlon)*r,
-                cy = (dy + directions[lastd].dlat)*r;
-            s += ` a${r},${r} 0 0 ${turn==1?0:1} ${cx},${cy}`
+        } else {
+            const turn = (lastd-d+4) % 4;
+            if (turn == 0) {
+                s += ` l${dx*2*r},${dy*2*r}`;
+            } else if (turn % 2) {
+                let cx = (dx + directions[lastd].dlon)*r,
+                    cy = (dy + directions[lastd].dlat)*r;
+                s += ` a${r},${r} 0 0 ${turn==1?0:1} ${cx},${cy}`
+            }
         }
         lastd = d;
         s += ` l${dx*(1-2*r)},${dy*(1-2*r)}`;
@@ -172,7 +184,11 @@ function pathSVG(orders) {
     return svg;
 }
 
-function paintMap(opts)  {
+function paintMap(action: string, opts)  {
+    if (action != 'recolor') {
+        console.warn('paintMap: unrecognized action', action)
+        return;
+    }
     // apply current fg/bg colors to map and unit background
     d3.selectAll('#map .chr-bg, #units .chr-bg')
         .style('background-color', anticColor(opts.bgcolor));
@@ -185,58 +201,62 @@ function paintMap(opts)  {
         .style('color', anticColor(opts.labelcolor));
 }
 
-function paintUnit(u, event) {
+function paintUnit(event: string, u: Unit) {
     let chr = d3.select(`#unit-${u.id}`),
         path = d3.select(`#path-${u.id}`),
         loc = u.location;
 
-    if (['moved', 'removed'].includes(event)) {
+    if (['move', 'enter', 'exit'].includes(event)) {
         chr = chr.transition().duration(250).ease(d3.easeLinear);
     }
     switch (event) {
-        case 'moved':
+        case 'enter':
+        case 'move':
             chr.call(showAt, loc);
         // eslint-disable-next-line no-fallthrough
         case 'orders':
             path.attr('transform', `translate(${loc.col + 0.5},${loc.row + 0.5}) scale(-1)`)
                 .html(pathSVG(u.orders));
         // eslint-disable-next-line no-fallthrough
-        case 'stats':
+        case 'damage':
             chr.select('.chr-mstrng').style('width', (90 * u.mstrng/255) + '%');
             chr.select('.chr-cstrng').style('width', (100 * u.cstrng/u.mstrng) + '%');
             break;
-        case 'removed':
+        case 'exit':
             chr.style('opacity', 0);
             break;
-        case 'attacking':
-        case 'defending':
-        case 'resolving':
+        case 'attack':
+        case 'defend':
             chr.select('.chr-fg')
-                .classed('flash', event != 'resolving')
-                .style('animation-direction', event == 'defending' ? 'reverse': 'normal');
+                .classed('flash', true)
+                .style('animation-direction', event == 'defend' ? 'reverse': 'normal');
             break;
-        case 'selected':
-        case 'unselected':
-            chr.classed('blink', event == 'selected');
-            animateUnitPath(event == 'selected' && u.human ? u : null);
+        case 'focus':
+        case 'blur':
+            chr.classed('blink', event == 'focus');
+            animateUnitPath(event == 'focus' && u.human ? u : null);
             break;
         default:
             console.warn('paintUnit ignoring unknown event', event)
     }
 }
 
+interface HasIcon {icon: number};
+
 class Display {
-    #score;
+    #score: number | null = null;
+    centered = centered;
 
-    constructor(help, game) {
+    constructor(game: Game, helpText: string, helpUrl: string) {
 
-        const icon = (d) => d.icon,
-            unitcolor = (u) => players[u.player].color,
-            root = document.querySelector(':root'),
-            variant = variants[game.variant].key;
+        const iconfn = (d: HasIcon) => d.icon,
+            unitcolor = (u: Unit) => players[u.player].color,
+            root: HTMLElement = document.querySelector(':root')!,
+            font = mapVariants[scenarios[game.scenario].map].font;
 
+        //TODO needs adjusted with setLevel
         // pick the right fontmap
-        root.style.setProperty('--fontmap', `url(fontmap-${variant}.png)`);
+        root.style.setProperty('--fontmap', `url(fontmap-${font}.png)`);
 
         // set up background colors
         setclr('body', 'D4');
@@ -245,16 +265,21 @@ class Display {
         setclr('.err-rule', '8A');
 
         // set up info, error and help
-        putlines('#help-window', help, c => c == "}" ? '94': '04', '0e');
+        putlines('#help-window', helpText, c => c == "}" ? '94': '04', '0e');
+
+        // for amusement add a hyperlink on help page
+        d3.selectAll('#help-window .chr')
+            .filter(d => d == "}")
+            .on('click', () => window.open(helpUrl))
+
         putlines('#date-window', [''], '6A', 'B0');
         putlines('#info-window', [''], '28', '22');
         putlines('#err-window', [''], '22', '3A');
 
         this.datemsg(centered("EASTERN FRONT 1941", 20))
-        this.infomsg(centered('COPYRIGHT 1982 ATARI'), centered('ALL RIGHTS RESERVED'));
 
         // draw the map characters with a semi-transparent dimming layer which we can hide/show
-        putlines('#map', game.mapboard.locations, 'ff', '00', icon, m => `map-${m.id}`)
+        putlines('#map', game.mapboard.locations, 'ff', '00', iconfn, m => `map-${m.id}`)
             .append('div')
             .classed('chr-dim', true)
             .classed('extra', true);
@@ -289,8 +314,8 @@ class Display {
             });
 
         // draw all of the units
-        putlines('#units', [game.oob], unitcolor, '00', icon, u => `unit-${u.id}`)
-            .each(function(u) { d3.select(this).call(showAt, u.location); })
+        putlines('#units', [game.oob.slice()], unitcolor, '00', iconfn, (u: Unit) => `unit-${u.id}`)
+            .each(function(u: Unit) { d3.select(this).call(showAt, u.location); })
             .style('opacity', 0)
             .append('div')
             .attr('class', 'chr-overlay extra')
@@ -301,69 +326,67 @@ class Display {
 
         // put arrows and kreuze in layer for path animation
         putlines(
-            '#arrows', [[256], directions.map(icon)],
-            d => d == 256 ? '1A': 'DC', null, c => c, (d, i) => d == 256 ? 'kreuze': `arrow-${i-1}`)
+            '#arrows', [[256], Object.values(directions).map(iconfn)],
+            d => d == 256 ? '1A': 'DC', undefined, c => c, (d, i) => d == 256 ? 'kreuze': `arrow-${i-1}`)
             .style('opacity', 0);
 
-        game.addListener(this.changeListener);
-
+        game.on('game', (action, obj) => {
+            d3.selectAll('#units .chr-fg').classed('flash', false);
+            if (action == 'turn') {
+                this.#score = obj.score(obj.human);
+                this.errmsg(centered('PLEASE ENTER YOUR ORDERS NOW'));
+                this.datemsg(" " + obj.date.toLocaleDateString("en-US", {year: 'numeric', month: 'long', day: 'numeric'}));
+                this.infomsg();
+            }
+        });
+        game.on('message', (typ, ...lines) => {
+            switch (typ) {
+                case 'error':
+                    this.errmsg(...lines);
+                    break;
+                case 'info':
+                    this.infomsg(...lines);
+                    break;
+                case 'date':
+                    this.datemsg(...lines);
+                    break;
+            }
+        });
+        game.on('unit', paintUnit);
+        game.on('map', paintMap);
     }
-    changeListener(typ, event, obj, options) {
-        // console.debug(`Display.changeListener got ${typ}.${event}`);
-
-        switch (typ) {
-            case 'map':
-                paintMap(options);
-                break;
-            case 'unit':
-                paintUnit(obj, event);
-                break;
-            case 'msg':
-                switch (event) {
-                    case 'info': this.infomsg(...obj); break;
-                    case 'date': this.datemsg(...obj); break;
-                    case 'err': this.errmsg(obj); break;
-                }
-                break;
-            default:
-                console.warn(`Display.changeListener ignoring ${typ}.${event}`);
+    datemsg(line2?: string, line1?: string) {  // by default put on second line
+        putlines('#date-window', [line1 ?? "", line2 ?? ""]);
+    }
+    infomsg(line1?: string, line2?: string) {
+        putlines('#info-window', [line1 ?? "", line2 ?? ""]);
+    }
+    errmsg(text?: string) {
+        text ??= '';
+        let s;
+        if (this.#score == null) {
+            s = centered(text)
+        } else {
+            s = this.#score.toString().padStart(3).padEnd(4) + centered(text, 36);
         }
-    }
-    datemsg(line2, line1) {  // by default put on second line
-        putlines('#date-window', [line1 || "", line2 || ""]);
-    }
-    infomsg(line1, line2) {
-        putlines('#info-window', [line1 || "", line2 || ""]);
-    }
-    errmsg(text) {
-        let s = (this.#score || '').toString().padStart(3).padEnd(4);
-        s += centered(text || "", 36);
         putlines('#err-window', [s])
     }
-    setZoom(zoomed, focus) {
+    setZoom(zoomed: boolean, u: Unit | null) {
         var elt;
-        if (focus) {
+        if (u != null) {
             elt = d3.select('#kreuze').node();
         } else {
             let x = 320/2,
-                y = 144/2 + d3.select('#map-window').node().offsetTop - window.scrollY;
+                y = 144/2 + (d3.select('#map-window').node() as HTMLElement).offsetTop - window.scrollY;
             elt = document.elementFromPoint(x*4, y*4);
         }
         // toggle zoom level, apply it, and re-center target eleemnt
         d3.select('#map-window .container').classed('doubled', zoomed);
-        elt.scrollIntoView({block: "center", inline: "center"})
+        (elt as HTMLElement)!.scrollIntoView({block: "center", inline: "center"})
     }
-    setVisibility(sel, visible) {
+    setVisibility(sel: string, visible: boolean) {
         d3.selectAll(sel).style('visibility', visible ? 'visible': 'hidden')
     }
-    nextTurn(date, score) {
-        // clear error, show score for this turn
-        this.#score = score;
-        this.errmsg(centered('PLEASE ENTER YOUR ORDERS NOW'));
-        this.datemsg(" " + date.toLocaleDateString("en-US", {year: 'numeric', month: 'long', day: 'numeric'}));
-        this.infomsg();
-    }
 }
-Display.centered = centered;
 
 export {Display};

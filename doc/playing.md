@@ -1,7 +1,5 @@
 <p align="center"><img src="apxlogo.png"></p>
 
-- link the map poster
-
 
 INTRODUCTION
 ===
@@ -28,28 +26,25 @@ rewarding experience than you would have by just grabbing a Joystick and
 starting to play.
 
 <table><td>
-    :information_source: This is a warning. You play the part of the German commander, maneuvering your combat units to
-obtain a good position before the winter sets in and the Russian
-counteroffensives begin. The game is played on an ATARI 400™ or ATARI 800™
-Personal Computer System with an ATARI 410™ program recorder or an ATARI 810™
-disk drive. The cassette version requires at least 16K of RAM; the diskette
-version requires at least 32K of RAM.
-</td></table>
 
-<table><td>
-    :warning: :construction:  :round_pushpin:  :no_entry: :white_check_mark:
-    :point_right: :eyes:  :bulb:  :pushpin:
-:new: You play the part of the German commander, maneuvering your combat units to
-obtain a good position before the winter sets in and the Russian
-counteroffensives begin.
+:information_source: This is an annotated copy of the original
+[APX manual][apxmanual].
+I've added a few comments throughout, all in boxes like this.
+You can obviously skip "Loading the program", and just click
+[here][game] to play.
 
+The cartridge version introduced some new features, explained with less
+detail but more gloss in the [cartridge manual][cartmanual].
+It also included a nice [map poster][ef1941poster]
+which is very similar to the original APX map.
 
-The game is **played** on an ATARI 400™ or ATARI 800™
-Personal Computer System with an ATARI 410™ program recorder or an ATARI 810™
-disk drive. The cassette version requires at least 16K of RAM; the diskette
-version requires at least 32K of RAM.
+[game]: https://patricksurry.github.io/eastern-front-1941/
+[apxmanual]: ./APX_Eastern_Front_1941.pdf
+[cartmanual]: ./eastern_front_atari_cartridge.pdf
+[ef1941poster]: ./Eastern_Front_1941_Atari_poster_text.pdf
 
 </td></table>
+
 
 LOADING THE PROGRAM
 ===
@@ -92,7 +87,10 @@ colors. Squares with x's in them indicate infantry units. Squares with
 smaller squares inside them (they are supposed to be ovals) indicate armored
 or cavalry units. Red units are Russian; white units are German or German
 allies. A map of the entire theater of operations is included at the end of
-this manual.
+this manual [below].
+
+<p align="center"><img src="apxmap.png"></p>
+
 
 INSPECTING UNITS
 ===
@@ -168,7 +166,7 @@ the date message at the top of the screen and figures the passage of the
 seasons. It brings any reinforcements onto the map and adds replacements to
 units already on the map. It figures logistics and imposes penalties on
 units which are out of supply. It figures your current point score and posts
-it on the upper left corner of the dark orange text window. Finally, ft
+it on the upper left corner of the dark orange text window. Finally, it
 notes if you have any reinforcements this turn; if so it places an asterisk
 in the upper right corner of the dark orange text window to remind you. When
 it is done, it will prompt you to begin entering your orders for the next
@@ -513,7 +511,7 @@ them from interfering with the deep penetration of the armored units.
 
 Often you will cut off a single Russian army from the rest of the line.
 Do not waste valuable troops mopping it up. Only two corps, one on either
-side, will finish [ft off.
+side, will finish it off.
 
 The Russian winter counteroffensive is a frightening experience. The
 Russians look overwhelmingly powerful. They cannot be stopped. They can be
@@ -608,8 +606,3 @@ program. It took me eight months to complete. I am glad it's finished.
 
 I AM TOO! — HIS WIFE
 
-<p align="center"><img src="apxmap.png"></p>
-
-Compare the [map poster][ef1941poster] that shipped with the cartridge version.
-
-[ef1941poster]: ../refdoc/Eastern_Front_1941_Atari_poster_text.pdf

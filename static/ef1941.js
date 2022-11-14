@@ -1,290 +1,279 @@
-var ef1941 = (function (exports) {
+var ef1941 = (function (exports, node_crypto) {
     'use strict';
-
-    // Atari had a memory location that could be read for a byte of random noise
-    function randbyte() {
-        return Math.floor(Math.random()*256);
-    }
 
     function sum(xs) {
         return xs.reduce((s, x) => s + x, 0);
     }
-
-
-    function enumFor(vs, key) {
-        return Object.fromEntries(vs.map((v, i) => [v[key || 'key'], i]));
-    }
-
-    const // mimic logic from STKTABlon looking for zeroed pins
-        // see https://forums.atariage.com/topic/275027-joystick-value-logic/:
-        directions = [
-            {dlon: 0,  dlat: 1,  key: 'north', icon: 257},   // up    1110 => 0 - north
-            {dlon: -1, dlat: 0,  key: 'east',  icon: 258},   // right 0111 => 1 - east
-            {dlon: 0,  dlat: -1, key: 'south', icon: 259},   // down  1101 => 2 - south
-            {dlon: 1,  dlat: 0,  key: 'west',  icon: 260},   // left  1011 => 3 - west
-        ],
-        Direction = enumFor(directions),
-        players = [
-            {
-                key: 'german',  unit: 'CORPS', color: '0C', homedir: Direction.west,
-                supply: {sea: 1, replacements: 0, maxfail: [24, 0, 16], freeze: 1}
-            },
-            {
-                key: 'russian', unit: 'ARMY',  color: '46', homedir: Direction.east,
-                supply: {sea: 0, replacements: 2, maxfail: [24, 24, 24], freeze: 0}
-            },
-        ],
-        // note we rely on Player.german = 1 - Player.russian and vice versa
-        Player = enumFor(players),
-        // cartridge offers selection of levels which modify various parameters:
-        //  ncity:  is the number of cities that are scored - note needs bumped if Sevastopol added
-        //  mdmg/cdmg: is the amount of damage caused by a successful attack tick
-        //  cadj: is the base adjustment to german combat strength
-        //  fog: controls which bits are randomized for enemy units out of sight
-        //  nunit: gives index of first ineligbile unit, e.g. 0x2 means control first 2 ids
-        //  endturn: when the scneario ends
-        //  score required to win
-        leveldata = [
-            {key: "learner",      ncity: 1,  mdmg: 4, cdmg: 12, cadj: 255, fog: 0xff, nunit: [0x2,  0x31], endturn: 14, win: 5},
-            {key: "beginner",     ncity: 1,  mdmg: 4, cdmg: 12, cadj: 150, fog: 0xff, nunit: [0x12, 0x50], endturn: 14, win: 25},
-            {key: "intermediate", ncity: 3,  mdmg: 2, cdmg: 8,  cadj:  75, fog: 0xff, nunit: [0x1f, 0x72], endturn: 40, win: 40},
-            {key: "advanced",     ncity: 18, mdmg: 1, cdmg: 5,  cadj:  25, fog: 0xc0, nunit: [0x2b, 0x90], endturn: 40, win: 80},
-            {key: "expert",       ncity: 18, mdmg: 1, cdmg: 4,  cadj:   0, fog: 0x80, nunit: [0x30, 0xa8], endturn: 44, win: 255},
-        ];
-        enumFor(leveldata);
-        const // terrain types M.ASM: 8160 TERRTY
-        // NB we store offence and defence modifiers so 0 is no effect, equivalent to orignal game's 2
-        // OFFNC I.ASM:9080 1,1,1,1,1,1,2,2,1,0
-        // DEFNC I.ASM:9080 2,3,3,2,2,2,1,1,2,0
-        // movement costs (of 32/turn) come from D.ASM:5430 SSNCOD / 5440 TRNTAB
-        // index by terrain, then armor(0/1) and finally Weather enum
-        // value of 128 means impassable, 0 means error (frozen terrain outside winter)
-        terraintypes = [
-            {
-                key: 'clear', color: '02',
-                offence: 0, defence: 0, movecost: [[ 6, 24, 10], [ 4, 30,  6]]
-            },
-            {
-                key: 'mountain_forest', color: '28', altcolor: 'D6',   // mtn + forest
-                offence: 0, defence: 1, movecost: [[12, 30, 16], [ 8, 30, 10]]
-            },
-            {
-                key: 'city', color: '0C', altcolor: '46',  // german + russian control
-                offence: 0, defence: 1, movecost: [[ 8, 24, 10], [ 6, 30,  8]]
-            },
-            {
-                key: 'frozen_swamp', color: '0C',
-                offence: 0, defence: 0, movecost: [[ 0,  0, 12], [ 0,  0,  8]]
-            },
-            {
-                key: 'frozen_river', color: '0C',
-                offence: 0, defence: 0, movecost: [[ 0,  0, 12], [ 0,  0,  8]]
-            },
-            {
-                key: 'swamp', color: '94',
-                offence: 0, defence: 0, movecost: [[18, 30, 24], [18, 30, 24]]
-            },
-            {
-                key: 'river', color: '94',
-                offence: -1, defence: -1, movecost: [[14, 30, 28], [13, 30, 28]]
-            },
-            {
-                // strange that coastline acts like river but estuary doesn't?
-                key: 'coastline', color: '94',
-                offence: -1, defence: -1, movecost: [[ 8, 26, 12], [ 6, 30,  8]]
-            },
-            {
-                key: 'estuary', color: '94',
-                offence: 0, defence: 0, movecost: [[20, 28, 24], [16, 30, 20]],
-            },
-            {
-                key: 'impassable', color: '94', altcolor: '0C',  // sea + border
-                offence: 0, defence: 0, movecost: [[0, 0, 0], [0, 0, 0]]
+    function memoize(fn) {
+        const cache = new Map();
+        const cached = function (x) {
+            if (!cache.has(x)) {
+                cache.set(x, fn(x));
             }
-        ],
-        Terrain = enumFor(terraintypes),
-        // D.ASM:2690 TRTAB
-        // M.ASM:2690 season calcs
-        weatherdata = [
-            {key: 'dry',  earth: '10'},
-            {key: 'mud',  earth: '02'},
-            {key: 'snow', earth: '0A'},
-        ],
-        Weather = enumFor(weatherdata),
-        waterstate = [
-            {key: 'freeze', dir: Direction.south, terrain: [Terrain.frozen_swamp, Terrain.frozen_river]},
-            {key: 'thaw',   dir: Direction.north, terrain: [Terrain.swamp, Terrain.river]},
-        ],
-        Water = enumFor(waterstate),
-        // combines D.asm:2690 TRTAB and 5430 SSNCOD, also annotated PDF p71 (labelled -63-)
-        monthdata = [
-            {label: "January",   trees: '12', weather: Weather.snow},
-            {label: "February",  trees: '12', weather: Weather.snow},
-            {label: "March",     trees: '12', weather: Weather.snow, water: Water.thaw},
-            {label: "April",     trees: 'D2', weather: Weather.mud},
-            {label: "May",       trees: 'D8', weather: Weather.dry},
-            {label: "June",      trees: 'D6', weather: Weather.dry},
-            {label: "July",      trees: 'C4', weather: Weather.dry},
-            {label: "August",    trees: 'D4', weather: Weather.dry},
-            {label: "September", trees: 'C2', weather: Weather.dry},
-            {label: "October",   trees: '12', weather: Weather.mud},
-            {label: "November",  trees: '12', weather: Weather.snow, water: Water.freeze},
-            {label: "December",  trees: '12', weather: Weather.snow},
-        ];
-        enumFor(monthdata, 'label');
-        const unitkinds = [
-            {key: 'infantry',   icon: 0xfd},
-            {key: 'armor',      icon: 0xfe},
-            {key: 'air',        icon: 0xfc},
-        ],
-        UnitKind = enumFor(unitkinds),
-        variants = [
-            {key: 'apx'},
-            {key: 'cart'}
-        ],
-        Variant = enumFor(variants),
-        //TODO arrival turns for '42 scenario seem to be calculated in cartridge.asm:3709
-        scenarios = [
-            // start dates stored as week prior to first turn in cartridge, ie. '41/6/15, '42/5/17
-            {key: '41', start: '1941/6/22'},
-            {key: '42', start: '1942/5/24'},
-        ],
-        Scenario = enumFor(scenarios);
-
-    function moveCost(terrain, kind, weather) {
-        return kind == UnitKind.air ? 4: (terraintypes[terrain].movecost[kind][weather] || 255);
+            return cache.get(x);
+        };
+        return cached;
     }
-
+    const directions = {
+        [0 /* DirectionKey.north */]: { label: 'N', dlon: 0, dlat: 1, icon: 257 },
+        [1 /* DirectionKey.east */]: { label: 'E', dlon: -1, dlat: 0, icon: 258 },
+        [2 /* DirectionKey.south */]: { label: 'S', dlon: 0, dlat: -1, icon: 259 },
+        [3 /* DirectionKey.west */]: { label: 'W', dlon: 1, dlat: 0, icon: 260 }, // left  1011 => 3
+    };
+    const players = {
+        [0 /* PlayerKey.German */]: {
+            label: 'German', unit: 'CORPS', color: '0C', homedir: 3 /* DirectionKey.west */,
+            supply: { sea: 1, replacements: 0, maxfail: [24, 0, 16], freeze: 1 }
+        },
+        [1 /* PlayerKey.Russian */]: {
+            label: 'Russian', unit: 'ARMY', color: '46', homedir: 1 /* DirectionKey.east */,
+            supply: { sea: 0, replacements: 2, maxfail: [24, 24, 24], freeze: 0 }
+        },
+    };
+    const terraintypes = {
+        [0 /* TerrainKey.clear */]: {
+            label: 'clear', color: '02',
+            offence: 0, defence: 0, movecost: [[6, 24, 10], [4, 30, 6]]
+        },
+        [1 /* TerrainKey.mountain_forest */]: {
+            label: 'mountain/forest', color: '28', altcolor: 'D6',
+            offence: 0, defence: 1, movecost: [[12, 30, 16], [8, 30, 10]]
+        },
+        [2 /* TerrainKey.city */]: {
+            label: 'city', color: '0C', altcolor: '46',
+            offence: 0, defence: 1, movecost: [[8, 24, 10], [6, 30, 8]]
+        },
+        [3 /* TerrainKey.frozen_swamp */]: {
+            label: 'frozen swamp', color: '0C',
+            offence: 0, defence: 0, movecost: [[0, 0, 12], [0, 0, 8]]
+        },
+        [4 /* TerrainKey.frozen_river */]: {
+            label: 'frozen river', color: '0C',
+            offence: 0, defence: 0, movecost: [[0, 0, 12], [0, 0, 8]]
+        },
+        [5 /* TerrainKey.swamp */]: {
+            label: 'swamp', color: '94',
+            offence: 0, defence: 0, movecost: [[18, 30, 24], [18, 30, 24]]
+        },
+        [6 /* TerrainKey.river */]: {
+            label: 'river', color: '94',
+            offence: -1, defence: -1, movecost: [[14, 30, 28], [13, 30, 28]]
+        },
+        [7 /* TerrainKey.coastline */]: {
+            // strange that coastline acts like river but estuary doesn't?
+            label: 'coastline', color: '94',
+            offence: -1, defence: -1, movecost: [[8, 26, 12], [6, 30, 8]]
+        },
+        [8 /* TerrainKey.estuary */]: {
+            label: 'estuary', color: '94',
+            offence: 0, defence: 0, movecost: [[20, 28, 24], [16, 30, 20]],
+        },
+        [9 /* TerrainKey.impassable */]: {
+            label: 'impassable', color: '94', altcolor: '0C',
+            offence: 0, defence: 0, movecost: [[0, 0, 0], [0, 0, 0]]
+        }
+    };
+    const weatherdata = {
+        [0 /* WeatherKey.dry */]: { label: 'dry', earth: '10' },
+        [1 /* WeatherKey.mud */]: { label: 'mud', earth: '02' },
+        [2 /* WeatherKey.snow */]: { label: 'snow', earth: '0A' },
+    };
+    const waterstate = {
+        [0 /* WaterStateKey.freeze */]: {
+            dir: 2 /* DirectionKey.south */, terrain: [3 /* TerrainKey.frozen_swamp */, 4 /* TerrainKey.frozen_river */]
+        },
+        [1 /* WaterStateKey.thaw */]: {
+            dir: 0 /* DirectionKey.north */, terrain: [5 /* TerrainKey.swamp */, 6 /* TerrainKey.river */]
+        },
+    };
+    const monthdata = {
+        [0 /* MonthKey.Jan */]: { label: "January", trees: '12', weather: 2 /* WeatherKey.snow */ },
+        [1 /* MonthKey.Feb */]: { label: "February", trees: '12', weather: 2 /* WeatherKey.snow */ },
+        [2 /* MonthKey.Mar */]: { label: "March", trees: '12', weather: 2 /* WeatherKey.snow */, water: 1 /* WaterStateKey.thaw */ },
+        [3 /* MonthKey.Apr */]: { label: "April", trees: 'D2', weather: 1 /* WeatherKey.mud */ },
+        [4 /* MonthKey.May */]: { label: "May", trees: 'D8', weather: 0 /* WeatherKey.dry */ },
+        [5 /* MonthKey.Jun */]: { label: "June", trees: 'D6', weather: 0 /* WeatherKey.dry */ },
+        [6 /* MonthKey.Jul */]: { label: "July", trees: 'C4', weather: 0 /* WeatherKey.dry */ },
+        [7 /* MonthKey.Aug */]: { label: "August", trees: 'D4', weather: 0 /* WeatherKey.dry */ },
+        [8 /* MonthKey.Sep */]: { label: "September", trees: 'C2', weather: 0 /* WeatherKey.dry */ },
+        [9 /* MonthKey.Oct */]: { label: "October", trees: '12', weather: 1 /* WeatherKey.mud */ },
+        [10 /* MonthKey.Nov */]: { label: "November", trees: '12', weather: 2 /* WeatherKey.snow */, water: 0 /* WaterStateKey.freeze */ },
+        [11 /* MonthKey.Dec */]: { label: "December", trees: '12', weather: 2 /* WeatherKey.snow */ },
+    };
+    const unitkinds = {
+        [0 /* UnitKindKey.infantry */]: { key: 'infantry', icon: 0xfd },
+        [1 /* UnitKindKey.armor */]: { key: 'armor', icon: 0xfe },
+        [2 /* UnitKindKey.air */]: { key: 'air', icon: 0xfc },
+    };
+    function moveCost(terrain, kind, weather) {
+        return kind == 2 /* UnitKindKey.air */ ? 4 : (terraintypes[terrain].movecost[kind][weather] || 255);
+    }
     function moveCosts(kind, weather) {
         // return a table of movement costs based on armor/inf and weather
-        return terraintypes.map((_, i) => moveCost(i, kind, weather));
+        return Object.keys(terraintypes).map(t => moveCost(+t, kind, weather));
     }
 
-    // see https://en.wikipedia.org/wiki/Fibonacci_coding
+    const scenarios = {
+        [0 /* ScenarioKey.apx */]: {
+            label: 'APX MODE', map: 0 /* MapVariantKey.apx */, oob: 0 /* OobVariantKey.apx */, level: 3 /* LevelKey.advanced */, start: '1941/6/22'
+        },
+        [1 /* ScenarioKey.learner */]: {
+            label: 'LEARNER', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 0 /* LevelKey.learner */, start: '1941/6/22'
+        },
+        [2 /* ScenarioKey.beginner */]: {
+            label: 'BEGINNER', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 1 /* LevelKey.beginner */, start: '1941/6/22'
+        },
+        [3 /* ScenarioKey.intermediate */]: {
+            label: 'INTERMED', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 2 /* LevelKey.intermediate */, start: '1941/6/22'
+        },
+        [4 /* ScenarioKey.advanced */]: {
+            label: 'ADVANCED', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 3 /* LevelKey.advanced */, start: '1941/6/22'
+        },
+        [5 /* ScenarioKey.expert41 */]: {
+            label: 'EXPERT41', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 4 /* LevelKey.expert */, start: '1941/6/22'
+        },
+        [6 /* ScenarioKey.expert42 */]: {
+            //TODO arrival turns for '42 scenario seem to be calculated in cartridge.asm:3709
+            label: 'EXPERT42', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 4 /* LevelKey.expert */, start: '1942/5/24'
+        },
+    };
 
-    let chr2int = {},
-        int2chr = {};
+    /******************************************************************************
+    Copyright (c) Microsoft Corporation.
 
-    '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'
-        .split('').forEach((c, i) => {
-            chr2int[c] = i;
-            int2chr[i] = c;
-        });
+    Permission to use, copy, modify, and/or distribute this software for any
+    purpose with or without fee is hereby granted.
 
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+    REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+    AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+    INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+    LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+    OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+    PERFORMANCE OF THIS SOFTWARE.
+    ***************************************************************************** */
 
-    let fib = n => (n in fib.memo) ? fib.memo[n] : (fib.memo[n] = fib(n-1) + fib(n-2));
-    fib.memo = {0: 0, 1: 1};
+    function __classPrivateFieldGet(receiver, state, kind, f) {
+        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+        return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+    }
 
+    function __classPrivateFieldSet(receiver, state, value, kind, f) {
+        if (kind === "m") throw new TypeError("Private method is not writable");
+        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+        return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+    }
 
+    /**
+     * Contains a bunch of routines to compact various integer data into
+     * a sequence of six-bit unsigned ints (uint6) which we map to
+     * a base64-like encoding
+     */
+    const chrs64 = [
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
+        'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
+        'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
+        'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '-', '_'
+    ];
+    const chr2int = Object.fromEntries(chrs64.map((c, i) => [c, i])), int2chr = Object.fromEntries(chrs64.map((c, i) => [i, c]));
+    function ischr64(c) {
+        return chrs64.includes(c);
+    }
     /** test v is unsigned integer */
     function isuint(v) {
         return Number.isInteger(v) && v >= 0;
     }
-
-    /** map an array (or singleton) of signed integer to an array of unsigned integers */
-    function zigzag(vs) {
-        if (typeof vs === 'number') return zigzag([vs])[0];
-
-        if (!vs.every(Number.isInteger)) throw new Error('zigzag: Expected list of integers:', vs);
-        return vs.map(v => v < 0 ? ((-v) << 1) - 1: v << 1);
+    // memoized Fibonacci numbers
+    const fib = memoize((n) => n < 2 ? n : fib(n - 1) + fib(n - 2));
+    function seq2str(seq) {
+        if (seq.some(u => !isuint(u) || u >= 64))
+            throw new Error(`seq2str: Invalid uint6 in input ${seq}`);
+        return seq.map(u => int2chr[u]).join('');
     }
-
-    /** recover an array of signed integer from a zigzag()d array */
-    function zagzig(vs) {
-        if (!vs.every(isuint)) throw new Error('zagzig: Expected list of unsigned integers:', vs);
-        return vs.map(v => v & 0x1 ? -((v + 1) >> 1): v >> 1);
+    function str2seq(s) {
+        const chrs = s.split('');
+        if (!chrs.every(ischr64))
+            throw new Error(`str2seq: Unexpected characters in '${s}'`);
+        return chrs.map(c => chr2int[c]);
     }
-
-    /** run length code an array of unsigned integer by replacing runs of consecutive
-     * values by <marker> <value> <repeat - min_repeat>, returning a new array of unsigned integer.
-     * @param {Array[uint]} vs - The list of values to encode
-     * @param {uint} marker - value to use as repeat token; existing values >= marker are incremented
-     * @param {function} vsize - Function returning the expected size of encoding a value
-     */
-    function rlencode(vs, marker, vsize) {
-        marker ??= 0;
-        vsize ??= fibencsize;
-
-        if (!vs.every(isuint)) throw new Error('rlencode: Expected list of unsigned integers:', vs);
-        if (!isuint(marker)) throw new Error('rlencode: Expected unsigned integer marker:', marker);
-
-        /*
-        for efficient run coding we want len(<marker><value><0>) < len(<value><value>...)
-        =>  len(<marker><0>) < len(<value>) * (repeat - 1)
-        =>  repeat > len(<marker><0>) / len(<value>) + 1
-        */
-
-        const rptlen = vsize(marker) + vsize(0);
-
-        let zs = [],
-            prev = -1,
-            repeat = 0,
-            seq = vs.map(v => v >= marker ? v + 1: v);
-
-        seq.push(-1);  // dummy to make sure we flush final value(s)
-        seq.forEach(v => {
-            if (v == prev) {
-                repeat++;
-            } else {
-                const prev_1 = prev > marker ? prev - 1: prev,
-                    min_repeat = repeat > 1 ? Math.ceil(rptlen/vsize(prev_1)) + 1: 2;
-                if (repeat >= min_repeat) {
-                    zs.push(marker);
-                    zs.push(prev_1);
-                    zs.push(repeat - min_repeat);
-                } else {
-                    while(repeat--) zs.push(prev);
-                }
-                repeat = 1;
-                prev = v;
-            }
-        });
-        return zs;
+    /** convert payload to string, wrapping with optional prefix string, length marker, and CRC check */
+    function wrap64(payload, prefix, length_maxbits = 12) {
+        let seq = [].concat(bitsencode(payload.length, length_maxbits), payload, fletcher6(payload));
+        return (prefix || '') + seq2str(seq);
     }
-
-    /** run length decode an array of unsinged ints to recover the original array provided to rlencode
-     *  the marker and vsize function must match the original encoding
-     */
-    function rldecode(zs, marker, vsize) {
-        marker ??= 0;
-        vsize ??= fibencsize;
-
-        if (!zs.every(isuint)) throw new Error('rldecode: Expected list of unsigned integers:', zs);
-        if (!isuint(marker)) throw new Error('rldecode: Expected unsigned integer marker:', marker);
-
-        const rptlen = vsize(marker) + vsize(0);
-
-        let vs = [];
-        while(zs.length) {
-            let v = zs.shift();
-            if (v != marker) {
-                vs.push(v > marker ? v - 1: v);
-            } else {
-                v = zs.shift();
-                const min_repeat = Math.ceil(rptlen/vsize(v)) + 1;
-                let repeat = zs.shift() + min_repeat;
-                while(repeat--) vs.push(v);
-            }
+    /** unwrap payload to seqas wrapped by wrap64, ignoring garbage and trailing characters */
+    function unwrap64(s, prefix, length_maxbits = 12) {
+        prefix || (prefix = '');
+        // check prefix
+        if (!s.startsWith(prefix))
+            throw new Error(`unwrap64: string didn't start with expected prefix '${prefix}'`);
+        // remove prefix and extraenous characters, and convert to seq<uint64>
+        let seq = str2seq(s.slice(prefix.length).replace(/[^-\w]/g, ''));
+        // get payload length
+        let n = bitsdecode(seq, length_maxbits);
+        if (seq.length < n + 2) {
+            throw new Error(`unwrap: expected at least ${n} + 2 characters after length marker, got ${seq.length}`);
         }
-        return vs;
+        // get payload and compute checksum
+        let payload = seq.slice(0, n), chk = fletcher6(payload);
+        // validate checksum
+        if (!chk.every((u, i) => u == seq[n + i]))
+            throw new Error(`unwrap64: checksum mismatch got ${s.slice(0, 2)}, expected ${chk}`);
+        return payload;
     }
-
-    function fibencsize(n) {
-        return fibencode_uint(n).toString(2).length;
+    /**
+     * computes achecksum for sequence as a typle
+     * using a six bit version of the Fletcher checksum
+     */
+    function fletcher6(seq, modulus = 61) {
+        let x = 0, y = 0;
+        seq.forEach(u => {
+            x = (x + u) % modulus;
+            y = (y + x) % modulus;
+        });
+        return [x, y];
     }
-
-    /** fibnonacci encode a single unsigned int to a bit pattern returned as a value >= 3 */
-    function fibencode_uint(n) {
-        if (!isuint(n)) throw new Error(`fibencode_uint: Invalid unsigned integer: ${n}`)
-
-        if (n in fibencode_uint.memo) return fibencode_uint.memo[n];
-
-        var n1 = n + 1,   // fib coding wants a natural number rather than a unit, i.e. 0 => 1
-            k,
-            bits = 1;
-        for(k=2; fib(k) <= n1; k++) /**/ ;      // k is index of largest fibonacci number in n1
+    /**
+     * Encode a fixed-size uint of up to 1<<nbits as a seq of uint6
+     */
+    function bitsencode(n, nbits) {
+        if (!isuint(n) || n >= (1 << nbits))
+            throw new Error(`bitsencode: value ${n} exceeds max ${1 << nbits}`);
+        let seq = [];
+        for (let i = 0; i < Math.ceil(nbits / 6); i++) {
+            seq.push(n & 0x3f);
+            n >>= 6;
+        }
+        return seq;
+    }
+    /**
+     * Decode a fixed-size value of up to nbits from a seq<uint6>
+     * modifying seq in place
+     */
+    function bitsdecode(seq, nbits) {
+        let nchars = Math.ceil(nbits / 6);
+        if (nchars > seq.length) {
+            throw new Error(`bitsdecode: expected at least ${nchars} characters, got ${seq.length}`);
+        }
+        let n = 0, us = seq.splice(0, nchars);
+        us.reverse().forEach(u => { n = (n << 6) + u; });
+        return n;
+    }
+    /** Fibnonacci encode a single uint to a uint with prefix-free bit pattern,
+     * returned as a value >= 3 (b000011)
+     * see https://en.wikipedia.org/wiki/Fibonacci_coding
+     */
+    function _fibencode_uint(n) {
+        if (!isuint(n))
+            throw new Error(`fibencode_uint: Invalid unsigned integer: ${n}`);
+        let n1 = n + 1, // fib coding wants a natural number rather than a unit, i.e. 0 => 1
+        k, bits = 1;
+        for (k = 2; fib(k) <= n1; k++) /**/
+            ; // k is index of largest fibonacci number in n1
         // create the fibonacci bit pattern by flagging presence/absence of each smaller number
-        for(--k; k >= 2; k--) {
+        for (--k; k >= 2; k--) {
             bits <<= 1;
             const m = fib(k);
             if (n1 >= m) {
@@ -292,74 +281,67 @@ var ef1941 = (function (exports) {
                 n1 -= m;
             }
         }
-        fibencode_uint.memo[n] = bits;          // remember for future reference
         return bits;
     }
-    fibencode_uint.memo = {};
-
-    /** fibonacci decode an encoded bit pattern to recover the original uint value */
-    function fibdecode_uint(bits) {
-        if (!(isuint(bits) && bits >= 3)) throw new Error(`fibdecode_uint: Invalid encoded integer: ${bits.toString(2)}`)
-
-        if (bits in fibdecode_uint.memo) return fibdecode_uint.memo[bits];
+    const fibencode_uint = memoize(_fibencode_uint);
+    /** helper function estimating the size of an encoded value, used for run-length coding */
+    function fibencsize(n) {
+        return fibencode_uint(n).toString(2).length;
+    }
+    /** Fibonacci decode a prefix-free bit pattern to recover the original uint value */
+    function _fibdecode_uint(bits) {
+        if (!(isuint(bits) && bits >= 3))
+            throw new Error(`fibdecode_uint: Invalid encoded integer: ${bits.toString(2)}`);
         // sum the fibonacci numbers represented by the bit pattern, ignoring the MSB flag
-        var n=0;
-        for(let k=2; bits > 1; k++) {
-            if (bits & 0x1) n += fib(k);
+        var n = 0;
+        for (let k = 2; bits > 1; k++) {
+            if (bits & 0x1)
+                n += fib(k);
             bits >>= 1;
         }
-        fibdecode_uint.memo[bits] = n-1;
-        return n-1;
+        return n - 1;
     }
-    fibdecode_uint.memo = {};
-
-    /** encode an array of unsigned int to a base64-string using fibonacci encoding */
+    const fibdecode_uint = memoize(_fibdecode_uint);
+    /** Fibonacci code a seq<uint> to a prefix free encoding chunked into seq<uint6> */
     function fibencode(vs) {
-        if (typeof vs === 'number') return fibencode([vs]);
-        if (!vs.every(isuint)) throw new Error('fibencode: Expected list of unsigned integers', vs);
-        let seq = vs.map(fibencode_uint),
-            s = "",
-            bits = 0,
-            k = 0,
-            lead_bit = 0x1;
-        while (seq.length && k < 6) {
-            bits |= seq.shift() << k;
+        if (typeof vs === 'number')
+            return fibencode([vs]);
+        if (!vs.every(isuint))
+            throw new Error(`fibencode: Expected list of unsigned integers ${vs}`);
+        let fibs = vs.map(fibencode_uint), seq = [], bits = 0, k = 0, lead_bit = 0x1;
+        while (fibs.length && k < 6) {
+            bits |= fibs.shift() << k;
             while (lead_bit <= bits) {
                 k++;
                 lead_bit <<= 1;
             }
             while (k >= 6) {
-                s += int2chr[bits & 0x3f];
+                seq.push(bits & 0x3f);
                 bits >>= 6;
                 lead_bit >>= 6;
                 k -= 6;
             }
         }
-        if (k) s += int2chr[bits];
-        return s;
+        if (k)
+            seq.push(bits);
+        return seq;
     }
-
-    /** decode a base64 fibonnaci encoded string to recover the original unsigned int array */
-    function fibdecode(s) {
-        let vs = [],
-            seq = s.split('').map(c => chr2int[c]),
-            bitseq = 0,
-            m = 0,
-            mask = 0x3,
-            k = 2;
+    /** Decode prefix-free Fibonacci coding chunked into seq<64> by fibencode() to recover original seq<uint> */
+    function fibdecode(seq) {
+        let vs = [], bitseq = 0, m = 0, mask = 0x3, k = 2;
         while (seq.length) {
             bitseq |= (seq.shift() << m);
             m += 6;
             while (k <= m) {
                 if ((mask & bitseq) == mask) {
-                    const bits = bitseq & ((1 << k) - 1),
-                        v = fibdecode_uint(bits);
+                    const bits = bitseq & ((1 << k) - 1), v = fibdecode_uint(bits);
                     vs.push(v);
                     bitseq >>= k;
                     m -= k;
                     k = 2;
                     mask = 0x3;
-                } else {
+                }
+                else {
                     k++;
                     mask <<= 1;
                 }
@@ -367,29 +349,123 @@ var ef1941 = (function (exports) {
         }
         return vs;
     }
+    /** run length code seq<uint> => seq<uint> (hopefully shorter) by replacing runs of consecutive
+     * values by <marker> <value> <repeat - min_repeat>, returning a new array of unsigned integer.
+     * @param {Array[uint]} vs - The list of values to encode
+     * @param {uint} marker - value to use as repeat token; existing values >= marker are incremented
+     * @param {function} vsize - Function returning the expected size of encoding a value
+     */
+    function rlencode(vs, marker = 0, vsize = fibencsize) {
+        if (!vs.every(isuint))
+            throw new Error(`rlencode: Expected list of unsigned integers: ${vs}`);
+        if (!isuint(marker))
+            throw new Error(`rlencode: Expected unsigned integer marker: ${marker}`);
+        /*
+        for efficient run coding we want len(<marker><value><0>) < len(<value><value>...)
+        =>  len(<marker><0>) < len(<value>) * (repeat - 1)
+        =>  repeat > len(<marker><0>) / len(<value>) + 1
+        */
+        const rptlen = vsize(marker) + vsize(0);
+        let zs = [], prev = -1, repeat = 0, seq = vs.map(v => v >= marker ? v + 1 : v);
+        seq.push(-1); // dummy to make sure we flush final value(s)
+        seq.forEach(v => {
+            if (v == prev) {
+                repeat++;
+            }
+            else {
+                const prev_1 = prev > marker ? prev - 1 : prev, min_repeat = repeat > 1 ? Math.ceil(rptlen / vsize(prev_1)) + 1 : 2;
+                if (repeat >= min_repeat) {
+                    zs.push(marker);
+                    zs.push(prev_1);
+                    zs.push(repeat - min_repeat);
+                }
+                else {
+                    while (repeat--)
+                        zs.push(prev);
+                }
+                repeat = 1;
+                prev = v;
+            }
+        });
+        return zs;
+    }
+    /** run length decode seq<uint> => seq<uint> to recover original array provided to rlencode
+     *  the marker and vsize function must match the original encoding
+     */
+    function rldecode(zs, marker = 0, vsize = fibencsize) {
+        if (!zs.every(isuint))
+            throw new Error(`rldecode: Expected list of unsigned integers: ${zs}`);
+        if (!isuint(marker))
+            throw new Error(`rldecode: Expected unsigned integer marker: ${marker}`);
+        const rptlen = vsize(marker) + vsize(0);
+        let vs = [];
+        while (zs.length) {
+            let v = zs.shift();
+            if (v != marker) {
+                vs.push(v > marker ? v - 1 : v);
+            }
+            else {
+                if (zs.length < 2)
+                    throw new Error('rldecode: Malformed run definition');
+                v = zs.shift();
+                const min_repeat = Math.ceil(rptlen / vsize(v)) + 1;
+                let repeat = zs.shift() + min_repeat;
+                while (repeat--)
+                    vs.push(v);
+            }
+        }
+        return vs;
+    }
+    /** map a seq<int> (or singleton int) to seq<uint> */
+    function zigzag(vs) {
+        if (!vs.every(Number.isInteger))
+            throw new Error(`zigzag: Expected list of integers: ${vs}`);
+        return vs.map(v => v < 0 ? ((-v) << 1) - 1 : v << 1);
+    }
+    /** recover seq<int> from a zigzag()d seq<uint> */
+    function zagzig(vs) {
+        if (!vs.every(isuint))
+            throw new Error(`zagzig: Expected list of unsigned integers: ${vs}`);
+        return vs.map(v => v & 0x1 ? -((v + 1) >> 1) : v >> 1);
+    }
+    /** combine multiple small numbers into a single result by interleaving bits
+     * this is not safe for large numbers / long lists without switching to bigint
+     * since JS works with signed 32-bit integers for bitwise ops
+     */
+    function ravel(vs) {
+        let z = 0, m = Math.max(...vs), bit = 1;
+        if (!vs.every(isuint))
+            throw new Error(`ravel: Expected list of unsigned integers: ${vs}`);
+        while (m) {
+            vs = vs.map(v => {
+                if (v & 1)
+                    z |= bit;
+                bit <<= 1;
+                return v >> 1;
+            });
+            m >>= 1;
+        }
+        return z;
+    }
+    function unravel(z, n) {
+        if (!isuint(z))
+            throw new Error(`unravel: Expected unsigned int: ${z}`);
+        let vs = new Array(n).fill(0), bit = 1;
+        while (z) {
+            vs = vs.map(v => {
+                if (z & 1)
+                    v |= bit;
+                z >>= 1;
+                return v;
+            });
+            bit <<= 1;
+        }
+        return vs;
+    }
 
-    /*
-    The game map is represented as binary data using one byte per square at offset 0x6500
-    the original encoding uses the high two bits to select the foreground color
-    and the low six bits to choose a character from a set of 64 custom characters.
-    in fact the top and bottom halves of the map use slightly different character sets and color scheme.
-
-    Since not all bit patterns are used (the high two bits are nearly redundant),
-    we can store exactly the same raw binary data using a custom base64(ish) encoding
-    (for north and south) and then represent the map with a human-readable string.
-
-    North and south parts of map are encoded from 6-bit hex to ascii
-    with pipe-delimited blocks of chrs for consecutive terrain types
-
-    The full map is 48 x 41, including the impassable border.
-    However most game logic use a lat/lon coord system
-    with (0,0) in the bottom right corner *excluding* the border.
-    Thus the internal map has longitudes 0-45 and latitudes 0-38.
-    Ihe first 25 rows (incl border) are mapped with a northern charset
-    which mainly uses forest rather than the mountains of the southern charset
-    */
     const mapVariants = {
-        apx: {
+        [0 /* MapVariantKey.apx */]: {
+            font: 'apx',
             encoding: [
                 ' |123456|@*0$|||,.;:|abcdefghijklmnopqrstuvwxyz|ABCDEFGHIJKLMNOPQR|{}??|~#',
                 ' |123456|@*0$|||,.;:|abcdefghijklmnopqrst|ABCDEFGHIJKLMNOPQRSTUVW|{}<??|~#'
@@ -441,29 +517,30 @@ var ef1941 = (function (exports) {
             // oddly Sevastpol is assigned points but is not coded as a city in either version of the map?
             //TODO  create a variant that replaces F => @ in the bottom row of the map, and adds to city list
             cities: [
-                {owner: Player.russian, lon: 20, lat: 28, points: 20, label: 'Moscow'},
-                {owner: Player.russian, lon: 33, lat: 36, points: 10,  label: 'Leningrad'},
-                {owner: Player.russian, lon: 6,  lat: 15, points: 10,  label: 'Stalingrad'},
-                {owner: Player.russian, lon: 12, lat:  4, points: 0,  label: 'Krasnodar'},   // APX all others zero except Sevastopol
-                {owner: Player.russian, lon: 13, lat: 33, points: 0,  label: 'Gorky'},
-                {owner: Player.russian, lon: 7,  lat: 32, points: 0,  label: 'Kazan'},
-                {owner: Player.russian, lon: 38, lat: 30, points: 0,  label: 'Riga'},
-                {owner: Player.russian, lon: 24, lat: 28, points: 0,  label: 'Rzhev'},
-                {owner: Player.russian, lon: 26, lat: 24, points: 0,  label: 'Smolensk'},
-                {owner: Player.russian, lon: 3,  lat: 24, points: 0,  label: 'Kuibishev'},
-                {owner: Player.russian, lon: 33, lat: 22, points: 0,  label: 'Minsk'},
-                {owner: Player.russian, lon: 15, lat: 21, points: 0,  label: 'Voronezh'},
-                {owner: Player.russian, lon: 21, lat: 21, points: 0,  label: 'Orel'},
-                {owner: Player.russian, lon: 20, lat: 15, points: 0,  label: 'Kharkov'},
-                {owner: Player.russian, lon: 29, lat: 14, points: 0,  label: 'Kiev'},
-                {owner: Player.russian, lon: 12, lat:  8, points: 0,  label: 'Rostov'},
-                {owner: Player.russian, lon: 20, lat:  8, points: 0,  label: 'Dnepropetrovsk'},
-                {owner: Player.russian, lon: 26, lat:  5, points: 0,  label: 'Odessa'},
-                {owner: Player.german,  lon: 44, lat: 19, points: 0,  label: 'Warsaw'},
-        //        {owner: Player.russian, lon: 20, lat:  0, points: 10,  label: 'Sevastopol'},
+                { owner: 1 /* PlayerKey.Russian */, lon: 20, lat: 28, points: 20, label: 'Moscow' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 33, lat: 36, points: 10, label: 'Leningrad' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 6, lat: 15, points: 10, label: 'Stalingrad' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 12, lat: 4, points: 0, label: 'Krasnodar' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 13, lat: 33, points: 0, label: 'Gorky' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 7, lat: 32, points: 0, label: 'Kazan' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 38, lat: 30, points: 0, label: 'Riga' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 24, lat: 28, points: 0, label: 'Rzhev' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 26, lat: 24, points: 0, label: 'Smolensk' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 3, lat: 24, points: 0, label: 'Kuibishev' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 33, lat: 22, points: 0, label: 'Minsk' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 15, lat: 21, points: 0, label: 'Voronezh' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 21, lat: 21, points: 0, label: 'Orel' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 20, lat: 15, points: 0, label: 'Kharkov' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 29, lat: 14, points: 0, label: 'Kiev' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 12, lat: 8, points: 0, label: 'Rostov' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 20, lat: 8, points: 0, label: 'Dnepropetrovsk' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 26, lat: 5, points: 0, label: 'Odessa' },
+                { owner: 0 /* PlayerKey.German */, lon: 44, lat: 19, points: 0, label: 'Warsaw' },
+                //        {owner: PlayerKey.Russian, lon: 20, lat:  0, points: 10,  label: 'Sevastopol'},
             ]
         },
-        cart: {
+        [1 /* MapVariantKey.cart */]: {
+            font: 'cart',
             encoding: [
                 " |123456|@*0$|||,.;:|abcdefghijklmnopqrstuvwxyz|ABCDEFGHIJKLMNOPQ|{}???|~#",
                 " |123456|@*0$|||,.;:|abcdefghijklmnopqrst|ABCDEFGHIJKLMNOPQRSTUV|{}<???|~#"
@@ -515,241 +592,103 @@ var ef1941 = (function (exports) {
             // oddly Sevastpol is assigned points but is not coded as a city in either version of the map?
             //TODO  create a variant that replaces F => @ in the bottom row of the map, and adds to city list
             cities: [
-                {owner: Player.russian, lon: 20, lat: 28, points: 10, label: 'Moscow'},
-                {owner: Player.russian, lon: 33, lat: 36, points: 5,  label: 'Leningrad'},
-                {owner: Player.russian, lon: 6,  lat: 15, points: 5,  label: 'Stalingrad'},
-                {owner: Player.russian, lon: 12, lat:  4, points: 5,  label: 'Krasnodar'},
-                {owner: Player.russian, lon: 13, lat: 33, points: 5,  label: 'Gorky'},
-                {owner: Player.russian, lon: 7,  lat: 32, points: 5,  label: 'Kazan'},
-                {owner: Player.russian, lon: 38, lat: 30, points: 2,  label: 'Riga'},
-                {owner: Player.russian, lon: 24, lat: 28, points: 2,  label: 'Rzhev'},
-                {owner: Player.russian, lon: 26, lat: 24, points: 2,  label: 'Smolensk'},
-                {owner: Player.russian, lon: 3,  lat: 24, points: 5,  label: 'Kuibishev'},
-                {owner: Player.russian, lon: 33, lat: 22, points: 2,  label: 'Minsk'},
-                {owner: Player.russian, lon: 15, lat: 21, points: 2,  label: 'Voronezh'},
-                {owner: Player.russian, lon: 21, lat: 21, points: 2,  label: 'Orel'},
-                {owner: Player.russian, lon: 20, lat: 15, points: 2,  label: 'Kharkov'},
-                {owner: Player.russian, lon: 29, lat: 14, points: 2,  label: 'Kiev'},
-                {owner: Player.russian, lon: 12, lat:  8, points: 2,  label: 'Rostov'},
-                {owner: Player.russian, lon: 20, lat:  8, points: 2,  label: 'Dnepropetrovsk'},
-                {owner: Player.russian, lon: 26, lat:  5, points: 2,  label: 'Odessa'},
-                {owner: Player.german,  lon: 44, lat: 19, points: 0,  label: 'Warsaw'},
-        //        {owner: Player.russian, lon: 20, lat:  0, points: 5,  label: 'Sevastopol'},
+                { owner: 1 /* PlayerKey.Russian */, lon: 20, lat: 28, points: 10, label: 'Moscow' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 33, lat: 36, points: 5, label: 'Leningrad' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 6, lat: 15, points: 5, label: 'Stalingrad' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 12, lat: 4, points: 5, label: 'Krasnodar' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 13, lat: 33, points: 5, label: 'Gorky' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 7, lat: 32, points: 5, label: 'Kazan' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 38, lat: 30, points: 2, label: 'Riga' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 24, lat: 28, points: 2, label: 'Rzhev' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 26, lat: 24, points: 2, label: 'Smolensk' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 3, lat: 24, points: 5, label: 'Kuibishev' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 33, lat: 22, points: 2, label: 'Minsk' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 15, lat: 21, points: 2, label: 'Voronezh' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 21, lat: 21, points: 2, label: 'Orel' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 20, lat: 15, points: 2, label: 'Kharkov' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 29, lat: 14, points: 2, label: 'Kiev' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 12, lat: 8, points: 2, label: 'Rostov' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 20, lat: 8, points: 2, label: 'Dnepropetrovsk' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 26, lat: 5, points: 2, label: 'Odessa' },
+                { owner: 0 /* PlayerKey.German */, lon: 44, lat: 19, points: 0, label: 'Warsaw' },
+                //        {owner: PlayerKey.Russian, lon: 20, lat:  0, points: 5,  label: 'Sevastopol'},
             ]
-        }
-    },
-        // D.ASM:5500 BHX1 .BYTE ... / BHY1 / BHX2 / BHY2
-        // there are 11 impassable square-sides
-        // the original game stores 22 sets of (x1,y1),(x2,y2) coordinates
-        // to enumerate the to/from coordinates in both senses
-        // but we can reduce from 88 to 22 bytes by storing a list of
-        // squares you can't move north from (or south to), and likewise west from (or east to)
-        blocked = [
-            // can't move north from here (or south into here)
-            [
-                {lon: 40, lat: 35},
-                {lon: 39, lat: 35},
-                {lon: 38, lat: 35},
-                {lon: 35, lat: 36},
-                {lon: 34, lat: 36},
-                {lon: 22, lat: 3},
-                {lon: 15, lat: 6},
-                {lon: 14, lat: 7},
-                {lon: 19, lat: 3}
-            ],
-            // can't move west from here (or east into here)
-            [
-                {lon: 35, lat: 33},
-                {lon: 14, lat: 7},
-            ]
-        ];
+        },
+    };
+    // D.ASM:5500 BHX1 .BYTE ... / BHY1 / BHX2 / BHY2
+    // there are 11 impassable square-sides
+    // the original game stores 22 sets of (x1,y1),(x2,y2) coordinates
+    // to enumerate the to/from coordinates in both senses
+    // but we can reduce from 88 to 22 bytes by storing a list of
+    // squares you can't move north from (or south to), and likewise west from (or east to)
+    const blocked = [
+        // can't move north from here (or south into here)
+        [
+            { lon: 40, lat: 35 },
+            { lon: 39, lat: 35 },
+            { lon: 38, lat: 35 },
+            { lon: 35, lat: 36 },
+            { lon: 34, lat: 36 },
+            { lon: 22, lat: 3 },
+            { lon: 15, lat: 6 },
+            { lon: 14, lat: 7 },
+            { lon: 19, lat: 3 }
+        ],
+        // can't move west from here (or east into here)
+        [
+            { lon: 35, lat: 33 },
+            { lon: 14, lat: 7 },
+        ]
+    ];
 
+    var _Mapboard_instances, _Mapboard_game, _Mapboard_maxlon, _Mapboard_maxlat, _Mapboard_icelat, _Mapboard_fgcolor, _Mapboard_freezeThaw;
     // the map is made up of locations, each with a lon and lat
-    class Location {
-        lon;
-        lat;
-
-        constructor(lon, lat, ...objs) {
-            if (!Number.isInteger(lon) || !Number.isInteger(lat)) {
-                throw(`bad Location(lon: int, lat: int, ...data), got lon=${lon}, lat=${lat}`)
-            }
+    // grid points have integer coordinates and a unique identifier
+    class GridPoint {
+        constructor(lon, lat) {
+            if (!Number.isInteger(lon) || !Number.isInteger(lat))
+                throw (`bad Location(lon: int, lat: int, ...data), got lon=${lon}, lat=${lat}`);
             this.lon = lon;
             this.lat = lat;
-            Object.assign(this, ...objs);
+        }
+        get id() {
+            return ravel(zigzag([this.lon, this.lat]));
         }
         put(d) {
             d.lon = this.lon;
             d.lat = this.lat;
             return d;
         }
-    }
-
-
-    // mapboard constructor, used as a container of Locations
-    class Mapboard {
-        locations;
-        cities;
-        #game;
-        #maxlon;
-        #maxlat;
-        #icelat = 39;       // via M.ASM:8600 PSXVAL initial value is 0x27
-
-        constructor(game, memento) {
-            const variant = mapVariants[game.variant || 'apx'],
-                mapencoding = variant.encoding.map((enc, i) => {
-                    // convert the encoding table into a lookup of char => [icon, terraintype, alt-flag]
-                    let lookup = {}, ch=0;
-                    enc.split('|').forEach((s, t) =>
-                        s.split('').forEach(c => {
-                            let alt = ((t == 1 && i == 0) || ch == 0x40) ? 1 : 0;
-                            if (ch==0x40) ch--;
-                            lookup[c] = {
-                                icon: 0x80 + i * 0x40 + ch++,
-                                terrain: t,
-                                alt: alt
-                            };
-                        })
-                    );
-                    return lookup;
-                }),
-                // decode the map into a 2-d array of rows x cols of  {lon: , lat:, icon:, terrain:, alt:}
-                mapdata = variant.ascii.split(/\n/).slice(1,-1).map(
-                    (row, i) =>
-                    row.split('').map(
-                        c => Object.assign({}, mapencoding[i <= 25 ? 0: 1][c])
-                    )
-                );
-
-            // excluding the impassable border valid is 0..maxlon-1, 0..maxlat-1
-            this.#maxlon = mapdata[0].length-2;
-            this.#maxlat = mapdata.length-2;
-
-            this.#game = game;
-            this.locations = mapdata.map(
-                (row, i) => row.map(
-                    (data, j) => {
-                        let lon = this.#maxlon - j,
-                            lat = this.#maxlat - i,
-                            id = (lat << 8) + lon;
-                        return new Location(lon, lat, data, {id, row: i, col: j})
-                    }
-                )
-            );
-
-            this.cities = variant.cities.map(c => {return {...c}});
-            this.cities.forEach((city, i) => {
-                city.points ||= 0;
-                let loc = this.locationOf(city);
-                loc.cityid = i;
-            });
-            if (memento) {
-                this.#freezeThaw(Water.freeze, memento.shift());
-                this.cities.forEach(c => c.owner = memento.shift());
-            }
+        next(dir) {
+            const d = directions[dir];
+            return new GridPoint(this.lon + d.dlon, this.lat + d.dlat);
         }
-        nextTurn(initialSetup) {
-            let mdata = monthdata[this.#game.month],
-                earth = weatherdata[mdata.weather].earth;
-
-            // update the tree color in place in the terrain data :grimace:
-            terraintypes[Terrain.mountain_forest].altcolor = mdata.trees;
-
-            if (!initialSetup && mdata.water != null) this.#freezeThaw(mdata.water);
-
-            this.#game.notify('map', 'recolor', this, {
-                fgcolorfn: (loc) => this.#fgcolor(loc),
-                bgcolor: earth,
-                labelcolor: mdata.weather == Weather.snow ? '04': '08'
-            });
+        static get(p) {
+            return new GridPoint(p.lon, p.lat);
         }
-        get memento() {
-            return [].concat(
-                [this.#icelat],
-                this.cities.map(c => c.owner)
-            )
+        static fromid(v) {
+            const [lon, lat] = zagzig(unravel(v, 2));
+            return new GridPoint(lon, lat);
         }
-        valid(loc) {
-            return loc.lat >= 0 && loc.lat < this.#maxlat && loc.lon >= 0 && loc.lon < this.#maxlon;
+        static directionsFrom(p, q) {
+            // project all directions from p to q and rank them, ensuring tie breaking has no bias
+            let dlat = (q.lat - p.lat), dlon = (q.lon - p.lon);
+            if (dlat == 0 && dlon == 0)
+                return [];
+            return Object.entries(directions)
+                .map(([k, d]) => [d.dlon * dlon + d.dlat * dlat, +k])
+                // in case tied dirs (which will be neighbors) pick the  the clockwise leader
+                .sort(([a, i], [b, j]) => (b - a) || ((j - i + 4 + 2) % 4) - 2);
         }
-        locationOf(d) {
-            let loc = new Location(d.lon, d.lat);
-            return this.valid(loc) ? this.locations[this.#maxlat - loc.lat][this.#maxlon - loc.lon]: loc;
-        }
-        fromid(x) {
-            return this.locationOf({lon: x & 0xff, lat: x >> 8});
-        }
-        boundaryDistance(loc, dir) {
-            switch (dir) {
-                case Direction.north: return this.#maxlat - 1 - loc.lat;
-                case Direction.south: return loc.lat;
-                case Direction.east: return loc.lon;
-                case Direction.west: return this.#maxlon - 1 - loc.lon;
-            }
-        }
-        neighbor(loc, dir, skipcheck) {
-            let d = directions[dir],
-                lon = loc.lon + d.dlon,
-                lat = loc.lat + d.dlat,
-                nbr = this.locationOf({lon, lat});
-
-            if (skipcheck) return nbr;
-            if (!this.valid(nbr)) return null;
-
-            let legal = (
-                    nbr.terrain != Terrain.impassable
-                    && !(
-                        (dir == Direction.north || dir == Direction.south)
-                        ? blocked[0].find(d => d.lon == loc.lon && d.lat == (dir == Direction.north ? loc.lat : nbr.lat))
-                        : blocked[1].find(d => d.lon == (dir == Direction.west ? loc.lon : nbr.lon) && d.lat == loc.lat)
-                    )
-                );
-            return legal ? nbr: null;
-        }
-        #fgcolor(loc) {
-            // return the antic fg color for a given location
-            let tinfo = terraintypes[loc.terrain],
-                alt = (loc.terrain == Terrain.city) ? this.cities[loc.cityid].owner : loc.alt;
-            return alt ? tinfo.altcolor : tinfo.color;
-        }
-        #freezeThaw(w, newlat) {
-            // move ice by freeze/thaw rivers and swamps, where w is Water.freeze or Water.thaw
-            // ICELAT -= [7,14] incl]; clamp 1-39 incl
-            // small bug in APX code? freeze chrs $0B - $29 (exclusive, seems like it could freeze Kerch straight?)
-            let state = waterstate[w],
-                other = waterstate[1-w],
-                oldlat = this.#icelat,
-                dlat = directions[state.dir].dlat,
-                change = (randbyte() & 0x8) + 7;
-
-            this.#icelat = newlat ?? Math.min(this.#maxlat, Math.max(1, oldlat + dlat * change));
-
-            let skip = (w == Water.freeze) ? oldlat: this.#icelat;  // for freeze skip old line, for thaw skip new new
-            for (let i = oldlat; i != this.#icelat + dlat; i += dlat) {
-                if (i == skip) continue;
-                this.locations[this.#maxlat - i].forEach(d => {
-                    let k = other.terrain.indexOf(d.terrain);
-                    if (k != -1) d.terrain = state.terrain[k];
-                });
-            }
-        }
-        occupy(loc, player) {
-            if (loc.cityid != null) this.cities[loc.cityid].owner = player;
-            //TODO repaint this square
-        }
-        squareSpiral(center, diameter) {
+        static squareSpiral(center, diameter) {
             // return list of the diameter^2 locations spiraling out from loc
             // which form a square of 'radius' (diameter-1)/2, based on a spiralpattern
             // that looks like N, E, S,S, W,W, N,N,N, E,E,E, S,S,S,S, W,W,W,W, ...
-
-            if (diameter % 2 != 1) throw("Diameter should be odd: 1, 3, 5, ...");
-            let loc = center,
-                locs = [loc],
-                dir = 0,
-                i = 0,
-                side = 1;
-
+            if (diameter % 2 != 1)
+                throw (`squareSpiral: diameter should be odd, got ${diameter}`);
+            let loc = new GridPoint(center.lon, center.lat), locs = [loc], dir = 0, i = 0, side = 1;
             while (++i < diameter) {
-                loc = this.neighbor(loc, dir, true);
+                loc = loc.next(dir);
                 locs.push(loc);
                 if (i == side) {
                     side += dir % 2;
@@ -758,6 +697,130 @@ var ef1941 = (function (exports) {
                 }
             }
             return locs;
+        }
+    }
+    GridPoint.manhattanDistance = function (p, q) {
+        // calculate the taxicab metric between two locations
+        return Math.abs(p.lat - q.lat) + Math.abs(p.lon - q.lon);
+    };
+    GridPoint.directionFrom = function (p, q) {
+        // return the index of the winning direction
+        let projections = GridPoint.directionsFrom(p, q);
+        return projections.length ? projections[0][1] : null;
+    };
+    class MapPoint extends GridPoint {
+        constructor(lon, lat, row, col, terrain, alt, icon) {
+            super(lon, lat);
+            this.row = row;
+            this.col = col;
+            this.terrain = terrain;
+            this.alt = alt;
+            this.icon = icon;
+        }
+        describe() {
+            return `[${this.id}] ${terraintypes[this.terrain].label}${this.alt ? "-alt" : ""}\n`
+                + `lon ${this.lon}, lat ${this.lat}`;
+        }
+    }
+    // mapboard constructor, used as a container of MapPoints
+    class Mapboard {
+        constructor(game, memento) {
+            _Mapboard_instances.add(this);
+            _Mapboard_game.set(this, void 0); //TODO only wants .month, .emit, .rand
+            _Mapboard_maxlon.set(this, void 0);
+            _Mapboard_maxlat.set(this, void 0);
+            _Mapboard_icelat.set(this, 39); // via M.ASM:8600 PSXVAL initial value is 0x27
+            const variant = mapVariants[scenarios[game.scenario].map], mapencoding = variant.encoding.map((enc, i) => {
+                let lookup = {}, ch = 0;
+                enc.split('|').forEach((s, t) => s.split('').forEach(c => {
+                    let alt = ((t == 1 && i == 0) || ch == 0x40) ? 1 : 0;
+                    if (ch == 0x40)
+                        ch--;
+                    lookup[c] = {
+                        icon: 0x80 + i * 0x40 + ch++,
+                        terrain: t,
+                        alt: alt
+                    };
+                }));
+                return lookup;
+            }), 
+            // decode the map into a 2-d array of rows x cols of  {lon: , lat:, icon:, terrain:, alt:}
+            mapdata = variant.ascii.split(/\n/).slice(1, -1).map((row, i) => row.split('').map(c => Object.assign({}, mapencoding[i <= 25 ? 0 : 1][c])));
+            // excluding the impassable border valid is 0..maxlon-1, 0..maxlat-1
+            __classPrivateFieldSet(this, _Mapboard_maxlon, mapdata[0].length - 2, "f");
+            __classPrivateFieldSet(this, _Mapboard_maxlat, mapdata.length - 2, "f");
+            __classPrivateFieldSet(this, _Mapboard_game, game, "f");
+            this.locations = mapdata.map((row, i) => row.map((data, j) => {
+                let lon = __classPrivateFieldGet(this, _Mapboard_maxlon, "f") - j, lat = __classPrivateFieldGet(this, _Mapboard_maxlat, "f") - i;
+                return new MapPoint(lon, lat, i, j, data.terrain, data.alt, data.icon);
+            }));
+            this.cities = variant.cities.map(c => { return Object.assign({}, c); });
+            this.cities.forEach((city, i) => {
+                city.points || (city.points = 0);
+                let loc = this.locationOf(city);
+                if (loc.terrain != 2 /* TerrainKey.city */)
+                    throw new Error(`Mapboard: city at (${loc.lon}, ${loc.lat}) missing city terrain`);
+                loc.cityid = i;
+            });
+            // verify each city terrain has a cityid
+            const missing = this.locations.map(row => row.filter(loc => loc.terrain == 2 /* TerrainKey.city */ && typeof loc.cityid === 'undefined')).flat();
+            if (missing.length > 0)
+                throw new Error(`Mapboard: city terrain missing city details at ${missing}`);
+            if (memento) {
+                if (memento.length < this.cities.length + 1)
+                    throw new Error("Mapboard: malformed save data");
+                __classPrivateFieldGet(this, _Mapboard_instances, "m", _Mapboard_freezeThaw).call(this, 0 /* WaterStateKey.freeze */, memento.shift());
+                this.cities.forEach(c => c.owner = memento.shift());
+            }
+        }
+        newTurn(initialize = false) {
+            let mdata = monthdata[__classPrivateFieldGet(this, _Mapboard_game, "f").month], earth = weatherdata[mdata.weather].earth;
+            // update the tree color in place in the terrain data :grimace:
+            terraintypes[1 /* TerrainKey.mountain_forest */].altcolor = mdata.trees;
+            if (!initialize && mdata.water != null)
+                __classPrivateFieldGet(this, _Mapboard_instances, "m", _Mapboard_freezeThaw).call(this, mdata.water);
+            __classPrivateFieldGet(this, _Mapboard_game, "f").emit('map', 'recolor', {
+                fgcolorfn: (loc) => __classPrivateFieldGet(this, _Mapboard_instances, "m", _Mapboard_fgcolor).call(this, loc),
+                bgcolor: earth,
+                labelcolor: mdata.weather == 2 /* WeatherKey.snow */ ? '04' : '08'
+            });
+        }
+        get memento() {
+            let vs = []
+                .concat([__classPrivateFieldGet(this, _Mapboard_icelat, "f")], this.cities.map(c => c.owner));
+            return vs;
+        }
+        valid(pt) {
+            return pt.lat >= 0 && pt.lat < __classPrivateFieldGet(this, _Mapboard_maxlat, "f") && pt.lon >= 0 && pt.lon < __classPrivateFieldGet(this, _Mapboard_maxlon, "f");
+        }
+        locationOf(pt) {
+            if (!this.valid(pt))
+                throw new Error(`MapBoard.locationOf: invalid point ${pt.lon}, ${pt.lat}`);
+            return this.locations[__classPrivateFieldGet(this, _Mapboard_maxlat, "f") - pt.lat][__classPrivateFieldGet(this, _Mapboard_maxlon, "f") - pt.lon];
+        }
+        boundaryDistance(pt, dir) {
+            switch (dir) {
+                case 0 /* DirectionKey.north */: return __classPrivateFieldGet(this, _Mapboard_maxlat, "f") - 1 - pt.lat;
+                case 2 /* DirectionKey.south */: return pt.lat;
+                case 1 /* DirectionKey.east */: return pt.lon;
+                case 3 /* DirectionKey.west */: return __classPrivateFieldGet(this, _Mapboard_maxlon, "f") - 1 - pt.lon;
+            }
+        }
+        neighborOf(pt, dir) {
+            let q = pt.next(dir);
+            if (!this.valid(q))
+                return null;
+            let nbr = this.locationOf(q);
+            const legal = (nbr.terrain != 9 /* TerrainKey.impassable */
+                && !((dir == 0 /* DirectionKey.north */ || dir == 2 /* DirectionKey.south */)
+                    ? blocked[0].find(d => d.lon == pt.lon && d.lat == (dir == 0 /* DirectionKey.north */ ? pt.lat : nbr.lat))
+                    : blocked[1].find(d => d.lon == (dir == 3 /* DirectionKey.west */ ? pt.lon : nbr.lon) && d.lat == pt.lat)));
+            return legal ? nbr : null;
+        }
+        occupy(loc, player) {
+            if (loc.cityid != null)
+                this.cities[loc.cityid].owner = player;
+            //TODO repaint this square
         }
         directPath(p, q, costs) {
             /*
@@ -772,65 +835,52 @@ var ef1941 = (function (exports) {
             Taking a step in direction dx, dy will change E by A dx + B dy
             so we just keep choosing the step that moves E back towards zero.
             */
-
-            let loc = this.locationOf(p),
-                goal = this.locationOf(q);
-            if (loc.id == goal.id) return {cost: 0, orders: []};
-
-            const
-                A = q.lat - p.lat,
-                B = - (q.lon - p.lon),
-                // C = q.lon * p.lat - q.lat * p.lon,
-                projections = Mapboard.#directionsFrom(p, q),
-                i = projections[0][1], j = projections[1][1], // best two directinoe
-                s = directions[i], t = directions[j],
-                ds = A * s.dlon + B * s.dlat,
-                dt = A * t.dlon + B * t.dlat;
-
-            let err = 0,
-                cost = 0,
-                orders = [];
-
+            let loc = this.locationOf(p), goal = this.locationOf(q);
+            if (loc.id == goal.id)
+                return { cost: 0, orders: [] };
+            const A = q.lat - p.lat, B = -(q.lon - p.lon), 
+            // C = q.lon * p.lat - q.lat * p.lon,
+            projections = GridPoint.directionsFrom(p, q), i = projections[0][1], j = projections[1][1], // best two directinoe
+            s = directions[i], t = directions[j], ds = A * s.dlon + B * s.dlat, dt = A * t.dlon + B * t.dlat;
+            let err = 0, cost = 0, orders = [];
             while (loc.id != goal.id) {
-                let [k, de] = Math.abs(err + ds) < Math.abs(err + dt) ? [i, ds]: [j, dt];
+                let [k, de] = Math.abs(err + ds) < Math.abs(err + dt) ? [i, ds] : [j, dt];
                 err += de;
                 orders.push(k);
-                loc = this.neighbor(loc, k, true);
-                cost += costs ? costs[loc.terrain]: 1;
+                //NB. not validating that we can actually take this path
+                loc = this.locationOf(loc.next(k));
+                cost += costs ? costs[loc.terrain] : 1;
             }
-
-            return {cost, orders}
+            return { cost, orders };
         }
         bestPath(p, q, costs) {
             // implements A* shortest path, e.g. see https://www.redblobgames.com/pathfinding/a-star/introduction.html
             // returns {cost: , orders: []} where cost is the movement cost (ticks), and orders is a seq of dir indices
             // or null if goal is unreachable
             const minCost = Math.min(...costs);
-            let src = this.locationOf(p),
-                goal = this.locationOf(q),
-                frontEst = {_: 0},              // estimated total cost via this square, _ is head
-                frontNext = {_: src.id},        // linked list with next best frontier square to check
-                dirTo = {[src.id]: null},       // direction index which arrived at keyed square
-                costTo = {[src.id]: 0};         // actual cost to get to keyed square
-
+            let src = this.locationOf(p), goal = this.locationOf(q), frontEst = { _: 0 }, // estimated total cost via this square, _ is head
+            frontNext = { _: src.id }, // linked list with next best frontier square to check
+            dirTo = { [src.id]: null }, // direction index which arrived at keyed square
+            costTo = { [src.id]: 0 }; // actual cost to get to keyed square
             while (frontNext._) {
                 let next = frontNext._;
-                src = this.fromid(next);
-                if (src.id == goal.id) break;
+                src = this.locationOf(GridPoint.fromid(next));
+                if (src.id == goal.id)
+                    break;
                 frontNext._ = frontNext[next];
                 frontEst._ = frontEst[next];
                 delete frontNext[next], frontEst[next];
-
-                directions.forEach((_, i) => {
-                    let dst = this.neighbor(src, i);
-                    if (!dst) return;
+                Object.keys(directions).forEach(i => {
+                    let d = +i, dst = this.neighborOf(src, d);
+                    if (!dst)
+                        return;
                     let cost = costTo[src.id] + costs[dst.terrain];
-                    if (!(dst.id in costTo)) {  // with consistent estimate we always find best first
+                    if (!(dst.id in costTo)) { // with consistent estimate we always find best first
                         costTo[dst.id] = cost;
-                        dirTo[dst.id] = i;
-                        let est = cost + minCost * Mapboard.manhattanDistance(src, dst),
-                            at = '_';
-                        while (frontNext[at] && frontEst[at] < est) at = frontNext[at];
+                        dirTo[dst.id] = d;
+                        let est = cost + minCost * GridPoint.manhattanDistance(src, dst), at = '_';
+                        while (frontNext[at] && frontEst[at] < est)
+                            at = frontNext[at].toString();
                         next = frontNext[at];
                         frontNext[at] = dst.id;
                         frontNext[dst.id] = next;
@@ -838,130 +888,131 @@ var ef1941 = (function (exports) {
                     }
                 });
             }
-            if (src.id != goal.id) return null;
-
-            let orders = [];
-            for(;;) {
-                let dir = dirTo[src.id];
-                if (dir == null) break;
+            if (src.id != goal.id)
+                throw new Error(`MapBoard.bestPath: no path from ${p} to ${q}`);
+            let orders = [], pt = src;
+            for (;;) {
+                let dir = dirTo[pt.id];
+                if (dir == null)
+                    break;
                 orders.unshift(dir);
-                src = this.neighbor(src, (dir + 2) % 4);    // walk back in reverse direction
+                pt = pt.next((dir + 2) % 4); // walk back in reverse direction
             }
-            return {cost: costTo[goal.id], orders: orders}
+            return { cost: costTo[goal.id], orders: orders };
         }
         reach(src, range, costs) {
             // find all squares accessible to unit within range, ignoring other units, zoc
-            let cost = 0,
-                start = this.locationOf(src),
-                locs = {[start.id]: 0};
-
+            let cost = 0, start = this.locationOf(src), locs = { [start.id]: 0 };
             while (cost < range) {
                 // eslint-disable-next-line no-unused-vars
-                Object.entries(locs).filter(([_,v]) => v == cost).forEach(([k,_]) => {
-                    let src = this.fromid(k);
-                    Object.values(Direction).forEach(i => {
-                        let dst = this.neighbor(src, i);
-                        if (!dst) return;
+                Object.entries(locs).filter(([_, v]) => v == cost).forEach(([k, _]) => {
+                    let src = GridPoint.fromid(+k);
+                    Object.keys(directions).forEach(i => {
+                        let dst = this.neighborOf(src, +i);
+                        if (!dst)
+                            return;
                         let curr = dst.id in locs ? locs[dst.id] : 255;
-                        if (curr <= cost) return;
+                        if (curr <= cost)
+                            return;
                         let c = cost + costs[dst.terrain];
-                        if (c <= range && c < curr) locs[dst.id] = c;
+                        if (c <= range && c < curr)
+                            locs[dst.id] = c;
                     });
                 });
                 cost++;
             }
             return locs;
         }
-        describe(loc) {
-            return `[${loc.id}] ${terraintypes[loc.terrain].key}${loc.alt ? "-alt": ""}\n`
-                + `lon ${loc.lon}, lat ${loc.lat}`;
-        }
-
-        static manhattanDistance = function(p, q) {
-            // calculate the taxicab metric between two locations
-            return Math.abs(p.lat - q.lat) + Math.abs(p.lon - q.lon);
-        }
-        static directionFrom = function(p, q) {
-            // return the index of the winning direction
-            let projections = Mapboard.#directionsFrom(p, q);
-            return projections && projections[0][1];
-        }
-        static #directionsFrom(p, q) {
-            // project all directions from p to q and rank them, ensuring tie breaking has no bias
-            let dlat = (q.lat - p.lat),
-                dlon = (q.lon - p.lon);
-            if (!dlat && !dlon) return null;
-            return directions
-                .map((d, i) => [d.dlon * dlon + d.dlat * dlat, i])
-                // in case tied dirs (which will be neighbors) pick the  the clockwise leader
-                .sort(([a, i], [b, j]) => (b - a) || ((j - i + 4 + 2)%4) - 2);
-        }
     }
+    _Mapboard_game = new WeakMap(), _Mapboard_maxlon = new WeakMap(), _Mapboard_maxlat = new WeakMap(), _Mapboard_icelat = new WeakMap(), _Mapboard_instances = new WeakSet(), _Mapboard_fgcolor = function _Mapboard_fgcolor(loc) {
+        // return the antic fg color for a given location
+        let tinfo = terraintypes[loc.terrain], alt = typeof loc.cityid === 'undefined' ? loc.alt : this.cities[loc.cityid].owner;
+        return alt ? tinfo.altcolor : tinfo.color;
+    }, _Mapboard_freezeThaw = function _Mapboard_freezeThaw(w, newlat) {
+        // move ice by freeze/thaw rivers and swamps, where w is Water.freeze or Water.thaw
+        // ICELAT -= [7,14] incl]; clamp 1-39 incl
+        // small bug in APX code? freeze chrs $0B - $29 (exclusive, seems like it could freeze Kerch straight?)
+        let state = waterstate[w], other = waterstate[1 - w], oldlat = __classPrivateFieldGet(this, _Mapboard_icelat, "f"), dlat = directions[state.dir].dlat;
+        if (newlat != null) {
+            // initial setup where we freeze to saved value
+            __classPrivateFieldSet(this, _Mapboard_icelat, newlat, "f");
+        }
+        else {
+            let change = __classPrivateFieldGet(this, _Mapboard_game, "f").rand.bits(3) + 7;
+            __classPrivateFieldSet(this, _Mapboard_icelat, Math.min(__classPrivateFieldGet(this, _Mapboard_maxlat, "f"), Math.max(1, oldlat + dlat * change)), "f");
+        }
+        let skip = (w == 0 /* WaterStateKey.freeze */) ? oldlat : __classPrivateFieldGet(this, _Mapboard_icelat, "f"); // for freeze skip old line, for thaw skip new new
+        for (let i = oldlat; i != __classPrivateFieldGet(this, _Mapboard_icelat, "f") + dlat; i += dlat) {
+            if (i == skip)
+                continue;
+            this.locations[__classPrivateFieldGet(this, _Mapboard_maxlat, "f") - i].forEach(d => {
+                let k = other.terrain.indexOf(d.terrain);
+                if (k != -1)
+                    d.terrain = state.terrain[k];
+            });
+        }
+    };
 
-    const
-        types = [
-            {key: 'infantry', kind: UnitKind.infantry},
-            {key: 'militia',  kind: UnitKind.infantry, canMove: 0},
-            {key: 'unused'},  // apx had unused labels for shock and paratrp
-            {key: 'flieger',  kind: UnitKind.air},   // cart only
-            {key: 'panzer',   kind: UnitKind.armor},
-            {key: 'tank',     kind: UnitKind.armor},
-            {key: 'cavalry',  kind: UnitKind.armor},
-            {key: 'pzgrndr',  kind: UnitKind.armor},   // apx only
-        ],
-        Type = enumFor(types),
-        apxXref = {
-            0: Type.infantry, 1: Type.tank, 2: Type.cavalry, 3: Type.panzer,
-            4: Type.militia, 5: Type.unused /* shock */, 6: Type.unused /* paratrp */, 7: Type.pzgrndr,
-        },
-        modifiers = [
-            {key: ''},
-            {key: 'ss'}, // unused
-            {key: 'finnish',  canAttack: 0},
-            {key: 'rumanian'},
-            {key: 'italian'},
-            {key: 'hungarian'},
-            {key: 'mountain'},  //  unused
-            {key: 'guards'},
-        ];
-
+    var _Unit_instances, _Unit_game, _Unit_resolveCombat, _Unit_takeDamage;
+    const unittypes = {
+        [0 /* UnitTypeKey.infantry */]: { label: "infantry", kind: 0 /* UnitKindKey.infantry */ },
+        [1 /* UnitTypeKey.militia */]: { label: "militia", kind: 0 /* UnitKindKey.infantry */, canMove: 0 },
+        [2 /* UnitTypeKey.unused */]: null,
+        [3 /* UnitTypeKey.flieger */]: { label: "flieger", kind: 2 /* UnitKindKey.air */ },
+        [4 /* UnitTypeKey.panzer */]: { label: "panzer", kind: 1 /* UnitKindKey.armor */ },
+        [5 /* UnitTypeKey.tank */]: { label: "tank", kind: 1 /* UnitKindKey.armor */ },
+        [6 /* UnitTypeKey.cavalry */]: { label: "cavalry", kind: 1 /* UnitKindKey.armor */ },
+        [7 /* UnitTypeKey.pzgrndr */]: { label: "pzgrndr", kind: 1 /* UnitKindKey.armor */ }, // apx only
+    };
+    const apxXref = {
+        0: 0 /* UnitTypeKey.infantry */,
+        1: 5 /* UnitTypeKey.tank */,
+        2: 6 /* UnitTypeKey.cavalry */,
+        3: 4 /* UnitTypeKey.panzer */,
+        4: 1 /* UnitTypeKey.militia */,
+        5: 2 /* UnitTypeKey.unused */ /* shock */,
+        6: 2 /* UnitTypeKey.unused */ /* paratrp */,
+        7: 7 /* UnitTypeKey.pzgrndr */,
+    }, modifiers = [
+        { key: '' },
+        { key: 'ss' },
+        { key: 'finnish', canAttack: 0 },
+        { key: 'rumanian' },
+        { key: 'italian' },
+        { key: 'hungarian' },
+        { key: 'mountain' },
+        { key: 'guards' },
+    ];
     class Unit {
-        id;
-        player;
-        unitno;
-        kind;
-        type;
-        modifier;
-        canMove = 1;
-        canAttack = 1;
-        resolute = 0;
-        arrive;
-        scheduled;
-        lon;
-        lat;
-        mstrng;
-        cstrng;
-        orders = [];      // WHORDRS, HMORDS
-
-        #game;
-
         constructor(game, id, ...args) {
+            var _a, _b;
+            _Unit_instances.add(this);
+            this.canMove = 1;
+            this.canAttack = 1;
+            this.resolute = 0;
+            this.orders = []; // WHORDRS, HMORDS
+            this.ifr = 0;
+            this.ifrdir = [0, 0, 0, 0];
+            _Unit_game.set(this, void 0);
             let corpsx, corpsy, mstrng, arrive, corpt, corpno;
-
-            if (args.length == 7) {     // apx
+            if (args.length == 7) { // apx
                 let swap, corptapx;
                 [corpsx, corpsy, mstrng, swap, arrive, corptapx, corpno] = args;
                 // translate apx => cart format
                 corpt = (swap & 0x80) | (corptapx & 0x70) | apxXref[corptapx & 0x7];
-            } else {                    // cart
+            }
+            else { // cart
                 console.assert(args.length == 6, "Expected 6 or 7 args for cartridge or apx unit def respectively");
                 [corpsx, corpsy, mstrng, arrive, corpt, corpno] = args;
             }
             this.id = id;
-            this.player = (corpt & 0x80) ? Player.russian : Player.german;  // german=0, russian=1; equiv i >= 55
+            this.player = (corpt & 0x80) ? 1 /* PlayerKey.Russian */ : 0 /* PlayerKey.German */; // german=0, russian=1; equiv i >= 55
             this.unitno = corpno;
             this.type = corpt & 0x7;
-            this.kind = types[this.type].kind;
+            let ut = unittypes[this.type];
+            if (ut == null)
+                throw new Error(`Unused unit type for unit id ${id}`);
+            this.kind = ut.kind;
             this.icon = unitkinds[this.kind].icon;
             this.modifier = (corpt >> 4) & 0x7;
             this.arrive = arrive;
@@ -970,238 +1021,199 @@ var ef1941 = (function (exports) {
             this.lat = corpsy;
             this.mstrng = mstrng;
             this.cstrng = mstrng;
-
-            this.canMove = types[this.type].canMove ?? 1;
-            this.canAttack = modifiers[this.modifier] ?? 1;
-            this.resolute = this.player == Player.german && !this.modifier ? 1: 0;
+            this.canMove = (_a = ut.canMove) !== null && _a !== void 0 ? _a : 1;
+            this.canAttack = (_b = modifiers[this.modifier].canAttack) !== null && _b !== void 0 ? _b : 1;
+            this.resolute = this.player == 0 /* PlayerKey.German */ && !this.modifier ? 1 : 0;
             this.label = [
                 this.unitno,
                 modifiers[this.modifier].key,
-                types[this.type].key,
+                ut.label,
                 players[this.player].unit
             ].filter(Boolean).join(' ').toUpperCase().trim();
-
-            this.#game = game;
+            __classPrivateFieldSet(this, _Unit_game, game, "f");
         }
         get active() {
-            return this.arrive <= this.#game.turn && this.cstrng > 0;
+            return this.arrive <= __classPrivateFieldGet(this, _Unit_game, "f").turn && this.cstrng > 0;
         }
         get human() {
-            return this.player == this.#game.human;
+            return this.player == __classPrivateFieldGet(this, _Unit_game, "f").human;
         }
         get location() {
-            return this.#game.mapboard.locationOf(this);
+            return __classPrivateFieldGet(this, _Unit_game, "f").mapboard.locationOf(this);
         }
         get path() {
-            let loc = this.location,
-                path = [loc];
+            let loc = this.location, path = [loc];
             this.orders.forEach(dir => {
-                let dst = this.#game.mapboard.neighbor(loc, dir);
-                if (!dst) return;
+                let dst = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.neighborOf(loc, dir);
+                if (!dst)
+                    return;
                 path.push(loc = dst);
             });
             return path;
         }
         addOrder(dir) {
-            let dst = null;
+            let dst = null, err = null;
             if (!this.canMove) {
-                this.#game.notify('msg', 'err', "MILITIA UNITS CAN'T MOVE!");
-            } else if (this.orders.length == 8) {
-                this.#game.notify('msg', 'err', "ONLY 8 ORDERS ARE ALLOWED!");
-            } else {
-                dst = this.#game.mapboard.neighbor(this.path.pop(), dir);
-                if (dst) {
+                err = "MILITIA UNITS CAN'T MOVE!";
+            }
+            else if (this.orders.length == 8) {
+                err = "ONLY 8 ORDERS ARE ALLOWED!";
+            }
+            else {
+                dst = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.neighborOf(this.path.pop(), dir);
+                if (!dst) {
+                    err = "IMPASSABLE!";
+                }
+                else {
                     this.orders.push(dir);
-                    this.#game.notify('unit', 'orders', this);
-                } else {
-                    this.#game.notify('msg',' err', "IMPASSABLE!");
                 }
             }
+            if (err) {
+                __classPrivateFieldGet(this, _Unit_game, "f").emit('message', 'error', err);
+            }
+            else {
+                __classPrivateFieldGet(this, _Unit_game, "f").emit('unit', 'orders', this);
+            }
             return dst;
+        }
+        delOrder() {
+            if (this.orders.length) {
+                __classPrivateFieldGet(this, _Unit_game, "f").emit('unit', 'orders', this);
+                this.orders.pop();
+            }
+        }
+        setOrders(dirs) {
+            this.orders = dirs;
+            __classPrivateFieldGet(this, _Unit_game, "f").emit('unit', 'orders', this);
         }
         resetOrders() {
             this.orders = [];
             this.tick = 255;
+            __classPrivateFieldGet(this, _Unit_game, "f").emit('unit', 'orders', this);
         }
         moveCost(dir) {
-            if (!this.canMove) return 255;
-            let dst = this.#game.mapboard.neighbor(this, dir);
-            if (!dst) return 255;
-            return moveCost(dst.terrain, this.kind, this.#game.weather);
+            if (!this.canMove)
+                return 255;
+            let dst = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.neighborOf(GridPoint.get(this), dir);
+            if (!dst)
+                return 255;
+            return moveCost(dst.terrain, this.kind, __classPrivateFieldGet(this, _Unit_game, "f").weather);
         }
-        scheduleOrder(reset) {
-            if (reset) this.tick = 0;
-            if (this.orders.length) this.tick += this.moveCost(this.orders[0]);
-            else this.tick = 255;
-            this.#game.notify('unit', 'resolving', this);
+        scheduleOrder(reset = false) {
+            if (reset || !this.tick)
+                this.tick = 0;
+            if (this.orders.length)
+                this.tick += this.moveCost(this.orders[0]);
+            else
+                this.tick = 255;
         }
         bestPath(goal) {
             //TODO config directPath for comparison
-            return this.#game.mapboard.bestPath(this, goal, moveCosts(this.kind, this.#game.weather));
+            return __classPrivateFieldGet(this, _Unit_game, "f").mapboard.bestPath(this, goal, moveCosts(this.kind, __classPrivateFieldGet(this, _Unit_game, "f").weather));
         }
-        reach(range) {
-            return this.#game.mapboard.reach(this, range || 32, moveCosts(this.kind, this.#game.weather));
+        reach(range = 32) {
+            return __classPrivateFieldGet(this, _Unit_game, "f").mapboard.reach(this, range, moveCosts(this.kind, __classPrivateFieldGet(this, _Unit_game, "f").weather));
         }
         moveTo(dst) {
-            this.location.unitid = null;  // leave the current location
+            let action = 'move';
+            if (this.location.unitid) {
+                this.location.unitid = undefined; // leave the current location
+            }
+            else {
+                action = 'enter';
+            }
             if (dst != null) {
                 // occupy the new one and repaint
                 dst.put(this);
                 dst.unitid = this.id;
-                this.#game.mapboard.occupy(dst, this.player);
+                __classPrivateFieldGet(this, _Unit_game, "f").mapboard.occupy(dst, this.player);
             }
-            this.#game.notify('unit', dst ? 'moved': 'removed', this);
+            else {
+                action = 'exit';
+            }
+            __classPrivateFieldGet(this, _Unit_game, "f").emit('unit', action, this);
         }
         tryOrder() {
-            let src = this.location,
-                dst = this.#game.mapboard.neighbor(src, this.orders[0]);  // assumes legal
-
+            if (this.tick == null)
+                throw new Error('Unit:tryOrder tick not set');
+            let src = this.location, dst = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.neighborOf(src, this.orders[0]); // assumes already validated
+            if (dst == null)
+                throw new Error("Unit.tryOrder: invalid order");
             if (dst.unitid != null) {
-                let opp = this.#game.oob.at(dst.unitid);
+                let opp = __classPrivateFieldGet(this, _Unit_game, "f").oob.at(dst.unitid);
                 if (opp.player != this.player) {
-                    if (!this.#resolveCombat(opp)) {
+                    if (!__classPrivateFieldGet(this, _Unit_instances, "m", _Unit_resolveCombat).call(this, opp)) {
                         this.tick++;
                         return;
                     }
                     // otherwise fall through to advance after combat, ignoring ZoC
-                } else {
+                }
+                else {
                     // traffic jam
                     this.tick += 2;
                     return;
                 }
-            } else if (this.#game.oob.zocBlocked(this.player, src, dst)) {
+            }
+            else if (__classPrivateFieldGet(this, _Unit_game, "f").oob.zocBlocked(this.player, src, dst)) {
                 // moving between enemy ZOC M.ASM:5740
                 this.tick += 2;
                 return;
             }
-
             this.orders.shift();
             this.moveTo(dst);
             this.scheduleOrder();
         }
-        #resolveCombat(opp) {
-            // return 1 if target square is vacant
-            if (!this.canAttack) return 0;
-
-            this.#game.notify('unit', 'attacking', this);
-            this.#game.notify('unit', 'defending', opp);
-
-            let modifier = terraintypes[this.#game.mapboard.locationOf(opp).terrain].defence;
-            if (opp.orders.length) modifier--;  // movement penalty
-
-            // opponent attacks
-            let str = modifyStrength(opp.cstrng, modifier);
-            // note APX doesn't skip attacker if break, but cart does
-            if (str >= randbyte()) {
-                this.#takeDamage(1, 5, true);
-                if (!this.orders) return 0;
-            }
-            modifier = terraintypes[this.#game.mapboard.locationOf(opp).terrain].offence;
-            str = modifyStrength(this.cstrng, modifier);
-            if (str >= randbyte()) {
-                return opp.#takeDamage(1, 5, true, this.orders[0]);
-            } else {
-                return 0;
-            }
-        }
-        #takeDamage(mdmg, cdmg, checkBreak, retreatDir) {
-            // return 1 if this square is vacated, 0 otherwise
-
-            // apply mdmg/cdmg to unit
-            this.mstrng -= mdmg;
-            this.cstrng -= cdmg;
-
-            // dead?
-            if (this.cstrng <= 0) {
-                // TODO show as scrolling status window
-                console.log(`${this.label} eliminated`);
-                this.mstrng = 0;
-                this.cstrng = 0;
-                this.arrive = 255;
-                this.resetOrders();
-                this.moveTo(null);
-                return 1;
-            }
-            this.#game.notify('unit', 'stats', this);
-
-            if (!checkBreak) return 0;
-
-            // russian (& ger allies) break if cstrng <= 7/8 mstrng
-            // german regulars break if cstrng < 1/2 mstrng
-            let brkpt = this.mstrng - (this.mstrng >> (this.resolute ? 1: 3));
-            if (this.cstrng < brkpt) {
-                this.resetOrders();
-
-                if (retreatDir != null) {
-                    const homedir = players[this.player].homedir,
-                        nxtdir = (randbyte() & 0x1) ? Direction.north : Direction.south,
-                        dirs = [retreatDir, homedir,  nxtdir, (nxtdir + 2) % 4, (homedir + 2) % 4];
-
-                    for (let dir of dirs) {
-                        let src = this.location,
-                            dst = this.#game.mapboard.neighbor(src, dir);
-                        if (!dst || dst.unitid != null || this.#game.oob.zocBlocked(this.player, src, dst)) {
-                            if (this.#takeDamage(0, 5)) return 1;  // dead
-                        } else {
-                            this.moveTo(dst);
-                            return 1;
-                        }
-                    }
-                }
-            }
-            // otherwise square still occupied (no break or all retreats blocked but defender remains)
-            return 0;
-        }
         recover() {
             // M.ASM:5070  recover combat strength
-            if (this.mstrng - this.cstrng >= 2) this.cstring += 1 + (randbyte() & 0x1);
+            if (this.mstrng - this.cstrng >= 2)
+                this.cstrng += 1 + __classPrivateFieldGet(this, _Unit_game, "f").rand.bit();
         }
         traceSupply() {
-            // implement the supply check from C.ASM:3430, returns 0 if supplied, 1 if not
-            const player = players[this.player],
-                supply = player.supply;
-            let fail = 0,
-                loc = this.location,
-                dir = player.homedir;
-
-            if (supply.freeze && this.#game.weather == Weather.snow) {
+            // implement the supply check from C.ASM:3430, returns 1 if supplied, 0 if not
+            const player = players[this.player], supply = player.supply;
+            let fail = 0, loc = this.location, dir = player.homedir;
+            if (supply.freeze && __classPrivateFieldGet(this, _Unit_game, "f").weather == 2 /* WeatherKey.snow */) {
                 // C.ASM:3620
-                if (randbyte() >= 74 + 4*(this.#game.mapboard.boundaryDistance(loc, dir) + (dir == Direction.east ? 1 : 0))) {
+                if (__classPrivateFieldGet(this, _Unit_game, "f").rand.byte() >= 74 + 4 * (__classPrivateFieldGet(this, _Unit_game, "f").mapboard.boundaryDistance(loc, dir) + (dir == 1 /* DirectionKey.east */ ? 1 : 0))) {
                     return 0;
                 }
             }
-            while(fail < supply.maxfail[this.#game.weather]) {
-                let dst = this.#game.mapboard.neighbor(loc, dir, true),
-                    cost = 0;
-
-                if (this.#game.mapboard.boundaryDistance(this, player.homedir) < 0) {
+            while (fail < supply.maxfail[__classPrivateFieldGet(this, _Unit_game, "f").weather]) {
+                let dst = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.locationOf(loc.next(dir)), cost = 0;
+                if (__classPrivateFieldGet(this, _Unit_game, "f").mapboard.boundaryDistance(this, player.homedir) < 0) {
                     return 1;
-                } else if (dst.terrain == Terrain.impassable && (supply.sea == 0 || dst.alt == 1)) {
+                }
+                else if (dst == null || (dst.terrain == 9 /* TerrainKey.impassable */ && (supply.sea == 0 || dst.alt == 1))) {
                     cost = 1;
-                } else if (this.#game.oob.zocAffecting(this.player, dst) >= 2) {
+                }
+                else if (__classPrivateFieldGet(this, _Unit_game, "f").oob.zocAffecting(this.player, dst) >= 2) {
                     cost = 2;
-                } else {
+                }
+                else {
                     loc = dst;
                 }
                 if (cost) {
                     fail += cost;
                     // either flip a coin or try the opposite direction (potentially repeatedly until failure)
-                    if (dir != player.homedir) dir = (dir + 2) % 4;
-                    else dir = (randbyte() & 0x1) ? Direction.north : Direction.south;
-                } else {
+                    if (dir != player.homedir)
+                        dir = (dir + 2) % 4;
+                    else
+                        dir = __classPrivateFieldGet(this, _Unit_game, "f").rand.bit() ? 0 /* DirectionKey.north */ : 2 /* DirectionKey.south */;
+                }
+                else {
                     dir = player.homedir;
                 }
             }
             return 0;
         }
         score() {
-            let v = 0,
-                dist = this.#game.mapboard.boundaryDistance(this, players[this.player].homedir);
+            let v = 0, dist = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.boundaryDistance(this, players[this.player].homedir);
             // see M.ASM:4050 - note even inactive units are scored based on future arrival/strength
-            if (this.player == Player.german) {
+            if (this.player == 0 /* PlayerKey.German */) {
                 // maxlon + 2 == #$30 per M.ASM:4110
                 v = (dist + 3) * (this.mstrng >> 1);
-            } else {
+            }
+            else {
                 v = dist * (this.cstrng >> 3);
             }
             return v >> 8;
@@ -1209,11 +1221,12 @@ var ef1941 = (function (exports) {
         describe(debug) {
             let s = `[${this.id}] ${this.mstrng} / ${this.cstrng}\n`;
             s += `${this.label}\n`;
-            if (this.orders) s += 'orders: ' + this.orders.map(d => directions[d].key[0].toUpperCase()).join('');
-
-            if (this.ifr && debug) {
+            if (this.orders)
+                s += 'orders: ' + this.orders.map(d => directions[d].label).join('');
+            if (debug && this.ifr !== undefined && this.ifrdir !== undefined) {
                 s += `ifr: ${this.ifr}; `;
-                s += directions.map((d, i) => `${d.key[0]}: ${this.ifrdir[i]}`).join(' ') + '\n';
+                s += Object.entries(directions)
+                    .map(([i, d]) => `${d.label}: ${this.ifrdir[+i]}`).join(' ') + '\n';
                 s += this.objective
                     ? `obj: lon ${this.objective.lon} lat ${this.objective.lat}\n`
                     : 'no objective\n';
@@ -1221,22 +1234,88 @@ var ef1941 = (function (exports) {
             return s;
         }
     }
-
-
+    _Unit_game = new WeakMap(), _Unit_instances = new WeakSet(), _Unit_resolveCombat = function _Unit_resolveCombat(opp) {
+        // return 1 if target square is vacant
+        if (!this.canAttack)
+            return 0;
+        __classPrivateFieldGet(this, _Unit_game, "f").emit('unit', 'attack', this);
+        __classPrivateFieldGet(this, _Unit_game, "f").emit('unit', 'defend', opp);
+        let modifier = terraintypes[__classPrivateFieldGet(this, _Unit_game, "f").mapboard.locationOf(opp).terrain].defence;
+        if (opp.orders.length)
+            modifier--; // movement penalty
+        // opponent attacks
+        let str = modifyStrength(opp.cstrng, modifier);
+        // note APX doesn't skip attacker if break, but cart does
+        if (str >= __classPrivateFieldGet(this, _Unit_game, "f").rand.byte()) {
+            __classPrivateFieldGet(this, _Unit_instances, "m", _Unit_takeDamage).call(this, 1, 5, true);
+            if (!this.orders)
+                return 0;
+        }
+        let t = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.locationOf(opp).terrain;
+        modifier = terraintypes[t].offence;
+        str = modifyStrength(this.cstrng, modifier);
+        if (str >= __classPrivateFieldGet(this, _Unit_game, "f").rand.byte()) {
+            return __classPrivateFieldGet(opp, _Unit_instances, "m", _Unit_takeDamage).call(opp, 1, 5, true, this.orders[0]);
+        }
+        else {
+            return 0;
+        }
+    }, _Unit_takeDamage = function _Unit_takeDamage(mdmg, cdmg, checkBreak = false, retreatDir) {
+        // return 1 if this square is vacated, 0 otherwise
+        // apply mdmg/cdmg to unit
+        this.mstrng -= mdmg;
+        this.cstrng -= cdmg;
+        // dead?
+        if (this.cstrng <= 0) {
+            // TODO show as scrolling status window
+            console.log(`${this.label} eliminated`);
+            this.mstrng = 0;
+            this.cstrng = 0;
+            this.arrive = 255;
+            this.resetOrders();
+            this.moveTo(null);
+            return 1;
+        }
+        __classPrivateFieldGet(this, _Unit_game, "f").emit('unit', 'damage', this);
+        if (!checkBreak)
+            return 0;
+        // russian (& ger allies) break if cstrng <= 7/8 mstrng
+        // german regulars break if cstrng < 1/2 mstrng
+        let brkpt = this.mstrng - (this.mstrng >> (this.resolute ? 1 : 3));
+        if (this.cstrng < brkpt) {
+            this.resetOrders();
+            if (retreatDir != null) {
+                const homedir = players[this.player].homedir, nxtdir = __classPrivateFieldGet(this, _Unit_game, "f").rand.bit() ? 0 /* DirectionKey.north */ : 2 /* DirectionKey.south */, dirs = [retreatDir, homedir, nxtdir, (nxtdir + 2) % 4, (homedir + 2) % 4];
+                for (let dir of dirs) {
+                    let src = this.location, dst = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.neighborOf(src, dir);
+                    if (!dst || dst.unitid != null || __classPrivateFieldGet(this, _Unit_game, "f").oob.zocBlocked(this.player, src, dst)) {
+                        if (__classPrivateFieldGet(this, _Unit_instances, "m", _Unit_takeDamage).call(this, 0, 5))
+                            return 1; // dead
+                    }
+                    else {
+                        this.moveTo(dst);
+                        return 1;
+                    }
+                }
+            }
+        }
+        // otherwise square still occupied (no break or all retreats blocked but defender remains)
+        return 0;
+    };
     function modifyStrength(strength, modifier) {
         if (modifier > 0) {
-            while (modifier-- > 0) strength = Math.min(strength << 1, 255);
-        } else {
-            while (modifier++ < 0) strength = Math.max(strength >> 1, 1);
+            while (modifier-- > 0)
+                strength = Math.min(strength << 1, 255);
+        }
+        else {
+            while (modifier++ < 0)
+                strength = Math.max(strength >> 1, 1);
         }
         return strength;
     }
 
-    // order-of-battle table with 159 units (55 german) comes from D.ASM:0x5400
-    // in the original game each column is stored separately,
-    // we've transposed into a list of rows which we map to unit objects
     const oobVariants = {
-        apx41: [
+        [0 /* OobVariantKey.apx */]: [
             // CORPSX, CORPSY, MSTRNG, SWAP, ARRIVE, CORPT, CORPNO
             // German
             [0, 0, 0, 0, 255, 0, 0],
@@ -1400,7 +1479,7 @@ var ef1941 = (function (exports) {
             [20, 3, 102, 253, 4, 4, 5],
             [19, 2, 98, 253, 4, 4, 6],
         ],
-        cart41: [
+        [1 /* OobVariantKey.cart41 */]: [
             // ["CORPSX", "CORPSY", "MSTRNG", "ARRIVE", "CORPT", "CORPNO"]
             [0, 0, 0, 255, 0, 0],
             [40, 20, 223, 0, 4, 24],
@@ -1570,7 +1649,7 @@ var ef1941 = (function (exports) {
             [0, 30, 235, 25, 240, 10],
             [0, 24, 225, 25, 133, 7],
         ],
-        cart42: [
+        [2 /* OobVariantKey.cart42 */]: [
             // ["CORPSX42", "CORPSY42", "MSTRNG42", "ARRIVE", "CORPT", "CORPNO"]
             [0, 0, 0, 255, 0, 0],
             [20, 20, 150, 0, 4, 24],
@@ -1742,96 +1821,98 @@ var ef1941 = (function (exports) {
         ],
     };
 
+    var _Oob_game, _Oob_units;
     class Oob {
-        #game;
-        #units;
-
         constructor(game, memento) {
-            const v = variants[game.variant].key + scenarios[game.scenario].key;
-
-            this.#units = oobVariants[v].map((vs, i) => new Unit(game, i, ...vs));
-
-            this.#game = game;
-            // offer read-only array convenience functions
-            [
-                'at', 'every', 'filter', 'find', 'findIndex', 'findLast', 'findLastIndex',
-                'forEach', 'map', 'reduce', 'reduceRight', 'slice', 'some'
-            ].forEach(k => {this[k] = (...args) => this.#units[k](...args);});
-
+            _Oob_game.set(this, void 0);
+            _Oob_units.set(this, void 0);
+            __classPrivateFieldSet(this, _Oob_units, oobVariants[scenarios[game.scenario].oob].map((vs, i) => new Unit(game, i, ...vs)), "f");
+            __classPrivateFieldSet(this, _Oob_game, game, "f");
             if (memento) {
-                this.filter(u => u.scheduled <= game.turn)
-                    .forEach(u => {
-                        let status = memento.shift();
-                        if (status == 1) { // eliminated
-                            //TODO function
-                            u.mstrng = 0;
-                            u.cstrng = 0;
-                            u.arrive = 255;
-                        } else if (status == 2) { // delayed
-                            u.arrive = game.turn + 1;
-                        }
-                    });
-                let active = this.activeUnits(),
-                    human = active.filter(u => u.human),
-                    lats = zagzig(memento.splice(0, active.length)),
-                    lons = zagzig(memento.splice(0, active.length)),
-                    mstrs = zagzig(memento.splice(0, active.length)),
-                    cdmgs = memento.splice(0, active.length),
-                    nords = memento.splice(0, human.length),
-                    lat = 0, lon = 0, mstr = 255;
+                let scheduled = this.filter(u => u.scheduled <= game.turn);
+                if (memento.length < scheduled.length)
+                    throw new Error('Oob: malformed save data for scheduled unit status');
+                scheduled.forEach(u => {
+                    let status = memento.shift();
+                    if (status == 1) { // eliminated
+                        //TODO via unit function to match with unit elimination code
+                        u.mstrng = 0;
+                        u.cstrng = 0;
+                        u.arrive = 255;
+                    }
+                    else if (status == 2) { // delayed
+                        u.arrive = game.turn + 1;
+                    }
+                });
+                let active = this.activeUnits(), human = active.filter(u => u.human);
+                if (memento.length < 4 * active.length + human.length)
+                    throw new Error('oob: malformed save data for active unit properties');
+                let lats = zagzig(memento.splice(0, active.length)), lons = zagzig(memento.splice(0, active.length)), mstrs = zagzig(memento.splice(0, active.length)), cdmgs = memento.splice(0, active.length), nords = memento.splice(0, human.length), lat = 0, lon = 0, mstr = 255;
                 active.forEach(u => {
-                    u.lat = lat + lats.shift();
-                    u.lon = lon + lons.shift();
-                    u.mstrng = mstr + mstrs.shift();
-                    [lat, lon, mstr] = [u.lat, u.lon, u.mstrng];
+                    lat += lats.shift();
+                    lon += lons.shift();
+                    mstr += mstrs.shift();
+                    [u.lat, u.lon, u.mstrng] = [lat, lon, mstr];
                     u.cstrng = u.mstrng - cdmgs.shift();
                 });
+                if (memento.length < sum(nords))
+                    throw new Error('oob: malformed save data for unit orders');
                 human.forEach(u => {
                     u.orders = memento.splice(0, nords.shift());
                 });
             }
         }
-        nextTurn(initialSetup) {
-            if (initialSetup) {
-                this.activeUnits().forEach(u => u.moveTo(u.location));
-            } else {
-                this.regroup();
-                // TODO trace supply, with CSTR >> 1 if not, russian MSTR+2 (for apx)
-                this.reinforce();
-            }
+        at(index) {
+            const u = __classPrivateFieldGet(this, _Oob_units, "f").at(index);
+            if (!u)
+                throw new Error(`Oob.at(${index}): Invalid unit index`);
+            return u;
         }
+        every(f) { return __classPrivateFieldGet(this, _Oob_units, "f").every(f); }
+        some(f) { return __classPrivateFieldGet(this, _Oob_units, "f").some(f); }
+        filter(f) { return __classPrivateFieldGet(this, _Oob_units, "f").filter(f); }
+        find(f) { return __classPrivateFieldGet(this, _Oob_units, "f").find(f); }
+        findIndex(f) { return __classPrivateFieldGet(this, _Oob_units, "f").findIndex(f); }
+        forEach(f) { __classPrivateFieldGet(this, _Oob_units, "f").forEach(f); }
+        map(f) { return __classPrivateFieldGet(this, _Oob_units, "f").map(f); }
+        slice(start, end) { return __classPrivateFieldGet(this, _Oob_units, "f").slice(start, end); }
         get memento() {
-            let lats = [], lons = [], mstrs = [], cdmgs = [], nords = [], ords = [],
-                lat = 0, lon = 0, mstr = 255,
-                active = this.activeUnits();
-
-            // for scheduled active units, status = 0 (active), 1 (dead), 2 (delayed)
-            let status = this.filter(u => u.scheduled <= this.#game.turn)
-                .map(u => u.active ? 0: (u.arrive <= this.#game.turn ? 1: 2));
-
+            let lats = [], lons = [], mstrs = [], cdmgs = [], nords = [], ords = [], lat = 0, lon = 0, mstr = 255;
+            // for scheduled units, status = 0 (active), 1 (dead), 2 (delayed)
+            let scheduled = this.filter(u => u.scheduled <= __classPrivateFieldGet(this, _Oob_game, "f").turn), status = scheduled.map(u => u.active ? 0 : (u.cstrng == 0 ? 1 : 2)), active = scheduled.filter(u => u.active);
             active.forEach(u => {
                 lats.push(u.lat - lat);
                 lons.push(u.lon - lon);
                 mstrs.push(u.mstrng - mstr);
                 [lat, lon, mstr] = [u.lat, u.lon, u.mstrng];
-
                 cdmgs.push(u.mstrng - u.cstrng);
                 if (u.human) {
                     nords.push(u.orders.length);
                     ords = ords.concat(u.orders);
                 }
             });
-
             return status.concat(zigzag(lats), zigzag(lons), zigzag(mstrs), cdmgs, nords, ords);
         }
+        newTurn(initialize) {
+            if (initialize) {
+                this.activeUnits().forEach(u => u.moveTo(u.location));
+            }
+            else {
+                this.regroup();
+                // TODO trace supply, with CSTR >> 1 if not, russian MSTR+2 (for apx)
+                this.reinforce();
+            }
+        }
         activeUnits(player) {
-            return this.filter(u => u.active && (player == null || u.player == player));
+            return this.filter((u) => u.active && (player == null || u.player == player));
         }
         scheduleOrders() {
             // M.asm:4950 movement execution
             this.forEach(u => u.scheduleOrder(true));
         }
         executeOrders(tick) {
+            // original code processes movement in reverse-oob order
+            // could be interesting to randomize, or support a 'pause' order to handle traffic
             this.filter(u => u.tick == tick).reverse().forEach(u => u.tryOrder());
         }
         regroup() {
@@ -1840,27 +1921,33 @@ var ef1941 = (function (exports) {
         }
         reinforce() {
             // M.ASM:3720  delay reinforcements scheduled for an occuplied square
-            this.filter(u => u.arrive == this.#game.turn)
+            this.filter(u => u.arrive == __classPrivateFieldGet(this, _Oob_game, "f").turn)
                 .forEach(u => {
-                    const loc = u.location;
-                    if (loc.unitid != null) {
-                        u.arrive++;
-                    } else {
-                        u.moveTo(loc);   // reveal unit and link to the map square
-                    }
-                });
+                const loc = u.location;
+                if (loc.unitid != null) {
+                    u.arrive++;
+                }
+                else {
+                    u.moveTo(loc); // reveal unit and link to the map square
+                }
+            });
         }
         zocAffecting(player, loc) {
             // evaluate zoc experienced by player (eg. exerted by !player) in square at loc
             let zoc = 0;
-            // same player in target square exerts 4, enemy negates zoc
+            // same player in target square negates zoc, enemy exerts 4
             if (loc.unitid != null) {
-                if (this.at(loc.unitid).player == player) return zoc;
+                if (this.at(loc.unitid).player == player)
+                    return zoc;
                 zoc += 4;
             }
-            this.#game.mapboard.squareSpiral(loc, 3).slice(1).forEach((d, i) => {
+            GridPoint.squareSpiral(loc, 3).slice(1).forEach((p, i) => {
+                if (!__classPrivateFieldGet(this, _Oob_game, "f").mapboard.valid(p))
+                    return;
+                const pt = __classPrivateFieldGet(this, _Oob_game, "f").mapboard.locationOf(p);
                 // even steps in the spiral exert 2, odd steps exert 1
-                if (d.unitid != null && this.at(d.unitid).player != player) zoc += (i % 2) ? 1: 2;
+                if (pt.unitid != null && this.at(pt.unitid).player != player)
+                    zoc += (i % 2) ? 1 : 2;
             });
             return zoc;
         }
@@ -1869,136 +1956,624 @@ var ef1941 = (function (exports) {
             return this.zocAffecting(player, src) >= 2 && this.zocAffecting(player, dst) >= 2;
         }
     }
+    _Oob_game = new WeakMap(), _Oob_units = new WeakMap();
 
-    const tokenVersion = 1,
-        rlmarker = 6;  // highest 5-bit coded value, so values 0..3 (& 4,5) are unchanged by rlencode
+    // Atari had a memory location that could be read for a byte of random noise
+    const _crypto = node_crypto.webcrypto !== null && node_crypto.webcrypto !== void 0 ? node_crypto.webcrypto : (window && window.crypto);
+    function lfsr24(seed) {
+        const beforezero = 0xEF41CC; // arbitrary location to insert zero in the sequence
+        seed !== null && seed !== void 0 ? seed : (seed = _crypto.getRandomValues(new Uint32Array(1))[0]);
+        var r;
+        function bit() {
+            const v = r & 0x1;
+            if (r == beforezero) {
+                r = 0;
+            }
+            else {
+                if (r == 0)
+                    r = beforezero; // continue on
+                // constant via // https://en.wikipedia.org/wiki/Linear-feedback_shift_register
+                r = (r >> 1) ^ (-(r & 1) & 0xe10000);
+            }
+            return v;
+        }
+        function bits(k) {
+            let v = 0;
+            for (let i = 0; i < k; i++)
+                v = (v << 1) | bit();
+            return v;
+        }
+        function state(seed) {
+            if (seed != null)
+                r = seed & 0xffffff;
+            return r;
+        }
+        state(seed);
+        return {
+            state: state,
+            bit: bit,
+            bits: bits,
+            byte: () => bits(8),
+        };
+    }
 
-    class Game {
-        variant = Variant.apx;
-        scenario = Scenario['41'];
-        human = Player.german;
-        turn = 0;       // 0-based turn index
+    var domain;
 
-        // helpers derived from turn
-        date = null;
-        month = null;
-        weather = null;
+    // This constructor is used to store event handlers. Instantiating this is
+    // faster than explicitly calling `Object.create(null)` to get a "clean" empty
+    // object (tested with v8 v4.9).
+    function EventHandlers() {}
+    EventHandlers.prototype = Object.create(null);
 
-        // flags
-        help = 0;        // after init, has 0/1 indicating help hide/show state
-        handicap = 0;    // whether the game is handicapped
-        zoom = 0;        // display zoom on or off
-        extras = 1;      // display extras like labels, health, zoc
-        debug = 0;       // whether to display debug info for Russian units
+    function EventEmitter() {
+      EventEmitter.init.call(this);
+    }
 
-        listeners = [];
+    // nodejs oddity
+    // require('events') === require('events').EventEmitter
+    EventEmitter.EventEmitter = EventEmitter;
 
-        constructor(options) {
-            let memento = null;
-            if (typeof options === 'string') {
-                memento = rldecode(fibdecode(options), rlmarker);
+    EventEmitter.usingDomains = false;
+
+    EventEmitter.prototype.domain = undefined;
+    EventEmitter.prototype._events = undefined;
+    EventEmitter.prototype._maxListeners = undefined;
+
+    // By default EventEmitters will print a warning if more than 10 listeners are
+    // added to it. This is a useful default which helps finding memory leaks.
+    EventEmitter.defaultMaxListeners = 10;
+
+    EventEmitter.init = function() {
+      this.domain = null;
+      if (EventEmitter.usingDomains) {
+        // if there is an active domain, then attach to it.
+        if (domain.active ) ;
+      }
+
+      if (!this._events || this._events === Object.getPrototypeOf(this)._events) {
+        this._events = new EventHandlers();
+        this._eventsCount = 0;
+      }
+
+      this._maxListeners = this._maxListeners || undefined;
+    };
+
+    // Obviously not all Emitters should be limited to 10. This function allows
+    // that to be increased. Set to zero for unlimited.
+    EventEmitter.prototype.setMaxListeners = function setMaxListeners(n) {
+      if (typeof n !== 'number' || n < 0 || isNaN(n))
+        throw new TypeError('"n" argument must be a positive number');
+      this._maxListeners = n;
+      return this;
+    };
+
+    function $getMaxListeners(that) {
+      if (that._maxListeners === undefined)
+        return EventEmitter.defaultMaxListeners;
+      return that._maxListeners;
+    }
+
+    EventEmitter.prototype.getMaxListeners = function getMaxListeners() {
+      return $getMaxListeners(this);
+    };
+
+    // These standalone emit* functions are used to optimize calling of event
+    // handlers for fast cases because emit() itself often has a variable number of
+    // arguments and can be deoptimized because of that. These functions always have
+    // the same number of arguments and thus do not get deoptimized, so the code
+    // inside them can execute faster.
+    function emitNone(handler, isFn, self) {
+      if (isFn)
+        handler.call(self);
+      else {
+        var len = handler.length;
+        var listeners = arrayClone(handler, len);
+        for (var i = 0; i < len; ++i)
+          listeners[i].call(self);
+      }
+    }
+    function emitOne(handler, isFn, self, arg1) {
+      if (isFn)
+        handler.call(self, arg1);
+      else {
+        var len = handler.length;
+        var listeners = arrayClone(handler, len);
+        for (var i = 0; i < len; ++i)
+          listeners[i].call(self, arg1);
+      }
+    }
+    function emitTwo(handler, isFn, self, arg1, arg2) {
+      if (isFn)
+        handler.call(self, arg1, arg2);
+      else {
+        var len = handler.length;
+        var listeners = arrayClone(handler, len);
+        for (var i = 0; i < len; ++i)
+          listeners[i].call(self, arg1, arg2);
+      }
+    }
+    function emitThree(handler, isFn, self, arg1, arg2, arg3) {
+      if (isFn)
+        handler.call(self, arg1, arg2, arg3);
+      else {
+        var len = handler.length;
+        var listeners = arrayClone(handler, len);
+        for (var i = 0; i < len; ++i)
+          listeners[i].call(self, arg1, arg2, arg3);
+      }
+    }
+
+    function emitMany(handler, isFn, self, args) {
+      if (isFn)
+        handler.apply(self, args);
+      else {
+        var len = handler.length;
+        var listeners = arrayClone(handler, len);
+        for (var i = 0; i < len; ++i)
+          listeners[i].apply(self, args);
+      }
+    }
+
+    EventEmitter.prototype.emit = function emit(type) {
+      var er, handler, len, args, i, events, domain;
+      var doError = (type === 'error');
+
+      events = this._events;
+      if (events)
+        doError = (doError && events.error == null);
+      else if (!doError)
+        return false;
+
+      domain = this.domain;
+
+      // If there is no 'error' event listener then throw.
+      if (doError) {
+        er = arguments[1];
+        if (domain) {
+          if (!er)
+            er = new Error('Uncaught, unspecified "error" event');
+          er.domainEmitter = this;
+          er.domain = domain;
+          er.domainThrown = false;
+          domain.emit('error', er);
+        } else if (er instanceof Error) {
+          throw er; // Unhandled 'error' event
+        } else {
+          // At least give some kind of context to the user
+          var err = new Error('Uncaught, unspecified "error" event. (' + er + ')');
+          err.context = er;
+          throw err;
+        }
+        return false;
+      }
+
+      handler = events[type];
+
+      if (!handler)
+        return false;
+
+      var isFn = typeof handler === 'function';
+      len = arguments.length;
+      switch (len) {
+        // fast cases
+        case 1:
+          emitNone(handler, isFn, this);
+          break;
+        case 2:
+          emitOne(handler, isFn, this, arguments[1]);
+          break;
+        case 3:
+          emitTwo(handler, isFn, this, arguments[1], arguments[2]);
+          break;
+        case 4:
+          emitThree(handler, isFn, this, arguments[1], arguments[2], arguments[3]);
+          break;
+        // slower
+        default:
+          args = new Array(len - 1);
+          for (i = 1; i < len; i++)
+            args[i - 1] = arguments[i];
+          emitMany(handler, isFn, this, args);
+      }
+
+      return true;
+    };
+
+    function _addListener(target, type, listener, prepend) {
+      var m;
+      var events;
+      var existing;
+
+      if (typeof listener !== 'function')
+        throw new TypeError('"listener" argument must be a function');
+
+      events = target._events;
+      if (!events) {
+        events = target._events = new EventHandlers();
+        target._eventsCount = 0;
+      } else {
+        // To avoid recursion in the case that type === "newListener"! Before
+        // adding it to the listeners, first emit "newListener".
+        if (events.newListener) {
+          target.emit('newListener', type,
+                      listener.listener ? listener.listener : listener);
+
+          // Re-assign `events` because a newListener handler could have caused the
+          // this._events to be assigned to a new object
+          events = target._events;
+        }
+        existing = events[type];
+      }
+
+      if (!existing) {
+        // Optimize the case of one listener. Don't need the extra array object.
+        existing = events[type] = listener;
+        ++target._eventsCount;
+      } else {
+        if (typeof existing === 'function') {
+          // Adding the second element, need to change to array.
+          existing = events[type] = prepend ? [listener, existing] :
+                                              [existing, listener];
+        } else {
+          // If we've already got an array, just append.
+          if (prepend) {
+            existing.unshift(listener);
+          } else {
+            existing.push(listener);
+          }
+        }
+
+        // Check for listener leak
+        if (!existing.warned) {
+          m = $getMaxListeners(target);
+          if (m && m > 0 && existing.length > m) {
+            existing.warned = true;
+            var w = new Error('Possible EventEmitter memory leak detected. ' +
+                                existing.length + ' ' + type + ' listeners added. ' +
+                                'Use emitter.setMaxListeners() to increase limit');
+            w.name = 'MaxListenersExceededWarning';
+            w.emitter = target;
+            w.type = type;
+            w.count = existing.length;
+            emitWarning(w);
+          }
+        }
+      }
+
+      return target;
+    }
+    function emitWarning(e) {
+      typeof console.warn === 'function' ? console.warn(e) : console.log(e);
+    }
+    EventEmitter.prototype.addListener = function addListener(type, listener) {
+      return _addListener(this, type, listener, false);
+    };
+
+    EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+    EventEmitter.prototype.prependListener =
+        function prependListener(type, listener) {
+          return _addListener(this, type, listener, true);
+        };
+
+    function _onceWrap(target, type, listener) {
+      var fired = false;
+      function g() {
+        target.removeListener(type, g);
+        if (!fired) {
+          fired = true;
+          listener.apply(target, arguments);
+        }
+      }
+      g.listener = listener;
+      return g;
+    }
+
+    EventEmitter.prototype.once = function once(type, listener) {
+      if (typeof listener !== 'function')
+        throw new TypeError('"listener" argument must be a function');
+      this.on(type, _onceWrap(this, type, listener));
+      return this;
+    };
+
+    EventEmitter.prototype.prependOnceListener =
+        function prependOnceListener(type, listener) {
+          if (typeof listener !== 'function')
+            throw new TypeError('"listener" argument must be a function');
+          this.prependListener(type, _onceWrap(this, type, listener));
+          return this;
+        };
+
+    // emits a 'removeListener' event iff the listener was removed
+    EventEmitter.prototype.removeListener =
+        function removeListener(type, listener) {
+          var list, events, position, i, originalListener;
+
+          if (typeof listener !== 'function')
+            throw new TypeError('"listener" argument must be a function');
+
+          events = this._events;
+          if (!events)
+            return this;
+
+          list = events[type];
+          if (!list)
+            return this;
+
+          if (list === listener || (list.listener && list.listener === listener)) {
+            if (--this._eventsCount === 0)
+              this._events = new EventHandlers();
+            else {
+              delete events[type];
+              if (events.removeListener)
+                this.emit('removeListener', type, list.listener || listener);
+            }
+          } else if (typeof list !== 'function') {
+            position = -1;
+
+            for (i = list.length; i-- > 0;) {
+              if (list[i] === listener ||
+                  (list[i].listener && list[i].listener === listener)) {
+                originalListener = list[i].listener;
+                position = i;
+                break;
+              }
+            }
+
+            if (position < 0)
+              return this;
+
+            if (list.length === 1) {
+              list[0] = undefined;
+              if (--this._eventsCount === 0) {
+                this._events = new EventHandlers();
+                return this;
+              } else {
+                delete events[type];
+              }
+            } else {
+              spliceOne(list, position);
+            }
+
+            if (events.removeListener)
+              this.emit('removeListener', type, originalListener || listener);
+          }
+
+          return this;
+        };
+        
+    // Alias for removeListener added in NodeJS 10.0
+    // https://nodejs.org/api/events.html#events_emitter_off_eventname_listener
+    EventEmitter.prototype.off = function(type, listener){
+        return this.removeListener(type, listener);
+    };
+
+    EventEmitter.prototype.removeAllListeners =
+        function removeAllListeners(type) {
+          var listeners, events;
+
+          events = this._events;
+          if (!events)
+            return this;
+
+          // not listening for removeListener, no need to emit
+          if (!events.removeListener) {
+            if (arguments.length === 0) {
+              this._events = new EventHandlers();
+              this._eventsCount = 0;
+            } else if (events[type]) {
+              if (--this._eventsCount === 0)
+                this._events = new EventHandlers();
+              else
+                delete events[type];
+            }
+            return this;
+          }
+
+          // emit removeListener for all listeners on all events
+          if (arguments.length === 0) {
+            var keys = Object.keys(events);
+            for (var i = 0, key; i < keys.length; ++i) {
+              key = keys[i];
+              if (key === 'removeListener') continue;
+              this.removeAllListeners(key);
+            }
+            this.removeAllListeners('removeListener');
+            this._events = new EventHandlers();
+            this._eventsCount = 0;
+            return this;
+          }
+
+          listeners = events[type];
+
+          if (typeof listeners === 'function') {
+            this.removeListener(type, listeners);
+          } else if (listeners) {
+            // LIFO order
+            do {
+              this.removeListener(type, listeners[listeners.length - 1]);
+            } while (listeners[0]);
+          }
+
+          return this;
+        };
+
+    EventEmitter.prototype.listeners = function listeners(type) {
+      var evlistener;
+      var ret;
+      var events = this._events;
+
+      if (!events)
+        ret = [];
+      else {
+        evlistener = events[type];
+        if (!evlistener)
+          ret = [];
+        else if (typeof evlistener === 'function')
+          ret = [evlistener.listener || evlistener];
+        else
+          ret = unwrapListeners(evlistener);
+      }
+
+      return ret;
+    };
+
+    EventEmitter.listenerCount = function(emitter, type) {
+      if (typeof emitter.listenerCount === 'function') {
+        return emitter.listenerCount(type);
+      } else {
+        return listenerCount.call(emitter, type);
+      }
+    };
+
+    EventEmitter.prototype.listenerCount = listenerCount;
+    function listenerCount(type) {
+      var events = this._events;
+
+      if (events) {
+        var evlistener = events[type];
+
+        if (typeof evlistener === 'function') {
+          return 1;
+        } else if (evlistener) {
+          return evlistener.length;
+        }
+      }
+
+      return 0;
+    }
+
+    EventEmitter.prototype.eventNames = function eventNames() {
+      return this._eventsCount > 0 ? Reflect.ownKeys(this._events) : [];
+    };
+
+    // About 1.5x faster than the two-arg version of Array#splice().
+    function spliceOne(list, index) {
+      for (var i = index, k = i + 1, n = list.length; k < n; i += 1, k += 1)
+        list[i] = list[k];
+      list.pop();
+    }
+
+    function arrayClone(arr, i) {
+      var copy = new Array(i);
+      while (i--)
+        copy[i] = arr[i];
+      return copy;
+    }
+
+    function unwrapListeners(arr) {
+      var ret = new Array(arr.length);
+      for (var i = 0; i < ret.length; ++i) {
+        ret[i] = arr[i].listener || arr[i];
+      }
+      return ret;
+    }
+
+    var _Game_instances, _Game_setDates, _Game_newTurn;
+    const tokenPrefix = 'EF41', tokenVersion = 1, rlSigil = 6; // highest 5-bit coded value, so values 0..3 (& 4,5) are unchanged by rlencode
+    class Game extends EventEmitter {
+        constructor(token) {
+            super();
+            _Game_instances.add(this);
+            this.scenario = 0 /* ScenarioKey.apx */;
+            this.human = 0 /* PlayerKey.German */;
+            this.turn = 0; // 0-based turn index
+            // helpers derived from turn
+            this.date = new Date('1941/6/22');
+            this.month = 5 /* MonthKey.Jun */;
+            this.weather = 0 /* WeatherKey.dry */;
+            // flags
+            this.handicap = 0; // whether the game is handicapped
+            this.extras = 1; // display extras like labels, health, zoc
+            this.debug = 0; // whether to display debug info for Russian units
+            this.on('message', (typ, obj) => {
+                if (this.listenerCount('message') == 1) {
+                    let s = typeof obj === 'string' ? obj : obj.join('\n'), logger = (typ == 'error' ? console.warn : console.info);
+                    logger(s);
+                }
+            });
+            let memento = undefined, seed = undefined;
+            if (token != null) {
+                let payload = unwrap64(token, tokenPrefix);
+                seed = bitsdecode(payload, 24);
+                memento = rldecode(fibdecode(payload), rlSigil);
+                if (memento.length < 7)
+                    throw new Error('Game: malformed save data');
                 const version = memento.shift();
-                if (version != tokenVersion) throw new Error("Unrecognized save version", version);
-
-                this.variant = memento.shift();
+                if (version != tokenVersion)
+                    throw new Error(`Game: unrecognized save version ${version}`);
                 this.scenario = memento.shift();
                 this.human = memento.shift();
                 this.turn = memento.shift();
-
-                this.help = memento.shift();
                 this.handicap = memento.shift();
-                this.zoom = memento.shift();
                 this.extras = memento.shift();
                 this.debug = memento.shift();
-            } else {
-                Object.assign(this, options ?? {});
             }
             this.mapboard = new Mapboard(this, memento);
             this.oob = new Oob(this, memento);
-
-            if (memento && memento.length != 0) throw new Error("Unexpected save data overflow");
-        }
-        score(player) {
-            // M.asm:4050
-            let eastwest = sum(this.oob.map(u => u.score(this) * (u.player == player ? 1: -1))),
-                bonus = sum(this.mapboard.cities.filter(c => c.owner == player).map(c => c.points)),
-                score = Math.max(0, eastwest) + bonus;
-            if (this.handicap) score >>= 1;
-            return score;
-        }
-        nextTurn(initialSetup) {
-            // start next turn, add a week to the date
-            if (!initialSetup) this.turn++;
-
-            let dt = new Date(scenarios[this.scenario].start);
-            this.date = new Date(dt.setDate(dt.getDate() + 7 * this.turn));
-            this.month = this.date.getMonth();     // note JS getMonth is 0-indexed
-            this.weather = monthdata[this.month].weather;
-
-            this.mapboard.nextTurn(initialSetup);
-            this.oob.nextTurn(initialSetup);
-            return this;
-        }
-        resolveTurn(callback, delay) {
-            // process the orders for this turn
-            // if `callback` is provided the turn is processed asynchronously in increments of delay (ms)
-            // and callback is called on completion.
-            // otherwise the turn is resolved immediately and returns to caller
-            const oob = this.oob;
-            let tick = 0;
-
-            oob.scheduleOrders();
-
-            // Set up a function that loops synchronously or asynchornously
-            function tickTock() {
-                // original code processes movement in reverse-oob order
-                // could be interesting to randomize, or support a 'pause' order to handle traffic
-                oob.executeOrders(tick++);
-                if (callback) {
-                    setTimeout(tick < 32 ? tickTock : callback, delay || 250);
-                } else if (tick < 32) {
-                    tickTock();
-                }
-            }
-            tickTock();
-        }
-        addListener(listener) {
-            this.listeners.push(listener);
-        }
-        notify(typ, event, obj, options) {
-            // console.debug(`game.notify: ${typ}-${event}`);
-            this.listeners.forEach(listener => listener(typ, event, obj, options));
-
-            if (typ == 'msg') {
-                let s = typeof obj === 'string' ? obj: obj.join('\n'),
-                    logger = (event == 'err' ? console.warn: console.info);
-                logger(s);
-            }
+            this.rand = lfsr24(seed);
+            if (memento && memento.length != 0)
+                throw new Error("Game: unexpected save data overflow");
         }
         get memento() {
             // return a list of uint representing the state of the game
             return [
                 tokenVersion,
-
-                this.variant,
                 this.scenario,
                 this.human,
                 this.turn,
-
-                +this.help,
                 +this.handicap,
-                +this.zoom,
                 +this.extras,
                 +this.debug,
-            ].concat(
-                this.mapboard.memento,
-                this.oob.memento,
-            );
+            ].concat(this.mapboard.memento, this.oob.memento);
         }
         get token() {
-            return fibencode(rlencode(this.memento, rlmarker));
+            let payload = [].concat(bitsencode(this.rand.state(), 24), fibencode(rlencode(this.memento, rlSigil)));
+            return wrap64(payload, tokenPrefix);
+        }
+        start() {
+            __classPrivateFieldGet(this, _Game_instances, "m", _Game_newTurn).call(this, true);
+            return this;
+        }
+        nextTurn(delay) {
+            // process the orders for this turn, if delay we tick asynchrnously,
+            // otherwise we resolve synchronously
+            // either way we proceed to subsequent startTurn or game end
+            let tick = 0, g = this; // for the closure
+            this.oob.scheduleOrders();
+            // Set up for a sync or async loop
+            function tickTock() {
+                g.oob.executeOrders(tick);
+                g.emit('game', 'tick', tick);
+                let next = ++tick < 32 ? tickTock : () => __classPrivateFieldGet(g, _Game_instances, "m", _Game_newTurn).call(g);
+                if (delay)
+                    setTimeout(next, delay);
+                else
+                    next();
+            }
+            tickTock();
+        }
+        score(player) {
+            // M.asm:4050
+            let eastwest = sum(this.oob.map(u => u.score() * (u.player == player ? 1 : -1))), bonus = sum(this.mapboard.cities.filter(c => c.owner == player).map(c => c.points)), score = Math.max(0, eastwest) + bonus;
+            if (this.handicap)
+                score >>= 1;
+            return score;
         }
     }
+    _Game_instances = new WeakSet(), _Game_setDates = function _Game_setDates(start) {
+        let dt = new Date(start);
+        this.date = new Date(dt.setDate(dt.getDate() + 7 * this.turn));
+        this.month = this.date.getMonth(); // note JS getMonth is 0-indexed
+        this.weather = monthdata[this.month].weather;
+    }, _Game_newTurn = function _Game_newTurn(initialize = false) {
+        if (!initialize)
+            this.turn++;
+        __classPrivateFieldGet(this, _Game_instances, "m", _Game_setDates).call(this, new Date(scenarios[this.scenario].start));
+        this.mapboard.newTurn(initialize);
+        this.oob.newTurn(initialize);
+        this.emit('game', 'turn', this);
+    };
 
     var noop = {value: () => {}};
 
@@ -4677,87 +5252,69 @@ var ef1941 = (function (exports) {
 
     Transform.prototype;
 
-    const
-        // Antic NTSC palette via https://en.wikipedia.org/wiki/List_of_video_game_console_palettes#NTSC
-        // 128 colors indexed via high 7 bits, e.g. 0x00 and 0x01 refer to the first entry
-        anticPaletteRGB = [
-            "#000000",  "#404040",  "#6c6c6c",  "#909090",  "#b0b0b0",  "#c8c8c8",  "#dcdcdc",  "#ececec",
-            "#444400",  "#646410",  "#848424",  "#a0a034",  "#b8b840",  "#d0d050",  "#e8e85c",  "#fcfc68",
-            "#702800",  "#844414",  "#985c28",  "#ac783c",  "#bc8c4c",  "#cca05c",  "#dcb468",  "#ecc878",
-            "#841800",  "#983418",  "#ac5030",  "#c06848",  "#d0805c",  "#e09470",  "#eca880",  "#fcbc94",
-            "#880000",  "#9c2020",  "#b03c3c",  "#c05858",  "#d07070",  "#e08888",  "#eca0a0",  "#fcb4b4",
-            "#78005c",  "#8c2074",  "#a03c88",  "#b0589c",  "#c070b0",  "#d084c0",  "#dc9cd0",  "#ecb0e0",
-            "#480078",  "#602090",  "#783ca4",  "#8c58b8",  "#a070cc",  "#b484dc",  "#c49cec",  "#d4b0fc",
-            "#140084",  "#302098",  "#4c3cac",  "#6858c0",  "#7c70d0",  "#9488e0",  "#a8a0ec",  "#bcb4fc",
-            "#000088",  "#1c209c",  "#3840b0",  "#505cc0",  "#6874d0",  "#7c8ce0",  "#90a4ec",  "#a4b8fc",
-            "#00187c",  "#1c3890",  "#3854a8",  "#5070bc",  "#6888cc",  "#7c9cdc",  "#90b4ec",  "#a4c8fc",
-            "#002c5c",  "#1c4c78",  "#386890",  "#5084ac",  "#689cc0",  "#7cb4d4",  "#90cce8",  "#a4e0fc",
-            "#003c2c",  "#1c5c48",  "#387c64",  "#509c80",  "#68b494",  "#7cd0ac",  "#90e4c0",  "#a4fcd4",
-            "#003c00",  "#205c20",  "#407c40",  "#5c9c5c",  "#74b474",  "#8cd08c",  "#a4e4a4",  "#b8fcb8",
-            "#143800",  "#345c1c",  "#507c38",  "#6c9850",  "#84b468",  "#9ccc7c",  "#b4e490",  "#c8fca4",
-            "#2c3000",  "#4c501c",  "#687034",  "#848c4c",  "#9ca864",  "#b4c078",  "#ccd488",  "#e0ec9c",
-            "#442800",  "#644818",  "#846830",  "#a08444",  "#b89c58",  "#d0b46c",  "#e8cc7c",  "#fce08c",
-        ];
-
-    function centered(s, width) {
-        width ||= 40;
+    var _Display_score;
+    const 
+    // Antic NTSC palette via https://en.wikipedia.org/wiki/List_of_video_game_console_palettes#NTSC
+    // 128 colors indexed via high 7 bits, e.g. 0x00 and 0x01 refer to the first entry
+    anticPaletteRGB = [
+        "#000000", "#404040", "#6c6c6c", "#909090", "#b0b0b0", "#c8c8c8", "#dcdcdc", "#ececec",
+        "#444400", "#646410", "#848424", "#a0a034", "#b8b840", "#d0d050", "#e8e85c", "#fcfc68",
+        "#702800", "#844414", "#985c28", "#ac783c", "#bc8c4c", "#cca05c", "#dcb468", "#ecc878",
+        "#841800", "#983418", "#ac5030", "#c06848", "#d0805c", "#e09470", "#eca880", "#fcbc94",
+        "#880000", "#9c2020", "#b03c3c", "#c05858", "#d07070", "#e08888", "#eca0a0", "#fcb4b4",
+        "#78005c", "#8c2074", "#a03c88", "#b0589c", "#c070b0", "#d084c0", "#dc9cd0", "#ecb0e0",
+        "#480078", "#602090", "#783ca4", "#8c58b8", "#a070cc", "#b484dc", "#c49cec", "#d4b0fc",
+        "#140084", "#302098", "#4c3cac", "#6858c0", "#7c70d0", "#9488e0", "#a8a0ec", "#bcb4fc",
+        "#000088", "#1c209c", "#3840b0", "#505cc0", "#6874d0", "#7c8ce0", "#90a4ec", "#a4b8fc",
+        "#00187c", "#1c3890", "#3854a8", "#5070bc", "#6888cc", "#7c9cdc", "#90b4ec", "#a4c8fc",
+        "#002c5c", "#1c4c78", "#386890", "#5084ac", "#689cc0", "#7cb4d4", "#90cce8", "#a4e0fc",
+        "#003c2c", "#1c5c48", "#387c64", "#509c80", "#68b494", "#7cd0ac", "#90e4c0", "#a4fcd4",
+        "#003c00", "#205c20", "#407c40", "#5c9c5c", "#74b474", "#8cd08c", "#a4e4a4", "#b8fcb8",
+        "#143800", "#345c1c", "#507c38", "#6c9850", "#84b468", "#9ccc7c", "#b4e490", "#c8fca4",
+        "#2c3000", "#4c501c", "#687034", "#848c4c", "#9ca864", "#b4c078", "#ccd488", "#e0ec9c",
+        "#442800", "#644818", "#846830", "#a08444", "#b89c58", "#d0b46c", "#e8cc7c", "#fce08c",
+    ];
+    function centered(s, width = 40) {
         let pad = width - s.length;
-        return s.padStart((pad >> 1) + s.length).padEnd(width) ;
+        return s.padStart((pad >> 1) + s.length).padEnd(width);
     }
-
     function setclr(sel, c) {
         //TODO support sel as existing d3 selection
         selectAll(sel).style('background-color', anticColor(c));
     }
-
     function anticColor(v) {
-        return anticPaletteRGB[Math.floor(parseInt(v, 16)/2)];
+        return anticPaletteRGB[Math.floor(parseInt(v, 16) / 2)];
     }
-
     function atascii(c) {
         return c.charCodeAt(0) & 0x7f;
     }
-
     function maskpos(c) {
-        return `${-(c%16)*8}px ${-Math.floor(c/16)*8}px`;
+        return `${-(c % 16) * 8}px ${-Math.floor(c / 16) * 8}px`;
     }
-
     function putlines(win, lines, fg, bg, chrfn, idfn) {
         // fg color can be a function of the data element, bg should be a constant
         const w = select(win);
-
-        chrfn ||= atascii;
-        fg ||= w.attr('data-fg-color');
-        bg ||= w.attr('data-bg-color');
-
+        chrfn !== null && chrfn !== void 0 ? chrfn : (chrfn = atascii);
+        fg !== null && fg !== void 0 ? fg : (fg = w.attr('data-fg-color'));
+        bg !== null && bg !== void 0 ? bg : (bg = w.attr('data-bg-color'));
         w.attr('data-fg-color', () => fg);
         if (bg) {
             w.attr('data-bg-color', () => bg);
             w.style('background-color', anticColor(bg));
         }
-        w.selectAll('div.chr').remove();  //TODO don't deal with enter/update yet
-
-        let
-            fgfn = typeof fg == 'function' ? fg : (() => fg),
-            data = [].concat(
-                ...lines.map(
-                    (ds, i) =>
-                    (typeof(ds) == 'string' ? ds.split(''): ds)
-                        .map((d, j) => [i, j, d])
-                    )
-                );
-
-        let chrs= w
+        w.selectAll('div.chr').remove(); //TODO don't deal with enter/update yet
+        let fgfn = typeof fg == 'string' ? ((d) => fg) : fg, data = [].concat(...lines.map((ds, i) => (typeof (ds) == 'string' ? ds.split('') : ds)
+            .map((d, j) => [i, j, d])));
+        let chrs = w
             .selectAll('div.chr')
             .data(data)
-          .join('div')
+            .join('div')
             .classed('chr', true)
-            .style('top', ([i, _, __]) => `${i*8}px`)        // eslint-disable-line no-unused-vars
-            .style('left', ([_, j, __]) => `${j*8}px`)       // eslint-disable-line no-unused-vars
-            .datum(([_, __, d]) => d);                       // eslint-disable-line no-unused-vars
-
-        if (idfn) chrs.attr('id', idfn);
-
+            .style('top', ([i, _, __]) => `${i * 8}px`) // eslint-disable-line no-unused-vars
+            .style('left', ([_, j, __]) => `${j * 8}px`) // eslint-disable-line no-unused-vars
+            .datum(([_, __, d]) => d); // eslint-disable-line no-unused-vars
+        if (idfn)
+            chrs.attr('id', idfn);
         chrs.append('div')
             .classed('chr-bg', true)
             .style('background-color', bg ? anticColor(bg) : null);
@@ -4765,207 +5322,188 @@ var ef1941 = (function (exports) {
             .classed('chr-fg', true)
             .style('background-color', d => anticColor(fgfn(d)))
             .style("-webkit-mask-position", d => maskpos(chrfn(d)));
-
         return chrs;
     }
-
     function showAt(sel, loc, dx, dy) {
         return sel
-            .style('left', `${loc.col*8 + (dx || 0)}px`)
-            .style('top', `${loc.row*8 + (dy || 0)}px`)
+            .style('left', `${loc.col * 8 + (dx || 0)}px`)
+            .style('top', `${loc.row * 8 + (dy || 0)}px`)
             .style('opacity', 1);
     }
-
     function animateUnitPath(u) {
         selectAll('#arrows .chr').interrupt().style('opacity', 0);
-        if (!u) return;
-
+        if (u == null)
+            return;
         let path = u.path;
-
-        select('#kreuze')
-            .call(showAt, path[path.length-1])
-            .node()
-            .scrollIntoView({block: "center", inline: "center"});
-
-        if (path.length < 2) return;
-
+        if (path.length < 1)
+            return;
+        const elt = select('#kreuze')
+            .call(showAt, path[path.length - 1])
+            .node();
+        elt.scrollIntoView({ block: "center", inline: "center" });
+        if (path.length < 2)
+            return;
         let i = 0;
         function animateStep() {
-            let loc = path[i],
-                dst = path[i+1],
-                dir = u.orders[i],
-                interrupted = false;
+            let loc = path[i], dst = path[i + 1], dir = u.orders[i], interrupted = false;
             select(`#arrow-${dir}`)
                 .call(showAt, loc)
-            .transition()
-                .delay(i ? 0: 250)
+                .transition()
+                .delay(i ? 0 : 250)
                 .duration(500)
                 .ease(linear)
                 .call(showAt, dst)
-            .transition()
+                .transition()
                 .duration(0)
                 .style('opacity', 0)
-            .on("interrupt", () => { interrupted = true; })
-            .on("end", () => {
-                i = (i+1) % (path.length-1);
-                if (!interrupted) animateStep();
+                .on("interrupt", () => { interrupted = true; })
+                .on("end", () => {
+                i = (i + 1) % (path.length - 1);
+                if (!interrupted)
+                    animateStep();
             });
         }
         animateStep();
     }
-
     function pathSVG(orders) {
         const r = 0.25;
-        let x = 0,
-            y = 0,
-            lastd = null,
-            s = "M0,0";
-
+        let x = 0, y = 0, lastd = null, s = "M0,0";
         orders.forEach(d => {
-            let dir = directions[d],
-                dx = dir.dlon,
-                dy = dir.dlat,
-                turn = (lastd-d+4) % 4;
+            let dir = directions[d], dx = dir.dlon, dy = dir.dlat;
             // add prev corner
             if (lastd == null) {
-                s = `M${dx*r},${dy*r}`;
-            } else if (turn == 0) {
-                s += ` l${dx*2*r},${dy*2*r}`;
-            } else if (turn % 2) {
-                let cx = (dx + directions[lastd].dlon)*r,
-                    cy = (dy + directions[lastd].dlat)*r;
-                s += ` a${r},${r} 0 0 ${turn==1?0:1} ${cx},${cy}`;
+                s = `M${dx * r},${dy * r}`;
+            }
+            else {
+                const turn = (lastd - d + 4) % 4;
+                if (turn == 0) {
+                    s += ` l${dx * 2 * r},${dy * 2 * r}`;
+                }
+                else if (turn % 2) {
+                    let cx = (dx + directions[lastd].dlon) * r, cy = (dy + directions[lastd].dlat) * r;
+                    s += ` a${r},${r} 0 0 ${turn == 1 ? 0 : 1} ${cx},${cy}`;
+                }
             }
             lastd = d;
-            s += ` l${dx*(1-2*r)},${dy*(1-2*r)}`;
+            s += ` l${dx * (1 - 2 * r)},${dy * (1 - 2 * r)}`;
             x += dx;
             y += dy;
         });
-        if (orders.length) s += ` L${x},${y}`;
+        if (orders.length)
+            s += ` L${x},${y}`;
         let svg = `<path d="${s}"/>`;
-        if (orders.length) svg += `<circle r="${r}" cx="${x}" cy="${y}">`;
+        if (orders.length)
+            svg += `<circle r="${r}" cx="${x}" cy="${y}">`;
         return svg;
     }
-
-    function paintMap(opts)  {
+    function paintMap(action, opts) {
+        if (action != 'recolor') {
+            console.warn('paintMap: unrecognized action', action);
+            return;
+        }
         // apply current fg/bg colors to map and unit background
         selectAll('#map .chr-bg, #units .chr-bg')
             .style('background-color', anticColor(opts.bgcolor));
-
         selectAll('#map .chr-fg')
             .style('background-color', d => anticColor(opts.fgcolorfn(d)));
-
         // contrasting label colors
         selectAll('.label')
             .style('color', anticColor(opts.labelcolor));
     }
-
-    function paintUnit(u, event) {
-        let chr = select(`#unit-${u.id}`),
-            path = select(`#path-${u.id}`),
-            loc = u.location;
-
-        if (['moved', 'removed'].includes(event)) {
+    function paintUnit(event, u) {
+        let chr = select(`#unit-${u.id}`), path = select(`#path-${u.id}`), loc = u.location;
+        if (['move', 'enter', 'exit'].includes(event)) {
             chr = chr.transition().duration(250).ease(linear);
         }
         switch (event) {
-            case 'moved':
+            case 'enter':
+            case 'move':
                 chr.call(showAt, loc);
             // eslint-disable-next-line no-fallthrough
             case 'orders':
                 path.attr('transform', `translate(${loc.col + 0.5},${loc.row + 0.5}) scale(-1)`)
                     .html(pathSVG(u.orders));
             // eslint-disable-next-line no-fallthrough
-            case 'stats':
-                chr.select('.chr-mstrng').style('width', (90 * u.mstrng/255) + '%');
-                chr.select('.chr-cstrng').style('width', (100 * u.cstrng/u.mstrng) + '%');
+            case 'damage':
+                chr.select('.chr-mstrng').style('width', (90 * u.mstrng / 255) + '%');
+                chr.select('.chr-cstrng').style('width', (100 * u.cstrng / u.mstrng) + '%');
                 break;
-            case 'removed':
+            case 'exit':
                 chr.style('opacity', 0);
                 break;
-            case 'attacking':
-            case 'defending':
-            case 'resolving':
+            case 'attack':
+            case 'defend':
                 chr.select('.chr-fg')
-                    .classed('flash', event != 'resolving')
-                    .style('animation-direction', event == 'defending' ? 'reverse': 'normal');
+                    .classed('flash', true)
+                    .style('animation-direction', event == 'defend' ? 'reverse' : 'normal');
                 break;
-            case 'selected':
-            case 'unselected':
-                chr.classed('blink', event == 'selected');
-                animateUnitPath(event == 'selected' && u.human ? u : null);
+            case 'focus':
+            case 'blur':
+                chr.classed('blink', event == 'focus');
+                animateUnitPath(event == 'focus' && u.human ? u : null);
                 break;
             default:
                 console.warn('paintUnit ignoring unknown event', event);
         }
     }
-
     class Display {
-        #score;
-
-        constructor(help, game) {
-
-            const icon = (d) => d.icon,
-                unitcolor = (u) => players[u.player].color,
-                root = document.querySelector(':root'),
-                variant = variants[game.variant].key;
-
+        constructor(game, helpText, helpUrl) {
+            _Display_score.set(this, null);
+            this.centered = centered;
+            const iconfn = (d) => d.icon, unitcolor = (u) => players[u.player].color, root = document.querySelector(':root'), font = mapVariants[scenarios[game.scenario].map].font;
+            //TODO needs adjusted with setLevel
             // pick the right fontmap
-            root.style.setProperty('--fontmap', `url(fontmap-${variant}.png)`);
-
+            root.style.setProperty('--fontmap', `url(fontmap-${font}.png)`);
             // set up background colors
             setclr('body', 'D4');
             setclr('.date-rule', '1A');
-            setclr('.info-rule', '02');  // same as map
+            setclr('.info-rule', '02'); // same as map
             setclr('.err-rule', '8A');
-
             // set up info, error and help
-            putlines('#help-window', help, c => c == "}" ? '94': '04', '0e');
+            putlines('#help-window', helpText, c => c == "}" ? '94' : '04', '0e');
+            // for amusement add a hyperlink on help page
+            selectAll('#help-window .chr')
+                .filter(d => d == "}")
+                .on('click', () => window.open(helpUrl));
             putlines('#date-window', [''], '6A', 'B0');
             putlines('#info-window', [''], '28', '22');
             putlines('#err-window', [''], '22', '3A');
-
             this.datemsg(centered("EASTERN FRONT 1941", 20));
-            this.infomsg(centered('COPYRIGHT 1982 ATARI'), centered('ALL RIGHTS RESERVED'));
-
             // draw the map characters with a semi-transparent dimming layer which we can hide/show
-            putlines('#map', game.mapboard.locations, 'ff', '00', icon, m => `map-${m.id}`)
+            putlines('#map', game.mapboard.locations, 'ff', '00', iconfn, m => `map-${m.id}`)
                 .append('div')
                 .classed('chr-dim', true)
                 .classed('extra', true);
-
             // add the city labels
             select('#labels')
                 .selectAll('div.label')
                 .data(game.mapboard.cities)
-              .join('div')
+                .join('div')
                 .classed('label', true)
                 .classed('extra', true)
                 .text(d => d.label)
-                .each(function(d) { select(this).call(showAt, game.mapboard.locationOf(d), 4, -4); });
-
+                .each(function (d) { select(this).call(showAt, game.mapboard.locationOf(d), 4, -4); });
             // create a layer to show paths with unit orders
             select('#orders')
                 .append('svg')
-                .attr('width', 48*8)
-                .attr('height', 41*8)
+                .attr('width', 48 * 8)
+                .attr('height', 41 * 8)
                 .append('g')
                 .attr('transform', 'scale(8)')
                 .selectAll('.unit-path')
                 .data(game.oob.slice())
-              .join('g')
+                .join('g')
                 .attr('id', u => `path-${u.id}`)
                 .classed('unit-path', true)
                 .classed('debug', u => !u.human)
                 .classed('extra', true)
                 .attr('style', u => {
-                    const c = anticColor(unitcolor(u));
-                    return `stroke: ${c}; fill: ${c};`
-                });
-
+                const c = anticColor(unitcolor(u));
+                return `stroke: ${c}; fill: ${c};`;
+            });
             // draw all of the units
-            putlines('#units', [game.oob], unitcolor, '00', icon, u => `unit-${u.id}`)
-                .each(function(u) { select(this).call(showAt, u.location); })
+            putlines('#units', [game.oob.slice()], unitcolor, '00', iconfn, (u) => `unit-${u.id}`)
+                .each(function (u) { select(this).call(showAt, u.location); })
                 .style('opacity', 0)
                 .append('div')
                 .attr('class', 'chr-overlay extra')
@@ -4973,532 +5511,557 @@ var ef1941 = (function (exports) {
                 .classed('chr-mstrng', true)
                 .append('div')
                 .classed('chr-cstrng', true);
-
             // put arrows and kreuze in layer for path animation
-            putlines(
-                '#arrows', [[256], directions.map(icon)],
-                d => d == 256 ? '1A': 'DC', null, c => c, (d, i) => d == 256 ? 'kreuze': `arrow-${i-1}`)
+            putlines('#arrows', [[256], Object.values(directions).map(iconfn)], d => d == 256 ? '1A' : 'DC', undefined, c => c, (d, i) => d == 256 ? 'kreuze' : `arrow-${i - 1}`)
                 .style('opacity', 0);
-
-            game.addListener(this.changeListener);
-
+            game.on('game', (action, obj) => {
+                selectAll('#units .chr-fg').classed('flash', false);
+                if (action == 'turn') {
+                    __classPrivateFieldSet(this, _Display_score, obj.score(obj.human), "f");
+                    this.errmsg(centered('PLEASE ENTER YOUR ORDERS NOW'));
+                    this.datemsg(" " + obj.date.toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' }));
+                    this.infomsg();
+                }
+            });
+            game.on('message', (typ, ...lines) => {
+                switch (typ) {
+                    case 'error':
+                        this.errmsg(...lines);
+                        break;
+                    case 'info':
+                        this.infomsg(...lines);
+                        break;
+                    case 'date':
+                        this.datemsg(...lines);
+                        break;
+                }
+            });
+            game.on('unit', paintUnit);
+            game.on('map', paintMap);
         }
-        changeListener(typ, event, obj, options) {
-            // console.debug(`Display.changeListener got ${typ}.${event}`);
-
-            switch (typ) {
-                case 'map':
-                    paintMap(options);
-                    break;
-                case 'unit':
-                    paintUnit(obj, event);
-                    break;
-                case 'msg':
-                    switch (event) {
-                        case 'info': this.infomsg(...obj); break;
-                        case 'date': this.datemsg(...obj); break;
-                        case 'err': this.errmsg(obj); break;
-                    }
-                    break;
-                default:
-                    console.warn(`Display.changeListener ignoring ${typ}.${event}`);
-            }
-        }
-        datemsg(line2, line1) {  // by default put on second line
-            putlines('#date-window', [line1 || "", line2 || ""]);
+        datemsg(line2, line1) {
+            putlines('#date-window', [line1 !== null && line1 !== void 0 ? line1 : "", line2 !== null && line2 !== void 0 ? line2 : ""]);
         }
         infomsg(line1, line2) {
-            putlines('#info-window', [line1 || "", line2 || ""]);
+            putlines('#info-window', [line1 !== null && line1 !== void 0 ? line1 : "", line2 !== null && line2 !== void 0 ? line2 : ""]);
         }
         errmsg(text) {
-            let s = (this.#score || '').toString().padStart(3).padEnd(4);
-            s += centered(text || "", 36);
+            text !== null && text !== void 0 ? text : (text = '');
+            let s;
+            if (__classPrivateFieldGet(this, _Display_score, "f") == null) {
+                s = centered(text);
+            }
+            else {
+                s = __classPrivateFieldGet(this, _Display_score, "f").toString().padStart(3).padEnd(4) + centered(text, 36);
+            }
             putlines('#err-window', [s]);
         }
-        setZoom(zoomed, focus) {
+        setZoom(zoomed, u) {
             var elt;
-            if (focus) {
+            if (u != null) {
                 elt = select('#kreuze').node();
-            } else {
-                let x = 320/2,
-                    y = 144/2 + select('#map-window').node().offsetTop - window.scrollY;
-                elt = document.elementFromPoint(x*4, y*4);
+            }
+            else {
+                let x = 320 / 2, y = 144 / 2 + select('#map-window').node().offsetTop - window.scrollY;
+                elt = document.elementFromPoint(x * 4, y * 4);
             }
             // toggle zoom level, apply it, and re-center target eleemnt
             select('#map-window .container').classed('doubled', zoomed);
-            elt.scrollIntoView({block: "center", inline: "center"});
+            elt.scrollIntoView({ block: "center", inline: "center" });
         }
         setVisibility(sel, visible) {
-            selectAll(sel).style('visibility', visible ? 'visible': 'hidden');
-        }
-        nextTurn(date, score) {
-            // clear error, show score for this turn
-            this.#score = score;
-            this.errmsg(centered('PLEASE ENTER YOUR ORDERS NOW'));
-            this.datemsg(" " + date.toLocaleDateString("en-US", {year: 'numeric', month: 'long', day: 'numeric'}));
-            this.infomsg();
+            selectAll(sel).style('visibility', visible ? 'visible' : 'hidden');
         }
     }
-    Display.centered = centered;
+    _Display_score = new WeakMap();
 
+    var _Thinker_instances, _Thinker_game, _Thinker_player, _Thinker_trainOfThought, _Thinker_depth, _Thinker_delay, _Thinker_concluded, _Thinker_recur, _Thinker_findBeleaguered, _Thinker_evalLocation;
     class Thinker {
-        #game;
-        #player;
-        #trainOfThought = 0;
-        #depth = 0;
-        #delay;
-        #concluded = false;
-
         constructor(game, player) {
-            this.#game = game;
-            this.#player = player;
+            _Thinker_instances.add(this);
+            _Thinker_game.set(this, void 0);
+            _Thinker_player.set(this, void 0);
+            _Thinker_trainOfThought.set(this, 0);
+            _Thinker_depth.set(this, 0);
+            _Thinker_delay.set(this, 0);
+            _Thinker_concluded.set(this, false);
+            this.finalized = true;
+            __classPrivateFieldSet(this, _Thinker_game, game, "f");
+            __classPrivateFieldSet(this, _Thinker_player, player, "f");
         }
-
         thinkRecurring(delay) {
-            this.#delay = (delay == null) ? 250: delay;
-            this.concluded = false;
-
-            this.#recur(this.#trainOfThought);
+            __classPrivateFieldSet(this, _Thinker_delay, (delay == null) ? 250 : delay, "f");
+            this.finalized = false;
+            __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_recur).call(this, __classPrivateFieldGet(this, _Thinker_trainOfThought, "f"));
         }
-
-        #recur(train) {
-            if (train != this.#trainOfThought) {
-                // skip pre-scheduled old train of thought
-                console.debug(`Skipped passing thought, train ${train}`);
-                return;
-            }
-            const t0 = performance.now();
-            this.think()
-                .forEach(u => this.#game.notify('unit', 'orders', u));
-            const dt = performance.now() - t0;
-
-            this.#delay *= 1.1;  // gradually back off thinking rate
-            console.debug(`Think.#recur ${train}-${this.#depth} took ${Math.round(dt)}ms; waiting ${Math.round(this.#delay)}ms`);
-            this.#depth++;
-
-            setTimeout(() => this.#recur(train), this.#delay);
-        }
-        concludeRecurring() {
-            console.debug("Concluding...");
-            this.#trainOfThought++;
-            this.#depth = 0;
-            this.concluded = true;
-            this.#game.oob.activeUnits(this.#player).forEach(u => {u.orders = u.orders.slice(0, 8);});
+        finalize() {
+            var _a;
+            console.debug("Finalizing...");
+            __classPrivateFieldSet(this, _Thinker_trainOfThought, (_a = __classPrivateFieldGet(this, _Thinker_trainOfThought, "f"), _a++, _a), "f");
+            __classPrivateFieldSet(this, _Thinker_depth, 0, "f");
+            this.finalized = true;
+            __classPrivateFieldGet(this, _Thinker_game, "f").oob.activeUnits(__classPrivateFieldGet(this, _Thinker_player, "f")).forEach(u => u.setOrders(u.orders.slice(0, 8)));
         }
         think() {
-            const
-                firstpass = this.#depth == 0,
-                pinfo = players[this.#player],
-                friends = this.#game.oob.activeUnits(this.#player),
-                foes = this.#game.oob.activeUnits(1-this.#player);
-
+            const firstpass = __classPrivateFieldGet(this, _Thinker_depth, "f") == 0, pinfo = players[__classPrivateFieldGet(this, _Thinker_player, "f")], friends = __classPrivateFieldGet(this, _Thinker_game, "f").oob.activeUnits(__classPrivateFieldGet(this, _Thinker_player, "f")), foes = __classPrivateFieldGet(this, _Thinker_game, "f").oob.activeUnits(1 - __classPrivateFieldGet(this, _Thinker_player, "f"));
             // set up the ghost army
-            var ofr = 0;  // only used in first pass
+            var ofr = 0; // only used in first pass
             if (firstpass) {
-                ofr = calcForceRatios(this.#game.oob, this.#player).ofr;
+                ofr = calcForceRatios(__classPrivateFieldGet(this, _Thinker_game, "f").oob, __classPrivateFieldGet(this, _Thinker_player, "f")).ofr;
                 console.log('Overall force ratio (OFR) is', ofr);
-                friends.forEach(u => {u.objective = u.location;});
+                friends.forEach(u => { u.objective = u.location; });
             }
-
             friends.filter(u => u.canMove).forEach(u => {
                 //TODO these first two checks don't seem to depend on ghost army so are fixed on first pass?
                 if (firstpass && u.ifr == (ofr >> 1)) {
                     // head to reinforce if no local threat since (Local + OFR) / 2 = OFR / 2
                     //TODO this tends to send most units to same beleagured square
-                    let v = this.#findBeleaguered(u, friends);
-                    if (v) u.objective = v.location;
-                } else if (firstpass && (u.cstrng <= (u.mstrng >> 1) || u.ifrdir[pinfo.homedir] >= 16)) {
+                    let v = __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_findBeleaguered).call(this, u, friends);
+                    if (v)
+                        u.objective = v.location;
+                }
+                else if (firstpass && (u.cstrng <= (u.mstrng >> 1) || u.ifrdir[pinfo.homedir] >= 16)) {
                     // run home if hurting or outnumbered in the rear
                     //TODO could look for farthest legal square (valid & not impassable) 5, 4, ...
                     let d = directions[pinfo.homedir];
-                    u.objective = new Location(u.lon + 5 * d.dlon, u.lat + 5 * d.dlat);
-                } else {
+                    u.objective = { lon: u.lon + 5 * d.dlon, lat: u.lat + 5 * d.dlat };
+                }
+                else {
                     // find nearest best square
-                    let start = u.objective,
-                        bestval = this.#evalLocation(u, start, friends, foes);
-                    directions.forEach((_, i) => {
-                        let loc = this.#game.mapboard.neighbor(start, i);
-                        if (!loc) return;
-                        let sqval = this.#evalLocation(u, loc, friends, foes);
+                    let start = __classPrivateFieldGet(this, _Thinker_game, "f").mapboard.locationOf(u.objective), bestval = __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_evalLocation).call(this, u, start, friends, foes);
+                    Object.keys(directions).forEach(d => {
+                        let loc = __classPrivateFieldGet(this, _Thinker_game, "f").mapboard.neighborOf(start, +d);
+                        if (!loc)
+                            return;
+                        let sqval = __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_evalLocation).call(this, u, loc, friends, foes);
                         if (sqval > bestval) {
                             bestval = sqval;
-                            u.objective = loc;
+                            loc.put(u.objective);
                         }
                     });
                 }
-                if (!u.objective) return;
+                if (!u.objective)
+                    return;
                 let result = u.bestPath(u.objective);
-                if (!result) return;
-                u.orders = result.orders;  // We'll prune to 8 later
+                if (!result)
+                    return;
+                u.setOrders(result.orders); // We'll prune to 8 later
             });
-
             return friends.filter(u => u.objective);
         }
-        #findBeleaguered(u, friends) {
-            let best = null, score = 0;
-            friends.filter(v => v.ifr > u.ifr).forEach(v => {
-                    let d = Mapboard.manhattanDistance(u, v);
-                    if (d <= 8) return;  // APX code does weird bit 3 check
-                    let s = v.ifr - (d >> 3);
-                    if (s > score) {
-                        score = s;
-                        best = v;
-                    }
-                });
-            return best;
-        }
-        #evalLocation(u, loc, friends, foes) {
-            let ghosts = {},
-                range = Mapboard.manhattanDistance(u, loc);
-
-            // too far, early exit
-            if (range >= 8) return 0;
-
-            const nbval = Math.min(...foes.map(v => Mapboard.manhattanDistance(loc, v)));
-
-            // on the defensive and square is occupied by an enemy
-            if (u.ifr >= 16 && nbval == 0) return 0;
-
-            friends.filter(v => v.id != u.id)
-                .forEach(v => { ghosts[v.objective.id] = v.id; });
-
-            let isOccupied = pt => ghosts[pt.id],
-                dibs = false;
-
-            if (isOccupied(loc)) dibs = true;      // someone else have dibs already?
-            else ghosts[loc.id] = u.id;
-
-            const square = this.#game.mapboard.squareSpiral(loc, 5),
-                linepts = directions.map(
-                    (_, i) => linePoints(sortSquareFacing(loc, 5, i, square), 5, isOccupied)
-                ),
-                tadj = terraintypes[loc.terrain].defence + 2;  // our 0 adj is equiv to his 2
-
-            let sqval = sum(linepts.map((scr, i) => scr * u.ifrdir[i])) >> 8;
-            sqval += u.ifr >= 16 ? u.ifr * (nbval + tadj) : 2 * (15 - u.ifr) * (9 - nbval + tadj);
-            if (dibs) sqval -= 32;
-            sqval -= 1 << range;
-            return sqval < 0 ? 0 : sqval;
-        }
     }
-
+    _Thinker_game = new WeakMap(), _Thinker_player = new WeakMap(), _Thinker_trainOfThought = new WeakMap(), _Thinker_depth = new WeakMap(), _Thinker_delay = new WeakMap(), _Thinker_concluded = new WeakMap(), _Thinker_instances = new WeakSet(), _Thinker_recur = function _Thinker_recur(train) {
+        var _a;
+        if (train != __classPrivateFieldGet(this, _Thinker_trainOfThought, "f")) {
+            // skip pre-scheduled old train of thought
+            console.debug(`Skipped passing thought, train ${train}`);
+            return;
+        }
+        const t0 = performance.now();
+        this.think();
+        const dt = performance.now() - t0;
+        __classPrivateFieldSet(this, _Thinker_delay, __classPrivateFieldGet(this, _Thinker_delay, "f") * 1.1, "f"); // gradually back off thinking rate
+        console.debug(`Think.#recur ${train}-${__classPrivateFieldGet(this, _Thinker_depth, "f")} took ${Math.round(dt)}ms; waiting ${Math.round(__classPrivateFieldGet(this, _Thinker_delay, "f"))}ms`);
+        __classPrivateFieldSet(this, _Thinker_depth, (_a = __classPrivateFieldGet(this, _Thinker_depth, "f"), _a++, _a), "f");
+        setTimeout(() => __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_recur).call(this, train), __classPrivateFieldGet(this, _Thinker_delay, "f"));
+    }, _Thinker_findBeleaguered = function _Thinker_findBeleaguered(u, friends) {
+        let best = null, score = 0;
+        friends.filter(v => v.ifr > u.ifr).forEach(v => {
+            let d = GridPoint.manhattanDistance(u, v);
+            if (d <= 8)
+                return; // APX code does weird bit 3 check
+            let s = v.ifr - (d >> 3);
+            if (s > score) {
+                score = s;
+                best = v;
+            }
+        });
+        return best;
+    }, _Thinker_evalLocation = function _Thinker_evalLocation(u, loc, friends, foes) {
+        let ghosts = {}, range = GridPoint.manhattanDistance(u, loc);
+        // too far, early exit
+        if (range >= 8)
+            return 0;
+        const nbval = Math.min(...foes.map(v => GridPoint.manhattanDistance(loc, v)));
+        // on the defensive and square is occupied by an enemy
+        if (u.ifr >= 16 && nbval == 0)
+            return 0;
+        friends.filter(v => v.id != u.id)
+            .forEach(v => { ghosts[GridPoint.get(v.objective).id] = v.id; });
+        let isOccupied = (pt) => !!ghosts[pt.id], dibs = false;
+        if (isOccupied(loc))
+            dibs = true; // someone else have dibs already?
+        else
+            ghosts[loc.id] = u.id;
+        const square = GridPoint.squareSpiral(loc, 5), linepts = Object.keys(directions).map(d => linePoints(sortSquareFacing(loc, 5, +d, square), 5, isOccupied)), tadj = terraintypes[loc.terrain].defence + 2; // our 0 adj is equiv to his 2
+        let sqval = sum(linepts.map((scr, i) => scr * u.ifrdir[i])) >> 8;
+        sqval += u.ifr >= 16 ? u.ifr * (nbval + tadj) : 2 * (15 - u.ifr) * (9 - nbval + tadj);
+        if (dibs)
+            sqval -= 32;
+        sqval -= 1 << range;
+        return sqval < 0 ? 0 : sqval;
+    };
     function calcForceRatios(oob, player) {
-        let active = oob.activeUnits(),
-            friend = sum(active.filter(u => u.player == player).map(u => u.cstrng)),
-            foe = sum(active.filter(u => u.player != player).map(u => u.cstrng)),
-            ofr = Math.floor((foe << 4) / friend),
-            ofropp = Math.floor((friend << 4) / foe);
-
+        let active = oob.activeUnits(), friend = sum(active.filter(u => u.player == player).map(u => u.cstrng)), foe = sum(active.filter(u => u.player != player).map(u => u.cstrng)), ofr = Math.floor((foe << 4) / friend), ofropp = Math.floor((friend << 4) / foe);
         active.forEach(u => {
-            let nearby = active.filter(v => Mapboard.manhattanDistance(u, v) <= 8),
-                friend = 0,
-                loc = u.location;
+            let nearby = active.filter(v => GridPoint.manhattanDistance(u, v) <= 8), friend = 0, loc = u.location;
             u.ifrdir = [0, 0, 0, 0];
             nearby.forEach(v => {
                 let inc = v.cstrng >> 4;
-                if (v.player == u.player) friend += inc;
-                else u.ifrdir[Mapboard.directionFrom(loc, v.location)] += inc;
+                if (v.player == u.player)
+                    friend += inc;
+                else
+                    u.ifrdir[GridPoint.directionFrom(loc, v.location)] += inc;
             });
             // individual and overall ifr max 255
             let ifr = Math.floor((sum(u.ifrdir) << 4) / friend);
             // we actually work with average of IFR + OFR
-            u.ifr = (ifr + (u.player == player ? ofr: ofropp)) >> 1;
+            u.ifr = (ifr + (u.player == player ? ofr : ofropp)) >> 1;
         });
-        return {ofr, friend, foe};
+        return { ofr, friend, foe };
     }
-
     function sortSquareFacing(center, diameter, dir, locs) {
-        if (diameter % 2 != 1) throw("Diameter should be odd: 1, 3, 5, ...");
-        if (!locs || locs.length != diameter * diameter) throw("Square diameter doesn't match length");
-
-        let r = (diameter - 1)/2,
-            minor = directions[(dir+1)%4],
-            major = directions[(dir+2)%4],
-            out = new Array(locs.length);
-
+        if (diameter % 2 != 1)
+            throw (`sortSquareFacing: diameter should be odd, got ${diameter}`);
+        if (!locs || locs.length != diameter * diameter)
+            throw (`sortSquareFacing: diameter : size mismatch ${locs.length} != ${diameter}^2`);
+        let r = (diameter - 1) / 2, minor = directions[(dir + 1) % 4], major = directions[(dir + 2) % 4], out = new Array(locs.length);
         locs.forEach(loc => {
-            let dlat = loc.lat - center.lat,
-                dlon = loc.lon - center.lon,
-                idx = (
-                    r + dlat * major.dlat + dlon * major.dlon
-                    + diameter * (r + dlat * minor.dlat + dlon * minor.dlon)
-                );
+            let dlat = loc.lat - center.lat, dlon = loc.lon - center.lon, idx = (r + dlat * major.dlat + dlon * major.dlon
+                + diameter * (r + dlat * minor.dlat + dlon * minor.dlon));
             out[idx] = loc;
         });
         return out;
     }
-
     function linePoints(locs, diameter, occupied) {
         // curious that this doesn't consider terrain, e.g. a line ending at the coast will get penalized heavily?
-        let r = (diameter-1)/2,
-            frontline = Array(diameter).fill(diameter),
-            counts = Array(diameter).fill(0),
-            row = -1, col = -1,
-            score = 0;
-
+        let r = (diameter - 1) / 2, frontline = Array(diameter).fill(diameter), counts = Array(diameter).fill(0), row = -1, col = -1, score = 0;
         locs.forEach(loc => {
             row = (row + 1) % diameter;
-            if (row == 0) col++;
+            if (row == 0)
+                col++;
             if (occupied(loc)) {
                 counts[col] += 1;
-                if (frontline[col] == diameter) frontline[col] = row;
+                if (frontline[col] == diameter)
+                    frontline[col] = row;
             }
         });
         frontline.forEach((row, col) => {
-            if (row < diameter) score += 40;
-            if (row < diameter-1 && occupied(locs[row + 1 + diameter*col])) score -= 32;
+            if (row < diameter)
+                score += 40;
+            if (row < diameter - 1 && occupied(locs[row + 1 + diameter * col]))
+                score -= 32;
         });
-        if (frontline[r] == r && counts[r] == 1) score += 48;
+        if (frontline[r] == r && counts[r] == 1)
+            score += 48;
         // also curious that we look at all pairs not just adjacent ones?
-        for (let i=1; i<diameter; i++) for (let j=0; j<i; j++) {
-            let delta = Math.abs(frontline[i]-frontline[j]);
-            if (delta) score -= 1 << delta;
-        }
+        for (let i = 1; i < diameter; i++)
+            for (let j = 0; j < i; j++) {
+                let delta = Math.abs(frontline[i] - frontline[j]);
+                if (delta)
+                    score -= 1 << delta;
+            }
         return score;
     }
 
-    var game,
-        display,
-        ai,
-        initialSetup = true,
-        focusid = null,  // current focused unit id
-        lastid = null;   // must recent focused unit id (= focusid or null)
+    const helpText = `
+0123456789012345678901234567890123456789
 
-    function mapHover(ev, loc) {
-        let s = game.mapboard.describe(loc);
-        if (loc.unitid != null) s += '\n' + game.oob.at(loc.unitid).describe(game.debug);
-        select(this).attr('title', s);
-    }
 
-    function mapClick(ev, loc) {
-        let u = getFocusedUnit();
-        display.errmsg();       // clear errror window
-        if (loc.unitid == null || (u && u.id == loc.unitid)) {
-            // clicking an empty square or already-focused unit unfocuses
-            unfocusUnit();
-            if (loc.cityid) {
-                const label = game.mapboard.cities[loc.cityid].label.toUpperCase();
-                display.infomsg(Display.centered(label));
-            }
-        } else {
-            focusUnit(game.oob.at(loc.unitid));
-        }
-    }
+      Welcome to Chris Crawford's
+          Eastern Front  1941
 
-    function toggleHelp() {
-        game.help = !game.help;
-        display.setVisibility('#help-window', game.help);
-        display.setVisibility('#map-scroller', !game.help);  //TODO needs to be display not visibility
+       Ported by Patrick Surry }
 
-        if (!game.help && initialSetup) nextTurn();  // start the game
-    }
+  Select: Click, [n]ext, [p]rev
+  Orders: \x1f, \x1c, \x1d, \x1e, [Bksp]
+  Cancel: [Space], [Esc]
+  Submit: [End], [Fn \x1f]
+  Toggle: [z]oom, e[x]tras, debu[g]
 
-    function toggleExtras() {
-        game.extras = !game.extras;
-        display.setVisibility('.extra', game.extras);
-    }
+          [?] shows this help
 
-    function toggleDebug() {
-        game.debug = !game.debug;
-        display.setVisibility('.debug', game.debug);
-    }
+         Press any key to play!
 
-    function toggleZoom() {
-        game.zoom = !game.zoom;
-        display.setZoom(game.zoom, getFocusedUnit());
-    }
-
-    function setLevel(key) {
-    /*
-        orginal game shows errmsg "[SELECT]: LEARNER  [START] TO BEGIN" with copyright in txt window,
-        where [] is reverse video.  could switch to "[< >]: LEARNER  [ENTER] TO BEGIN(RESUME)"
-        so < > increments level, # picks directly
-    */
-        console.log('set level', +key);
-    }
-
-    const keyboardCommands = {
-        n:          {action: focusUnitRelative, args: [1], help: "Select: Click, [n]ext, [p]rev"},
-        Enter:      {action: focusUnitRelative, args: [1]},
-        p:          {action: focusUnitRelative, args: [-1]},
-        ArrowUp:    {action: showNewOrder, args: [Direction.north], help: "Orders: \x1f, \x1c, \x1d, \x1e, [Bksp]"},
-        ArrowRight: {action: showNewOrder, args: [Direction.east]},
-        ArrowDown:  {action: showNewOrder, args: [Direction.south]},
-        ArrowLeft:  {action: showNewOrder, args: [Direction.west]},
-        Backspace:  {action: showNewOrder, args: [-1]},
-        Escape:     {action: showNewOrder, help: "Cancel: [Space], [Esc]"},
-        " ":        {action: showNewOrder},
-        End:        {action: resolveTurn, help: "Submit: [End], [Fn \x1f]"},
-        z:          {action: toggleZoom, help: "Toggle: [z]oom, e[x]tras, debu[g]"},
-        x:          {action: toggleExtras},
-        g:          {action: toggleDebug},
-        "?":        {action: toggleHelp},
-        "/":        {action: toggleHelp},
-        "1":        {action: setLevel},
-        "2":        {action: setLevel},
-        "3":        {action: setLevel},
-        "4":        {action: setLevel},
-        "5":        {action: setLevel},
-        "6":        {action: setLevel},
-        "0":        {action: setLevel},
-    };
-
-    function keyhandler(e) {
-        let cmd = (
-            game.help   // if help is displayed, pretend any key  is '?' to toggle off
-            ? keyboardCommands["?"]
-            : (keyboardCommands[e.key] || keyboardCommands[e.key.toLowerCase()])
-        );
-        if (cmd) {
-            let args = [].concat(cmd.args || [], [e.key]);
-            display.errmsg();   // clear error
-            cmd.action(...args);
-            e.preventDefault();     // eat event if handled
-        } else {
-            console.log(e.key);
-        }
-    }
-
-    const helpText = [].concat(
-        [
-            "",
-            "",
-            Display.centered("Welcome to Chris Crawford's"),
-            Display.centered("Eastern Front  1941"),
-            "",
-            Display.centered("Ported by Patrick Surry }"),
-            "",
-        ],
-        Object.values(keyboardCommands)
-            .filter(d => d.help)
-            .map(d => "  " + d.help),
-        [
-            "",
-            Display.centered("[?] shows this help"),
-            "",
-            Display.centered("Press any key to play!"),
-        ]
-    );
-
+0123456789012345678901234567890123456789
+`.split('\n').slice(2, -2);
+    var game, display, ai, zoom = 0, // display zoom 0 or 1
+    help = 1, // help visible 0 or 1
+    uimode = null, focusid = null, // current focused unit id
+    lastid = null; // most recent focused unit id (= focusid or null)
     // main entry point
     function start() {
-        const resume = window.location.hash.slice(1) || null;
+        const resume = window.location.hash.slice(1) || undefined;
         game = new Game(resume);
-        display = new Display(helpText, game);
-
-        ai = Object.values(Player).filter(player => player != game.human).map(player => new Thinker(game, player));
-
-        // for amusement add a hyperlink on help page
-        selectAll('#help-window .chr')
-            .filter(d => d == "}")
-            .on('click', () => window.open('https://github.com/patricksurry/eastern-front-1941'));
-
+        display = new Display(game, helpText, 'https://github.com/patricksurry/eastern-front-1941');
+        game.start();
+        game.on('game', (action) => {
+            if (action == 'turn' && uimode == 2 /* UIModeKey.resolve */)
+                setMode(1 /* UIModeKey.orders */);
+        });
+        ai = Object.keys(players)
+            .filter(player => +player != game.human)
+            .map(player => new Thinker(game, +player));
         // set up a click handler to toggle help
         select('#help-window').on('click', toggleHelp);
-        display.setVisibility('#help-window', false);
-
         // add map square click handlers
         selectAll('#map .chr')
-            .on('click', mapClick)
-            .on('mouseover', mapHover);
-
-        // either show help which starts the game on dismiss, or start immediately if resuming
-        if (!resume) toggleHelp();
-        else nextTurn();
-
+            .on('click', mapClickHandler)
+            .on('mouseover', mapHoverHandler);
         // start the key handler
-        if (game.human != null) document.addEventListener('keydown', keyhandler);
+        document.addEventListener('keydown', keyHandler);
+        if (resume) {
+            // hide help and keep going
+            toggleHelp();
+            setMode(1 /* UIModeKey.orders */);
+        }
+        else {
+            setMode(0 /* UIModeKey.setup */);
+        }
     }
-
-    function resolveTurn() {
-        // if some thinker is `concluded` it means we're already resolving a turn, so ignore
-        if (ai.some(t => t.concluded)) return;
-
-        // tell thinker(s) to finalize orders
-        ai.forEach(t => t.concludeRecurring());
-
-        // process movement from prior turn
-        display.errmsg('EXECUTING MOVE');
-        unfocusUnit();
-
-        game.resolveTurn(nextTurn, 250);
+    const modes = {
+        [0 /* UIModeKey.setup */]: {
+            enter: () => {
+                display.infomsg(display.centered('COPYRIGHT 1982 ATARI'), display.centered('ALL RIGHTS RESERVED'));
+                //TODO this won't work until game responds appropriately
+                //setScenario(Scenario.beginner);
+            },
+            keyHandler: (key) => {
+                if (keymap.prev.includes(key) || key == 'ArrowLeft') {
+                    setScenario(null, -1);
+                }
+                else if (keymap.next.includes(key) || key == 'ArrowRight') {
+                    setScenario(null, +1);
+                }
+                else if (keymap.scenario.includes(key)) {
+                    setScenario(parseInt(key));
+                }
+                else if (key == 'Enter') {
+                    setMode(1 /* UIModeKey.orders */);
+                }
+                else {
+                    return false;
+                }
+                return true;
+            },
+        },
+        [1 /* UIModeKey.orders */]: {
+            enter: () => {
+                window.location.hash = game.token;
+                // start thinking...
+                ai.forEach(t => t.thinkRecurring(250));
+            },
+            keyHandler: (key) => {
+                if (keymap.prev.includes(key)) {
+                    focusUnitRelative(-1);
+                }
+                else if (keymap.next.includes(key) || key == 'Enter') {
+                    focusUnitRelative(+1);
+                }
+                else if (key in arrowmap) {
+                    showNewOrder(arrowmap[key]);
+                }
+                else if (keymap.cancel.includes(key)) {
+                    showNewOrder(null);
+                }
+                else if (key == 'Backspace') {
+                    showNewOrder(-1);
+                }
+                else if (key == 'End') {
+                    setMode(2 /* UIModeKey.resolve */);
+                }
+                else {
+                    return false;
+                }
+                return true;
+            },
+            mapClickHandler: (ev, loc) => {
+                let u = getFocusedUnit();
+                display.errmsg(); // clear errror window
+                if (loc.unitid == null || (u && u.id == loc.unitid)) {
+                    // clicking an empty square or already-focused unit unfocuses
+                    blurUnit();
+                    if (loc.cityid) {
+                        const label = game.mapboard.cities[loc.cityid].label.toUpperCase();
+                        display.infomsg(display.centered(label));
+                    }
+                }
+                else {
+                    focusUnit(game.oob.at(loc.unitid));
+                }
+            },
+        },
+        [2 /* UIModeKey.resolve */]: {
+            enter: () => {
+                // finalize AI orders
+                ai.forEach(t => t.finalize());
+                blurUnit();
+                display.errmsg('EXECUTING MOVE');
+                game.nextTurn(250);
+            },
+            keyHandler: (key) => {
+                if (keymap.prev.includes(key)) {
+                    focusUnitRelative(-1);
+                }
+                else if (keymap.next.includes(key) || key == 'Enter') {
+                    focusUnitRelative(+1);
+                }
+                else {
+                    return false;
+                }
+                return true;
+            }
+        }
+    };
+    function setMode(m) {
+        if (uimode && modes[uimode].exit != null)
+            modes[uimode].exit();
+        uimode = m;
+        if (modes[m].enter != null)
+            modes[m].enter();
     }
-
-    function nextTurn() {
-        game.nextTurn(initialSetup);
-        display.nextTurn(game.date, game.score(game.human));
-        initialSetup = false;
-        window.location.hash = game.token;
-        // start thinking...
-        ai.forEach(t => t.thinkRecurring(250));
+    const keymap = {
+        help: '?/',
+        prev: '<,p',
+        next: '>.n',
+        cancel: ['Escape', ' '],
+        scenario: '0123456789'.slice(0, Object.keys(scenarios).length),
+        extras: 'xX',
+        zoom: 'zZ',
+        debug: 'gG',
+    }, arrowmap = {
+        ArrowUp: 0 /* DirectionKey.north */,
+        ArrowDown: 2 /* DirectionKey.south */,
+        ArrowRight: 1 /* DirectionKey.east */,
+        ArrowLeft: 3 /* DirectionKey.west */,
+    };
+    function keyHandler(e) {
+        let handled = true;
+        display.errmsg(); // clear error
+        if (help || keymap.help.includes(e.key)) {
+            toggleHelp();
+        }
+        else if (keymap.zoom.includes(e.key)) {
+            toggleZoom();
+        }
+        else if (keymap.extras.includes(e.key)) {
+            toggleExtras();
+        }
+        else if (keymap.debug.includes(e.key)) {
+            toggleDebug();
+        }
+        else if (uimode && modes[uimode].keyHandler != null) {
+            handled = modes[uimode].keyHandler(e.key);
+        }
+        if (handled)
+            e.preventDefault(); // eat event if handled
     }
-
+    function mapClickHandler(ev, loc) {
+        if (uimode && modes[uimode].mapClickHandler != null)
+            modes[uimode].mapClickHandler(ev, loc);
+    }
+    function mapHoverHandler(ev, loc) {
+        let s = loc.describe();
+        if (loc.unitid != null)
+            s += '\n' + game.oob.at(loc.unitid).describe(!!game.debug);
+        select(this).attr('title', s);
+    }
+    function toggleHelp() {
+        help = help ? 0 : 1;
+        display.setVisibility('#help-window', !!help);
+        display.setVisibility('#map-scroller', !help); //TODO needs to be display not visibility
+    }
+    function toggleZoom() {
+        zoom = zoom ? 0 : 1;
+        display.setZoom(!!zoom, getFocusedUnit());
+    }
+    function toggleExtras() {
+        game.extras = game.extras ? 0 : 1;
+        display.setVisibility('.extra', !!game.extras);
+    }
+    function toggleDebug() {
+        game.debug = game.debug ? 0 : 1;
+        display.setVisibility('.debug', !!game.debug);
+    }
+    function setScenario(scenario, inc) {
+        /*
+            orginal game shows errmsg "[SELECT]: LEARNER  [START] TO BEGIN" with copyright in txt window,
+            where [] is reverse video.  could switch to "[< >]: LEARNER  [ENTER] TO BEGIN(RESUME)"
+            so < > increments scenario, # picks directly
+        */
+        inc !== null && inc !== void 0 ? inc : (inc = 0);
+        let n = Object.keys(scenarios).length;
+        if (scenario == null) {
+            scenario = (game.scenario + inc + n) % n;
+        }
+        // TODO setter
+        game.scenario = scenario;
+        let label = scenarios[scenario].label.padEnd(8, ' ');
+        display.errmsg(display.centered(`[<] ${label} [>]  [ENTER] TO START`));
+    }
     function focusUnit(u) {
-        unfocusUnit();
-        if (!u) return;
-
+        blurUnit();
+        if (!u)
+            return;
         focusid = u.id;
         lastid = focusid;
-
         display.infomsg(`     ${u.label}`, `     MUSTER: ${u.mstrng}  COMBAT: ${u.cstrng}`);
-
         if (game.extras) {
             let locs = u.reach();
-            selectAll('.chr-dim').filter(d => !(d.id in locs)).style('opacity', 0.5);
+            selectAll('.chr-dim').filter((d) => !(d.id in locs)).style('opacity', 0.5);
         }
-
-        game.notify('unit', 'selected', u);
+        game.emit('unit', 'focus', u);
     }
-
     function focusUnitRelative(offset) {
         // sort active germans descending by location id (right => left reading order)
         let humanUnits = game.oob.activeUnits(game.human)
-                .sort((a, b) => game.mapboard.locationOf(b).id - game.mapboard.locationOf(a).id),
-            n = humanUnits.length;
+            .sort((a, b) => game.mapboard.locationOf(b).id - game.mapboard.locationOf(a).id), n = humanUnits.length;
         var i;
         if (lastid) {
             i = humanUnits.findIndex(u => u.id == lastid);
             if (i < 0) {
                 // if last unit no longer active, find the nearest active unit
                 let locid = game.mapboard.locationOf(game.oob.at(lastid)).id;
-                while (++i < humanUnits.length && game.mapboard.locationOf(humanUnits[i]).id > locid) {/**/}
+                while (++i < humanUnits.length && game.mapboard.locationOf(humanUnits[i]).id > locid) { /**/ }
             }
-        } else {
-            i = offset > 0 ? -1: 0;
+        }
+        else {
+            i = offset > 0 ? -1 : 0;
         }
         i = (i + n + offset) % n;
         focusUnit(humanUnits[i]);
     }
-
     function getFocusedUnit() {
-        return focusid === null ? null: game.oob.at(focusid);
+        return focusid === null ? null : game.oob.at(focusid);
     }
-
-    function unfocusUnit() {
+    function blurUnit() {
         const u = getFocusedUnit();
-        if (u) game.notify('unit', 'unselected', u);
+        if (u)
+            game.emit('unit', 'blur', u);
         display.infomsg();
         focusid = null;
         selectAll('.chr-dim').style('opacity', 0);
         window.location.hash = game.token;
     }
-
     function showNewOrder(dir) {
         let u = getFocusedUnit();
-        if (!u) return;
+        if (!u)
+            return;
         if (!u.human) {
-            display.errmsg(`THAT IS A ${players[u.player].key.toUpperCase()} UNIT!`);
+            display.errmsg(`THAT IS A ${players[u.player].label.toUpperCase()} UNIT!`);
             return;
         }
         if (dir == null) {
             if (u.orders.length == 0) {
-                unfocusUnit();
+                blurUnit();
                 return;
             }
             u.resetOrders();
-        } else if (dir == -1) {
-            u.orders.pop();
-        } else {
+        }
+        else if (dir == -1) {
+            u.delOrder();
+        }
+        else {
             u.addOrder(dir);
         }
         focusUnit(u);
@@ -5510,5 +6073,5 @@ var ef1941 = (function (exports) {
 
     return exports;
 
-})({});
+})({}, window);
 //# sourceMappingURL=ef1941.js.map
