@@ -1,27 +1,3 @@
-:root {
-  --fontmap: url(fontmap-apx.png);
-}
-#screen {
-    width: 320px;
-    height: 192px;
-/*    background-color: blue; */
-    transform-origin: top center;
-    transform:  scale(4);
-    margin: 0 auto;
-}
-.section {
-    width: 100%;
-    overflow: hidden;
-}
-.rule {
-    height: 2px;
-}
-#date-window, #map-window, #info-window, #err-window {
-    position: relative;
-}
-#date-window {
-    height:  16px;
-}
 .container {
     transform-origin: top left;
     width: 100%;
@@ -49,13 +25,6 @@
 }
 #err-window {
     height: 8px;
-}
-#map-scroller {
-    /* 48 x 41  8px sq cells*/
-    width: 384px;
-    height: 328px;
-    overflow: hidden;
-    position: relative;
 }
 .map-layer {
     position: absolute;
@@ -149,18 +118,7 @@
     background-color: rgb(50,205,50, 0.8);
     height: 100%;
 }
-.unit-path {
-    opacity: 0.5;
-}
-.unit-path path {
-    fill: none;
-    stroke-linecap: round;
-    stroke-width: 1px;
-    vector-effect: non-scaling-stroke;
-}
-.unit-path circle {
-    stroke: none;
-}
+
 .debug {
     visibility: hidden;
 }

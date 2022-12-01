@@ -1,3 +1,6 @@
+import type {AnticColor} from './antic';
+
+
 type Flag = 0 | 1;
 type Point = {lon: number, lat: number};
 
@@ -15,8 +18,6 @@ function memoize<S, T>(fn: (x: S) => T): (x: S) => T {
     };
     return cached;
 };
-  
-type AnticColor = string; //TODO
 
 // mimic logic from STKTABlon looking for zeroed pins
 // see https://forums.atariage.com/topic/275027-joystick-value-logic/:
@@ -39,11 +40,11 @@ type Player = {
 const enum PlayerKey {German, Russian};
 const players: Record<PlayerKey, Player> = {
     [PlayerKey.German]: {
-        label: 'German',  unit: 'CORPS', color: '0C', homedir: DirectionKey.west,
+        label: 'German',  unit: 'CORPS', color: 0x0C, homedir: DirectionKey.west,
         supply: {sea: 1, replacements: 0, maxfail: [24, 0, 16], freeze: 1}
     },
     [PlayerKey.Russian]: {
-        label: 'Russian', unit: 'ARMY',  color: '46', homedir: DirectionKey.east,
+        label: 'Russian', unit: 'ARMY',  color: 0x46, homedir: DirectionKey.east,
         supply: {sea: 0, replacements: 2, maxfail: [24, 24, 24], freeze: 0}
     },
  } as const;
@@ -56,7 +57,7 @@ const players: Record<PlayerKey, Player> = {
 // index by terrain, then armor(0/1) and finally Weather enum
 // value of 128 means impassable, 0 means error (frozen terrain outside winter)
 const enum TerrainKey {
-    clear, mountain_forest, city, frozen_swamp, frozen_river, 
+    clear, mountain_forest, city, frozen_swamp, frozen_river,
     swamp, river, coastline, estuary, impassable
 };
 type WeatherCosts = readonly [number, number, number];
@@ -67,56 +68,55 @@ type Terrain = {
 }
 const terraintypes: Record<TerrainKey, Terrain> = {
     [TerrainKey.clear]: {
-        label: 'clear', color: '02',
+        label: 'clear', color: 0x02,
         offence: 0, defence: 0, movecost: [[ 6, 24, 10], [ 4, 30,  6]]
     },
     [TerrainKey.mountain_forest]: {
-        label: 'mountain/forest', color: '28', altcolor: 'D6',   // mtn + forest
+        label: 'mountain/forest', color: 0x28, altcolor: 0xD6,   // mtn + forest
         offence: 0, defence: 1, movecost: [[12, 30, 16], [ 8, 30, 10]]
     },
     [TerrainKey.city]: {
-        label: 'city', color: '0C', altcolor: '46',  // german + russian control
+        label: 'city', color: 0x00,  // will be colored based on player control
         offence: 0, defence: 1, movecost: [[ 8, 24, 10], [ 6, 30,  8]]
     },
     [TerrainKey.frozen_swamp]: {
-        label: 'frozen swamp', color: '0C',
+        label: 'frozen swamp', color: 0x0C,
         offence: 0, defence: 0, movecost: [[ 0,  0, 12], [ 0,  0,  8]]
     },
     [TerrainKey.frozen_river]: {
-        label: 'frozen river', color: '0C',
+        label: 'frozen river', color: 0x0C,
         offence: 0, defence: 0, movecost: [[ 0,  0, 12], [ 0,  0,  8]]
     },
     [TerrainKey.swamp]: {
-        label: 'swamp', color: '94',
+        label: 'swamp', color: 0x94,
         offence: 0, defence: 0, movecost: [[18, 30, 24], [18, 30, 24]]
     },
     [TerrainKey.river]: {
-        label: 'river', color: '94',
+        label: 'river', color: 0x94,
         offence: -1, defence: -1, movecost: [[14, 30, 28], [13, 30, 28]]
     },
     [TerrainKey.coastline]: {
         // strange that coastline acts like river but estuary doesn't?
-        label: 'coastline', color: '94',
+        label: 'coastline', color: 0x94,
         offence: -1, defence: -1, movecost: [[ 8, 26, 12], [ 6, 30,  8]]
     },
     [TerrainKey.estuary]: {
-        label: 'estuary', color: '94',
+        label: 'estuary', color: 0x94,
         offence: 0, defence: 0, movecost: [[20, 28, 24], [16, 30, 20]],
     },
     [TerrainKey.impassable]: {
-        label: 'impassable', color: '94', altcolor: '0C',  // sea + border
+        label: 'impassable', color: 0x94, altcolor: 0x0C,  // sea + border
         offence: 0, defence: 0, movecost: [[0, 0, 0], [0, 0, 0]]
     }
 } as const;
 
-// D.ASM:2690 TRTAB
-// M.ASM:2690 season calcs
-type Weather = {label: string, earth: AnticColor};
+// adds contrast color for optional labels
+type Weather = {label: string, earth: AnticColor, contrast: AnticColor};
 const enum WeatherKey {dry, mud, snow};
 const weatherdata: Record<WeatherKey, Weather> = {
-    [WeatherKey.dry]: {label: 'dry',  earth: '10'},
-    [WeatherKey.mud]: {label: 'mud',  earth: '02'},
-    [WeatherKey.snow]: {label: 'snow', earth: '0A'},
+    [WeatherKey.dry]:  {label: 'dry',  earth: 0x10, contrast: 0x06},
+    [WeatherKey.mud]:  {label: 'mud',  earth: 0x02, contrast: 0x06},
+    [WeatherKey.snow]: {label: 'snow', earth: 0x0A, contrast: 0x04},
 } as const;
 
 type WaterState = {
@@ -138,18 +138,18 @@ const enum MonthKey {
     Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec
 }
 const monthdata: Record<MonthKey, Month> = {
-    [MonthKey.Jan]: {label: "January",   trees: '12', weather: WeatherKey.snow},
-    [MonthKey.Feb]: {label: "February",  trees: '12', weather: WeatherKey.snow},
-    [MonthKey.Mar]: {label: "March",     trees: '12', weather: WeatherKey.snow, water: WaterStateKey.thaw},
-    [MonthKey.Apr]: {label: "April",     trees: 'D2', weather: WeatherKey.mud},
-    [MonthKey.May]: {label: "May",       trees: 'D8', weather: WeatherKey.dry},
-    [MonthKey.Jun]: {label: "June",      trees: 'D6', weather: WeatherKey.dry},
-    [MonthKey.Jul]: {label: "July",      trees: 'C4', weather: WeatherKey.dry},
-    [MonthKey.Aug]: {label: "August",    trees: 'D4', weather: WeatherKey.dry},
-    [MonthKey.Sep]: {label: "September", trees: 'C2', weather: WeatherKey.dry},
-    [MonthKey.Oct]: {label: "October",   trees: '12', weather: WeatherKey.mud},
-    [MonthKey.Nov]: {label: "November",  trees: '12', weather: WeatherKey.snow, water: WaterStateKey.freeze},
-    [MonthKey.Dec]: {label: "December",  trees: '12', weather: WeatherKey.snow},
+    [MonthKey.Jan]: {label: "January",   trees: 0x12, weather: WeatherKey.snow},
+    [MonthKey.Feb]: {label: "February",  trees: 0x12, weather: WeatherKey.snow},
+    [MonthKey.Mar]: {label: "March",     trees: 0x12, weather: WeatherKey.snow, water: WaterStateKey.thaw},
+    [MonthKey.Apr]: {label: "April",     trees: 0xD2, weather: WeatherKey.mud},
+    [MonthKey.May]: {label: "May",       trees: 0xD8, weather: WeatherKey.dry},
+    [MonthKey.Jun]: {label: "June",      trees: 0xD6, weather: WeatherKey.dry},
+    [MonthKey.Jul]: {label: "July",      trees: 0xC4, weather: WeatherKey.dry},
+    [MonthKey.Aug]: {label: "August",    trees: 0xD4, weather: WeatherKey.dry},
+    [MonthKey.Sep]: {label: "September", trees: 0xC2, weather: WeatherKey.dry},
+    [MonthKey.Oct]: {label: "October",   trees: 0x12, weather: WeatherKey.mud},
+    [MonthKey.Nov]: {label: "November",  trees: 0x12, weather: WeatherKey.snow, water: WaterStateKey.freeze},
+    [MonthKey.Dec]: {label: "December",  trees: 0x12, weather: WeatherKey.snow},
 } as const;
 
 type UnitKind = {key: string, icon: number};

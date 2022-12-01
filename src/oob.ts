@@ -73,7 +73,7 @@ class Oob {
     findIndex(f: UnitPredicate) { return this.#units.findIndex(f) }
     forEach(f: UnitForeach) { this.#units.forEach(f); }
     map(f: UnitMap) { return this.#units.map(f); }
-    slice(start: number, end: number) { return this.#units.slice(start, end)}
+    slice(start?: number, end?: number) { return this.#units.slice(start, end)}
 
     get memento() {
         let lats: number[] = [], 

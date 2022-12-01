@@ -184,23 +184,6 @@ function pathSVG(orders: DirectionKey[]) {
     return svg;
 }
 
-function paintMap(action: string, opts)  {
-    if (action != 'recolor') {
-        console.warn('paintMap: unrecognized action', action)
-        return;
-    }
-    // apply current fg/bg colors to map and unit background
-    d3.selectAll('#map .chr-bg, #units .chr-bg')
-        .style('background-color', anticColor(opts.bgcolor));
-
-    d3.selectAll('#map .chr-fg')
-        .style('background-color', d => anticColor(opts.fgcolorfn(d)))
-
-    // contrasting label colors
-    d3.selectAll('.label')
-        .style('color', anticColor(opts.labelcolor));
-}
-
 function paintUnit(event: string, u: Unit) {
     let chr = d3.select(`#unit-${u.id}`),
         path = d3.select(`#path-${u.id}`),

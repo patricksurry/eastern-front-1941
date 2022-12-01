@@ -3,35 +3,42 @@
   "description": "Javascript port of Chris Crawford's Eastern Front 1941 game for Atari",
   "version": "0.1.0",
   "license": "ISC",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/patricksurry/eastern-front-1941"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^17.0.0",
-    "@rollup/plugin-eslint": "^9.0.0",
-    "@rollup/plugin-node-resolve": "^11.1.0",
+    "@rollup/plugin-babel": "^6.0.2",
+    "@rollup/plugin-commonjs": "^23.0.2",
+    "@rollup/plugin-node-resolve": "^15.0.1",
+    "@rollup/plugin-terser": "^0.1.0",
     "@rollup/plugin-typescript": "^9.0.2",
     "@types/d3": "^7.4.0",
-    "@types/jest": "^29.2.2",
-    "eslint": "^8.9.0",
-    "jest": "^29.0.3",
+    "@types/jest": "^29.2.3",
+    "@types/mithril": "^2.0.11",
+    "eslint": "^8.28.0",
+    "jest": "^29.3.1",
     "jest-environment-jsdom": "^29.3.1",
     "npm-run-all": "^4.1.5",
-    "rollup": "^2.79.1",
+    "rollup": "^3.3.0",
     "rollup-jest": "^3.0.0",
     "rollup-plugin-polyfill-node": "^0.11.0",
-    "rollup-plugin-terser": "^7.0.2",
-    "serve": "^14.0.1",
-    "ts-jest": "^29.0.3"
+    "serve": "^14.1.2",
+    "ts-jest": "^29.0.3",
+    "ts-node": "^10.9.1"
   },
   "dependencies": {
+    "18": "^0.0.0",
+    "@emotion/css": "^11.10.5",
     "d3": "^7.6.1",
+    "mithril": "^2.2.2",
+    "npm": "^9.1.2",
     "tslib": "^2.4.1"
   },
   "engines": {
     "npm": ">=8.0.0 <9.0.0",
-    "node": ">=16.0.0 <17.0.0"
+    "node": ">=18.0.0 <19.0.0"
   },
   "scripts": {
     "build": "rollup -c",

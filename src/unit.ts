@@ -52,7 +52,6 @@ class Unit implements Point {
     player: PlayerKey;
     unitno: number;
     kind: UnitKindKey;
-    icon: number;
     type: UnitTypeKey;
     modifier: number;
     canMove = 1;
@@ -92,7 +91,6 @@ class Unit implements Point {
         let ut = unittypes[this.type];
         if (ut == null) throw new Error(`Unused unit type for unit id ${id}`)
         this.kind = ut.kind;
-        this.icon = unitkinds[this.kind].icon;
         this.modifier = (corpt >> 4) & 0x7;
         this.arrive = arrive;
         this.scheduled = arrive;
@@ -119,8 +117,11 @@ class Unit implements Point {
     get human() {
         return this.player == this.#game.human;
     }
-    get location() {
+    get location(): MapPoint {
         return this.#game.mapboard.locationOf(this);
+    }
+    get point(): Point {
+        return {lon: this.lon, lat: this.lat}
     }
     get path(): MapPoint[] {
         let loc = this.location,
@@ -197,7 +198,7 @@ class Unit implements Point {
         }
         if (dst != null) {
             // occupy the new one and repaint
-            dst.put(this);
+            Object.assign(this, dst.point);
             dst.unitid = this.id;
             this.#game.mapboard.occupy(dst, this.player);
         } else {

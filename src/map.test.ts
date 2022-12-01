@@ -16,6 +16,16 @@ test("Location.fromid round-trip failed", () => {
     expect(mapboard.locationOf(GridPoint.fromid(loc34.id))).toBe(loc34);
 })
 
+test("Consistent self locations", () => {
+    mapboard.locations.forEach((row, y) =>
+        row.forEach((loc, x) => mapboard.valid(loc) && expect(mapboard.locationOf(loc).id).toBe(loc.id)))
+})
+
+test("unique locations", () => {
+    const ids = mapboard.locations.flatMap(row => row.map(loc => loc.id));
+    expect(ids.length).toEqual(new Set(ids).size);
+})
+
 test("Neighbor location", () => {
     expect(mapboard.neighborOf(loc34, DirectionKey.east)).toBe(mapboard.locationOf({lon: 2, lat: 4}))
 })

@@ -29,10 +29,8 @@ class GridPoint implements Point {
     get id() {
         return ravel(zigzag([this.lon, this.lat]))
     }
-    put(d: Point) {
-        d.lon = this.lon;
-        d.lat = this.lat;
-        return d;
+    get point(): Point {
+        return {lon: this.lon, lat: this.lat}
     }
     next(dir: DirectionKey): GridPoint {
         const d = directions[dir];
@@ -91,19 +89,14 @@ class GridPoint implements Point {
 }
 
 class MapPoint extends GridPoint {
-    row: number;
-    col: number;
     terrain: TerrainKey;
     alt: Flag;
     icon: number;
     cityid?: number;
     unitid?: number;
 
-    constructor(lon: number, lat: number, row: number, col: number, 
-            terrain: TerrainKey, alt: Flag, icon: number) {
+    constructor(lon: number, lat: number, terrain: TerrainKey, alt: Flag, icon: number) {
         super(lon, lat);
-        this.row = row;
-        this.col = col;
         this.terrain = terrain;
         this.alt = alt;
         this.icon = icon;
@@ -159,9 +152,9 @@ class Mapboard {
         this.locations = mapdata.map(
             (row, i) => row.map(
                 (data, j) => {
-                    let lon = this.#maxlon - j,
+                    const lon = this.#maxlon - j,
                         lat = this.#maxlat - i;
-                    return new MapPoint(lon, lat, i, j, data.terrain, data.alt as Flag, data.icon);
+                    return new MapPoint(lon, lat, data.terrain, data.alt as Flag, data.icon);
                 }
             )
         );
@@ -204,6 +197,9 @@ class Mapboard {
             labelcolor: mdata.weather == WeatherKey.snow ? '04': '08'
         });
     }
+    get size() {
+        return {width: this.locations[0].length, height: this.locations.length}
+    }
     get memento(): number[] {
         let vs = ([] as number[])
             .concat(
@@ -216,7 +212,7 @@ class Mapboard {
         return pt.lat >= 0 && pt.lat < this.#maxlat && pt.lon >= 0 && pt.lon < this.#maxlon;
     }
     locationOf(pt: Point): MapPoint {
-        if (!this.valid(pt))
+        if (!this.valid(pt))  // nb this throws for impassable boundary points
             throw new Error(`MapBoard.locationOf: invalid point ${pt.lon}, ${pt.lat}`);
         return this.locations[this.#maxlat - pt.lat][this.#maxlon - pt.lon];
     }
@@ -327,39 +323,47 @@ class Mapboard {
         // implements A* shortest path, e.g. see https://www.redblobgames.com/pathfinding/a-star/introduction.html
         // returns {cost: , orders: []} where cost is the movement cost (ticks), and orders is a seq of dir indices
         // or null if goal is unreachable
-        const minCost = Math.min(...costs);
-        type FrontT = {[key: string]: number};
+        const minCost = Math.min(...costs),
+            _head = -1;
+        type FrontierPoint = {id: number, est: number};
+        type Step = {dir: DirectionKey | null, cost: number};
         let src = this.locationOf(p),
             goal = this.locationOf(q),
-            frontEst: FrontT = {_: 0},              // estimated total cost via this square, _ is head
-            frontNext: FrontT = {_: src.id},        // linked list with next best frontier square to check
-            dirTo: {[key: number]: number | null} 
-                = {[src.id]: null},       // direction index which arrived at keyed square
-            costTo = {[src.id]: 0};         // actual cost to get to keyed square
+            // linked list of points to search next, ordered by estimated total cost via this point
+            frontier = new Map<number, FrontierPoint>([[_head, {id: src.id, est: 0}]]),
+            // dir arrived from and cost from start to here
+            found = new Map<number, Step>([[src.id, {dir: null, cost: 0}]]);
 
-        while (frontNext._) {
-            let next = frontNext._;
+        while (frontier.has(_head)) {
+            const {id: next} = frontier.get(_head)!;
             src = this.locationOf(GridPoint.fromid(next));
             if (src.id == goal.id) break;
-            frontNext._ = frontNext[next];
-            frontEst._ = frontEst[next];
-            delete frontNext[next], frontEst[next]
-
+            if (frontier.has(next)) {
+                frontier.set(_head, frontier.get(next)!);
+                frontier.delete(next);
+            } else {
+                frontier.delete(_head);
+            }
+            
             Object.keys(directions).forEach(i => {
-                let d: DirectionKey = +i,
+                const d = +i as DirectionKey,
                     dst = this.neighborOf(src, d);
                 if (!dst) return;
-                let cost = costTo[src.id] + costs[dst.terrain];
-                if (!(dst.id in costTo)) {  // with consistent estimate we always find best first
-                    costTo[dst.id] = cost;
-                    dirTo[dst.id] = d;
-                    let est = cost + minCost * GridPoint.manhattanDistance(src, dst),
-                        at = '_';
-                    while (frontNext[at] && frontEst[at] < est) at = frontNext[at].toString();
-                    next = frontNext[at];
-                    frontNext[at] = dst.id;
-                    frontNext[dst.id] = next;
-                    frontEst[dst.id] = est;
+                const cost = found.get(src.id)!.cost + costs[dst.terrain];
+                if (!found.has(dst.id)) {  // with consistent estimate we always find best first
+                    found.set(dst.id, {dir: d, cost});
+                    const est = cost + minCost * GridPoint.manhattanDistance(src, dst);
+                    let tail = _head;
+                    // insert point in linked list before tail to maintain asc sort by est
+                    while (frontier.has(tail)) {
+                        const {id: _next, est: _est} = frontier.get(tail)!;
+                        if (est <= _est) break;
+                        tail = _next;
+                    }
+                    if (frontier.has(tail)) {
+                        frontier.set(dst.id, frontier.get(tail)!);
+                    }
+                    frontier.set(tail, {id: dst.id, est: est})
                 }
             });
         }
@@ -367,14 +371,14 @@ class Mapboard {
             throw new Error(`MapBoard.bestPath: no path from ${p} to ${q}`)
 
         let orders: number[] = [],
-            pt: GridPoint = src;
+            pt: GridPoint = goal;
         for(;;) {
-            let dir = dirTo[pt.id];
+            const dir = found.get(pt.id)!.dir;
             if (dir == null) break;
             orders.unshift(dir);
             pt = pt.next((dir + 2) % 4);    // walk back in reverse direction
         }
-        return {cost: costTo[goal.id], orders: orders}
+        return {cost: found.get(goal.id)!.cost, orders: orders}
     }
     reach(src: Point, range: number, costs: number[]) {
         // find all squares accessible to unit within range, ignoring other units, zoc

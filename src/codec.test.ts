@@ -19,6 +19,13 @@ test("ravel is reversible", () => {
     expect(unravel(ravel(vs), vs.length)).toEqual(vs);
 });
 
+test("ravel is bijective", () => {
+    const xs = Object.keys([...Array(100)]),
+        vs = xs.flatMap(x => xs.map(y => ravel([+x, +y])));
+    expect(vs.length).toBe(100*100);
+    expect(new Set(vs).size).toBe(100*100);
+});
+
 test("zigzag+ravel is reversible", () => {
     const vs = fibs2.slice(0,5);
     expect(zagzig(unravel(ravel(zigzag(vs)),vs.length))).toEqual(vs);

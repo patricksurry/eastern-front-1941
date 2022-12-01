@@ -2,6 +2,7 @@ import {oobVariants} from './oob-data';
 import {GridPoint} from './map';
 
 import {Game} from './game';
+import { PlayerKey } from './defs';
 
 const game = new Game().start(),
     oob = game.oob;
@@ -27,17 +28,19 @@ test("ZoC is calculated correctly", () => {
         . O .       0 0 2
         . . X   =>  3 5 5
         X X .       6 7 4
+
+    in spiral ordering that's []. O . X . X X . .] => [5 0 2 5 4 7 6 3 0]
     */
 
     let locs = GridPoint.squareSpiral({lon: 20, lat: 20}, 3)
             .map(p => game.mapboard.locationOf(p)),
-        p0 = oob.findIndex(u => u.player == 0),
-        p1 = oob.findIndex(u => u.player == 1);
+        p0 = oob.findIndex(u => u.player == PlayerKey.German),
+        p1 = oob.findIndex(u => u.player == PlayerKey.Russian);
 
     locs[1].unitid = p0;
     locs[3].unitid = p1;
     locs[5].unitid = p1;
     locs[6].unitid = p1;
-    let zocs = locs.map(loc => oob.zocAffecting(0, loc));
+    let zocs = locs.map(loc => oob.zocAffecting(PlayerKey.German, loc));
     expect(zocs).toEqual([5,0,2,5,4,7,6,3,0]);
 });

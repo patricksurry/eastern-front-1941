@@ -4,7 +4,7 @@ var ef1941 = (function (exports, node_crypto) {
     function sum(xs) {
         return xs.reduce((s, x) => s + x, 0);
     }
-    function memoize(fn) {
+    function memoize$1(fn) {
         const cache = new Map();
         const cached = function (x) {
             if (!cache.has(x)) {
@@ -22,61 +22,61 @@ var ef1941 = (function (exports, node_crypto) {
     };
     const players = {
         [0 /* PlayerKey.German */]: {
-            label: 'German', unit: 'CORPS', color: '0C', homedir: 3 /* DirectionKey.west */,
+            label: 'German', unit: 'CORPS', color: 0x0C, homedir: 3 /* DirectionKey.west */,
             supply: { sea: 1, replacements: 0, maxfail: [24, 0, 16], freeze: 1 }
         },
         [1 /* PlayerKey.Russian */]: {
-            label: 'Russian', unit: 'ARMY', color: '46', homedir: 1 /* DirectionKey.east */,
+            label: 'Russian', unit: 'ARMY', color: 0x46, homedir: 1 /* DirectionKey.east */,
             supply: { sea: 0, replacements: 2, maxfail: [24, 24, 24], freeze: 0 }
         },
     };
     const terraintypes = {
         [0 /* TerrainKey.clear */]: {
-            label: 'clear', color: '02',
+            label: 'clear', color: 0x02,
             offence: 0, defence: 0, movecost: [[6, 24, 10], [4, 30, 6]]
         },
         [1 /* TerrainKey.mountain_forest */]: {
-            label: 'mountain/forest', color: '28', altcolor: 'D6',
+            label: 'mountain/forest', color: 0x28, altcolor: 0xD6,
             offence: 0, defence: 1, movecost: [[12, 30, 16], [8, 30, 10]]
         },
         [2 /* TerrainKey.city */]: {
-            label: 'city', color: '0C', altcolor: '46',
+            label: 'city', color: 0x00,
             offence: 0, defence: 1, movecost: [[8, 24, 10], [6, 30, 8]]
         },
         [3 /* TerrainKey.frozen_swamp */]: {
-            label: 'frozen swamp', color: '0C',
+            label: 'frozen swamp', color: 0x0C,
             offence: 0, defence: 0, movecost: [[0, 0, 12], [0, 0, 8]]
         },
         [4 /* TerrainKey.frozen_river */]: {
-            label: 'frozen river', color: '0C',
+            label: 'frozen river', color: 0x0C,
             offence: 0, defence: 0, movecost: [[0, 0, 12], [0, 0, 8]]
         },
         [5 /* TerrainKey.swamp */]: {
-            label: 'swamp', color: '94',
+            label: 'swamp', color: 0x94,
             offence: 0, defence: 0, movecost: [[18, 30, 24], [18, 30, 24]]
         },
         [6 /* TerrainKey.river */]: {
-            label: 'river', color: '94',
+            label: 'river', color: 0x94,
             offence: -1, defence: -1, movecost: [[14, 30, 28], [13, 30, 28]]
         },
         [7 /* TerrainKey.coastline */]: {
             // strange that coastline acts like river but estuary doesn't?
-            label: 'coastline', color: '94',
+            label: 'coastline', color: 0x94,
             offence: -1, defence: -1, movecost: [[8, 26, 12], [6, 30, 8]]
         },
         [8 /* TerrainKey.estuary */]: {
-            label: 'estuary', color: '94',
+            label: 'estuary', color: 0x94,
             offence: 0, defence: 0, movecost: [[20, 28, 24], [16, 30, 20]],
         },
         [9 /* TerrainKey.impassable */]: {
-            label: 'impassable', color: '94', altcolor: '0C',
+            label: 'impassable', color: 0x94, altcolor: 0x0C,
             offence: 0, defence: 0, movecost: [[0, 0, 0], [0, 0, 0]]
         }
     };
     const weatherdata = {
-        [0 /* WeatherKey.dry */]: { label: 'dry', earth: '10' },
-        [1 /* WeatherKey.mud */]: { label: 'mud', earth: '02' },
-        [2 /* WeatherKey.snow */]: { label: 'snow', earth: '0A' },
+        [0 /* WeatherKey.dry */]: { label: 'dry', earth: 0x10, contrast: 0x06 },
+        [1 /* WeatherKey.mud */]: { label: 'mud', earth: 0x02, contrast: 0x06 },
+        [2 /* WeatherKey.snow */]: { label: 'snow', earth: 0x0A, contrast: 0x04 },
     };
     const waterstate = {
         [0 /* WaterStateKey.freeze */]: {
@@ -87,18 +87,18 @@ var ef1941 = (function (exports, node_crypto) {
         },
     };
     const monthdata = {
-        [0 /* MonthKey.Jan */]: { label: "January", trees: '12', weather: 2 /* WeatherKey.snow */ },
-        [1 /* MonthKey.Feb */]: { label: "February", trees: '12', weather: 2 /* WeatherKey.snow */ },
-        [2 /* MonthKey.Mar */]: { label: "March", trees: '12', weather: 2 /* WeatherKey.snow */, water: 1 /* WaterStateKey.thaw */ },
-        [3 /* MonthKey.Apr */]: { label: "April", trees: 'D2', weather: 1 /* WeatherKey.mud */ },
-        [4 /* MonthKey.May */]: { label: "May", trees: 'D8', weather: 0 /* WeatherKey.dry */ },
-        [5 /* MonthKey.Jun */]: { label: "June", trees: 'D6', weather: 0 /* WeatherKey.dry */ },
-        [6 /* MonthKey.Jul */]: { label: "July", trees: 'C4', weather: 0 /* WeatherKey.dry */ },
-        [7 /* MonthKey.Aug */]: { label: "August", trees: 'D4', weather: 0 /* WeatherKey.dry */ },
-        [8 /* MonthKey.Sep */]: { label: "September", trees: 'C2', weather: 0 /* WeatherKey.dry */ },
-        [9 /* MonthKey.Oct */]: { label: "October", trees: '12', weather: 1 /* WeatherKey.mud */ },
-        [10 /* MonthKey.Nov */]: { label: "November", trees: '12', weather: 2 /* WeatherKey.snow */, water: 0 /* WaterStateKey.freeze */ },
-        [11 /* MonthKey.Dec */]: { label: "December", trees: '12', weather: 2 /* WeatherKey.snow */ },
+        [0 /* MonthKey.Jan */]: { label: "January", trees: 0x12, weather: 2 /* WeatherKey.snow */ },
+        [1 /* MonthKey.Feb */]: { label: "February", trees: 0x12, weather: 2 /* WeatherKey.snow */ },
+        [2 /* MonthKey.Mar */]: { label: "March", trees: 0x12, weather: 2 /* WeatherKey.snow */, water: 1 /* WaterStateKey.thaw */ },
+        [3 /* MonthKey.Apr */]: { label: "April", trees: 0xD2, weather: 1 /* WeatherKey.mud */ },
+        [4 /* MonthKey.May */]: { label: "May", trees: 0xD8, weather: 0 /* WeatherKey.dry */ },
+        [5 /* MonthKey.Jun */]: { label: "June", trees: 0xD6, weather: 0 /* WeatherKey.dry */ },
+        [6 /* MonthKey.Jul */]: { label: "July", trees: 0xC4, weather: 0 /* WeatherKey.dry */ },
+        [7 /* MonthKey.Aug */]: { label: "August", trees: 0xD4, weather: 0 /* WeatherKey.dry */ },
+        [8 /* MonthKey.Sep */]: { label: "September", trees: 0xC2, weather: 0 /* WeatherKey.dry */ },
+        [9 /* MonthKey.Oct */]: { label: "October", trees: 0x12, weather: 1 /* WeatherKey.mud */ },
+        [10 /* MonthKey.Nov */]: { label: "November", trees: 0x12, weather: 2 /* WeatherKey.snow */, water: 0 /* WaterStateKey.freeze */ },
+        [11 /* MonthKey.Dec */]: { label: "December", trees: 0x12, weather: 2 /* WeatherKey.snow */ },
     };
     const unitkinds = {
         [0 /* UnitKindKey.infantry */]: { key: 'infantry', icon: 0xfd },
@@ -112,31 +112,6 @@ var ef1941 = (function (exports, node_crypto) {
         // return a table of movement costs based on armor/inf and weather
         return Object.keys(terraintypes).map(t => moveCost(+t, kind, weather));
     }
-
-    const scenarios = {
-        [0 /* ScenarioKey.apx */]: {
-            label: 'APX MODE', map: 0 /* MapVariantKey.apx */, oob: 0 /* OobVariantKey.apx */, level: 3 /* LevelKey.advanced */, start: '1941/6/22'
-        },
-        [1 /* ScenarioKey.learner */]: {
-            label: 'LEARNER', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 0 /* LevelKey.learner */, start: '1941/6/22'
-        },
-        [2 /* ScenarioKey.beginner */]: {
-            label: 'BEGINNER', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 1 /* LevelKey.beginner */, start: '1941/6/22'
-        },
-        [3 /* ScenarioKey.intermediate */]: {
-            label: 'INTERMED', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 2 /* LevelKey.intermediate */, start: '1941/6/22'
-        },
-        [4 /* ScenarioKey.advanced */]: {
-            label: 'ADVANCED', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 3 /* LevelKey.advanced */, start: '1941/6/22'
-        },
-        [5 /* ScenarioKey.expert41 */]: {
-            label: 'EXPERT41', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 4 /* LevelKey.expert */, start: '1941/6/22'
-        },
-        [6 /* ScenarioKey.expert42 */]: {
-            //TODO arrival turns for '42 scenario seem to be calculated in cartridge.asm:3709
-            label: 'EXPERT42', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 4 /* LevelKey.expert */, start: '1942/5/24'
-        },
-    };
 
     /******************************************************************************
     Copyright (c) Microsoft Corporation.
@@ -152,6 +127,18 @@ var ef1941 = (function (exports, node_crypto) {
     OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
     PERFORMANCE OF THIS SOFTWARE.
     ***************************************************************************** */
+
+    function __rest(s, e) {
+        var t = {};
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+            t[p] = s[p];
+        if (s != null && typeof Object.getOwnPropertySymbols === "function")
+            for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+                if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                    t[p[i]] = s[p[i]];
+            }
+        return t;
+    }
 
     function __classPrivateFieldGet(receiver, state, kind, f) {
         if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
@@ -186,7 +173,7 @@ var ef1941 = (function (exports, node_crypto) {
         return Number.isInteger(v) && v >= 0;
     }
     // memoized Fibonacci numbers
-    const fib = memoize((n) => n < 2 ? n : fib(n - 1) + fib(n - 2));
+    const fib = memoize$1((n) => n < 2 ? n : fib(n - 1) + fib(n - 2));
     function seq2str(seq) {
         if (seq.some(u => !isuint(u) || u >= 64))
             throw new Error(`seq2str: Invalid uint6 in input ${seq}`);
@@ -283,7 +270,7 @@ var ef1941 = (function (exports, node_crypto) {
         }
         return bits;
     }
-    const fibencode_uint = memoize(_fibencode_uint);
+    const fibencode_uint = memoize$1(_fibencode_uint);
     /** helper function estimating the size of an encoded value, used for run-length coding */
     function fibencsize(n) {
         return fibencode_uint(n).toString(2).length;
@@ -301,7 +288,7 @@ var ef1941 = (function (exports, node_crypto) {
         }
         return n - 1;
     }
-    const fibdecode_uint = memoize(_fibdecode_uint);
+    const fibdecode_uint = memoize$1(_fibdecode_uint);
     /** Fibonacci code a seq<uint> to a prefix free encoding chunked into seq<uint6> */
     function fibencode(vs) {
         if (typeof vs === 'number')
@@ -462,6 +449,31 @@ var ef1941 = (function (exports, node_crypto) {
         }
         return vs;
     }
+
+    const scenarios = {
+        [0 /* ScenarioKey.apx */]: {
+            label: 'APX MODE', map: 0 /* MapVariantKey.apx */, oob: 0 /* OobVariantKey.apx */, level: 3 /* LevelKey.advanced */, start: '1941/6/22'
+        },
+        [1 /* ScenarioKey.learner */]: {
+            label: 'LEARNER', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 0 /* LevelKey.learner */, start: '1941/6/22'
+        },
+        [2 /* ScenarioKey.beginner */]: {
+            label: 'BEGINNER', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 1 /* LevelKey.beginner */, start: '1941/6/22'
+        },
+        [3 /* ScenarioKey.intermediate */]: {
+            label: 'INTERMED', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 2 /* LevelKey.intermediate */, start: '1941/6/22'
+        },
+        [4 /* ScenarioKey.advanced */]: {
+            label: 'ADVANCED', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 3 /* LevelKey.advanced */, start: '1941/6/22'
+        },
+        [5 /* ScenarioKey.expert41 */]: {
+            label: 'EXPERT41', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 4 /* LevelKey.expert */, start: '1941/6/22'
+        },
+        [6 /* ScenarioKey.expert42 */]: {
+            //TODO arrival turns for '42 scenario seem to be calculated in cartridge.asm:3709
+            label: 'EXPERT42', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 4 /* LevelKey.expert */, start: '1942/5/24'
+        },
+    };
 
     const mapVariants = {
         [0 /* MapVariantKey.apx */]: {
@@ -654,10 +666,8 @@ var ef1941 = (function (exports, node_crypto) {
         get id() {
             return ravel(zigzag([this.lon, this.lat]));
         }
-        put(d) {
-            d.lon = this.lon;
-            d.lat = this.lat;
-            return d;
+        get point() {
+            return { lon: this.lon, lat: this.lat };
         }
         next(dir) {
             const d = directions[dir];
@@ -709,10 +719,8 @@ var ef1941 = (function (exports, node_crypto) {
         return projections.length ? projections[0][1] : null;
     };
     class MapPoint extends GridPoint {
-        constructor(lon, lat, row, col, terrain, alt, icon) {
+        constructor(lon, lat, terrain, alt, icon) {
             super(lon, lat);
-            this.row = row;
-            this.col = col;
             this.terrain = terrain;
             this.alt = alt;
             this.icon = icon;
@@ -751,8 +759,8 @@ var ef1941 = (function (exports, node_crypto) {
             __classPrivateFieldSet(this, _Mapboard_maxlat, mapdata.length - 2, "f");
             __classPrivateFieldSet(this, _Mapboard_game, game, "f");
             this.locations = mapdata.map((row, i) => row.map((data, j) => {
-                let lon = __classPrivateFieldGet(this, _Mapboard_maxlon, "f") - j, lat = __classPrivateFieldGet(this, _Mapboard_maxlat, "f") - i;
-                return new MapPoint(lon, lat, i, j, data.terrain, data.alt, data.icon);
+                const lon = __classPrivateFieldGet(this, _Mapboard_maxlon, "f") - j, lat = __classPrivateFieldGet(this, _Mapboard_maxlat, "f") - i;
+                return new MapPoint(lon, lat, data.terrain, data.alt, data.icon);
             }));
             this.cities = variant.cities.map(c => { return Object.assign({}, c); });
             this.cities.forEach((city, i) => {
@@ -785,6 +793,9 @@ var ef1941 = (function (exports, node_crypto) {
                 labelcolor: mdata.weather == 2 /* WeatherKey.snow */ ? '04' : '08'
             });
         }
+        get size() {
+            return { width: this.locations[0].length, height: this.locations.length };
+        }
         get memento() {
             let vs = []
                 .concat([__classPrivateFieldGet(this, _Mapboard_icelat, "f")], this.cities.map(c => c.owner));
@@ -794,7 +805,7 @@ var ef1941 = (function (exports, node_crypto) {
             return pt.lat >= 0 && pt.lat < __classPrivateFieldGet(this, _Mapboard_maxlat, "f") && pt.lon >= 0 && pt.lon < __classPrivateFieldGet(this, _Mapboard_maxlon, "f");
         }
         locationOf(pt) {
-            if (!this.valid(pt))
+            if (!this.valid(pt)) // nb this throws for impassable boundary points
                 throw new Error(`MapBoard.locationOf: invalid point ${pt.lon}, ${pt.lat}`);
             return this.locations[__classPrivateFieldGet(this, _Mapboard_maxlat, "f") - pt.lat][__classPrivateFieldGet(this, _Mapboard_maxlon, "f") - pt.lon];
         }
@@ -857,48 +868,58 @@ var ef1941 = (function (exports, node_crypto) {
             // implements A* shortest path, e.g. see https://www.redblobgames.com/pathfinding/a-star/introduction.html
             // returns {cost: , orders: []} where cost is the movement cost (ticks), and orders is a seq of dir indices
             // or null if goal is unreachable
-            const minCost = Math.min(...costs);
-            let src = this.locationOf(p), goal = this.locationOf(q), frontEst = { _: 0 }, // estimated total cost via this square, _ is head
-            frontNext = { _: src.id }, // linked list with next best frontier square to check
-            dirTo = { [src.id]: null }, // direction index which arrived at keyed square
-            costTo = { [src.id]: 0 }; // actual cost to get to keyed square
-            while (frontNext._) {
-                let next = frontNext._;
+            const minCost = Math.min(...costs), _head = -1;
+            let src = this.locationOf(p), goal = this.locationOf(q), 
+            // linked list of points to search next, ordered by estimated total cost via this point
+            frontier = new Map([[_head, { id: src.id, est: 0 }]]), 
+            // dir arrived from and cost from start to here
+            found = new Map([[src.id, { dir: null, cost: 0 }]]);
+            while (frontier.has(_head)) {
+                const { id: next } = frontier.get(_head);
                 src = this.locationOf(GridPoint.fromid(next));
                 if (src.id == goal.id)
                     break;
-                frontNext._ = frontNext[next];
-                frontEst._ = frontEst[next];
-                delete frontNext[next], frontEst[next];
+                if (frontier.has(next)) {
+                    frontier.set(_head, frontier.get(next));
+                    frontier.delete(next);
+                }
+                else {
+                    frontier.delete(_head);
+                }
                 Object.keys(directions).forEach(i => {
-                    let d = +i, dst = this.neighborOf(src, d);
+                    const d = +i, dst = this.neighborOf(src, d);
                     if (!dst)
                         return;
-                    let cost = costTo[src.id] + costs[dst.terrain];
-                    if (!(dst.id in costTo)) { // with consistent estimate we always find best first
-                        costTo[dst.id] = cost;
-                        dirTo[dst.id] = d;
-                        let est = cost + minCost * GridPoint.manhattanDistance(src, dst), at = '_';
-                        while (frontNext[at] && frontEst[at] < est)
-                            at = frontNext[at].toString();
-                        next = frontNext[at];
-                        frontNext[at] = dst.id;
-                        frontNext[dst.id] = next;
-                        frontEst[dst.id] = est;
+                    const cost = found.get(src.id).cost + costs[dst.terrain];
+                    if (!found.has(dst.id)) { // with consistent estimate we always find best first
+                        found.set(dst.id, { dir: d, cost });
+                        const est = cost + minCost * GridPoint.manhattanDistance(src, dst);
+                        let tail = _head;
+                        // insert point in linked list before tail to maintain asc sort by est
+                        while (frontier.has(tail)) {
+                            const { id: _next, est: _est } = frontier.get(tail);
+                            if (est <= _est)
+                                break;
+                            tail = _next;
+                        }
+                        if (frontier.has(tail)) {
+                            frontier.set(dst.id, frontier.get(tail));
+                        }
+                        frontier.set(tail, { id: dst.id, est: est });
                     }
                 });
             }
             if (src.id != goal.id)
                 throw new Error(`MapBoard.bestPath: no path from ${p} to ${q}`);
-            let orders = [], pt = src;
+            let orders = [], pt = goal;
             for (;;) {
-                let dir = dirTo[pt.id];
+                const dir = found.get(pt.id).dir;
                 if (dir == null)
                     break;
                 orders.unshift(dir);
                 pt = pt.next((dir + 2) % 4); // walk back in reverse direction
             }
-            return { cost: costTo[goal.id], orders: orders };
+            return { cost: found.get(goal.id).cost, orders: orders };
         }
         reach(src, range, costs) {
             // find all squares accessible to unit within range, ignoring other units, zoc
@@ -1013,7 +1034,6 @@ var ef1941 = (function (exports, node_crypto) {
             if (ut == null)
                 throw new Error(`Unused unit type for unit id ${id}`);
             this.kind = ut.kind;
-            this.icon = unitkinds[this.kind].icon;
             this.modifier = (corpt >> 4) & 0x7;
             this.arrive = arrive;
             this.scheduled = arrive;
@@ -1040,6 +1060,9 @@ var ef1941 = (function (exports, node_crypto) {
         }
         get location() {
             return __classPrivateFieldGet(this, _Unit_game, "f").mapboard.locationOf(this);
+        }
+        get point() {
+            return { lon: this.lon, lat: this.lat };
         }
         get path() {
             let loc = this.location, path = [loc];
@@ -1124,7 +1147,7 @@ var ef1941 = (function (exports, node_crypto) {
             }
             if (dst != null) {
                 // occupy the new one and repaint
-                dst.put(this);
+                Object.assign(this, dst.point);
                 dst.unitid = this.id;
                 __classPrivateFieldGet(this, _Unit_game, "f").mapboard.occupy(dst, this.player);
             }
@@ -2575,3006 +2598,6 @@ var ef1941 = (function (exports, node_crypto) {
         this.emit('game', 'turn', this);
     };
 
-    var noop = {value: () => {}};
-
-    function dispatch() {
-      for (var i = 0, n = arguments.length, _ = {}, t; i < n; ++i) {
-        if (!(t = arguments[i] + "") || (t in _) || /[\s.]/.test(t)) throw new Error("illegal type: " + t);
-        _[t] = [];
-      }
-      return new Dispatch(_);
-    }
-
-    function Dispatch(_) {
-      this._ = _;
-    }
-
-    function parseTypenames$1(typenames, types) {
-      return typenames.trim().split(/^|\s+/).map(function(t) {
-        var name = "", i = t.indexOf(".");
-        if (i >= 0) name = t.slice(i + 1), t = t.slice(0, i);
-        if (t && !types.hasOwnProperty(t)) throw new Error("unknown type: " + t);
-        return {type: t, name: name};
-      });
-    }
-
-    Dispatch.prototype = dispatch.prototype = {
-      constructor: Dispatch,
-      on: function(typename, callback) {
-        var _ = this._,
-            T = parseTypenames$1(typename + "", _),
-            t,
-            i = -1,
-            n = T.length;
-
-        // If no callback was specified, return the callback of the given type and name.
-        if (arguments.length < 2) {
-          while (++i < n) if ((t = (typename = T[i]).type) && (t = get$1(_[t], typename.name))) return t;
-          return;
-        }
-
-        // If a type was specified, set the callback for the given type and name.
-        // Otherwise, if a null callback was specified, remove callbacks of the given name.
-        if (callback != null && typeof callback !== "function") throw new Error("invalid callback: " + callback);
-        while (++i < n) {
-          if (t = (typename = T[i]).type) _[t] = set$1(_[t], typename.name, callback);
-          else if (callback == null) for (t in _) _[t] = set$1(_[t], typename.name, null);
-        }
-
-        return this;
-      },
-      copy: function() {
-        var copy = {}, _ = this._;
-        for (var t in _) copy[t] = _[t].slice();
-        return new Dispatch(copy);
-      },
-      call: function(type, that) {
-        if ((n = arguments.length - 2) > 0) for (var args = new Array(n), i = 0, n, t; i < n; ++i) args[i] = arguments[i + 2];
-        if (!this._.hasOwnProperty(type)) throw new Error("unknown type: " + type);
-        for (t = this._[type], i = 0, n = t.length; i < n; ++i) t[i].value.apply(that, args);
-      },
-      apply: function(type, that, args) {
-        if (!this._.hasOwnProperty(type)) throw new Error("unknown type: " + type);
-        for (var t = this._[type], i = 0, n = t.length; i < n; ++i) t[i].value.apply(that, args);
-      }
-    };
-
-    function get$1(type, name) {
-      for (var i = 0, n = type.length, c; i < n; ++i) {
-        if ((c = type[i]).name === name) {
-          return c.value;
-        }
-      }
-    }
-
-    function set$1(type, name, callback) {
-      for (var i = 0, n = type.length; i < n; ++i) {
-        if (type[i].name === name) {
-          type[i] = noop, type = type.slice(0, i).concat(type.slice(i + 1));
-          break;
-        }
-      }
-      if (callback != null) type.push({name: name, value: callback});
-      return type;
-    }
-
-    var xhtml = "http://www.w3.org/1999/xhtml";
-
-    var namespaces = {
-      svg: "http://www.w3.org/2000/svg",
-      xhtml: xhtml,
-      xlink: "http://www.w3.org/1999/xlink",
-      xml: "http://www.w3.org/XML/1998/namespace",
-      xmlns: "http://www.w3.org/2000/xmlns/"
-    };
-
-    function namespace(name) {
-      var prefix = name += "", i = prefix.indexOf(":");
-      if (i >= 0 && (prefix = name.slice(0, i)) !== "xmlns") name = name.slice(i + 1);
-      return namespaces.hasOwnProperty(prefix) ? {space: namespaces[prefix], local: name} : name; // eslint-disable-line no-prototype-builtins
-    }
-
-    function creatorInherit(name) {
-      return function() {
-        var document = this.ownerDocument,
-            uri = this.namespaceURI;
-        return uri === xhtml && document.documentElement.namespaceURI === xhtml
-            ? document.createElement(name)
-            : document.createElementNS(uri, name);
-      };
-    }
-
-    function creatorFixed(fullname) {
-      return function() {
-        return this.ownerDocument.createElementNS(fullname.space, fullname.local);
-      };
-    }
-
-    function creator(name) {
-      var fullname = namespace(name);
-      return (fullname.local
-          ? creatorFixed
-          : creatorInherit)(fullname);
-    }
-
-    function none() {}
-
-    function selector(selector) {
-      return selector == null ? none : function() {
-        return this.querySelector(selector);
-      };
-    }
-
-    function selection_select(select) {
-      if (typeof select !== "function") select = selector(select);
-
-      for (var groups = this._groups, m = groups.length, subgroups = new Array(m), j = 0; j < m; ++j) {
-        for (var group = groups[j], n = group.length, subgroup = subgroups[j] = new Array(n), node, subnode, i = 0; i < n; ++i) {
-          if ((node = group[i]) && (subnode = select.call(node, node.__data__, i, group))) {
-            if ("__data__" in node) subnode.__data__ = node.__data__;
-            subgroup[i] = subnode;
-          }
-        }
-      }
-
-      return new Selection$1(subgroups, this._parents);
-    }
-
-    // Given something array like (or null), returns something that is strictly an
-    // array. This is used to ensure that array-like objects passed to d3.selectAll
-    // or selection.selectAll are converted into proper arrays when creating a
-    // selection; we don’t ever want to create a selection backed by a live
-    // HTMLCollection or NodeList. However, note that selection.selectAll will use a
-    // static NodeList as a group, since it safely derived from querySelectorAll.
-    function array(x) {
-      return x == null ? [] : Array.isArray(x) ? x : Array.from(x);
-    }
-
-    function empty() {
-      return [];
-    }
-
-    function selectorAll(selector) {
-      return selector == null ? empty : function() {
-        return this.querySelectorAll(selector);
-      };
-    }
-
-    function arrayAll(select) {
-      return function() {
-        return array(select.apply(this, arguments));
-      };
-    }
-
-    function selection_selectAll(select) {
-      if (typeof select === "function") select = arrayAll(select);
-      else select = selectorAll(select);
-
-      for (var groups = this._groups, m = groups.length, subgroups = [], parents = [], j = 0; j < m; ++j) {
-        for (var group = groups[j], n = group.length, node, i = 0; i < n; ++i) {
-          if (node = group[i]) {
-            subgroups.push(select.call(node, node.__data__, i, group));
-            parents.push(node);
-          }
-        }
-      }
-
-      return new Selection$1(subgroups, parents);
-    }
-
-    function matcher(selector) {
-      return function() {
-        return this.matches(selector);
-      };
-    }
-
-    function childMatcher(selector) {
-      return function(node) {
-        return node.matches(selector);
-      };
-    }
-
-    var find = Array.prototype.find;
-
-    function childFind(match) {
-      return function() {
-        return find.call(this.children, match);
-      };
-    }
-
-    function childFirst() {
-      return this.firstElementChild;
-    }
-
-    function selection_selectChild(match) {
-      return this.select(match == null ? childFirst
-          : childFind(typeof match === "function" ? match : childMatcher(match)));
-    }
-
-    var filter = Array.prototype.filter;
-
-    function children() {
-      return Array.from(this.children);
-    }
-
-    function childrenFilter(match) {
-      return function() {
-        return filter.call(this.children, match);
-      };
-    }
-
-    function selection_selectChildren(match) {
-      return this.selectAll(match == null ? children
-          : childrenFilter(typeof match === "function" ? match : childMatcher(match)));
-    }
-
-    function selection_filter(match) {
-      if (typeof match !== "function") match = matcher(match);
-
-      for (var groups = this._groups, m = groups.length, subgroups = new Array(m), j = 0; j < m; ++j) {
-        for (var group = groups[j], n = group.length, subgroup = subgroups[j] = [], node, i = 0; i < n; ++i) {
-          if ((node = group[i]) && match.call(node, node.__data__, i, group)) {
-            subgroup.push(node);
-          }
-        }
-      }
-
-      return new Selection$1(subgroups, this._parents);
-    }
-
-    function sparse(update) {
-      return new Array(update.length);
-    }
-
-    function selection_enter() {
-      return new Selection$1(this._enter || this._groups.map(sparse), this._parents);
-    }
-
-    function EnterNode(parent, datum) {
-      this.ownerDocument = parent.ownerDocument;
-      this.namespaceURI = parent.namespaceURI;
-      this._next = null;
-      this._parent = parent;
-      this.__data__ = datum;
-    }
-
-    EnterNode.prototype = {
-      constructor: EnterNode,
-      appendChild: function(child) { return this._parent.insertBefore(child, this._next); },
-      insertBefore: function(child, next) { return this._parent.insertBefore(child, next); },
-      querySelector: function(selector) { return this._parent.querySelector(selector); },
-      querySelectorAll: function(selector) { return this._parent.querySelectorAll(selector); }
-    };
-
-    function constant$1(x) {
-      return function() {
-        return x;
-      };
-    }
-
-    function bindIndex(parent, group, enter, update, exit, data) {
-      var i = 0,
-          node,
-          groupLength = group.length,
-          dataLength = data.length;
-
-      // Put any non-null nodes that fit into update.
-      // Put any null nodes into enter.
-      // Put any remaining data into enter.
-      for (; i < dataLength; ++i) {
-        if (node = group[i]) {
-          node.__data__ = data[i];
-          update[i] = node;
-        } else {
-          enter[i] = new EnterNode(parent, data[i]);
-        }
-      }
-
-      // Put any non-null nodes that don’t fit into exit.
-      for (; i < groupLength; ++i) {
-        if (node = group[i]) {
-          exit[i] = node;
-        }
-      }
-    }
-
-    function bindKey(parent, group, enter, update, exit, data, key) {
-      var i,
-          node,
-          nodeByKeyValue = new Map,
-          groupLength = group.length,
-          dataLength = data.length,
-          keyValues = new Array(groupLength),
-          keyValue;
-
-      // Compute the key for each node.
-      // If multiple nodes have the same key, the duplicates are added to exit.
-      for (i = 0; i < groupLength; ++i) {
-        if (node = group[i]) {
-          keyValues[i] = keyValue = key.call(node, node.__data__, i, group) + "";
-          if (nodeByKeyValue.has(keyValue)) {
-            exit[i] = node;
-          } else {
-            nodeByKeyValue.set(keyValue, node);
-          }
-        }
-      }
-
-      // Compute the key for each datum.
-      // If there a node associated with this key, join and add it to update.
-      // If there is not (or the key is a duplicate), add it to enter.
-      for (i = 0; i < dataLength; ++i) {
-        keyValue = key.call(parent, data[i], i, data) + "";
-        if (node = nodeByKeyValue.get(keyValue)) {
-          update[i] = node;
-          node.__data__ = data[i];
-          nodeByKeyValue.delete(keyValue);
-        } else {
-          enter[i] = new EnterNode(parent, data[i]);
-        }
-      }
-
-      // Add any remaining nodes that were not bound to data to exit.
-      for (i = 0; i < groupLength; ++i) {
-        if ((node = group[i]) && (nodeByKeyValue.get(keyValues[i]) === node)) {
-          exit[i] = node;
-        }
-      }
-    }
-
-    function datum(node) {
-      return node.__data__;
-    }
-
-    function selection_data(value, key) {
-      if (!arguments.length) return Array.from(this, datum);
-
-      var bind = key ? bindKey : bindIndex,
-          parents = this._parents,
-          groups = this._groups;
-
-      if (typeof value !== "function") value = constant$1(value);
-
-      for (var m = groups.length, update = new Array(m), enter = new Array(m), exit = new Array(m), j = 0; j < m; ++j) {
-        var parent = parents[j],
-            group = groups[j],
-            groupLength = group.length,
-            data = arraylike(value.call(parent, parent && parent.__data__, j, parents)),
-            dataLength = data.length,
-            enterGroup = enter[j] = new Array(dataLength),
-            updateGroup = update[j] = new Array(dataLength),
-            exitGroup = exit[j] = new Array(groupLength);
-
-        bind(parent, group, enterGroup, updateGroup, exitGroup, data, key);
-
-        // Now connect the enter nodes to their following update node, such that
-        // appendChild can insert the materialized enter node before this node,
-        // rather than at the end of the parent node.
-        for (var i0 = 0, i1 = 0, previous, next; i0 < dataLength; ++i0) {
-          if (previous = enterGroup[i0]) {
-            if (i0 >= i1) i1 = i0 + 1;
-            while (!(next = updateGroup[i1]) && ++i1 < dataLength);
-            previous._next = next || null;
-          }
-        }
-      }
-
-      update = new Selection$1(update, parents);
-      update._enter = enter;
-      update._exit = exit;
-      return update;
-    }
-
-    // Given some data, this returns an array-like view of it: an object that
-    // exposes a length property and allows numeric indexing. Note that unlike
-    // selectAll, this isn’t worried about “live” collections because the resulting
-    // array will only be used briefly while data is being bound. (It is possible to
-    // cause the data to change while iterating by using a key function, but please
-    // don’t; we’d rather avoid a gratuitous copy.)
-    function arraylike(data) {
-      return typeof data === "object" && "length" in data
-        ? data // Array, TypedArray, NodeList, array-like
-        : Array.from(data); // Map, Set, iterable, string, or anything else
-    }
-
-    function selection_exit() {
-      return new Selection$1(this._exit || this._groups.map(sparse), this._parents);
-    }
-
-    function selection_join(onenter, onupdate, onexit) {
-      var enter = this.enter(), update = this, exit = this.exit();
-      if (typeof onenter === "function") {
-        enter = onenter(enter);
-        if (enter) enter = enter.selection();
-      } else {
-        enter = enter.append(onenter + "");
-      }
-      if (onupdate != null) {
-        update = onupdate(update);
-        if (update) update = update.selection();
-      }
-      if (onexit == null) exit.remove(); else onexit(exit);
-      return enter && update ? enter.merge(update).order() : update;
-    }
-
-    function selection_merge(context) {
-      var selection = context.selection ? context.selection() : context;
-
-      for (var groups0 = this._groups, groups1 = selection._groups, m0 = groups0.length, m1 = groups1.length, m = Math.min(m0, m1), merges = new Array(m0), j = 0; j < m; ++j) {
-        for (var group0 = groups0[j], group1 = groups1[j], n = group0.length, merge = merges[j] = new Array(n), node, i = 0; i < n; ++i) {
-          if (node = group0[i] || group1[i]) {
-            merge[i] = node;
-          }
-        }
-      }
-
-      for (; j < m0; ++j) {
-        merges[j] = groups0[j];
-      }
-
-      return new Selection$1(merges, this._parents);
-    }
-
-    function selection_order() {
-
-      for (var groups = this._groups, j = -1, m = groups.length; ++j < m;) {
-        for (var group = groups[j], i = group.length - 1, next = group[i], node; --i >= 0;) {
-          if (node = group[i]) {
-            if (next && node.compareDocumentPosition(next) ^ 4) next.parentNode.insertBefore(node, next);
-            next = node;
-          }
-        }
-      }
-
-      return this;
-    }
-
-    function selection_sort(compare) {
-      if (!compare) compare = ascending;
-
-      function compareNode(a, b) {
-        return a && b ? compare(a.__data__, b.__data__) : !a - !b;
-      }
-
-      for (var groups = this._groups, m = groups.length, sortgroups = new Array(m), j = 0; j < m; ++j) {
-        for (var group = groups[j], n = group.length, sortgroup = sortgroups[j] = new Array(n), node, i = 0; i < n; ++i) {
-          if (node = group[i]) {
-            sortgroup[i] = node;
-          }
-        }
-        sortgroup.sort(compareNode);
-      }
-
-      return new Selection$1(sortgroups, this._parents).order();
-    }
-
-    function ascending(a, b) {
-      return a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
-    }
-
-    function selection_call() {
-      var callback = arguments[0];
-      arguments[0] = this;
-      callback.apply(null, arguments);
-      return this;
-    }
-
-    function selection_nodes() {
-      return Array.from(this);
-    }
-
-    function selection_node() {
-
-      for (var groups = this._groups, j = 0, m = groups.length; j < m; ++j) {
-        for (var group = groups[j], i = 0, n = group.length; i < n; ++i) {
-          var node = group[i];
-          if (node) return node;
-        }
-      }
-
-      return null;
-    }
-
-    function selection_size() {
-      let size = 0;
-      for (const node of this) ++size; // eslint-disable-line no-unused-vars
-      return size;
-    }
-
-    function selection_empty() {
-      return !this.node();
-    }
-
-    function selection_each(callback) {
-
-      for (var groups = this._groups, j = 0, m = groups.length; j < m; ++j) {
-        for (var group = groups[j], i = 0, n = group.length, node; i < n; ++i) {
-          if (node = group[i]) callback.call(node, node.__data__, i, group);
-        }
-      }
-
-      return this;
-    }
-
-    function attrRemove$1(name) {
-      return function() {
-        this.removeAttribute(name);
-      };
-    }
-
-    function attrRemoveNS$1(fullname) {
-      return function() {
-        this.removeAttributeNS(fullname.space, fullname.local);
-      };
-    }
-
-    function attrConstant$1(name, value) {
-      return function() {
-        this.setAttribute(name, value);
-      };
-    }
-
-    function attrConstantNS$1(fullname, value) {
-      return function() {
-        this.setAttributeNS(fullname.space, fullname.local, value);
-      };
-    }
-
-    function attrFunction$1(name, value) {
-      return function() {
-        var v = value.apply(this, arguments);
-        if (v == null) this.removeAttribute(name);
-        else this.setAttribute(name, v);
-      };
-    }
-
-    function attrFunctionNS$1(fullname, value) {
-      return function() {
-        var v = value.apply(this, arguments);
-        if (v == null) this.removeAttributeNS(fullname.space, fullname.local);
-        else this.setAttributeNS(fullname.space, fullname.local, v);
-      };
-    }
-
-    function selection_attr(name, value) {
-      var fullname = namespace(name);
-
-      if (arguments.length < 2) {
-        var node = this.node();
-        return fullname.local
-            ? node.getAttributeNS(fullname.space, fullname.local)
-            : node.getAttribute(fullname);
-      }
-
-      return this.each((value == null
-          ? (fullname.local ? attrRemoveNS$1 : attrRemove$1) : (typeof value === "function"
-          ? (fullname.local ? attrFunctionNS$1 : attrFunction$1)
-          : (fullname.local ? attrConstantNS$1 : attrConstant$1)))(fullname, value));
-    }
-
-    function defaultView(node) {
-      return (node.ownerDocument && node.ownerDocument.defaultView) // node is a Node
-          || (node.document && node) // node is a Window
-          || node.defaultView; // node is a Document
-    }
-
-    function styleRemove$1(name) {
-      return function() {
-        this.style.removeProperty(name);
-      };
-    }
-
-    function styleConstant$1(name, value, priority) {
-      return function() {
-        this.style.setProperty(name, value, priority);
-      };
-    }
-
-    function styleFunction$1(name, value, priority) {
-      return function() {
-        var v = value.apply(this, arguments);
-        if (v == null) this.style.removeProperty(name);
-        else this.style.setProperty(name, v, priority);
-      };
-    }
-
-    function selection_style(name, value, priority) {
-      return arguments.length > 1
-          ? this.each((value == null
-                ? styleRemove$1 : typeof value === "function"
-                ? styleFunction$1
-                : styleConstant$1)(name, value, priority == null ? "" : priority))
-          : styleValue(this.node(), name);
-    }
-
-    function styleValue(node, name) {
-      return node.style.getPropertyValue(name)
-          || defaultView(node).getComputedStyle(node, null).getPropertyValue(name);
-    }
-
-    function propertyRemove(name) {
-      return function() {
-        delete this[name];
-      };
-    }
-
-    function propertyConstant(name, value) {
-      return function() {
-        this[name] = value;
-      };
-    }
-
-    function propertyFunction(name, value) {
-      return function() {
-        var v = value.apply(this, arguments);
-        if (v == null) delete this[name];
-        else this[name] = v;
-      };
-    }
-
-    function selection_property(name, value) {
-      return arguments.length > 1
-          ? this.each((value == null
-              ? propertyRemove : typeof value === "function"
-              ? propertyFunction
-              : propertyConstant)(name, value))
-          : this.node()[name];
-    }
-
-    function classArray(string) {
-      return string.trim().split(/^|\s+/);
-    }
-
-    function classList(node) {
-      return node.classList || new ClassList(node);
-    }
-
-    function ClassList(node) {
-      this._node = node;
-      this._names = classArray(node.getAttribute("class") || "");
-    }
-
-    ClassList.prototype = {
-      add: function(name) {
-        var i = this._names.indexOf(name);
-        if (i < 0) {
-          this._names.push(name);
-          this._node.setAttribute("class", this._names.join(" "));
-        }
-      },
-      remove: function(name) {
-        var i = this._names.indexOf(name);
-        if (i >= 0) {
-          this._names.splice(i, 1);
-          this._node.setAttribute("class", this._names.join(" "));
-        }
-      },
-      contains: function(name) {
-        return this._names.indexOf(name) >= 0;
-      }
-    };
-
-    function classedAdd(node, names) {
-      var list = classList(node), i = -1, n = names.length;
-      while (++i < n) list.add(names[i]);
-    }
-
-    function classedRemove(node, names) {
-      var list = classList(node), i = -1, n = names.length;
-      while (++i < n) list.remove(names[i]);
-    }
-
-    function classedTrue(names) {
-      return function() {
-        classedAdd(this, names);
-      };
-    }
-
-    function classedFalse(names) {
-      return function() {
-        classedRemove(this, names);
-      };
-    }
-
-    function classedFunction(names, value) {
-      return function() {
-        (value.apply(this, arguments) ? classedAdd : classedRemove)(this, names);
-      };
-    }
-
-    function selection_classed(name, value) {
-      var names = classArray(name + "");
-
-      if (arguments.length < 2) {
-        var list = classList(this.node()), i = -1, n = names.length;
-        while (++i < n) if (!list.contains(names[i])) return false;
-        return true;
-      }
-
-      return this.each((typeof value === "function"
-          ? classedFunction : value
-          ? classedTrue
-          : classedFalse)(names, value));
-    }
-
-    function textRemove() {
-      this.textContent = "";
-    }
-
-    function textConstant$1(value) {
-      return function() {
-        this.textContent = value;
-      };
-    }
-
-    function textFunction$1(value) {
-      return function() {
-        var v = value.apply(this, arguments);
-        this.textContent = v == null ? "" : v;
-      };
-    }
-
-    function selection_text(value) {
-      return arguments.length
-          ? this.each(value == null
-              ? textRemove : (typeof value === "function"
-              ? textFunction$1
-              : textConstant$1)(value))
-          : this.node().textContent;
-    }
-
-    function htmlRemove() {
-      this.innerHTML = "";
-    }
-
-    function htmlConstant(value) {
-      return function() {
-        this.innerHTML = value;
-      };
-    }
-
-    function htmlFunction(value) {
-      return function() {
-        var v = value.apply(this, arguments);
-        this.innerHTML = v == null ? "" : v;
-      };
-    }
-
-    function selection_html(value) {
-      return arguments.length
-          ? this.each(value == null
-              ? htmlRemove : (typeof value === "function"
-              ? htmlFunction
-              : htmlConstant)(value))
-          : this.node().innerHTML;
-    }
-
-    function raise() {
-      if (this.nextSibling) this.parentNode.appendChild(this);
-    }
-
-    function selection_raise() {
-      return this.each(raise);
-    }
-
-    function lower() {
-      if (this.previousSibling) this.parentNode.insertBefore(this, this.parentNode.firstChild);
-    }
-
-    function selection_lower() {
-      return this.each(lower);
-    }
-
-    function selection_append(name) {
-      var create = typeof name === "function" ? name : creator(name);
-      return this.select(function() {
-        return this.appendChild(create.apply(this, arguments));
-      });
-    }
-
-    function constantNull() {
-      return null;
-    }
-
-    function selection_insert(name, before) {
-      var create = typeof name === "function" ? name : creator(name),
-          select = before == null ? constantNull : typeof before === "function" ? before : selector(before);
-      return this.select(function() {
-        return this.insertBefore(create.apply(this, arguments), select.apply(this, arguments) || null);
-      });
-    }
-
-    function remove() {
-      var parent = this.parentNode;
-      if (parent) parent.removeChild(this);
-    }
-
-    function selection_remove() {
-      return this.each(remove);
-    }
-
-    function selection_cloneShallow() {
-      var clone = this.cloneNode(false), parent = this.parentNode;
-      return parent ? parent.insertBefore(clone, this.nextSibling) : clone;
-    }
-
-    function selection_cloneDeep() {
-      var clone = this.cloneNode(true), parent = this.parentNode;
-      return parent ? parent.insertBefore(clone, this.nextSibling) : clone;
-    }
-
-    function selection_clone(deep) {
-      return this.select(deep ? selection_cloneDeep : selection_cloneShallow);
-    }
-
-    function selection_datum(value) {
-      return arguments.length
-          ? this.property("__data__", value)
-          : this.node().__data__;
-    }
-
-    function contextListener(listener) {
-      return function(event) {
-        listener.call(this, event, this.__data__);
-      };
-    }
-
-    function parseTypenames(typenames) {
-      return typenames.trim().split(/^|\s+/).map(function(t) {
-        var name = "", i = t.indexOf(".");
-        if (i >= 0) name = t.slice(i + 1), t = t.slice(0, i);
-        return {type: t, name: name};
-      });
-    }
-
-    function onRemove(typename) {
-      return function() {
-        var on = this.__on;
-        if (!on) return;
-        for (var j = 0, i = -1, m = on.length, o; j < m; ++j) {
-          if (o = on[j], (!typename.type || o.type === typename.type) && o.name === typename.name) {
-            this.removeEventListener(o.type, o.listener, o.options);
-          } else {
-            on[++i] = o;
-          }
-        }
-        if (++i) on.length = i;
-        else delete this.__on;
-      };
-    }
-
-    function onAdd(typename, value, options) {
-      return function() {
-        var on = this.__on, o, listener = contextListener(value);
-        if (on) for (var j = 0, m = on.length; j < m; ++j) {
-          if ((o = on[j]).type === typename.type && o.name === typename.name) {
-            this.removeEventListener(o.type, o.listener, o.options);
-            this.addEventListener(o.type, o.listener = listener, o.options = options);
-            o.value = value;
-            return;
-          }
-        }
-        this.addEventListener(typename.type, listener, options);
-        o = {type: typename.type, name: typename.name, value: value, listener: listener, options: options};
-        if (!on) this.__on = [o];
-        else on.push(o);
-      };
-    }
-
-    function selection_on(typename, value, options) {
-      var typenames = parseTypenames(typename + ""), i, n = typenames.length, t;
-
-      if (arguments.length < 2) {
-        var on = this.node().__on;
-        if (on) for (var j = 0, m = on.length, o; j < m; ++j) {
-          for (i = 0, o = on[j]; i < n; ++i) {
-            if ((t = typenames[i]).type === o.type && t.name === o.name) {
-              return o.value;
-            }
-          }
-        }
-        return;
-      }
-
-      on = value ? onAdd : onRemove;
-      for (i = 0; i < n; ++i) this.each(on(typenames[i], value, options));
-      return this;
-    }
-
-    function dispatchEvent(node, type, params) {
-      var window = defaultView(node),
-          event = window.CustomEvent;
-
-      if (typeof event === "function") {
-        event = new event(type, params);
-      } else {
-        event = window.document.createEvent("Event");
-        if (params) event.initEvent(type, params.bubbles, params.cancelable), event.detail = params.detail;
-        else event.initEvent(type, false, false);
-      }
-
-      node.dispatchEvent(event);
-    }
-
-    function dispatchConstant(type, params) {
-      return function() {
-        return dispatchEvent(this, type, params);
-      };
-    }
-
-    function dispatchFunction(type, params) {
-      return function() {
-        return dispatchEvent(this, type, params.apply(this, arguments));
-      };
-    }
-
-    function selection_dispatch(type, params) {
-      return this.each((typeof params === "function"
-          ? dispatchFunction
-          : dispatchConstant)(type, params));
-    }
-
-    function* selection_iterator() {
-      for (var groups = this._groups, j = 0, m = groups.length; j < m; ++j) {
-        for (var group = groups[j], i = 0, n = group.length, node; i < n; ++i) {
-          if (node = group[i]) yield node;
-        }
-      }
-    }
-
-    var root = [null];
-
-    function Selection$1(groups, parents) {
-      this._groups = groups;
-      this._parents = parents;
-    }
-
-    function selection() {
-      return new Selection$1([[document.documentElement]], root);
-    }
-
-    function selection_selection() {
-      return this;
-    }
-
-    Selection$1.prototype = selection.prototype = {
-      constructor: Selection$1,
-      select: selection_select,
-      selectAll: selection_selectAll,
-      selectChild: selection_selectChild,
-      selectChildren: selection_selectChildren,
-      filter: selection_filter,
-      data: selection_data,
-      enter: selection_enter,
-      exit: selection_exit,
-      join: selection_join,
-      merge: selection_merge,
-      selection: selection_selection,
-      order: selection_order,
-      sort: selection_sort,
-      call: selection_call,
-      nodes: selection_nodes,
-      node: selection_node,
-      size: selection_size,
-      empty: selection_empty,
-      each: selection_each,
-      attr: selection_attr,
-      style: selection_style,
-      property: selection_property,
-      classed: selection_classed,
-      text: selection_text,
-      html: selection_html,
-      raise: selection_raise,
-      lower: selection_lower,
-      append: selection_append,
-      insert: selection_insert,
-      remove: selection_remove,
-      clone: selection_clone,
-      datum: selection_datum,
-      on: selection_on,
-      dispatch: selection_dispatch,
-      [Symbol.iterator]: selection_iterator
-    };
-
-    function select(selector) {
-      return typeof selector === "string"
-          ? new Selection$1([[document.querySelector(selector)]], [document.documentElement])
-          : new Selection$1([[selector]], root);
-    }
-
-    function selectAll(selector) {
-      return typeof selector === "string"
-          ? new Selection$1([document.querySelectorAll(selector)], [document.documentElement])
-          : new Selection$1([array(selector)], root);
-    }
-
-    function define(constructor, factory, prototype) {
-      constructor.prototype = factory.prototype = prototype;
-      prototype.constructor = constructor;
-    }
-
-    function extend(parent, definition) {
-      var prototype = Object.create(parent.prototype);
-      for (var key in definition) prototype[key] = definition[key];
-      return prototype;
-    }
-
-    function Color() {}
-
-    var darker = 0.7;
-    var brighter = 1 / darker;
-
-    var reI = "\\s*([+-]?\\d+)\\s*",
-        reN = "\\s*([+-]?(?:\\d*\\.)?\\d+(?:[eE][+-]?\\d+)?)\\s*",
-        reP = "\\s*([+-]?(?:\\d*\\.)?\\d+(?:[eE][+-]?\\d+)?)%\\s*",
-        reHex = /^#([0-9a-f]{3,8})$/,
-        reRgbInteger = new RegExp(`^rgb\\(${reI},${reI},${reI}\\)$`),
-        reRgbPercent = new RegExp(`^rgb\\(${reP},${reP},${reP}\\)$`),
-        reRgbaInteger = new RegExp(`^rgba\\(${reI},${reI},${reI},${reN}\\)$`),
-        reRgbaPercent = new RegExp(`^rgba\\(${reP},${reP},${reP},${reN}\\)$`),
-        reHslPercent = new RegExp(`^hsl\\(${reN},${reP},${reP}\\)$`),
-        reHslaPercent = new RegExp(`^hsla\\(${reN},${reP},${reP},${reN}\\)$`);
-
-    var named = {
-      aliceblue: 0xf0f8ff,
-      antiquewhite: 0xfaebd7,
-      aqua: 0x00ffff,
-      aquamarine: 0x7fffd4,
-      azure: 0xf0ffff,
-      beige: 0xf5f5dc,
-      bisque: 0xffe4c4,
-      black: 0x000000,
-      blanchedalmond: 0xffebcd,
-      blue: 0x0000ff,
-      blueviolet: 0x8a2be2,
-      brown: 0xa52a2a,
-      burlywood: 0xdeb887,
-      cadetblue: 0x5f9ea0,
-      chartreuse: 0x7fff00,
-      chocolate: 0xd2691e,
-      coral: 0xff7f50,
-      cornflowerblue: 0x6495ed,
-      cornsilk: 0xfff8dc,
-      crimson: 0xdc143c,
-      cyan: 0x00ffff,
-      darkblue: 0x00008b,
-      darkcyan: 0x008b8b,
-      darkgoldenrod: 0xb8860b,
-      darkgray: 0xa9a9a9,
-      darkgreen: 0x006400,
-      darkgrey: 0xa9a9a9,
-      darkkhaki: 0xbdb76b,
-      darkmagenta: 0x8b008b,
-      darkolivegreen: 0x556b2f,
-      darkorange: 0xff8c00,
-      darkorchid: 0x9932cc,
-      darkred: 0x8b0000,
-      darksalmon: 0xe9967a,
-      darkseagreen: 0x8fbc8f,
-      darkslateblue: 0x483d8b,
-      darkslategray: 0x2f4f4f,
-      darkslategrey: 0x2f4f4f,
-      darkturquoise: 0x00ced1,
-      darkviolet: 0x9400d3,
-      deeppink: 0xff1493,
-      deepskyblue: 0x00bfff,
-      dimgray: 0x696969,
-      dimgrey: 0x696969,
-      dodgerblue: 0x1e90ff,
-      firebrick: 0xb22222,
-      floralwhite: 0xfffaf0,
-      forestgreen: 0x228b22,
-      fuchsia: 0xff00ff,
-      gainsboro: 0xdcdcdc,
-      ghostwhite: 0xf8f8ff,
-      gold: 0xffd700,
-      goldenrod: 0xdaa520,
-      gray: 0x808080,
-      green: 0x008000,
-      greenyellow: 0xadff2f,
-      grey: 0x808080,
-      honeydew: 0xf0fff0,
-      hotpink: 0xff69b4,
-      indianred: 0xcd5c5c,
-      indigo: 0x4b0082,
-      ivory: 0xfffff0,
-      khaki: 0xf0e68c,
-      lavender: 0xe6e6fa,
-      lavenderblush: 0xfff0f5,
-      lawngreen: 0x7cfc00,
-      lemonchiffon: 0xfffacd,
-      lightblue: 0xadd8e6,
-      lightcoral: 0xf08080,
-      lightcyan: 0xe0ffff,
-      lightgoldenrodyellow: 0xfafad2,
-      lightgray: 0xd3d3d3,
-      lightgreen: 0x90ee90,
-      lightgrey: 0xd3d3d3,
-      lightpink: 0xffb6c1,
-      lightsalmon: 0xffa07a,
-      lightseagreen: 0x20b2aa,
-      lightskyblue: 0x87cefa,
-      lightslategray: 0x778899,
-      lightslategrey: 0x778899,
-      lightsteelblue: 0xb0c4de,
-      lightyellow: 0xffffe0,
-      lime: 0x00ff00,
-      limegreen: 0x32cd32,
-      linen: 0xfaf0e6,
-      magenta: 0xff00ff,
-      maroon: 0x800000,
-      mediumaquamarine: 0x66cdaa,
-      mediumblue: 0x0000cd,
-      mediumorchid: 0xba55d3,
-      mediumpurple: 0x9370db,
-      mediumseagreen: 0x3cb371,
-      mediumslateblue: 0x7b68ee,
-      mediumspringgreen: 0x00fa9a,
-      mediumturquoise: 0x48d1cc,
-      mediumvioletred: 0xc71585,
-      midnightblue: 0x191970,
-      mintcream: 0xf5fffa,
-      mistyrose: 0xffe4e1,
-      moccasin: 0xffe4b5,
-      navajowhite: 0xffdead,
-      navy: 0x000080,
-      oldlace: 0xfdf5e6,
-      olive: 0x808000,
-      olivedrab: 0x6b8e23,
-      orange: 0xffa500,
-      orangered: 0xff4500,
-      orchid: 0xda70d6,
-      palegoldenrod: 0xeee8aa,
-      palegreen: 0x98fb98,
-      paleturquoise: 0xafeeee,
-      palevioletred: 0xdb7093,
-      papayawhip: 0xffefd5,
-      peachpuff: 0xffdab9,
-      peru: 0xcd853f,
-      pink: 0xffc0cb,
-      plum: 0xdda0dd,
-      powderblue: 0xb0e0e6,
-      purple: 0x800080,
-      rebeccapurple: 0x663399,
-      red: 0xff0000,
-      rosybrown: 0xbc8f8f,
-      royalblue: 0x4169e1,
-      saddlebrown: 0x8b4513,
-      salmon: 0xfa8072,
-      sandybrown: 0xf4a460,
-      seagreen: 0x2e8b57,
-      seashell: 0xfff5ee,
-      sienna: 0xa0522d,
-      silver: 0xc0c0c0,
-      skyblue: 0x87ceeb,
-      slateblue: 0x6a5acd,
-      slategray: 0x708090,
-      slategrey: 0x708090,
-      snow: 0xfffafa,
-      springgreen: 0x00ff7f,
-      steelblue: 0x4682b4,
-      tan: 0xd2b48c,
-      teal: 0x008080,
-      thistle: 0xd8bfd8,
-      tomato: 0xff6347,
-      turquoise: 0x40e0d0,
-      violet: 0xee82ee,
-      wheat: 0xf5deb3,
-      white: 0xffffff,
-      whitesmoke: 0xf5f5f5,
-      yellow: 0xffff00,
-      yellowgreen: 0x9acd32
-    };
-
-    define(Color, color, {
-      copy(channels) {
-        return Object.assign(new this.constructor, this, channels);
-      },
-      displayable() {
-        return this.rgb().displayable();
-      },
-      hex: color_formatHex, // Deprecated! Use color.formatHex.
-      formatHex: color_formatHex,
-      formatHex8: color_formatHex8,
-      formatHsl: color_formatHsl,
-      formatRgb: color_formatRgb,
-      toString: color_formatRgb
-    });
-
-    function color_formatHex() {
-      return this.rgb().formatHex();
-    }
-
-    function color_formatHex8() {
-      return this.rgb().formatHex8();
-    }
-
-    function color_formatHsl() {
-      return hslConvert(this).formatHsl();
-    }
-
-    function color_formatRgb() {
-      return this.rgb().formatRgb();
-    }
-
-    function color(format) {
-      var m, l;
-      format = (format + "").trim().toLowerCase();
-      return (m = reHex.exec(format)) ? (l = m[1].length, m = parseInt(m[1], 16), l === 6 ? rgbn(m) // #ff0000
-          : l === 3 ? new Rgb((m >> 8 & 0xf) | (m >> 4 & 0xf0), (m >> 4 & 0xf) | (m & 0xf0), ((m & 0xf) << 4) | (m & 0xf), 1) // #f00
-          : l === 8 ? rgba(m >> 24 & 0xff, m >> 16 & 0xff, m >> 8 & 0xff, (m & 0xff) / 0xff) // #ff000000
-          : l === 4 ? rgba((m >> 12 & 0xf) | (m >> 8 & 0xf0), (m >> 8 & 0xf) | (m >> 4 & 0xf0), (m >> 4 & 0xf) | (m & 0xf0), (((m & 0xf) << 4) | (m & 0xf)) / 0xff) // #f000
-          : null) // invalid hex
-          : (m = reRgbInteger.exec(format)) ? new Rgb(m[1], m[2], m[3], 1) // rgb(255, 0, 0)
-          : (m = reRgbPercent.exec(format)) ? new Rgb(m[1] * 255 / 100, m[2] * 255 / 100, m[3] * 255 / 100, 1) // rgb(100%, 0%, 0%)
-          : (m = reRgbaInteger.exec(format)) ? rgba(m[1], m[2], m[3], m[4]) // rgba(255, 0, 0, 1)
-          : (m = reRgbaPercent.exec(format)) ? rgba(m[1] * 255 / 100, m[2] * 255 / 100, m[3] * 255 / 100, m[4]) // rgb(100%, 0%, 0%, 1)
-          : (m = reHslPercent.exec(format)) ? hsla(m[1], m[2] / 100, m[3] / 100, 1) // hsl(120, 50%, 50%)
-          : (m = reHslaPercent.exec(format)) ? hsla(m[1], m[2] / 100, m[3] / 100, m[4]) // hsla(120, 50%, 50%, 1)
-          : named.hasOwnProperty(format) ? rgbn(named[format]) // eslint-disable-line no-prototype-builtins
-          : format === "transparent" ? new Rgb(NaN, NaN, NaN, 0)
-          : null;
-    }
-
-    function rgbn(n) {
-      return new Rgb(n >> 16 & 0xff, n >> 8 & 0xff, n & 0xff, 1);
-    }
-
-    function rgba(r, g, b, a) {
-      if (a <= 0) r = g = b = NaN;
-      return new Rgb(r, g, b, a);
-    }
-
-    function rgbConvert(o) {
-      if (!(o instanceof Color)) o = color(o);
-      if (!o) return new Rgb;
-      o = o.rgb();
-      return new Rgb(o.r, o.g, o.b, o.opacity);
-    }
-
-    function rgb(r, g, b, opacity) {
-      return arguments.length === 1 ? rgbConvert(r) : new Rgb(r, g, b, opacity == null ? 1 : opacity);
-    }
-
-    function Rgb(r, g, b, opacity) {
-      this.r = +r;
-      this.g = +g;
-      this.b = +b;
-      this.opacity = +opacity;
-    }
-
-    define(Rgb, rgb, extend(Color, {
-      brighter(k) {
-        k = k == null ? brighter : Math.pow(brighter, k);
-        return new Rgb(this.r * k, this.g * k, this.b * k, this.opacity);
-      },
-      darker(k) {
-        k = k == null ? darker : Math.pow(darker, k);
-        return new Rgb(this.r * k, this.g * k, this.b * k, this.opacity);
-      },
-      rgb() {
-        return this;
-      },
-      clamp() {
-        return new Rgb(clampi(this.r), clampi(this.g), clampi(this.b), clampa(this.opacity));
-      },
-      displayable() {
-        return (-0.5 <= this.r && this.r < 255.5)
-            && (-0.5 <= this.g && this.g < 255.5)
-            && (-0.5 <= this.b && this.b < 255.5)
-            && (0 <= this.opacity && this.opacity <= 1);
-      },
-      hex: rgb_formatHex, // Deprecated! Use color.formatHex.
-      formatHex: rgb_formatHex,
-      formatHex8: rgb_formatHex8,
-      formatRgb: rgb_formatRgb,
-      toString: rgb_formatRgb
-    }));
-
-    function rgb_formatHex() {
-      return `#${hex(this.r)}${hex(this.g)}${hex(this.b)}`;
-    }
-
-    function rgb_formatHex8() {
-      return `#${hex(this.r)}${hex(this.g)}${hex(this.b)}${hex((isNaN(this.opacity) ? 1 : this.opacity) * 255)}`;
-    }
-
-    function rgb_formatRgb() {
-      const a = clampa(this.opacity);
-      return `${a === 1 ? "rgb(" : "rgba("}${clampi(this.r)}, ${clampi(this.g)}, ${clampi(this.b)}${a === 1 ? ")" : `, ${a})`}`;
-    }
-
-    function clampa(opacity) {
-      return isNaN(opacity) ? 1 : Math.max(0, Math.min(1, opacity));
-    }
-
-    function clampi(value) {
-      return Math.max(0, Math.min(255, Math.round(value) || 0));
-    }
-
-    function hex(value) {
-      value = clampi(value);
-      return (value < 16 ? "0" : "") + value.toString(16);
-    }
-
-    function hsla(h, s, l, a) {
-      if (a <= 0) h = s = l = NaN;
-      else if (l <= 0 || l >= 1) h = s = NaN;
-      else if (s <= 0) h = NaN;
-      return new Hsl(h, s, l, a);
-    }
-
-    function hslConvert(o) {
-      if (o instanceof Hsl) return new Hsl(o.h, o.s, o.l, o.opacity);
-      if (!(o instanceof Color)) o = color(o);
-      if (!o) return new Hsl;
-      if (o instanceof Hsl) return o;
-      o = o.rgb();
-      var r = o.r / 255,
-          g = o.g / 255,
-          b = o.b / 255,
-          min = Math.min(r, g, b),
-          max = Math.max(r, g, b),
-          h = NaN,
-          s = max - min,
-          l = (max + min) / 2;
-      if (s) {
-        if (r === max) h = (g - b) / s + (g < b) * 6;
-        else if (g === max) h = (b - r) / s + 2;
-        else h = (r - g) / s + 4;
-        s /= l < 0.5 ? max + min : 2 - max - min;
-        h *= 60;
-      } else {
-        s = l > 0 && l < 1 ? 0 : h;
-      }
-      return new Hsl(h, s, l, o.opacity);
-    }
-
-    function hsl(h, s, l, opacity) {
-      return arguments.length === 1 ? hslConvert(h) : new Hsl(h, s, l, opacity == null ? 1 : opacity);
-    }
-
-    function Hsl(h, s, l, opacity) {
-      this.h = +h;
-      this.s = +s;
-      this.l = +l;
-      this.opacity = +opacity;
-    }
-
-    define(Hsl, hsl, extend(Color, {
-      brighter(k) {
-        k = k == null ? brighter : Math.pow(brighter, k);
-        return new Hsl(this.h, this.s, this.l * k, this.opacity);
-      },
-      darker(k) {
-        k = k == null ? darker : Math.pow(darker, k);
-        return new Hsl(this.h, this.s, this.l * k, this.opacity);
-      },
-      rgb() {
-        var h = this.h % 360 + (this.h < 0) * 360,
-            s = isNaN(h) || isNaN(this.s) ? 0 : this.s,
-            l = this.l,
-            m2 = l + (l < 0.5 ? l : 1 - l) * s,
-            m1 = 2 * l - m2;
-        return new Rgb(
-          hsl2rgb(h >= 240 ? h - 240 : h + 120, m1, m2),
-          hsl2rgb(h, m1, m2),
-          hsl2rgb(h < 120 ? h + 240 : h - 120, m1, m2),
-          this.opacity
-        );
-      },
-      clamp() {
-        return new Hsl(clamph(this.h), clampt(this.s), clampt(this.l), clampa(this.opacity));
-      },
-      displayable() {
-        return (0 <= this.s && this.s <= 1 || isNaN(this.s))
-            && (0 <= this.l && this.l <= 1)
-            && (0 <= this.opacity && this.opacity <= 1);
-      },
-      formatHsl() {
-        const a = clampa(this.opacity);
-        return `${a === 1 ? "hsl(" : "hsla("}${clamph(this.h)}, ${clampt(this.s) * 100}%, ${clampt(this.l) * 100}%${a === 1 ? ")" : `, ${a})`}`;
-      }
-    }));
-
-    function clamph(value) {
-      value = (value || 0) % 360;
-      return value < 0 ? value + 360 : value;
-    }
-
-    function clampt(value) {
-      return Math.max(0, Math.min(1, value || 0));
-    }
-
-    /* From FvD 13.37, CSS Color Module Level 3 */
-    function hsl2rgb(h, m1, m2) {
-      return (h < 60 ? m1 + (m2 - m1) * h / 60
-          : h < 180 ? m2
-          : h < 240 ? m1 + (m2 - m1) * (240 - h) / 60
-          : m1) * 255;
-    }
-
-    var constant = x => () => x;
-
-    function linear$1(a, d) {
-      return function(t) {
-        return a + t * d;
-      };
-    }
-
-    function exponential(a, b, y) {
-      return a = Math.pow(a, y), b = Math.pow(b, y) - a, y = 1 / y, function(t) {
-        return Math.pow(a + t * b, y);
-      };
-    }
-
-    function gamma(y) {
-      return (y = +y) === 1 ? nogamma : function(a, b) {
-        return b - a ? exponential(a, b, y) : constant(isNaN(a) ? b : a);
-      };
-    }
-
-    function nogamma(a, b) {
-      var d = b - a;
-      return d ? linear$1(a, d) : constant(isNaN(a) ? b : a);
-    }
-
-    var interpolateRgb = (function rgbGamma(y) {
-      var color = gamma(y);
-
-      function rgb$1(start, end) {
-        var r = color((start = rgb(start)).r, (end = rgb(end)).r),
-            g = color(start.g, end.g),
-            b = color(start.b, end.b),
-            opacity = nogamma(start.opacity, end.opacity);
-        return function(t) {
-          start.r = r(t);
-          start.g = g(t);
-          start.b = b(t);
-          start.opacity = opacity(t);
-          return start + "";
-        };
-      }
-
-      rgb$1.gamma = rgbGamma;
-
-      return rgb$1;
-    })(1);
-
-    function interpolateNumber(a, b) {
-      return a = +a, b = +b, function(t) {
-        return a * (1 - t) + b * t;
-      };
-    }
-
-    var reA = /[-+]?(?:\d+\.?\d*|\.?\d+)(?:[eE][-+]?\d+)?/g,
-        reB = new RegExp(reA.source, "g");
-
-    function zero(b) {
-      return function() {
-        return b;
-      };
-    }
-
-    function one(b) {
-      return function(t) {
-        return b(t) + "";
-      };
-    }
-
-    function interpolateString(a, b) {
-      var bi = reA.lastIndex = reB.lastIndex = 0, // scan index for next number in b
-          am, // current match in a
-          bm, // current match in b
-          bs, // string preceding current number in b, if any
-          i = -1, // index in s
-          s = [], // string constants and placeholders
-          q = []; // number interpolators
-
-      // Coerce inputs to strings.
-      a = a + "", b = b + "";
-
-      // Interpolate pairs of numbers in a & b.
-      while ((am = reA.exec(a))
-          && (bm = reB.exec(b))) {
-        if ((bs = bm.index) > bi) { // a string precedes the next number in b
-          bs = b.slice(bi, bs);
-          if (s[i]) s[i] += bs; // coalesce with previous string
-          else s[++i] = bs;
-        }
-        if ((am = am[0]) === (bm = bm[0])) { // numbers in a & b match
-          if (s[i]) s[i] += bm; // coalesce with previous string
-          else s[++i] = bm;
-        } else { // interpolate non-matching numbers
-          s[++i] = null;
-          q.push({i: i, x: interpolateNumber(am, bm)});
-        }
-        bi = reB.lastIndex;
-      }
-
-      // Add remains of b.
-      if (bi < b.length) {
-        bs = b.slice(bi);
-        if (s[i]) s[i] += bs; // coalesce with previous string
-        else s[++i] = bs;
-      }
-
-      // Special optimization for only a single match.
-      // Otherwise, interpolate each of the numbers and rejoin the string.
-      return s.length < 2 ? (q[0]
-          ? one(q[0].x)
-          : zero(b))
-          : (b = q.length, function(t) {
-              for (var i = 0, o; i < b; ++i) s[(o = q[i]).i] = o.x(t);
-              return s.join("");
-            });
-    }
-
-    var degrees = 180 / Math.PI;
-
-    var identity = {
-      translateX: 0,
-      translateY: 0,
-      rotate: 0,
-      skewX: 0,
-      scaleX: 1,
-      scaleY: 1
-    };
-
-    function decompose(a, b, c, d, e, f) {
-      var scaleX, scaleY, skewX;
-      if (scaleX = Math.sqrt(a * a + b * b)) a /= scaleX, b /= scaleX;
-      if (skewX = a * c + b * d) c -= a * skewX, d -= b * skewX;
-      if (scaleY = Math.sqrt(c * c + d * d)) c /= scaleY, d /= scaleY, skewX /= scaleY;
-      if (a * d < b * c) a = -a, b = -b, skewX = -skewX, scaleX = -scaleX;
-      return {
-        translateX: e,
-        translateY: f,
-        rotate: Math.atan2(b, a) * degrees,
-        skewX: Math.atan(skewX) * degrees,
-        scaleX: scaleX,
-        scaleY: scaleY
-      };
-    }
-
-    var svgNode;
-
-    /* eslint-disable no-undef */
-    function parseCss(value) {
-      const m = new (typeof DOMMatrix === "function" ? DOMMatrix : WebKitCSSMatrix)(value + "");
-      return m.isIdentity ? identity : decompose(m.a, m.b, m.c, m.d, m.e, m.f);
-    }
-
-    function parseSvg(value) {
-      if (value == null) return identity;
-      if (!svgNode) svgNode = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      svgNode.setAttribute("transform", value);
-      if (!(value = svgNode.transform.baseVal.consolidate())) return identity;
-      value = value.matrix;
-      return decompose(value.a, value.b, value.c, value.d, value.e, value.f);
-    }
-
-    function interpolateTransform(parse, pxComma, pxParen, degParen) {
-
-      function pop(s) {
-        return s.length ? s.pop() + " " : "";
-      }
-
-      function translate(xa, ya, xb, yb, s, q) {
-        if (xa !== xb || ya !== yb) {
-          var i = s.push("translate(", null, pxComma, null, pxParen);
-          q.push({i: i - 4, x: interpolateNumber(xa, xb)}, {i: i - 2, x: interpolateNumber(ya, yb)});
-        } else if (xb || yb) {
-          s.push("translate(" + xb + pxComma + yb + pxParen);
-        }
-      }
-
-      function rotate(a, b, s, q) {
-        if (a !== b) {
-          if (a - b > 180) b += 360; else if (b - a > 180) a += 360; // shortest path
-          q.push({i: s.push(pop(s) + "rotate(", null, degParen) - 2, x: interpolateNumber(a, b)});
-        } else if (b) {
-          s.push(pop(s) + "rotate(" + b + degParen);
-        }
-      }
-
-      function skewX(a, b, s, q) {
-        if (a !== b) {
-          q.push({i: s.push(pop(s) + "skewX(", null, degParen) - 2, x: interpolateNumber(a, b)});
-        } else if (b) {
-          s.push(pop(s) + "skewX(" + b + degParen);
-        }
-      }
-
-      function scale(xa, ya, xb, yb, s, q) {
-        if (xa !== xb || ya !== yb) {
-          var i = s.push(pop(s) + "scale(", null, ",", null, ")");
-          q.push({i: i - 4, x: interpolateNumber(xa, xb)}, {i: i - 2, x: interpolateNumber(ya, yb)});
-        } else if (xb !== 1 || yb !== 1) {
-          s.push(pop(s) + "scale(" + xb + "," + yb + ")");
-        }
-      }
-
-      return function(a, b) {
-        var s = [], // string constants and placeholders
-            q = []; // number interpolators
-        a = parse(a), b = parse(b);
-        translate(a.translateX, a.translateY, b.translateX, b.translateY, s, q);
-        rotate(a.rotate, b.rotate, s, q);
-        skewX(a.skewX, b.skewX, s, q);
-        scale(a.scaleX, a.scaleY, b.scaleX, b.scaleY, s, q);
-        a = b = null; // gc
-        return function(t) {
-          var i = -1, n = q.length, o;
-          while (++i < n) s[(o = q[i]).i] = o.x(t);
-          return s.join("");
-        };
-      };
-    }
-
-    var interpolateTransformCss = interpolateTransform(parseCss, "px, ", "px)", "deg)");
-    var interpolateTransformSvg = interpolateTransform(parseSvg, ", ", ")", ")");
-
-    var frame = 0, // is an animation frame pending?
-        timeout$1 = 0, // is a timeout pending?
-        interval = 0, // are any timers active?
-        pokeDelay = 1000, // how frequently we check for clock skew
-        taskHead,
-        taskTail,
-        clockLast = 0,
-        clockNow = 0,
-        clockSkew = 0,
-        clock = typeof performance === "object" && performance.now ? performance : Date,
-        setFrame = typeof window === "object" && window.requestAnimationFrame ? window.requestAnimationFrame.bind(window) : function(f) { setTimeout(f, 17); };
-
-    function now() {
-      return clockNow || (setFrame(clearNow), clockNow = clock.now() + clockSkew);
-    }
-
-    function clearNow() {
-      clockNow = 0;
-    }
-
-    function Timer() {
-      this._call =
-      this._time =
-      this._next = null;
-    }
-
-    Timer.prototype = timer.prototype = {
-      constructor: Timer,
-      restart: function(callback, delay, time) {
-        if (typeof callback !== "function") throw new TypeError("callback is not a function");
-        time = (time == null ? now() : +time) + (delay == null ? 0 : +delay);
-        if (!this._next && taskTail !== this) {
-          if (taskTail) taskTail._next = this;
-          else taskHead = this;
-          taskTail = this;
-        }
-        this._call = callback;
-        this._time = time;
-        sleep();
-      },
-      stop: function() {
-        if (this._call) {
-          this._call = null;
-          this._time = Infinity;
-          sleep();
-        }
-      }
-    };
-
-    function timer(callback, delay, time) {
-      var t = new Timer;
-      t.restart(callback, delay, time);
-      return t;
-    }
-
-    function timerFlush() {
-      now(); // Get the current time, if not already set.
-      ++frame; // Pretend we’ve set an alarm, if we haven’t already.
-      var t = taskHead, e;
-      while (t) {
-        if ((e = clockNow - t._time) >= 0) t._call.call(undefined, e);
-        t = t._next;
-      }
-      --frame;
-    }
-
-    function wake() {
-      clockNow = (clockLast = clock.now()) + clockSkew;
-      frame = timeout$1 = 0;
-      try {
-        timerFlush();
-      } finally {
-        frame = 0;
-        nap();
-        clockNow = 0;
-      }
-    }
-
-    function poke() {
-      var now = clock.now(), delay = now - clockLast;
-      if (delay > pokeDelay) clockSkew -= delay, clockLast = now;
-    }
-
-    function nap() {
-      var t0, t1 = taskHead, t2, time = Infinity;
-      while (t1) {
-        if (t1._call) {
-          if (time > t1._time) time = t1._time;
-          t0 = t1, t1 = t1._next;
-        } else {
-          t2 = t1._next, t1._next = null;
-          t1 = t0 ? t0._next = t2 : taskHead = t2;
-        }
-      }
-      taskTail = t0;
-      sleep(time);
-    }
-
-    function sleep(time) {
-      if (frame) return; // Soonest alarm already set, or will be.
-      if (timeout$1) timeout$1 = clearTimeout(timeout$1);
-      var delay = time - clockNow; // Strictly less than if we recomputed clockNow.
-      if (delay > 24) {
-        if (time < Infinity) timeout$1 = setTimeout(wake, time - clock.now() - clockSkew);
-        if (interval) interval = clearInterval(interval);
-      } else {
-        if (!interval) clockLast = clock.now(), interval = setInterval(poke, pokeDelay);
-        frame = 1, setFrame(wake);
-      }
-    }
-
-    function timeout(callback, delay, time) {
-      var t = new Timer;
-      delay = delay == null ? 0 : +delay;
-      t.restart(elapsed => {
-        t.stop();
-        callback(elapsed + delay);
-      }, delay, time);
-      return t;
-    }
-
-    var emptyOn = dispatch("start", "end", "cancel", "interrupt");
-    var emptyTween = [];
-
-    var CREATED = 0;
-    var SCHEDULED = 1;
-    var STARTING = 2;
-    var STARTED = 3;
-    var RUNNING = 4;
-    var ENDING = 5;
-    var ENDED = 6;
-
-    function schedule(node, name, id, index, group, timing) {
-      var schedules = node.__transition;
-      if (!schedules) node.__transition = {};
-      else if (id in schedules) return;
-      create(node, id, {
-        name: name,
-        index: index, // For context during callback.
-        group: group, // For context during callback.
-        on: emptyOn,
-        tween: emptyTween,
-        time: timing.time,
-        delay: timing.delay,
-        duration: timing.duration,
-        ease: timing.ease,
-        timer: null,
-        state: CREATED
-      });
-    }
-
-    function init(node, id) {
-      var schedule = get(node, id);
-      if (schedule.state > CREATED) throw new Error("too late; already scheduled");
-      return schedule;
-    }
-
-    function set(node, id) {
-      var schedule = get(node, id);
-      if (schedule.state > STARTED) throw new Error("too late; already running");
-      return schedule;
-    }
-
-    function get(node, id) {
-      var schedule = node.__transition;
-      if (!schedule || !(schedule = schedule[id])) throw new Error("transition not found");
-      return schedule;
-    }
-
-    function create(node, id, self) {
-      var schedules = node.__transition,
-          tween;
-
-      // Initialize the self timer when the transition is created.
-      // Note the actual delay is not known until the first callback!
-      schedules[id] = self;
-      self.timer = timer(schedule, 0, self.time);
-
-      function schedule(elapsed) {
-        self.state = SCHEDULED;
-        self.timer.restart(start, self.delay, self.time);
-
-        // If the elapsed delay is less than our first sleep, start immediately.
-        if (self.delay <= elapsed) start(elapsed - self.delay);
-      }
-
-      function start(elapsed) {
-        var i, j, n, o;
-
-        // If the state is not SCHEDULED, then we previously errored on start.
-        if (self.state !== SCHEDULED) return stop();
-
-        for (i in schedules) {
-          o = schedules[i];
-          if (o.name !== self.name) continue;
-
-          // While this element already has a starting transition during this frame,
-          // defer starting an interrupting transition until that transition has a
-          // chance to tick (and possibly end); see d3/d3-transition#54!
-          if (o.state === STARTED) return timeout(start);
-
-          // Interrupt the active transition, if any.
-          if (o.state === RUNNING) {
-            o.state = ENDED;
-            o.timer.stop();
-            o.on.call("interrupt", node, node.__data__, o.index, o.group);
-            delete schedules[i];
-          }
-
-          // Cancel any pre-empted transitions.
-          else if (+i < id) {
-            o.state = ENDED;
-            o.timer.stop();
-            o.on.call("cancel", node, node.__data__, o.index, o.group);
-            delete schedules[i];
-          }
-        }
-
-        // Defer the first tick to end of the current frame; see d3/d3#1576.
-        // Note the transition may be canceled after start and before the first tick!
-        // Note this must be scheduled before the start event; see d3/d3-transition#16!
-        // Assuming this is successful, subsequent callbacks go straight to tick.
-        timeout(function() {
-          if (self.state === STARTED) {
-            self.state = RUNNING;
-            self.timer.restart(tick, self.delay, self.time);
-            tick(elapsed);
-          }
-        });
-
-        // Dispatch the start event.
-        // Note this must be done before the tween are initialized.
-        self.state = STARTING;
-        self.on.call("start", node, node.__data__, self.index, self.group);
-        if (self.state !== STARTING) return; // interrupted
-        self.state = STARTED;
-
-        // Initialize the tween, deleting null tween.
-        tween = new Array(n = self.tween.length);
-        for (i = 0, j = -1; i < n; ++i) {
-          if (o = self.tween[i].value.call(node, node.__data__, self.index, self.group)) {
-            tween[++j] = o;
-          }
-        }
-        tween.length = j + 1;
-      }
-
-      function tick(elapsed) {
-        var t = elapsed < self.duration ? self.ease.call(null, elapsed / self.duration) : (self.timer.restart(stop), self.state = ENDING, 1),
-            i = -1,
-            n = tween.length;
-
-        while (++i < n) {
-          tween[i].call(node, t);
-        }
-
-        // Dispatch the end event.
-        if (self.state === ENDING) {
-          self.on.call("end", node, node.__data__, self.index, self.group);
-          stop();
-        }
-      }
-
-      function stop() {
-        self.state = ENDED;
-        self.timer.stop();
-        delete schedules[id];
-        for (var i in schedules) return; // eslint-disable-line no-unused-vars
-        delete node.__transition;
-      }
-    }
-
-    function interrupt(node, name) {
-      var schedules = node.__transition,
-          schedule,
-          active,
-          empty = true,
-          i;
-
-      if (!schedules) return;
-
-      name = name == null ? null : name + "";
-
-      for (i in schedules) {
-        if ((schedule = schedules[i]).name !== name) { empty = false; continue; }
-        active = schedule.state > STARTING && schedule.state < ENDING;
-        schedule.state = ENDED;
-        schedule.timer.stop();
-        schedule.on.call(active ? "interrupt" : "cancel", node, node.__data__, schedule.index, schedule.group);
-        delete schedules[i];
-      }
-
-      if (empty) delete node.__transition;
-    }
-
-    function selection_interrupt(name) {
-      return this.each(function() {
-        interrupt(this, name);
-      });
-    }
-
-    function tweenRemove(id, name) {
-      var tween0, tween1;
-      return function() {
-        var schedule = set(this, id),
-            tween = schedule.tween;
-
-        // If this node shared tween with the previous node,
-        // just assign the updated shared tween and we’re done!
-        // Otherwise, copy-on-write.
-        if (tween !== tween0) {
-          tween1 = tween0 = tween;
-          for (var i = 0, n = tween1.length; i < n; ++i) {
-            if (tween1[i].name === name) {
-              tween1 = tween1.slice();
-              tween1.splice(i, 1);
-              break;
-            }
-          }
-        }
-
-        schedule.tween = tween1;
-      };
-    }
-
-    function tweenFunction(id, name, value) {
-      var tween0, tween1;
-      if (typeof value !== "function") throw new Error;
-      return function() {
-        var schedule = set(this, id),
-            tween = schedule.tween;
-
-        // If this node shared tween with the previous node,
-        // just assign the updated shared tween and we’re done!
-        // Otherwise, copy-on-write.
-        if (tween !== tween0) {
-          tween1 = (tween0 = tween).slice();
-          for (var t = {name: name, value: value}, i = 0, n = tween1.length; i < n; ++i) {
-            if (tween1[i].name === name) {
-              tween1[i] = t;
-              break;
-            }
-          }
-          if (i === n) tween1.push(t);
-        }
-
-        schedule.tween = tween1;
-      };
-    }
-
-    function transition_tween(name, value) {
-      var id = this._id;
-
-      name += "";
-
-      if (arguments.length < 2) {
-        var tween = get(this.node(), id).tween;
-        for (var i = 0, n = tween.length, t; i < n; ++i) {
-          if ((t = tween[i]).name === name) {
-            return t.value;
-          }
-        }
-        return null;
-      }
-
-      return this.each((value == null ? tweenRemove : tweenFunction)(id, name, value));
-    }
-
-    function tweenValue(transition, name, value) {
-      var id = transition._id;
-
-      transition.each(function() {
-        var schedule = set(this, id);
-        (schedule.value || (schedule.value = {}))[name] = value.apply(this, arguments);
-      });
-
-      return function(node) {
-        return get(node, id).value[name];
-      };
-    }
-
-    function interpolate(a, b) {
-      var c;
-      return (typeof b === "number" ? interpolateNumber
-          : b instanceof color ? interpolateRgb
-          : (c = color(b)) ? (b = c, interpolateRgb)
-          : interpolateString)(a, b);
-    }
-
-    function attrRemove(name) {
-      return function() {
-        this.removeAttribute(name);
-      };
-    }
-
-    function attrRemoveNS(fullname) {
-      return function() {
-        this.removeAttributeNS(fullname.space, fullname.local);
-      };
-    }
-
-    function attrConstant(name, interpolate, value1) {
-      var string00,
-          string1 = value1 + "",
-          interpolate0;
-      return function() {
-        var string0 = this.getAttribute(name);
-        return string0 === string1 ? null
-            : string0 === string00 ? interpolate0
-            : interpolate0 = interpolate(string00 = string0, value1);
-      };
-    }
-
-    function attrConstantNS(fullname, interpolate, value1) {
-      var string00,
-          string1 = value1 + "",
-          interpolate0;
-      return function() {
-        var string0 = this.getAttributeNS(fullname.space, fullname.local);
-        return string0 === string1 ? null
-            : string0 === string00 ? interpolate0
-            : interpolate0 = interpolate(string00 = string0, value1);
-      };
-    }
-
-    function attrFunction(name, interpolate, value) {
-      var string00,
-          string10,
-          interpolate0;
-      return function() {
-        var string0, value1 = value(this), string1;
-        if (value1 == null) return void this.removeAttribute(name);
-        string0 = this.getAttribute(name);
-        string1 = value1 + "";
-        return string0 === string1 ? null
-            : string0 === string00 && string1 === string10 ? interpolate0
-            : (string10 = string1, interpolate0 = interpolate(string00 = string0, value1));
-      };
-    }
-
-    function attrFunctionNS(fullname, interpolate, value) {
-      var string00,
-          string10,
-          interpolate0;
-      return function() {
-        var string0, value1 = value(this), string1;
-        if (value1 == null) return void this.removeAttributeNS(fullname.space, fullname.local);
-        string0 = this.getAttributeNS(fullname.space, fullname.local);
-        string1 = value1 + "";
-        return string0 === string1 ? null
-            : string0 === string00 && string1 === string10 ? interpolate0
-            : (string10 = string1, interpolate0 = interpolate(string00 = string0, value1));
-      };
-    }
-
-    function transition_attr(name, value) {
-      var fullname = namespace(name), i = fullname === "transform" ? interpolateTransformSvg : interpolate;
-      return this.attrTween(name, typeof value === "function"
-          ? (fullname.local ? attrFunctionNS : attrFunction)(fullname, i, tweenValue(this, "attr." + name, value))
-          : value == null ? (fullname.local ? attrRemoveNS : attrRemove)(fullname)
-          : (fullname.local ? attrConstantNS : attrConstant)(fullname, i, value));
-    }
-
-    function attrInterpolate(name, i) {
-      return function(t) {
-        this.setAttribute(name, i.call(this, t));
-      };
-    }
-
-    function attrInterpolateNS(fullname, i) {
-      return function(t) {
-        this.setAttributeNS(fullname.space, fullname.local, i.call(this, t));
-      };
-    }
-
-    function attrTweenNS(fullname, value) {
-      var t0, i0;
-      function tween() {
-        var i = value.apply(this, arguments);
-        if (i !== i0) t0 = (i0 = i) && attrInterpolateNS(fullname, i);
-        return t0;
-      }
-      tween._value = value;
-      return tween;
-    }
-
-    function attrTween(name, value) {
-      var t0, i0;
-      function tween() {
-        var i = value.apply(this, arguments);
-        if (i !== i0) t0 = (i0 = i) && attrInterpolate(name, i);
-        return t0;
-      }
-      tween._value = value;
-      return tween;
-    }
-
-    function transition_attrTween(name, value) {
-      var key = "attr." + name;
-      if (arguments.length < 2) return (key = this.tween(key)) && key._value;
-      if (value == null) return this.tween(key, null);
-      if (typeof value !== "function") throw new Error;
-      var fullname = namespace(name);
-      return this.tween(key, (fullname.local ? attrTweenNS : attrTween)(fullname, value));
-    }
-
-    function delayFunction(id, value) {
-      return function() {
-        init(this, id).delay = +value.apply(this, arguments);
-      };
-    }
-
-    function delayConstant(id, value) {
-      return value = +value, function() {
-        init(this, id).delay = value;
-      };
-    }
-
-    function transition_delay(value) {
-      var id = this._id;
-
-      return arguments.length
-          ? this.each((typeof value === "function"
-              ? delayFunction
-              : delayConstant)(id, value))
-          : get(this.node(), id).delay;
-    }
-
-    function durationFunction(id, value) {
-      return function() {
-        set(this, id).duration = +value.apply(this, arguments);
-      };
-    }
-
-    function durationConstant(id, value) {
-      return value = +value, function() {
-        set(this, id).duration = value;
-      };
-    }
-
-    function transition_duration(value) {
-      var id = this._id;
-
-      return arguments.length
-          ? this.each((typeof value === "function"
-              ? durationFunction
-              : durationConstant)(id, value))
-          : get(this.node(), id).duration;
-    }
-
-    function easeConstant(id, value) {
-      if (typeof value !== "function") throw new Error;
-      return function() {
-        set(this, id).ease = value;
-      };
-    }
-
-    function transition_ease(value) {
-      var id = this._id;
-
-      return arguments.length
-          ? this.each(easeConstant(id, value))
-          : get(this.node(), id).ease;
-    }
-
-    function easeVarying(id, value) {
-      return function() {
-        var v = value.apply(this, arguments);
-        if (typeof v !== "function") throw new Error;
-        set(this, id).ease = v;
-      };
-    }
-
-    function transition_easeVarying(value) {
-      if (typeof value !== "function") throw new Error;
-      return this.each(easeVarying(this._id, value));
-    }
-
-    function transition_filter(match) {
-      if (typeof match !== "function") match = matcher(match);
-
-      for (var groups = this._groups, m = groups.length, subgroups = new Array(m), j = 0; j < m; ++j) {
-        for (var group = groups[j], n = group.length, subgroup = subgroups[j] = [], node, i = 0; i < n; ++i) {
-          if ((node = group[i]) && match.call(node, node.__data__, i, group)) {
-            subgroup.push(node);
-          }
-        }
-      }
-
-      return new Transition(subgroups, this._parents, this._name, this._id);
-    }
-
-    function transition_merge(transition) {
-      if (transition._id !== this._id) throw new Error;
-
-      for (var groups0 = this._groups, groups1 = transition._groups, m0 = groups0.length, m1 = groups1.length, m = Math.min(m0, m1), merges = new Array(m0), j = 0; j < m; ++j) {
-        for (var group0 = groups0[j], group1 = groups1[j], n = group0.length, merge = merges[j] = new Array(n), node, i = 0; i < n; ++i) {
-          if (node = group0[i] || group1[i]) {
-            merge[i] = node;
-          }
-        }
-      }
-
-      for (; j < m0; ++j) {
-        merges[j] = groups0[j];
-      }
-
-      return new Transition(merges, this._parents, this._name, this._id);
-    }
-
-    function start$1(name) {
-      return (name + "").trim().split(/^|\s+/).every(function(t) {
-        var i = t.indexOf(".");
-        if (i >= 0) t = t.slice(0, i);
-        return !t || t === "start";
-      });
-    }
-
-    function onFunction(id, name, listener) {
-      var on0, on1, sit = start$1(name) ? init : set;
-      return function() {
-        var schedule = sit(this, id),
-            on = schedule.on;
-
-        // If this node shared a dispatch with the previous node,
-        // just assign the updated shared dispatch and we’re done!
-        // Otherwise, copy-on-write.
-        if (on !== on0) (on1 = (on0 = on).copy()).on(name, listener);
-
-        schedule.on = on1;
-      };
-    }
-
-    function transition_on(name, listener) {
-      var id = this._id;
-
-      return arguments.length < 2
-          ? get(this.node(), id).on.on(name)
-          : this.each(onFunction(id, name, listener));
-    }
-
-    function removeFunction(id) {
-      return function() {
-        var parent = this.parentNode;
-        for (var i in this.__transition) if (+i !== id) return;
-        if (parent) parent.removeChild(this);
-      };
-    }
-
-    function transition_remove() {
-      return this.on("end.remove", removeFunction(this._id));
-    }
-
-    function transition_select(select) {
-      var name = this._name,
-          id = this._id;
-
-      if (typeof select !== "function") select = selector(select);
-
-      for (var groups = this._groups, m = groups.length, subgroups = new Array(m), j = 0; j < m; ++j) {
-        for (var group = groups[j], n = group.length, subgroup = subgroups[j] = new Array(n), node, subnode, i = 0; i < n; ++i) {
-          if ((node = group[i]) && (subnode = select.call(node, node.__data__, i, group))) {
-            if ("__data__" in node) subnode.__data__ = node.__data__;
-            subgroup[i] = subnode;
-            schedule(subgroup[i], name, id, i, subgroup, get(node, id));
-          }
-        }
-      }
-
-      return new Transition(subgroups, this._parents, name, id);
-    }
-
-    function transition_selectAll(select) {
-      var name = this._name,
-          id = this._id;
-
-      if (typeof select !== "function") select = selectorAll(select);
-
-      for (var groups = this._groups, m = groups.length, subgroups = [], parents = [], j = 0; j < m; ++j) {
-        for (var group = groups[j], n = group.length, node, i = 0; i < n; ++i) {
-          if (node = group[i]) {
-            for (var children = select.call(node, node.__data__, i, group), child, inherit = get(node, id), k = 0, l = children.length; k < l; ++k) {
-              if (child = children[k]) {
-                schedule(child, name, id, k, children, inherit);
-              }
-            }
-            subgroups.push(children);
-            parents.push(node);
-          }
-        }
-      }
-
-      return new Transition(subgroups, parents, name, id);
-    }
-
-    var Selection = selection.prototype.constructor;
-
-    function transition_selection() {
-      return new Selection(this._groups, this._parents);
-    }
-
-    function styleNull(name, interpolate) {
-      var string00,
-          string10,
-          interpolate0;
-      return function() {
-        var string0 = styleValue(this, name),
-            string1 = (this.style.removeProperty(name), styleValue(this, name));
-        return string0 === string1 ? null
-            : string0 === string00 && string1 === string10 ? interpolate0
-            : interpolate0 = interpolate(string00 = string0, string10 = string1);
-      };
-    }
-
-    function styleRemove(name) {
-      return function() {
-        this.style.removeProperty(name);
-      };
-    }
-
-    function styleConstant(name, interpolate, value1) {
-      var string00,
-          string1 = value1 + "",
-          interpolate0;
-      return function() {
-        var string0 = styleValue(this, name);
-        return string0 === string1 ? null
-            : string0 === string00 ? interpolate0
-            : interpolate0 = interpolate(string00 = string0, value1);
-      };
-    }
-
-    function styleFunction(name, interpolate, value) {
-      var string00,
-          string10,
-          interpolate0;
-      return function() {
-        var string0 = styleValue(this, name),
-            value1 = value(this),
-            string1 = value1 + "";
-        if (value1 == null) string1 = value1 = (this.style.removeProperty(name), styleValue(this, name));
-        return string0 === string1 ? null
-            : string0 === string00 && string1 === string10 ? interpolate0
-            : (string10 = string1, interpolate0 = interpolate(string00 = string0, value1));
-      };
-    }
-
-    function styleMaybeRemove(id, name) {
-      var on0, on1, listener0, key = "style." + name, event = "end." + key, remove;
-      return function() {
-        var schedule = set(this, id),
-            on = schedule.on,
-            listener = schedule.value[key] == null ? remove || (remove = styleRemove(name)) : undefined;
-
-        // If this node shared a dispatch with the previous node,
-        // just assign the updated shared dispatch and we’re done!
-        // Otherwise, copy-on-write.
-        if (on !== on0 || listener0 !== listener) (on1 = (on0 = on).copy()).on(event, listener0 = listener);
-
-        schedule.on = on1;
-      };
-    }
-
-    function transition_style(name, value, priority) {
-      var i = (name += "") === "transform" ? interpolateTransformCss : interpolate;
-      return value == null ? this
-          .styleTween(name, styleNull(name, i))
-          .on("end.style." + name, styleRemove(name))
-        : typeof value === "function" ? this
-          .styleTween(name, styleFunction(name, i, tweenValue(this, "style." + name, value)))
-          .each(styleMaybeRemove(this._id, name))
-        : this
-          .styleTween(name, styleConstant(name, i, value), priority)
-          .on("end.style." + name, null);
-    }
-
-    function styleInterpolate(name, i, priority) {
-      return function(t) {
-        this.style.setProperty(name, i.call(this, t), priority);
-      };
-    }
-
-    function styleTween(name, value, priority) {
-      var t, i0;
-      function tween() {
-        var i = value.apply(this, arguments);
-        if (i !== i0) t = (i0 = i) && styleInterpolate(name, i, priority);
-        return t;
-      }
-      tween._value = value;
-      return tween;
-    }
-
-    function transition_styleTween(name, value, priority) {
-      var key = "style." + (name += "");
-      if (arguments.length < 2) return (key = this.tween(key)) && key._value;
-      if (value == null) return this.tween(key, null);
-      if (typeof value !== "function") throw new Error;
-      return this.tween(key, styleTween(name, value, priority == null ? "" : priority));
-    }
-
-    function textConstant(value) {
-      return function() {
-        this.textContent = value;
-      };
-    }
-
-    function textFunction(value) {
-      return function() {
-        var value1 = value(this);
-        this.textContent = value1 == null ? "" : value1;
-      };
-    }
-
-    function transition_text(value) {
-      return this.tween("text", typeof value === "function"
-          ? textFunction(tweenValue(this, "text", value))
-          : textConstant(value == null ? "" : value + ""));
-    }
-
-    function textInterpolate(i) {
-      return function(t) {
-        this.textContent = i.call(this, t);
-      };
-    }
-
-    function textTween(value) {
-      var t0, i0;
-      function tween() {
-        var i = value.apply(this, arguments);
-        if (i !== i0) t0 = (i0 = i) && textInterpolate(i);
-        return t0;
-      }
-      tween._value = value;
-      return tween;
-    }
-
-    function transition_textTween(value) {
-      var key = "text";
-      if (arguments.length < 1) return (key = this.tween(key)) && key._value;
-      if (value == null) return this.tween(key, null);
-      if (typeof value !== "function") throw new Error;
-      return this.tween(key, textTween(value));
-    }
-
-    function transition_transition() {
-      var name = this._name,
-          id0 = this._id,
-          id1 = newId();
-
-      for (var groups = this._groups, m = groups.length, j = 0; j < m; ++j) {
-        for (var group = groups[j], n = group.length, node, i = 0; i < n; ++i) {
-          if (node = group[i]) {
-            var inherit = get(node, id0);
-            schedule(node, name, id1, i, group, {
-              time: inherit.time + inherit.delay + inherit.duration,
-              delay: 0,
-              duration: inherit.duration,
-              ease: inherit.ease
-            });
-          }
-        }
-      }
-
-      return new Transition(groups, this._parents, name, id1);
-    }
-
-    function transition_end() {
-      var on0, on1, that = this, id = that._id, size = that.size();
-      return new Promise(function(resolve, reject) {
-        var cancel = {value: reject},
-            end = {value: function() { if (--size === 0) resolve(); }};
-
-        that.each(function() {
-          var schedule = set(this, id),
-              on = schedule.on;
-
-          // If this node shared a dispatch with the previous node,
-          // just assign the updated shared dispatch and we’re done!
-          // Otherwise, copy-on-write.
-          if (on !== on0) {
-            on1 = (on0 = on).copy();
-            on1._.cancel.push(cancel);
-            on1._.interrupt.push(cancel);
-            on1._.end.push(end);
-          }
-
-          schedule.on = on1;
-        });
-
-        // The selection was empty, resolve end immediately
-        if (size === 0) resolve();
-      });
-    }
-
-    var id = 0;
-
-    function Transition(groups, parents, name, id) {
-      this._groups = groups;
-      this._parents = parents;
-      this._name = name;
-      this._id = id;
-    }
-
-    function newId() {
-      return ++id;
-    }
-
-    var selection_prototype = selection.prototype;
-
-    Transition.prototype = {
-      constructor: Transition,
-      select: transition_select,
-      selectAll: transition_selectAll,
-      selectChild: selection_prototype.selectChild,
-      selectChildren: selection_prototype.selectChildren,
-      filter: transition_filter,
-      merge: transition_merge,
-      selection: transition_selection,
-      transition: transition_transition,
-      call: selection_prototype.call,
-      nodes: selection_prototype.nodes,
-      node: selection_prototype.node,
-      size: selection_prototype.size,
-      empty: selection_prototype.empty,
-      each: selection_prototype.each,
-      on: transition_on,
-      attr: transition_attr,
-      attrTween: transition_attrTween,
-      style: transition_style,
-      styleTween: transition_styleTween,
-      text: transition_text,
-      textTween: transition_textTween,
-      remove: transition_remove,
-      tween: transition_tween,
-      delay: transition_delay,
-      duration: transition_duration,
-      ease: transition_ease,
-      easeVarying: transition_easeVarying,
-      end: transition_end,
-      [Symbol.iterator]: selection_prototype[Symbol.iterator]
-    };
-
-    const linear = t => +t;
-
-    function cubicInOut(t) {
-      return ((t *= 2) <= 1 ? t * t * t : (t -= 2) * t * t + 2) / 2;
-    }
-
-    var defaultTiming = {
-      time: null, // Set on use.
-      delay: 0,
-      duration: 250,
-      ease: cubicInOut
-    };
-
-    function inherit(node, id) {
-      var timing;
-      while (!(timing = node.__transition) || !(timing = timing[id])) {
-        if (!(node = node.parentNode)) {
-          throw new Error(`transition ${id} not found`);
-        }
-      }
-      return timing;
-    }
-
-    function selection_transition(name) {
-      var id,
-          timing;
-
-      if (name instanceof Transition) {
-        id = name._id, name = name._name;
-      } else {
-        id = newId(), (timing = defaultTiming).time = now(), name = name == null ? null : name + "";
-      }
-
-      for (var groups = this._groups, m = groups.length, j = 0; j < m; ++j) {
-        for (var group = groups[j], n = group.length, node, i = 0; i < n; ++i) {
-          if (node = group[i]) {
-            schedule(node, name, id, i, group, timing || inherit(node, id));
-          }
-        }
-      }
-
-      return new Transition(groups, this._parents, name, id);
-    }
-
-    selection.prototype.interrupt = selection_interrupt;
-    selection.prototype.transition = selection_transition;
-
-    function Transform(k, x, y) {
-      this.k = k;
-      this.x = x;
-      this.y = y;
-    }
-
-    Transform.prototype = {
-      constructor: Transform,
-      scale: function(k) {
-        return k === 1 ? this : new Transform(this.k * k, this.x, this.y);
-      },
-      translate: function(x, y) {
-        return x === 0 & y === 0 ? this : new Transform(this.k, this.x + this.k * x, this.y + this.k * y);
-      },
-      apply: function(point) {
-        return [point[0] * this.k + this.x, point[1] * this.k + this.y];
-      },
-      applyX: function(x) {
-        return x * this.k + this.x;
-      },
-      applyY: function(y) {
-        return y * this.k + this.y;
-      },
-      invert: function(location) {
-        return [(location[0] - this.x) / this.k, (location[1] - this.y) / this.k];
-      },
-      invertX: function(x) {
-        return (x - this.x) / this.k;
-      },
-      invertY: function(y) {
-        return (y - this.y) / this.k;
-      },
-      rescaleX: function(x) {
-        return x.copy().domain(x.range().map(this.invertX, this).map(x.invert, x));
-      },
-      rescaleY: function(y) {
-        return y.copy().domain(y.range().map(this.invertY, this).map(y.invert, y));
-      },
-      toString: function() {
-        return "translate(" + this.x + "," + this.y + ") scale(" + this.k + ")";
-      }
-    };
-
-    new Transform(1, 0, 0);
-
-    Transform.prototype;
-
-    var _Display_score;
-    const 
-    // Antic NTSC palette via https://en.wikipedia.org/wiki/List_of_video_game_console_palettes#NTSC
-    // 128 colors indexed via high 7 bits, e.g. 0x00 and 0x01 refer to the first entry
-    anticPaletteRGB = [
-        "#000000", "#404040", "#6c6c6c", "#909090", "#b0b0b0", "#c8c8c8", "#dcdcdc", "#ececec",
-        "#444400", "#646410", "#848424", "#a0a034", "#b8b840", "#d0d050", "#e8e85c", "#fcfc68",
-        "#702800", "#844414", "#985c28", "#ac783c", "#bc8c4c", "#cca05c", "#dcb468", "#ecc878",
-        "#841800", "#983418", "#ac5030", "#c06848", "#d0805c", "#e09470", "#eca880", "#fcbc94",
-        "#880000", "#9c2020", "#b03c3c", "#c05858", "#d07070", "#e08888", "#eca0a0", "#fcb4b4",
-        "#78005c", "#8c2074", "#a03c88", "#b0589c", "#c070b0", "#d084c0", "#dc9cd0", "#ecb0e0",
-        "#480078", "#602090", "#783ca4", "#8c58b8", "#a070cc", "#b484dc", "#c49cec", "#d4b0fc",
-        "#140084", "#302098", "#4c3cac", "#6858c0", "#7c70d0", "#9488e0", "#a8a0ec", "#bcb4fc",
-        "#000088", "#1c209c", "#3840b0", "#505cc0", "#6874d0", "#7c8ce0", "#90a4ec", "#a4b8fc",
-        "#00187c", "#1c3890", "#3854a8", "#5070bc", "#6888cc", "#7c9cdc", "#90b4ec", "#a4c8fc",
-        "#002c5c", "#1c4c78", "#386890", "#5084ac", "#689cc0", "#7cb4d4", "#90cce8", "#a4e0fc",
-        "#003c2c", "#1c5c48", "#387c64", "#509c80", "#68b494", "#7cd0ac", "#90e4c0", "#a4fcd4",
-        "#003c00", "#205c20", "#407c40", "#5c9c5c", "#74b474", "#8cd08c", "#a4e4a4", "#b8fcb8",
-        "#143800", "#345c1c", "#507c38", "#6c9850", "#84b468", "#9ccc7c", "#b4e490", "#c8fca4",
-        "#2c3000", "#4c501c", "#687034", "#848c4c", "#9ca864", "#b4c078", "#ccd488", "#e0ec9c",
-        "#442800", "#644818", "#846830", "#a08444", "#b89c58", "#d0b46c", "#e8cc7c", "#fce08c",
-    ];
-    function centered(s, width = 40) {
-        let pad = width - s.length;
-        return s.padStart((pad >> 1) + s.length).padEnd(width);
-    }
-    function setclr(sel, c) {
-        //TODO support sel as existing d3 selection
-        selectAll(sel).style('background-color', anticColor(c));
-    }
-    function anticColor(v) {
-        return anticPaletteRGB[Math.floor(parseInt(v, 16) / 2)];
-    }
-    function atascii(c) {
-        return c.charCodeAt(0) & 0x7f;
-    }
-    function maskpos(c) {
-        return `${-(c % 16) * 8}px ${-Math.floor(c / 16) * 8}px`;
-    }
-    function putlines(win, lines, fg, bg, chrfn, idfn) {
-        // fg color can be a function of the data element, bg should be a constant
-        const w = select(win);
-        chrfn !== null && chrfn !== void 0 ? chrfn : (chrfn = atascii);
-        fg !== null && fg !== void 0 ? fg : (fg = w.attr('data-fg-color'));
-        bg !== null && bg !== void 0 ? bg : (bg = w.attr('data-bg-color'));
-        w.attr('data-fg-color', () => fg);
-        if (bg) {
-            w.attr('data-bg-color', () => bg);
-            w.style('background-color', anticColor(bg));
-        }
-        w.selectAll('div.chr').remove(); //TODO don't deal with enter/update yet
-        let fgfn = typeof fg == 'string' ? ((d) => fg) : fg, data = [].concat(...lines.map((ds, i) => (typeof (ds) == 'string' ? ds.split('') : ds)
-            .map((d, j) => [i, j, d])));
-        let chrs = w
-            .selectAll('div.chr')
-            .data(data)
-            .join('div')
-            .classed('chr', true)
-            .style('top', ([i, _, __]) => `${i * 8}px`) // eslint-disable-line no-unused-vars
-            .style('left', ([_, j, __]) => `${j * 8}px`) // eslint-disable-line no-unused-vars
-            .datum(([_, __, d]) => d); // eslint-disable-line no-unused-vars
-        if (idfn)
-            chrs.attr('id', idfn);
-        chrs.append('div')
-            .classed('chr-bg', true)
-            .style('background-color', bg ? anticColor(bg) : null);
-        chrs.append('div')
-            .classed('chr-fg', true)
-            .style('background-color', d => anticColor(fgfn(d)))
-            .style("-webkit-mask-position", d => maskpos(chrfn(d)));
-        return chrs;
-    }
-    function showAt(sel, loc, dx, dy) {
-        return sel
-            .style('left', `${loc.col * 8 + (dx || 0)}px`)
-            .style('top', `${loc.row * 8 + (dy || 0)}px`)
-            .style('opacity', 1);
-    }
-    function animateUnitPath(u) {
-        selectAll('#arrows .chr').interrupt().style('opacity', 0);
-        if (u == null)
-            return;
-        let path = u.path;
-        if (path.length < 1)
-            return;
-        const elt = select('#kreuze')
-            .call(showAt, path[path.length - 1])
-            .node();
-        elt.scrollIntoView({ block: "center", inline: "center" });
-        if (path.length < 2)
-            return;
-        let i = 0;
-        function animateStep() {
-            let loc = path[i], dst = path[i + 1], dir = u.orders[i], interrupted = false;
-            select(`#arrow-${dir}`)
-                .call(showAt, loc)
-                .transition()
-                .delay(i ? 0 : 250)
-                .duration(500)
-                .ease(linear)
-                .call(showAt, dst)
-                .transition()
-                .duration(0)
-                .style('opacity', 0)
-                .on("interrupt", () => { interrupted = true; })
-                .on("end", () => {
-                i = (i + 1) % (path.length - 1);
-                if (!interrupted)
-                    animateStep();
-            });
-        }
-        animateStep();
-    }
-    function pathSVG(orders) {
-        const r = 0.25;
-        let x = 0, y = 0, lastd = null, s = "M0,0";
-        orders.forEach(d => {
-            let dir = directions[d], dx = dir.dlon, dy = dir.dlat;
-            // add prev corner
-            if (lastd == null) {
-                s = `M${dx * r},${dy * r}`;
-            }
-            else {
-                const turn = (lastd - d + 4) % 4;
-                if (turn == 0) {
-                    s += ` l${dx * 2 * r},${dy * 2 * r}`;
-                }
-                else if (turn % 2) {
-                    let cx = (dx + directions[lastd].dlon) * r, cy = (dy + directions[lastd].dlat) * r;
-                    s += ` a${r},${r} 0 0 ${turn == 1 ? 0 : 1} ${cx},${cy}`;
-                }
-            }
-            lastd = d;
-            s += ` l${dx * (1 - 2 * r)},${dy * (1 - 2 * r)}`;
-            x += dx;
-            y += dy;
-        });
-        if (orders.length)
-            s += ` L${x},${y}`;
-        let svg = `<path d="${s}"/>`;
-        if (orders.length)
-            svg += `<circle r="${r}" cx="${x}" cy="${y}">`;
-        return svg;
-    }
-    function paintMap(action, opts) {
-        if (action != 'recolor') {
-            console.warn('paintMap: unrecognized action', action);
-            return;
-        }
-        // apply current fg/bg colors to map and unit background
-        selectAll('#map .chr-bg, #units .chr-bg')
-            .style('background-color', anticColor(opts.bgcolor));
-        selectAll('#map .chr-fg')
-            .style('background-color', d => anticColor(opts.fgcolorfn(d)));
-        // contrasting label colors
-        selectAll('.label')
-            .style('color', anticColor(opts.labelcolor));
-    }
-    function paintUnit(event, u) {
-        let chr = select(`#unit-${u.id}`), path = select(`#path-${u.id}`), loc = u.location;
-        if (['move', 'enter', 'exit'].includes(event)) {
-            chr = chr.transition().duration(250).ease(linear);
-        }
-        switch (event) {
-            case 'enter':
-            case 'move':
-                chr.call(showAt, loc);
-            // eslint-disable-next-line no-fallthrough
-            case 'orders':
-                path.attr('transform', `translate(${loc.col + 0.5},${loc.row + 0.5}) scale(-1)`)
-                    .html(pathSVG(u.orders));
-            // eslint-disable-next-line no-fallthrough
-            case 'damage':
-                chr.select('.chr-mstrng').style('width', (90 * u.mstrng / 255) + '%');
-                chr.select('.chr-cstrng').style('width', (100 * u.cstrng / u.mstrng) + '%');
-                break;
-            case 'exit':
-                chr.style('opacity', 0);
-                break;
-            case 'attack':
-            case 'defend':
-                chr.select('.chr-fg')
-                    .classed('flash', true)
-                    .style('animation-direction', event == 'defend' ? 'reverse' : 'normal');
-                break;
-            case 'focus':
-            case 'blur':
-                chr.classed('blink', event == 'focus');
-                animateUnitPath(event == 'focus' && u.human ? u : null);
-                break;
-            default:
-                console.warn('paintUnit ignoring unknown event', event);
-        }
-    }
-    class Display {
-        constructor(game, helpText, helpUrl) {
-            _Display_score.set(this, null);
-            this.centered = centered;
-            const iconfn = (d) => d.icon, unitcolor = (u) => players[u.player].color, root = document.querySelector(':root'), font = mapVariants[scenarios[game.scenario].map].font;
-            //TODO needs adjusted with setLevel
-            // pick the right fontmap
-            root.style.setProperty('--fontmap', `url(fontmap-${font}.png)`);
-            // set up background colors
-            setclr('body', 'D4');
-            setclr('.date-rule', '1A');
-            setclr('.info-rule', '02'); // same as map
-            setclr('.err-rule', '8A');
-            // set up info, error and help
-            putlines('#help-window', helpText, c => c == "}" ? '94' : '04', '0e');
-            // for amusement add a hyperlink on help page
-            selectAll('#help-window .chr')
-                .filter(d => d == "}")
-                .on('click', () => window.open(helpUrl));
-            putlines('#date-window', [''], '6A', 'B0');
-            putlines('#info-window', [''], '28', '22');
-            putlines('#err-window', [''], '22', '3A');
-            this.datemsg(centered("EASTERN FRONT 1941", 20));
-            // draw the map characters with a semi-transparent dimming layer which we can hide/show
-            putlines('#map', game.mapboard.locations, 'ff', '00', iconfn, m => `map-${m.id}`)
-                .append('div')
-                .classed('chr-dim', true)
-                .classed('extra', true);
-            // add the city labels
-            select('#labels')
-                .selectAll('div.label')
-                .data(game.mapboard.cities)
-                .join('div')
-                .classed('label', true)
-                .classed('extra', true)
-                .text(d => d.label)
-                .each(function (d) { select(this).call(showAt, game.mapboard.locationOf(d), 4, -4); });
-            // create a layer to show paths with unit orders
-            select('#orders')
-                .append('svg')
-                .attr('width', 48 * 8)
-                .attr('height', 41 * 8)
-                .append('g')
-                .attr('transform', 'scale(8)')
-                .selectAll('.unit-path')
-                .data(game.oob.slice())
-                .join('g')
-                .attr('id', u => `path-${u.id}`)
-                .classed('unit-path', true)
-                .classed('debug', u => !u.human)
-                .classed('extra', true)
-                .attr('style', u => {
-                const c = anticColor(unitcolor(u));
-                return `stroke: ${c}; fill: ${c};`;
-            });
-            // draw all of the units
-            putlines('#units', [game.oob.slice()], unitcolor, '00', iconfn, (u) => `unit-${u.id}`)
-                .each(function (u) { select(this).call(showAt, u.location); })
-                .style('opacity', 0)
-                .append('div')
-                .attr('class', 'chr-overlay extra')
-                .append('div')
-                .classed('chr-mstrng', true)
-                .append('div')
-                .classed('chr-cstrng', true);
-            // put arrows and kreuze in layer for path animation
-            putlines('#arrows', [[256], Object.values(directions).map(iconfn)], d => d == 256 ? '1A' : 'DC', undefined, c => c, (d, i) => d == 256 ? 'kreuze' : `arrow-${i - 1}`)
-                .style('opacity', 0);
-            game.on('game', (action, obj) => {
-                selectAll('#units .chr-fg').classed('flash', false);
-                if (action == 'turn') {
-                    __classPrivateFieldSet(this, _Display_score, obj.score(obj.human), "f");
-                    this.errmsg(centered('PLEASE ENTER YOUR ORDERS NOW'));
-                    this.datemsg(" " + obj.date.toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' }));
-                    this.infomsg();
-                }
-            });
-            game.on('message', (typ, ...lines) => {
-                switch (typ) {
-                    case 'error':
-                        this.errmsg(...lines);
-                        break;
-                    case 'info':
-                        this.infomsg(...lines);
-                        break;
-                    case 'date':
-                        this.datemsg(...lines);
-                        break;
-                }
-            });
-            game.on('unit', paintUnit);
-            game.on('map', paintMap);
-        }
-        datemsg(line2, line1) {
-            putlines('#date-window', [line1 !== null && line1 !== void 0 ? line1 : "", line2 !== null && line2 !== void 0 ? line2 : ""]);
-        }
-        infomsg(line1, line2) {
-            putlines('#info-window', [line1 !== null && line1 !== void 0 ? line1 : "", line2 !== null && line2 !== void 0 ? line2 : ""]);
-        }
-        errmsg(text) {
-            text !== null && text !== void 0 ? text : (text = '');
-            let s;
-            if (__classPrivateFieldGet(this, _Display_score, "f") == null) {
-                s = centered(text);
-            }
-            else {
-                s = __classPrivateFieldGet(this, _Display_score, "f").toString().padStart(3).padEnd(4) + centered(text, 36);
-            }
-            putlines('#err-window', [s]);
-        }
-        setZoom(zoomed, u) {
-            var elt;
-            if (u != null) {
-                elt = select('#kreuze').node();
-            }
-            else {
-                let x = 320 / 2, y = 144 / 2 + select('#map-window').node().offsetTop - window.scrollY;
-                elt = document.elementFromPoint(x * 4, y * 4);
-            }
-            // toggle zoom level, apply it, and re-center target eleemnt
-            select('#map-window .container').classed('doubled', zoomed);
-            elt.scrollIntoView({ block: "center", inline: "center" });
-        }
-        setVisibility(sel, visible) {
-            selectAll(sel).style('visibility', visible ? 'visible' : 'hidden');
-        }
-    }
-    _Display_score = new WeakMap();
-
     var _Thinker_instances, _Thinker_game, _Thinker_player, _Thinker_trainOfThought, _Thinker_depth, _Thinker_delay, _Thinker_concluded, _Thinker_recur, _Thinker_findBeleaguered, _Thinker_evalLocation;
     class Thinker {
         constructor(game, player) {
@@ -5609,7 +2632,7 @@ var ef1941 = (function (exports, node_crypto) {
             if (firstpass) {
                 ofr = calcForceRatios(__classPrivateFieldGet(this, _Thinker_game, "f").oob, __classPrivateFieldGet(this, _Thinker_player, "f")).ofr;
                 console.log('Overall force ratio (OFR) is', ofr);
-                friends.forEach(u => { u.objective = u.location; });
+                friends.forEach(u => { u.objective = u.point; });
             }
             friends.filter(u => u.canMove).forEach(u => {
                 //TODO these first two checks don't seem to depend on ghost army so are fixed on first pass?
@@ -5618,11 +2641,12 @@ var ef1941 = (function (exports, node_crypto) {
                     //TODO this tends to send most units to same beleagured square
                     let v = __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_findBeleaguered).call(this, u, friends);
                     if (v)
-                        u.objective = v.location;
+                        u.objective = v.point;
                 }
                 else if (firstpass && (u.cstrng <= (u.mstrng >> 1) || u.ifrdir[pinfo.homedir] >= 16)) {
                     // run home if hurting or outnumbered in the rear
                     //TODO could look for farthest legal square (valid & not impassable) 5, 4, ...
+                    //!this fails if the target point is impassable, better to aim for nearest valid point on home border
                     let d = directions[pinfo.homedir];
                     u.objective = { lon: u.lon + 5 * d.dlon, lat: u.lat + 5 * d.dlat };
                 }
@@ -5636,7 +2660,7 @@ var ef1941 = (function (exports, node_crypto) {
                         let sqval = __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_evalLocation).call(this, u, loc, friends, foes);
                         if (sqval > bestval) {
                             bestval = sqval;
-                            loc.put(u.objective);
+                            u.objective = loc.point;
                         }
                     });
                 }
@@ -5704,14 +2728,14 @@ var ef1941 = (function (exports, node_crypto) {
     function calcForceRatios(oob, player) {
         let active = oob.activeUnits(), friend = sum(active.filter(u => u.player == player).map(u => u.cstrng)), foe = sum(active.filter(u => u.player != player).map(u => u.cstrng)), ofr = Math.floor((foe << 4) / friend), ofropp = Math.floor((friend << 4) / foe);
         active.forEach(u => {
-            let nearby = active.filter(v => GridPoint.manhattanDistance(u, v) <= 8), friend = 0, loc = u.location;
+            let nearby = active.filter(v => GridPoint.manhattanDistance(u, v) <= 8), friend = 0, p = u.point;
             u.ifrdir = [0, 0, 0, 0];
             nearby.forEach(v => {
                 let inc = v.cstrng >> 4;
                 if (v.player == u.player)
                     friend += inc;
                 else
-                    u.ifrdir[GridPoint.directionFrom(loc, v.location)] += inc;
+                    u.ifrdir[GridPoint.directionFrom(p, v.point)] += inc;
             });
             // individual and overall ifr max 255
             let ifr = Math.floor((sum(u.ifrdir) << 4) / friend);
@@ -5764,312 +2788,4427 @@ var ef1941 = (function (exports, node_crypto) {
         return score;
     }
 
-    const helpText = `
-0123456789012345678901234567890123456789
-
-
-      Welcome to Chris Crawford's
-          Eastern Front  1941
-
-       Ported by Patrick Surry }
-
-  Select: Click, [n]ext, [p]rev
-  Orders: \x1f, \x1c, \x1d, \x1e, [Bksp]
-  Cancel: [Space], [Esc]
-  Submit: [End], [Fn \x1f]
-  Toggle: [z]oom, e[x]tras, debu[g]
-
-          [?] shows this help
-
-         Press any key to play!
-
-0123456789012345678901234567890123456789
-`.split('\n').slice(2, -2);
-    var game, display, ai, zoom = 0, // display zoom 0 or 1
-    help = 1, // help visible 0 or 1
-    uimode = null, focusid = null, // current focused unit id
-    lastid = null; // most recent focused unit id (= focusid or null)
-    // main entry point
-    function start() {
-        const resume = window.location.hash.slice(1) || undefined;
-        game = new Game(resume);
-        display = new Display(game, helpText, 'https://github.com/patricksurry/eastern-front-1941');
-        game.start();
-        game.on('game', (action) => {
-            if (action == 'turn' && uimode == 2 /* UIModeKey.resolve */)
-                setMode(1 /* UIModeKey.orders */);
-        });
-        ai = Object.keys(players)
-            .filter(player => +player != game.human)
-            .map(player => new Thinker(game, +player));
-        // set up a click handler to toggle help
-        select('#help-window').on('click', toggleHelp);
-        // add map square click handlers
-        selectAll('#map .chr')
-            .on('click', mapClickHandler)
-            .on('mouseover', mapHoverHandler);
-        // start the key handler
-        document.addEventListener('keydown', keyHandler);
-        if (resume) {
-            // hide help and keep going
-            toggleHelp();
-            setMode(1 /* UIModeKey.orders */);
+    const 
+    // Antic NTSC palette via https://en.wikipedia.org/wiki/List_of_video_game_console_palettes#NTSC
+    // 128 colors indexed via high 7 bits, e.g. 0x00 and 0x01 refer to the first entry
+    anticPaletteRGB = [
+        "#000000", "#404040", "#6c6c6c", "#909090", "#b0b0b0", "#c8c8c8", "#dcdcdc", "#ececec",
+        "#444400", "#646410", "#848424", "#a0a034", "#b8b840", "#d0d050", "#e8e85c", "#fcfc68",
+        "#702800", "#844414", "#985c28", "#ac783c", "#bc8c4c", "#cca05c", "#dcb468", "#ecc878",
+        "#841800", "#983418", "#ac5030", "#c06848", "#d0805c", "#e09470", "#eca880", "#fcbc94",
+        "#880000", "#9c2020", "#b03c3c", "#c05858", "#d07070", "#e08888", "#eca0a0", "#fcb4b4",
+        "#78005c", "#8c2074", "#a03c88", "#b0589c", "#c070b0", "#d084c0", "#dc9cd0", "#ecb0e0",
+        "#480078", "#602090", "#783ca4", "#8c58b8", "#a070cc", "#b484dc", "#c49cec", "#d4b0fc",
+        "#140084", "#302098", "#4c3cac", "#6858c0", "#7c70d0", "#9488e0", "#a8a0ec", "#bcb4fc",
+        "#000088", "#1c209c", "#3840b0", "#505cc0", "#6874d0", "#7c8ce0", "#90a4ec", "#a4b8fc",
+        "#00187c", "#1c3890", "#3854a8", "#5070bc", "#6888cc", "#7c9cdc", "#90b4ec", "#a4c8fc",
+        "#002c5c", "#1c4c78", "#386890", "#5084ac", "#689cc0", "#7cb4d4", "#90cce8", "#a4e0fc",
+        "#003c2c", "#1c5c48", "#387c64", "#509c80", "#68b494", "#7cd0ac", "#90e4c0", "#a4fcd4",
+        "#003c00", "#205c20", "#407c40", "#5c9c5c", "#74b474", "#8cd08c", "#a4e4a4", "#b8fcb8",
+        "#143800", "#345c1c", "#507c38", "#6c9850", "#84b468", "#9ccc7c", "#b4e490", "#c8fca4",
+        "#2c3000", "#4c501c", "#687034", "#848c4c", "#9ca864", "#b4c078", "#ccd488", "#e0ec9c",
+        "#442800", "#644818", "#846830", "#a08444", "#b89c58", "#d0b46c", "#e8cc7c", "#fce08c",
+    ];
+    function antic2rgb(color) {
+        if (color == null)
+            return undefined;
+        if (!Number.isInteger(color) || color < 0 || color > 255) {
+            throw new Error(`DisplayLayer: Invalid antic color ${color}`);
         }
-        else {
-            setMode(0 /* UIModeKey.setup */);
+        return anticPaletteRGB[color >> 1];
+    }
+    const atascii = (c) => c.charCodeAt(0) & 0x7f;
+    function fontMap(maskImage, numGlyphs, glyphSize = 8, glyphsPerRow = 16, startOffset = 0) {
+        return { maskImage, numGlyphs, glyphSize, glyphsPerRow, startOffset };
+    }
+    class DisplayLayer {
+        constructor(width, height, fontmap, opts = {}) {
+            this.dirty = true;
+            // explicitly set foregroundColor: undefined for transparent grl can be explicitly undefined
+            if (!('foregroundColor' in opts))
+                opts.foregroundColor = 0x0f;
+            this.width = width;
+            this.height = height;
+            this.fontmap = fontmap;
+            this.setcolors(opts);
+        }
+        setcolors(opts) {
+            this.dirty = true;
+            this.foregroundColor = opts.foregroundColor;
+            this.backgroundColor = opts.backgroundColor;
+            this.layerColor = opts.layerColor;
         }
     }
-    const modes = {
-        [0 /* UIModeKey.setup */]: {
-            enter: () => {
-                display.infomsg(display.centered('COPYRIGHT 1982 ATARI'), display.centered('ALL RIGHTS RESERVED'));
-                //TODO this won't work until game responds appropriately
-                //setScenario(Scenario.beginner);
-            },
-            keyHandler: (key) => {
-                if (keymap.prev.includes(key) || key == 'ArrowLeft') {
-                    setScenario(null, -1);
+    class MappedDisplayLayer extends DisplayLayer {
+        constructor(width, height, fontmap, opts = {}) {
+            super(width, height, fontmap, opts);
+            this.x = 0;
+            this.y = 0;
+            this.glyphs = new Array(height).fill(undefined).map(() => new Array(width).fill(undefined));
+        }
+        spritelist() {
+            return this.glyphs.flatMap((row, y) => row.map((g, x) => g && Object.assign({ key: `${x},${y}`, x, y }, g)).filter(d => d));
+        }
+        setpos(x, y) {
+            this.x = x % this.width;
+            this.y = y % this.height;
+        }
+        putc(c, opts = {}) {
+            var _a, _b;
+            this.dirty = true;
+            this.setpos((_a = opts.x) !== null && _a !== void 0 ? _a : this.x, (_b = opts.y) !== null && _b !== void 0 ? _b : this.y);
+            this.glyphs[this.y][this.x] = Object.assign({ c }, opts);
+            this.x = (this.x + 1) % this.width;
+            if (this.x == 0)
+                this.y = (this.y + 1) % this.height;
+        }
+        puts(s, opts = {}) {
+            let { x, y } = opts, rest = __rest(opts, ["x", "y"]); // drop x and y
+            this.setpos(x !== null && x !== void 0 ? x : this.x, y !== null && y !== void 0 ? y : this.y);
+            s.split('').forEach((c) => { var _a; return this.putc(((_a = opts.charMap) !== null && _a !== void 0 ? _a : atascii)(c), rest); });
+        }
+        putlines(lines, opts = {}) {
+            var _a, _b;
+            const x0 = (_a = opts.x) !== null && _a !== void 0 ? _a : this.x, y0 = (_b = opts.y) !== null && _b !== void 0 ? _b : this.y;
+            lines.forEach((s, j) => this.puts(s, Object.assign({}, opts, { x: x0, y: y0 + j })));
+        }
+    }
+    class SpriteDisplayLayer extends DisplayLayer {
+        constructor() {
+            super(...arguments);
+            this.sprites = {};
+        }
+        put(key, c, x, y, opts = {}) {
+            this.dirty = true;
+            this.sprites[key] = Object.assign({ key, c, x, y }, opts);
+        }
+        moveto(key, x, y) {
+            this.dirty = true;
+            if (!(key in this.sprites)) {
+                throw new Error(`SpriteDisplayLayer.moveto: key error for '${key}'`);
+            }
+            Object.assign(this.sprites[key], { x: x, y: y });
+        }
+        delete(key) {
+            this.dirty = true;
+            if (!(key in this.sprites)) {
+                throw new Error(`SpriteDisplayLayer.delete: key error for '${key}'`);
+            }
+            delete this.sprites[key];
+        }
+        spritelist() {
+            return Object.values(this.sprites);
+        }
+    }
+
+    var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+
+    var vnode;
+    var hasRequiredVnode;
+
+    function requireVnode () {
+    	if (hasRequiredVnode) return vnode;
+    	hasRequiredVnode = 1;
+
+    	function Vnode(tag, key, attrs, children, text, dom) {
+    		return {tag: tag, key: key, attrs: attrs, children: children, text: text, dom: dom, domSize: undefined, state: undefined, events: undefined, instance: undefined}
+    	}
+    	Vnode.normalize = function(node) {
+    		if (Array.isArray(node)) return Vnode("[", undefined, undefined, Vnode.normalizeChildren(node), undefined, undefined)
+    		if (node == null || typeof node === "boolean") return null
+    		if (typeof node === "object") return node
+    		return Vnode("#", undefined, undefined, String(node), undefined, undefined)
+    	};
+    	Vnode.normalizeChildren = function(input) {
+    		var children = [];
+    		if (input.length) {
+    			var isKeyed = input[0] != null && input[0].key != null;
+    			// Note: this is a *very* perf-sensitive check.
+    			// Fun fact: merging the loop like this is somehow faster than splitting
+    			// it, noticeably so.
+    			for (var i = 1; i < input.length; i++) {
+    				if ((input[i] != null && input[i].key != null) !== isKeyed) {
+    					throw new TypeError(
+    						isKeyed && (input[i] != null || typeof input[i] === "boolean")
+    							? "In fragments, vnodes must either all have keys or none have keys. You may wish to consider using an explicit keyed empty fragment, m.fragment({key: ...}), instead of a hole."
+    							: "In fragments, vnodes must either all have keys or none have keys."
+    					)
+    				}
+    			}
+    			for (var i = 0; i < input.length; i++) {
+    				children[i] = Vnode.normalize(input[i]);
+    			}
+    		}
+    		return children
+    	};
+
+    	vnode = Vnode;
+    	return vnode;
+    }
+
+    var Vnode$4 = requireVnode();
+
+    // Call via `hyperscriptVnode.apply(startOffset, arguments)`
+    //
+    // The reason I do it this way, forwarding the arguments and passing the start
+    // offset in `this`, is so I don't have to create a temporary array in a
+    // performance-critical path.
+    //
+    // In native ES6, I'd instead add a final `...args` parameter to the
+    // `hyperscript` and `fragment` factories and define this as
+    // `hyperscriptVnode(...args)`, since modern engines do optimize that away. But
+    // ES5 (what Mithril.js requires thanks to IE support) doesn't give me that luxury,
+    // and engines aren't nearly intelligent enough to do either of these:
+    //
+    // 1. Elide the allocation for `[].slice.call(arguments, 1)` when it's passed to
+    //    another function only to be indexed.
+    // 2. Elide an `arguments` allocation when it's passed to any function other
+    //    than `Function.prototype.apply` or `Reflect.apply`.
+    //
+    // In ES6, it'd probably look closer to this (I'd need to profile it, though):
+    // module.exports = function(attrs, ...children) {
+    //     if (attrs == null || typeof attrs === "object" && attrs.tag == null && !Array.isArray(attrs)) {
+    //         if (children.length === 1 && Array.isArray(children[0])) children = children[0]
+    //     } else {
+    //         children = children.length === 0 && Array.isArray(attrs) ? attrs : [attrs, ...children]
+    //         attrs = undefined
+    //     }
+    //
+    //     if (attrs == null) attrs = {}
+    //     return Vnode("", attrs.key, attrs, children)
+    // }
+    var hyperscriptVnode$2 = function() {
+    	var attrs = arguments[this], start = this + 1, children;
+
+    	if (attrs == null) {
+    		attrs = {};
+    	} else if (typeof attrs !== "object" || attrs.tag != null || Array.isArray(attrs)) {
+    		attrs = {};
+    		start = this;
+    	}
+
+    	if (arguments.length === start + 1) {
+    		children = arguments[start];
+    		if (!Array.isArray(children)) children = [children];
+    	} else {
+    		children = [];
+    		while (start < arguments.length) children.push(arguments[start++]);
+    	}
+
+    	return Vnode$4("", attrs.key, attrs, children)
+    };
+
+    var hasOwn$2 = {}.hasOwnProperty;
+
+    var Vnode$3 = requireVnode();
+    var hyperscriptVnode$1 = hyperscriptVnode$2;
+    var hasOwn$1 = hasOwn$2;
+
+    var selectorParser = /(?:(^|#|\.)([^#\.\[\]]+))|(\[(.+?)(?:\s*=\s*("|'|)((?:\\["'\]]|.)*?)\5)?\])/g;
+    var selectorCache = {};
+
+    function isEmpty(object) {
+    	for (var key in object) if (hasOwn$1.call(object, key)) return false
+    	return true
+    }
+
+    function compileSelector(selector) {
+    	var match, tag = "div", classes = [], attrs = {};
+    	while (match = selectorParser.exec(selector)) {
+    		var type = match[1], value = match[2];
+    		if (type === "" && value !== "") tag = value;
+    		else if (type === "#") attrs.id = value;
+    		else if (type === ".") classes.push(value);
+    		else if (match[3][0] === "[") {
+    			var attrValue = match[6];
+    			if (attrValue) attrValue = attrValue.replace(/\\(["'])/g, "$1").replace(/\\\\/g, "\\");
+    			if (match[4] === "class") classes.push(attrValue);
+    			else attrs[match[4]] = attrValue === "" ? attrValue : attrValue || true;
+    		}
+    	}
+    	if (classes.length > 0) attrs.className = classes.join(" ");
+    	return selectorCache[selector] = {tag: tag, attrs: attrs}
+    }
+
+    function execSelector(state, vnode) {
+    	var attrs = vnode.attrs;
+    	var hasClass = hasOwn$1.call(attrs, "class");
+    	var className = hasClass ? attrs.class : attrs.className;
+
+    	vnode.tag = state.tag;
+    	vnode.attrs = {};
+
+    	if (!isEmpty(state.attrs) && !isEmpty(attrs)) {
+    		var newAttrs = {};
+
+    		for (var key in attrs) {
+    			if (hasOwn$1.call(attrs, key)) newAttrs[key] = attrs[key];
+    		}
+
+    		attrs = newAttrs;
+    	}
+
+    	for (var key in state.attrs) {
+    		if (hasOwn$1.call(state.attrs, key) && key !== "className" && !hasOwn$1.call(attrs, key)){
+    			attrs[key] = state.attrs[key];
+    		}
+    	}
+    	if (className != null || state.attrs.className != null) attrs.className =
+    		className != null
+    			? state.attrs.className != null
+    				? String(state.attrs.className) + " " + String(className)
+    				: className
+    			: state.attrs.className != null
+    				? state.attrs.className
+    				: null;
+
+    	if (hasClass) attrs.class = null;
+
+    	for (var key in attrs) {
+    		if (hasOwn$1.call(attrs, key) && key !== "key") {
+    			vnode.attrs = attrs;
+    			break
+    		}
+    	}
+
+    	return vnode
+    }
+
+    function hyperscript$2(selector) {
+    	if (selector == null || typeof selector !== "string" && typeof selector !== "function" && typeof selector.view !== "function") {
+    		throw Error("The selector must be either a string or a component.");
+    	}
+
+    	var vnode = hyperscriptVnode$1.apply(1, arguments);
+
+    	if (typeof selector === "string") {
+    		vnode.children = Vnode$3.normalizeChildren(vnode.children);
+    		if (selector !== "[") return execSelector(selectorCache[selector] || compileSelector(selector), vnode)
+    	}
+
+    	vnode.tag = selector;
+    	return vnode
+    }
+
+    var hyperscript_1$1 = hyperscript$2;
+
+    var Vnode$2 = requireVnode();
+
+    var trust = function(html) {
+    	if (html == null) html = "";
+    	return Vnode$2("<", undefined, undefined, html, undefined, undefined)
+    };
+
+    var Vnode$1 = requireVnode();
+    var hyperscriptVnode = hyperscriptVnode$2;
+
+    var fragment = function() {
+    	var vnode = hyperscriptVnode.apply(0, arguments);
+
+    	vnode.tag = "[";
+    	vnode.children = Vnode$1.normalizeChildren(vnode.children);
+    	return vnode
+    };
+
+    var hyperscript$1 = hyperscript_1$1;
+
+    hyperscript$1.trust = trust;
+    hyperscript$1.fragment = fragment;
+
+    var hyperscript_1 = hyperscript$1;
+
+    var promise = {exports: {}};
+
+    var polyfill;
+    var hasRequiredPolyfill;
+
+    function requirePolyfill () {
+    	if (hasRequiredPolyfill) return polyfill;
+    	hasRequiredPolyfill = 1;
+    	/** @constructor */
+    	var PromisePolyfill = function(executor) {
+    		if (!(this instanceof PromisePolyfill)) throw new Error("Promise must be called with 'new'.")
+    		if (typeof executor !== "function") throw new TypeError("executor must be a function.")
+
+    		var self = this, resolvers = [], rejectors = [], resolveCurrent = handler(resolvers, true), rejectCurrent = handler(rejectors, false);
+    		var instance = self._instance = {resolvers: resolvers, rejectors: rejectors};
+    		var callAsync = typeof setImmediate === "function" ? setImmediate : setTimeout;
+    		function handler(list, shouldAbsorb) {
+    			return function execute(value) {
+    				var then;
+    				try {
+    					if (shouldAbsorb && value != null && (typeof value === "object" || typeof value === "function") && typeof (then = value.then) === "function") {
+    						if (value === self) throw new TypeError("Promise can't be resolved with itself.")
+    						executeOnce(then.bind(value));
+    					}
+    					else {
+    						callAsync(function() {
+    							if (!shouldAbsorb && list.length === 0) console.error("Possible unhandled promise rejection:", value);
+    							for (var i = 0; i < list.length; i++) list[i](value);
+    							resolvers.length = 0, rejectors.length = 0;
+    							instance.state = shouldAbsorb;
+    							instance.retry = function() {execute(value);};
+    						});
+    					}
+    				}
+    				catch (e) {
+    					rejectCurrent(e);
+    				}
+    			}
+    		}
+    		function executeOnce(then) {
+    			var runs = 0;
+    			function run(fn) {
+    				return function(value) {
+    					if (runs++ > 0) return
+    					fn(value);
+    				}
+    			}
+    			var onerror = run(rejectCurrent);
+    			try {then(run(resolveCurrent), onerror);} catch (e) {onerror(e);}
+    		}
+
+    		executeOnce(executor);
+    	};
+    	PromisePolyfill.prototype.then = function(onFulfilled, onRejection) {
+    		var self = this, instance = self._instance;
+    		function handle(callback, list, next, state) {
+    			list.push(function(value) {
+    				if (typeof callback !== "function") next(value);
+    				else try {resolveNext(callback(value));} catch (e) {if (rejectNext) rejectNext(e);}
+    			});
+    			if (typeof instance.retry === "function" && state === instance.state) instance.retry();
+    		}
+    		var resolveNext, rejectNext;
+    		var promise = new PromisePolyfill(function(resolve, reject) {resolveNext = resolve, rejectNext = reject;});
+    		handle(onFulfilled, instance.resolvers, resolveNext, true), handle(onRejection, instance.rejectors, rejectNext, false);
+    		return promise
+    	};
+    	PromisePolyfill.prototype.catch = function(onRejection) {
+    		return this.then(null, onRejection)
+    	};
+    	PromisePolyfill.prototype.finally = function(callback) {
+    		return this.then(
+    			function(value) {
+    				return PromisePolyfill.resolve(callback()).then(function() {
+    					return value
+    				})
+    			},
+    			function(reason) {
+    				return PromisePolyfill.resolve(callback()).then(function() {
+    					return PromisePolyfill.reject(reason);
+    				})
+    			}
+    		)
+    	};
+    	PromisePolyfill.resolve = function(value) {
+    		if (value instanceof PromisePolyfill) return value
+    		return new PromisePolyfill(function(resolve) {resolve(value);})
+    	};
+    	PromisePolyfill.reject = function(value) {
+    		return new PromisePolyfill(function(resolve, reject) {reject(value);})
+    	};
+    	PromisePolyfill.all = function(list) {
+    		return new PromisePolyfill(function(resolve, reject) {
+    			var total = list.length, count = 0, values = [];
+    			if (list.length === 0) resolve([]);
+    			else for (var i = 0; i < list.length; i++) {
+    				(function(i) {
+    					function consume(value) {
+    						count++;
+    						values[i] = value;
+    						if (count === total) resolve(values);
+    					}
+    					if (list[i] != null && (typeof list[i] === "object" || typeof list[i] === "function") && typeof list[i].then === "function") {
+    						list[i].then(consume, reject);
+    					}
+    					else consume(list[i]);
+    				})(i);
+    			}
+    		})
+    	};
+    	PromisePolyfill.race = function(list) {
+    		return new PromisePolyfill(function(resolve, reject) {
+    			for (var i = 0; i < list.length; i++) {
+    				list[i].then(resolve, reject);
+    			}
+    		})
+    	};
+
+    	polyfill = PromisePolyfill;
+    	return polyfill;
+    }
+
+    /* global window */
+
+    var PromisePolyfill$1 = requirePolyfill();
+
+    if (typeof window !== "undefined") {
+    	if (typeof window.Promise === "undefined") {
+    		window.Promise = PromisePolyfill$1;
+    	} else if (!window.Promise.prototype.finally) {
+    		window.Promise.prototype.finally = PromisePolyfill$1.prototype.finally;
+    	}
+    	promise.exports = window.Promise;
+    } else if (typeof commonjsGlobal !== "undefined") {
+    	if (typeof commonjsGlobal.Promise === "undefined") {
+    		commonjsGlobal.Promise = PromisePolyfill$1;
+    	} else if (!commonjsGlobal.Promise.prototype.finally) {
+    		commonjsGlobal.Promise.prototype.finally = PromisePolyfill$1.prototype.finally;
+    	}
+    	promise.exports = commonjsGlobal.Promise;
+    } else {
+    	promise.exports = PromisePolyfill$1;
+    }
+
+    var render$2;
+    var hasRequiredRender;
+
+    function requireRender () {
+    	if (hasRequiredRender) return render$2;
+    	hasRequiredRender = 1;
+
+    	var Vnode = requireVnode();
+
+    	render$2 = function($window) {
+    		var $doc = $window && $window.document;
+    		var currentRedraw;
+
+    		var nameSpace = {
+    			svg: "http://www.w3.org/2000/svg",
+    			math: "http://www.w3.org/1998/Math/MathML"
+    		};
+
+    		function getNameSpace(vnode) {
+    			return vnode.attrs && vnode.attrs.xmlns || nameSpace[vnode.tag]
+    		}
+
+    		//sanity check to discourage people from doing `vnode.state = ...`
+    		function checkState(vnode, original) {
+    			if (vnode.state !== original) throw new Error("'vnode.state' must not be modified.")
+    		}
+
+    		//Note: the hook is passed as the `this` argument to allow proxying the
+    		//arguments without requiring a full array allocation to do so. It also
+    		//takes advantage of the fact the current `vnode` is the first argument in
+    		//all lifecycle methods.
+    		function callHook(vnode) {
+    			var original = vnode.state;
+    			try {
+    				return this.apply(original, arguments)
+    			} finally {
+    				checkState(vnode, original);
+    			}
+    		}
+
+    		// IE11 (at least) throws an UnspecifiedError when accessing document.activeElement when
+    		// inside an iframe. Catch and swallow this error, and heavy-handidly return null.
+    		function activeElement() {
+    			try {
+    				return $doc.activeElement
+    			} catch (e) {
+    				return null
+    			}
+    		}
+    		//create
+    		function createNodes(parent, vnodes, start, end, hooks, nextSibling, ns) {
+    			for (var i = start; i < end; i++) {
+    				var vnode = vnodes[i];
+    				if (vnode != null) {
+    					createNode(parent, vnode, hooks, ns, nextSibling);
+    				}
+    			}
+    		}
+    		function createNode(parent, vnode, hooks, ns, nextSibling) {
+    			var tag = vnode.tag;
+    			if (typeof tag === "string") {
+    				vnode.state = {};
+    				if (vnode.attrs != null) initLifecycle(vnode.attrs, vnode, hooks);
+    				switch (tag) {
+    					case "#": createText(parent, vnode, nextSibling); break
+    					case "<": createHTML(parent, vnode, ns, nextSibling); break
+    					case "[": createFragment(parent, vnode, hooks, ns, nextSibling); break
+    					default: createElement(parent, vnode, hooks, ns, nextSibling);
+    				}
+    			}
+    			else createComponent(parent, vnode, hooks, ns, nextSibling);
+    		}
+    		function createText(parent, vnode, nextSibling) {
+    			vnode.dom = $doc.createTextNode(vnode.children);
+    			insertNode(parent, vnode.dom, nextSibling);
+    		}
+    		var possibleParents = {caption: "table", thead: "table", tbody: "table", tfoot: "table", tr: "tbody", th: "tr", td: "tr", colgroup: "table", col: "colgroup"};
+    		function createHTML(parent, vnode, ns, nextSibling) {
+    			var match = vnode.children.match(/^\s*?<(\w+)/im) || [];
+    			// not using the proper parent makes the child element(s) vanish.
+    			//     var div = document.createElement("div")
+    			//     div.innerHTML = "<td>i</td><td>j</td>"
+    			//     console.log(div.innerHTML)
+    			// --> "ij", no <td> in sight.
+    			var temp = $doc.createElement(possibleParents[match[1]] || "div");
+    			if (ns === "http://www.w3.org/2000/svg") {
+    				temp.innerHTML = "<svg xmlns=\"http://www.w3.org/2000/svg\">" + vnode.children + "</svg>";
+    				temp = temp.firstChild;
+    			} else {
+    				temp.innerHTML = vnode.children;
+    			}
+    			vnode.dom = temp.firstChild;
+    			vnode.domSize = temp.childNodes.length;
+    			// Capture nodes to remove, so we don't confuse them.
+    			vnode.instance = [];
+    			var fragment = $doc.createDocumentFragment();
+    			var child;
+    			while (child = temp.firstChild) {
+    				vnode.instance.push(child);
+    				fragment.appendChild(child);
+    			}
+    			insertNode(parent, fragment, nextSibling);
+    		}
+    		function createFragment(parent, vnode, hooks, ns, nextSibling) {
+    			var fragment = $doc.createDocumentFragment();
+    			if (vnode.children != null) {
+    				var children = vnode.children;
+    				createNodes(fragment, children, 0, children.length, hooks, null, ns);
+    			}
+    			vnode.dom = fragment.firstChild;
+    			vnode.domSize = fragment.childNodes.length;
+    			insertNode(parent, fragment, nextSibling);
+    		}
+    		function createElement(parent, vnode, hooks, ns, nextSibling) {
+    			var tag = vnode.tag;
+    			var attrs = vnode.attrs;
+    			var is = attrs && attrs.is;
+
+    			ns = getNameSpace(vnode) || ns;
+
+    			var element = ns ?
+    				is ? $doc.createElementNS(ns, tag, {is: is}) : $doc.createElementNS(ns, tag) :
+    				is ? $doc.createElement(tag, {is: is}) : $doc.createElement(tag);
+    			vnode.dom = element;
+
+    			if (attrs != null) {
+    				setAttrs(vnode, attrs, ns);
+    			}
+
+    			insertNode(parent, element, nextSibling);
+
+    			if (!maybeSetContentEditable(vnode)) {
+    				if (vnode.children != null) {
+    					var children = vnode.children;
+    					createNodes(element, children, 0, children.length, hooks, null, ns);
+    					if (vnode.tag === "select" && attrs != null) setLateSelectAttrs(vnode, attrs);
+    				}
+    			}
+    		}
+    		function initComponent(vnode, hooks) {
+    			var sentinel;
+    			if (typeof vnode.tag.view === "function") {
+    				vnode.state = Object.create(vnode.tag);
+    				sentinel = vnode.state.view;
+    				if (sentinel.$$reentrantLock$$ != null) return
+    				sentinel.$$reentrantLock$$ = true;
+    			} else {
+    				vnode.state = void 0;
+    				sentinel = vnode.tag;
+    				if (sentinel.$$reentrantLock$$ != null) return
+    				sentinel.$$reentrantLock$$ = true;
+    				vnode.state = (vnode.tag.prototype != null && typeof vnode.tag.prototype.view === "function") ? new vnode.tag(vnode) : vnode.tag(vnode);
+    			}
+    			initLifecycle(vnode.state, vnode, hooks);
+    			if (vnode.attrs != null) initLifecycle(vnode.attrs, vnode, hooks);
+    			vnode.instance = Vnode.normalize(callHook.call(vnode.state.view, vnode));
+    			if (vnode.instance === vnode) throw Error("A view cannot return the vnode it received as argument")
+    			sentinel.$$reentrantLock$$ = null;
+    		}
+    		function createComponent(parent, vnode, hooks, ns, nextSibling) {
+    			initComponent(vnode, hooks);
+    			if (vnode.instance != null) {
+    				createNode(parent, vnode.instance, hooks, ns, nextSibling);
+    				vnode.dom = vnode.instance.dom;
+    				vnode.domSize = vnode.dom != null ? vnode.instance.domSize : 0;
+    			}
+    			else {
+    				vnode.domSize = 0;
+    			}
+    		}
+
+    		//update
+    		/**
+    		 * @param {Element|Fragment} parent - the parent element
+    		 * @param {Vnode[] | null} old - the list of vnodes of the last `render()` call for
+    		 *                               this part of the tree
+    		 * @param {Vnode[] | null} vnodes - as above, but for the current `render()` call.
+    		 * @param {Function[]} hooks - an accumulator of post-render hooks (oncreate/onupdate)
+    		 * @param {Element | null} nextSibling - the next DOM node if we're dealing with a
+    		 *                                       fragment that is not the last item in its
+    		 *                                       parent
+    		 * @param {'svg' | 'math' | String | null} ns) - the current XML namespace, if any
+    		 * @returns void
+    		 */
+    		// This function diffs and patches lists of vnodes, both keyed and unkeyed.
+    		//
+    		// We will:
+    		//
+    		// 1. describe its general structure
+    		// 2. focus on the diff algorithm optimizations
+    		// 3. discuss DOM node operations.
+
+    		// ## Overview:
+    		//
+    		// The updateNodes() function:
+    		// - deals with trivial cases
+    		// - determines whether the lists are keyed or unkeyed based on the first non-null node
+    		//   of each list.
+    		// - diffs them and patches the DOM if needed (that's the brunt of the code)
+    		// - manages the leftovers: after diffing, are there:
+    		//   - old nodes left to remove?
+    		// 	 - new nodes to insert?
+    		// 	 deal with them!
+    		//
+    		// The lists are only iterated over once, with an exception for the nodes in `old` that
+    		// are visited in the fourth part of the diff and in the `removeNodes` loop.
+
+    		// ## Diffing
+    		//
+    		// Reading https://github.com/localvoid/ivi/blob/ddc09d06abaef45248e6133f7040d00d3c6be853/packages/ivi/src/vdom/implementation.ts#L617-L837
+    		// may be good for context on longest increasing subsequence-based logic for moving nodes.
+    		//
+    		// In order to diff keyed lists, one has to
+    		//
+    		// 1) match nodes in both lists, per key, and update them accordingly
+    		// 2) create the nodes present in the new list, but absent in the old one
+    		// 3) remove the nodes present in the old list, but absent in the new one
+    		// 4) figure out what nodes in 1) to move in order to minimize the DOM operations.
+    		//
+    		// To achieve 1) one can create a dictionary of keys => index (for the old list), then iterate
+    		// over the new list and for each new vnode, find the corresponding vnode in the old list using
+    		// the map.
+    		// 2) is achieved in the same step: if a new node has no corresponding entry in the map, it is new
+    		// and must be created.
+    		// For the removals, we actually remove the nodes that have been updated from the old list.
+    		// The nodes that remain in that list after 1) and 2) have been performed can be safely removed.
+    		// The fourth step is a bit more complex and relies on the longest increasing subsequence (LIS)
+    		// algorithm.
+    		//
+    		// the longest increasing subsequence is the list of nodes that can remain in place. Imagine going
+    		// from `1,2,3,4,5` to `4,5,1,2,3` where the numbers are not necessarily the keys, but the indices
+    		// corresponding to the keyed nodes in the old list (keyed nodes `e,d,c,b,a` => `b,a,e,d,c` would
+    		//  match the above lists, for example).
+    		//
+    		// In there are two increasing subsequences: `4,5` and `1,2,3`, the latter being the longest. We
+    		// can update those nodes without moving them, and only call `insertNode` on `4` and `5`.
+    		//
+    		// @localvoid adapted the algo to also support node deletions and insertions (the `lis` is actually
+    		// the longest increasing subsequence *of old nodes still present in the new list*).
+    		//
+    		// It is a general algorithm that is fireproof in all circumstances, but it requires the allocation
+    		// and the construction of a `key => oldIndex` map, and three arrays (one with `newIndex => oldIndex`,
+    		// the `LIS` and a temporary one to create the LIS).
+    		//
+    		// So we cheat where we can: if the tails of the lists are identical, they are guaranteed to be part of
+    		// the LIS and can be updated without moving them.
+    		//
+    		// If two nodes are swapped, they are guaranteed not to be part of the LIS, and must be moved (with
+    		// the exception of the last node if the list is fully reversed).
+    		//
+    		// ## Finding the next sibling.
+    		//
+    		// `updateNode()` and `createNode()` expect a nextSibling parameter to perform DOM operations.
+    		// When the list is being traversed top-down, at any index, the DOM nodes up to the previous
+    		// vnode reflect the content of the new list, whereas the rest of the DOM nodes reflect the old
+    		// list. The next sibling must be looked for in the old list using `getNextSibling(... oldStart + 1 ...)`.
+    		//
+    		// In the other scenarios (swaps, upwards traversal, map-based diff),
+    		// the new vnodes list is traversed upwards. The DOM nodes at the bottom of the list reflect the
+    		// bottom part of the new vnodes list, and we can use the `v.dom`  value of the previous node
+    		// as the next sibling (cached in the `nextSibling` variable).
+
+
+    		// ## DOM node moves
+    		//
+    		// In most scenarios `updateNode()` and `createNode()` perform the DOM operations. However,
+    		// this is not the case if the node moved (second and fourth part of the diff algo). We move
+    		// the old DOM nodes before updateNode runs because it enables us to use the cached `nextSibling`
+    		// variable rather than fetching it using `getNextSibling()`.
+    		//
+    		// The fourth part of the diff currently inserts nodes unconditionally, leading to issues
+    		// like #1791 and #1999. We need to be smarter about those situations where adjascent old
+    		// nodes remain together in the new list in a way that isn't covered by parts one and
+    		// three of the diff algo.
+
+    		function updateNodes(parent, old, vnodes, hooks, nextSibling, ns) {
+    			if (old === vnodes || old == null && vnodes == null) return
+    			else if (old == null || old.length === 0) createNodes(parent, vnodes, 0, vnodes.length, hooks, nextSibling, ns);
+    			else if (vnodes == null || vnodes.length === 0) removeNodes(parent, old, 0, old.length);
+    			else {
+    				var isOldKeyed = old[0] != null && old[0].key != null;
+    				var isKeyed = vnodes[0] != null && vnodes[0].key != null;
+    				var start = 0, oldStart = 0;
+    				if (!isOldKeyed) while (oldStart < old.length && old[oldStart] == null) oldStart++;
+    				if (!isKeyed) while (start < vnodes.length && vnodes[start] == null) start++;
+    				if (isOldKeyed !== isKeyed) {
+    					removeNodes(parent, old, oldStart, old.length);
+    					createNodes(parent, vnodes, start, vnodes.length, hooks, nextSibling, ns);
+    				} else if (!isKeyed) {
+    					// Don't index past the end of either list (causes deopts).
+    					var commonLength = old.length < vnodes.length ? old.length : vnodes.length;
+    					// Rewind if necessary to the first non-null index on either side.
+    					// We could alternatively either explicitly create or remove nodes when `start !== oldStart`
+    					// but that would be optimizing for sparse lists which are more rare than dense ones.
+    					start = start < oldStart ? start : oldStart;
+    					for (; start < commonLength; start++) {
+    						o = old[start];
+    						v = vnodes[start];
+    						if (o === v || o == null && v == null) continue
+    						else if (o == null) createNode(parent, v, hooks, ns, getNextSibling(old, start + 1, nextSibling));
+    						else if (v == null) removeNode(parent, o);
+    						else updateNode(parent, o, v, hooks, getNextSibling(old, start + 1, nextSibling), ns);
+    					}
+    					if (old.length > commonLength) removeNodes(parent, old, start, old.length);
+    					if (vnodes.length > commonLength) createNodes(parent, vnodes, start, vnodes.length, hooks, nextSibling, ns);
+    				} else {
+    					// keyed diff
+    					var oldEnd = old.length - 1, end = vnodes.length - 1, map, o, v, oe, ve, topSibling;
+
+    					// bottom-up
+    					while (oldEnd >= oldStart && end >= start) {
+    						oe = old[oldEnd];
+    						ve = vnodes[end];
+    						if (oe.key !== ve.key) break
+    						if (oe !== ve) updateNode(parent, oe, ve, hooks, nextSibling, ns);
+    						if (ve.dom != null) nextSibling = ve.dom;
+    						oldEnd--, end--;
+    					}
+    					// top-down
+    					while (oldEnd >= oldStart && end >= start) {
+    						o = old[oldStart];
+    						v = vnodes[start];
+    						if (o.key !== v.key) break
+    						oldStart++, start++;
+    						if (o !== v) updateNode(parent, o, v, hooks, getNextSibling(old, oldStart, nextSibling), ns);
+    					}
+    					// swaps and list reversals
+    					while (oldEnd >= oldStart && end >= start) {
+    						if (start === end) break
+    						if (o.key !== ve.key || oe.key !== v.key) break
+    						topSibling = getNextSibling(old, oldStart, nextSibling);
+    						moveNodes(parent, oe, topSibling);
+    						if (oe !== v) updateNode(parent, oe, v, hooks, topSibling, ns);
+    						if (++start <= --end) moveNodes(parent, o, nextSibling);
+    						if (o !== ve) updateNode(parent, o, ve, hooks, nextSibling, ns);
+    						if (ve.dom != null) nextSibling = ve.dom;
+    						oldStart++; oldEnd--;
+    						oe = old[oldEnd];
+    						ve = vnodes[end];
+    						o = old[oldStart];
+    						v = vnodes[start];
+    					}
+    					// bottom up once again
+    					while (oldEnd >= oldStart && end >= start) {
+    						if (oe.key !== ve.key) break
+    						if (oe !== ve) updateNode(parent, oe, ve, hooks, nextSibling, ns);
+    						if (ve.dom != null) nextSibling = ve.dom;
+    						oldEnd--, end--;
+    						oe = old[oldEnd];
+    						ve = vnodes[end];
+    					}
+    					if (start > end) removeNodes(parent, old, oldStart, oldEnd + 1);
+    					else if (oldStart > oldEnd) createNodes(parent, vnodes, start, end + 1, hooks, nextSibling, ns);
+    					else {
+    						// inspired by ivi https://github.com/ivijs/ivi/ by Boris Kaul
+    						var originalNextSibling = nextSibling, vnodesLength = end - start + 1, oldIndices = new Array(vnodesLength), li=0, i=0, pos = 2147483647, matched = 0, map, lisIndices;
+    						for (i = 0; i < vnodesLength; i++) oldIndices[i] = -1;
+    						for (i = end; i >= start; i--) {
+    							if (map == null) map = getKeyMap(old, oldStart, oldEnd + 1);
+    							ve = vnodes[i];
+    							var oldIndex = map[ve.key];
+    							if (oldIndex != null) {
+    								pos = (oldIndex < pos) ? oldIndex : -1; // becomes -1 if nodes were re-ordered
+    								oldIndices[i-start] = oldIndex;
+    								oe = old[oldIndex];
+    								old[oldIndex] = null;
+    								if (oe !== ve) updateNode(parent, oe, ve, hooks, nextSibling, ns);
+    								if (ve.dom != null) nextSibling = ve.dom;
+    								matched++;
+    							}
+    						}
+    						nextSibling = originalNextSibling;
+    						if (matched !== oldEnd - oldStart + 1) removeNodes(parent, old, oldStart, oldEnd + 1);
+    						if (matched === 0) createNodes(parent, vnodes, start, end + 1, hooks, nextSibling, ns);
+    						else {
+    							if (pos === -1) {
+    								// the indices of the indices of the items that are part of the
+    								// longest increasing subsequence in the oldIndices list
+    								lisIndices = makeLisIndices(oldIndices);
+    								li = lisIndices.length - 1;
+    								for (i = end; i >= start; i--) {
+    									v = vnodes[i];
+    									if (oldIndices[i-start] === -1) createNode(parent, v, hooks, ns, nextSibling);
+    									else {
+    										if (lisIndices[li] === i - start) li--;
+    										else moveNodes(parent, v, nextSibling);
+    									}
+    									if (v.dom != null) nextSibling = vnodes[i].dom;
+    								}
+    							} else {
+    								for (i = end; i >= start; i--) {
+    									v = vnodes[i];
+    									if (oldIndices[i-start] === -1) createNode(parent, v, hooks, ns, nextSibling);
+    									if (v.dom != null) nextSibling = vnodes[i].dom;
+    								}
+    							}
+    						}
+    					}
+    				}
+    			}
+    		}
+    		function updateNode(parent, old, vnode, hooks, nextSibling, ns) {
+    			var oldTag = old.tag, tag = vnode.tag;
+    			if (oldTag === tag) {
+    				vnode.state = old.state;
+    				vnode.events = old.events;
+    				if (shouldNotUpdate(vnode, old)) return
+    				if (typeof oldTag === "string") {
+    					if (vnode.attrs != null) {
+    						updateLifecycle(vnode.attrs, vnode, hooks);
+    					}
+    					switch (oldTag) {
+    						case "#": updateText(old, vnode); break
+    						case "<": updateHTML(parent, old, vnode, ns, nextSibling); break
+    						case "[": updateFragment(parent, old, vnode, hooks, nextSibling, ns); break
+    						default: updateElement(old, vnode, hooks, ns);
+    					}
+    				}
+    				else updateComponent(parent, old, vnode, hooks, nextSibling, ns);
+    			}
+    			else {
+    				removeNode(parent, old);
+    				createNode(parent, vnode, hooks, ns, nextSibling);
+    			}
+    		}
+    		function updateText(old, vnode) {
+    			if (old.children.toString() !== vnode.children.toString()) {
+    				old.dom.nodeValue = vnode.children;
+    			}
+    			vnode.dom = old.dom;
+    		}
+    		function updateHTML(parent, old, vnode, ns, nextSibling) {
+    			if (old.children !== vnode.children) {
+    				removeHTML(parent, old);
+    				createHTML(parent, vnode, ns, nextSibling);
+    			}
+    			else {
+    				vnode.dom = old.dom;
+    				vnode.domSize = old.domSize;
+    				vnode.instance = old.instance;
+    			}
+    		}
+    		function updateFragment(parent, old, vnode, hooks, nextSibling, ns) {
+    			updateNodes(parent, old.children, vnode.children, hooks, nextSibling, ns);
+    			var domSize = 0, children = vnode.children;
+    			vnode.dom = null;
+    			if (children != null) {
+    				for (var i = 0; i < children.length; i++) {
+    					var child = children[i];
+    					if (child != null && child.dom != null) {
+    						if (vnode.dom == null) vnode.dom = child.dom;
+    						domSize += child.domSize || 1;
+    					}
+    				}
+    				if (domSize !== 1) vnode.domSize = domSize;
+    			}
+    		}
+    		function updateElement(old, vnode, hooks, ns) {
+    			var element = vnode.dom = old.dom;
+    			ns = getNameSpace(vnode) || ns;
+
+    			if (vnode.tag === "textarea") {
+    				if (vnode.attrs == null) vnode.attrs = {};
+    			}
+    			updateAttrs(vnode, old.attrs, vnode.attrs, ns);
+    			if (!maybeSetContentEditable(vnode)) {
+    				updateNodes(element, old.children, vnode.children, hooks, null, ns);
+    			}
+    		}
+    		function updateComponent(parent, old, vnode, hooks, nextSibling, ns) {
+    			vnode.instance = Vnode.normalize(callHook.call(vnode.state.view, vnode));
+    			if (vnode.instance === vnode) throw Error("A view cannot return the vnode it received as argument")
+    			updateLifecycle(vnode.state, vnode, hooks);
+    			if (vnode.attrs != null) updateLifecycle(vnode.attrs, vnode, hooks);
+    			if (vnode.instance != null) {
+    				if (old.instance == null) createNode(parent, vnode.instance, hooks, ns, nextSibling);
+    				else updateNode(parent, old.instance, vnode.instance, hooks, nextSibling, ns);
+    				vnode.dom = vnode.instance.dom;
+    				vnode.domSize = vnode.instance.domSize;
+    			}
+    			else if (old.instance != null) {
+    				removeNode(parent, old.instance);
+    				vnode.dom = undefined;
+    				vnode.domSize = 0;
+    			}
+    			else {
+    				vnode.dom = old.dom;
+    				vnode.domSize = old.domSize;
+    			}
+    		}
+    		function getKeyMap(vnodes, start, end) {
+    			var map = Object.create(null);
+    			for (; start < end; start++) {
+    				var vnode = vnodes[start];
+    				if (vnode != null) {
+    					var key = vnode.key;
+    					if (key != null) map[key] = start;
+    				}
+    			}
+    			return map
+    		}
+    		// Lifted from ivi https://github.com/ivijs/ivi/
+    		// takes a list of unique numbers (-1 is special and can
+    		// occur multiple times) and returns an array with the indices
+    		// of the items that are part of the longest increasing
+    		// subsequence
+    		var lisTemp = [];
+    		function makeLisIndices(a) {
+    			var result = [0];
+    			var u = 0, v = 0, i = 0;
+    			var il = lisTemp.length = a.length;
+    			for (var i = 0; i < il; i++) lisTemp[i] = a[i];
+    			for (var i = 0; i < il; ++i) {
+    				if (a[i] === -1) continue
+    				var j = result[result.length - 1];
+    				if (a[j] < a[i]) {
+    					lisTemp[i] = j;
+    					result.push(i);
+    					continue
+    				}
+    				u = 0;
+    				v = result.length - 1;
+    				while (u < v) {
+    					// Fast integer average without overflow.
+    					// eslint-disable-next-line no-bitwise
+    					var c = (u >>> 1) + (v >>> 1) + (u & v & 1);
+    					if (a[result[c]] < a[i]) {
+    						u = c + 1;
+    					}
+    					else {
+    						v = c;
+    					}
+    				}
+    				if (a[i] < a[result[u]]) {
+    					if (u > 0) lisTemp[i] = result[u - 1];
+    					result[u] = i;
+    				}
+    			}
+    			u = result.length;
+    			v = result[u - 1];
+    			while (u-- > 0) {
+    				result[u] = v;
+    				v = lisTemp[v];
+    			}
+    			lisTemp.length = 0;
+    			return result
+    		}
+
+    		function getNextSibling(vnodes, i, nextSibling) {
+    			for (; i < vnodes.length; i++) {
+    				if (vnodes[i] != null && vnodes[i].dom != null) return vnodes[i].dom
+    			}
+    			return nextSibling
+    		}
+
+    		// This covers a really specific edge case:
+    		// - Parent node is keyed and contains child
+    		// - Child is removed, returns unresolved promise in `onbeforeremove`
+    		// - Parent node is moved in keyed diff
+    		// - Remaining children still need moved appropriately
+    		//
+    		// Ideally, I'd track removed nodes as well, but that introduces a lot more
+    		// complexity and I'm not exactly interested in doing that.
+    		function moveNodes(parent, vnode, nextSibling) {
+    			var frag = $doc.createDocumentFragment();
+    			moveChildToFrag(parent, frag, vnode);
+    			insertNode(parent, frag, nextSibling);
+    		}
+    		function moveChildToFrag(parent, frag, vnode) {
+    			// Dodge the recursion overhead in a few of the most common cases.
+    			while (vnode.dom != null && vnode.dom.parentNode === parent) {
+    				if (typeof vnode.tag !== "string") {
+    					vnode = vnode.instance;
+    					if (vnode != null) continue
+    				} else if (vnode.tag === "<") {
+    					for (var i = 0; i < vnode.instance.length; i++) {
+    						frag.appendChild(vnode.instance[i]);
+    					}
+    				} else if (vnode.tag !== "[") {
+    					// Don't recurse for text nodes *or* elements, just fragments
+    					frag.appendChild(vnode.dom);
+    				} else if (vnode.children.length === 1) {
+    					vnode = vnode.children[0];
+    					if (vnode != null) continue
+    				} else {
+    					for (var i = 0; i < vnode.children.length; i++) {
+    						var child = vnode.children[i];
+    						if (child != null) moveChildToFrag(parent, frag, child);
+    					}
+    				}
+    				break
+    			}
+    		}
+
+    		function insertNode(parent, dom, nextSibling) {
+    			if (nextSibling != null) parent.insertBefore(dom, nextSibling);
+    			else parent.appendChild(dom);
+    		}
+
+    		function maybeSetContentEditable(vnode) {
+    			if (vnode.attrs == null || (
+    				vnode.attrs.contenteditable == null && // attribute
+    				vnode.attrs.contentEditable == null // property
+    			)) return false
+    			var children = vnode.children;
+    			if (children != null && children.length === 1 && children[0].tag === "<") {
+    				var content = children[0].children;
+    				if (vnode.dom.innerHTML !== content) vnode.dom.innerHTML = content;
+    			}
+    			else if (children != null && children.length !== 0) throw new Error("Child node of a contenteditable must be trusted.")
+    			return true
+    		}
+
+    		//remove
+    		function removeNodes(parent, vnodes, start, end) {
+    			for (var i = start; i < end; i++) {
+    				var vnode = vnodes[i];
+    				if (vnode != null) removeNode(parent, vnode);
+    			}
+    		}
+    		function removeNode(parent, vnode) {
+    			var mask = 0;
+    			var original = vnode.state;
+    			var stateResult, attrsResult;
+    			if (typeof vnode.tag !== "string" && typeof vnode.state.onbeforeremove === "function") {
+    				var result = callHook.call(vnode.state.onbeforeremove, vnode);
+    				if (result != null && typeof result.then === "function") {
+    					mask = 1;
+    					stateResult = result;
+    				}
+    			}
+    			if (vnode.attrs && typeof vnode.attrs.onbeforeremove === "function") {
+    				var result = callHook.call(vnode.attrs.onbeforeremove, vnode);
+    				if (result != null && typeof result.then === "function") {
+    					// eslint-disable-next-line no-bitwise
+    					mask |= 2;
+    					attrsResult = result;
+    				}
+    			}
+    			checkState(vnode, original);
+
+    			// If we can, try to fast-path it and avoid all the overhead of awaiting
+    			if (!mask) {
+    				onremove(vnode);
+    				removeChild(parent, vnode);
+    			} else {
+    				if (stateResult != null) {
+    					var next = function () {
+    						// eslint-disable-next-line no-bitwise
+    						if (mask & 1) { mask &= 2; if (!mask) reallyRemove(); }
+    					};
+    					stateResult.then(next, next);
+    				}
+    				if (attrsResult != null) {
+    					var next = function () {
+    						// eslint-disable-next-line no-bitwise
+    						if (mask & 2) { mask &= 1; if (!mask) reallyRemove(); }
+    					};
+    					attrsResult.then(next, next);
+    				}
+    			}
+
+    			function reallyRemove() {
+    				checkState(vnode, original);
+    				onremove(vnode);
+    				removeChild(parent, vnode);
+    			}
+    		}
+    		function removeHTML(parent, vnode) {
+    			for (var i = 0; i < vnode.instance.length; i++) {
+    				parent.removeChild(vnode.instance[i]);
+    			}
+    		}
+    		function removeChild(parent, vnode) {
+    			// Dodge the recursion overhead in a few of the most common cases.
+    			while (vnode.dom != null && vnode.dom.parentNode === parent) {
+    				if (typeof vnode.tag !== "string") {
+    					vnode = vnode.instance;
+    					if (vnode != null) continue
+    				} else if (vnode.tag === "<") {
+    					removeHTML(parent, vnode);
+    				} else {
+    					if (vnode.tag !== "[") {
+    						parent.removeChild(vnode.dom);
+    						if (!Array.isArray(vnode.children)) break
+    					}
+    					if (vnode.children.length === 1) {
+    						vnode = vnode.children[0];
+    						if (vnode != null) continue
+    					} else {
+    						for (var i = 0; i < vnode.children.length; i++) {
+    							var child = vnode.children[i];
+    							if (child != null) removeChild(parent, child);
+    						}
+    					}
+    				}
+    				break
+    			}
+    		}
+    		function onremove(vnode) {
+    			if (typeof vnode.tag !== "string" && typeof vnode.state.onremove === "function") callHook.call(vnode.state.onremove, vnode);
+    			if (vnode.attrs && typeof vnode.attrs.onremove === "function") callHook.call(vnode.attrs.onremove, vnode);
+    			if (typeof vnode.tag !== "string") {
+    				if (vnode.instance != null) onremove(vnode.instance);
+    			} else {
+    				var children = vnode.children;
+    				if (Array.isArray(children)) {
+    					for (var i = 0; i < children.length; i++) {
+    						var child = children[i];
+    						if (child != null) onremove(child);
+    					}
+    				}
+    			}
+    		}
+
+    		//attrs
+    		function setAttrs(vnode, attrs, ns) {
+    			// If you assign an input type that is not supported by IE 11 with an assignment expression, an error will occur.
+    			//
+    			// Also, the DOM does things to inputs based on the value, so it needs set first.
+    			// See: https://github.com/MithrilJS/mithril.js/issues/2622
+    			if (vnode.tag === "input" && attrs.type != null) vnode.dom.setAttribute("type", attrs.type);
+    			var isFileInput = attrs != null && vnode.tag === "input" && attrs.type === "file";
+    			for (var key in attrs) {
+    				setAttr(vnode, key, null, attrs[key], ns, isFileInput);
+    			}
+    		}
+    		function setAttr(vnode, key, old, value, ns, isFileInput) {
+    			if (key === "key" || key === "is" || value == null || isLifecycleMethod(key) || (old === value && !isFormAttribute(vnode, key)) && typeof value !== "object" || key === "type" && vnode.tag === "input") return
+    			if (key[0] === "o" && key[1] === "n") return updateEvent(vnode, key, value)
+    			if (key.slice(0, 6) === "xlink:") vnode.dom.setAttributeNS("http://www.w3.org/1999/xlink", key.slice(6), value);
+    			else if (key === "style") updateStyle(vnode.dom, old, value);
+    			else if (hasPropertyKey(vnode, key, ns)) {
+    				if (key === "value") {
+    					// Only do the coercion if we're actually going to check the value.
+    					/* eslint-disable no-implicit-coercion */
+    					//setting input[value] to same value by typing on focused element moves cursor to end in Chrome
+    					//setting input[type=file][value] to same value causes an error to be generated if it's non-empty
+    					if ((vnode.tag === "input" || vnode.tag === "textarea") && vnode.dom.value === "" + value && (isFileInput || vnode.dom === activeElement())) return
+    					//setting select[value] to same value while having select open blinks select dropdown in Chrome
+    					if (vnode.tag === "select" && old !== null && vnode.dom.value === "" + value) return
+    					//setting option[value] to same value while having select open blinks select dropdown in Chrome
+    					if (vnode.tag === "option" && old !== null && vnode.dom.value === "" + value) return
+    					//setting input[type=file][value] to different value is an error if it's non-empty
+    					// Not ideal, but it at least works around the most common source of uncaught exceptions for now.
+    					if (isFileInput && "" + value !== "") { console.error("`value` is read-only on file inputs!"); return }
+    					/* eslint-enable no-implicit-coercion */
+    				}
+    				vnode.dom[key] = value;
+    			} else {
+    				if (typeof value === "boolean") {
+    					if (value) vnode.dom.setAttribute(key, "");
+    					else vnode.dom.removeAttribute(key);
+    				}
+    				else vnode.dom.setAttribute(key === "className" ? "class" : key, value);
+    			}
+    		}
+    		function removeAttr(vnode, key, old, ns) {
+    			if (key === "key" || key === "is" || old == null || isLifecycleMethod(key)) return
+    			if (key[0] === "o" && key[1] === "n") updateEvent(vnode, key, undefined);
+    			else if (key === "style") updateStyle(vnode.dom, old, null);
+    			else if (
+    				hasPropertyKey(vnode, key, ns)
+    				&& key !== "className"
+    				&& key !== "title" // creates "null" as title
+    				&& !(key === "value" && (
+    					vnode.tag === "option"
+    					|| vnode.tag === "select" && vnode.dom.selectedIndex === -1 && vnode.dom === activeElement()
+    				))
+    				&& !(vnode.tag === "input" && key === "type")
+    			) {
+    				vnode.dom[key] = null;
+    			} else {
+    				var nsLastIndex = key.indexOf(":");
+    				if (nsLastIndex !== -1) key = key.slice(nsLastIndex + 1);
+    				if (old !== false) vnode.dom.removeAttribute(key === "className" ? "class" : key);
+    			}
+    		}
+    		function setLateSelectAttrs(vnode, attrs) {
+    			if ("value" in attrs) {
+    				if(attrs.value === null) {
+    					if (vnode.dom.selectedIndex !== -1) vnode.dom.value = null;
+    				} else {
+    					var normalized = "" + attrs.value; // eslint-disable-line no-implicit-coercion
+    					if (vnode.dom.value !== normalized || vnode.dom.selectedIndex === -1) {
+    						vnode.dom.value = normalized;
+    					}
+    				}
+    			}
+    			if ("selectedIndex" in attrs) setAttr(vnode, "selectedIndex", null, attrs.selectedIndex, undefined);
+    		}
+    		function updateAttrs(vnode, old, attrs, ns) {
+    			if (old && old === attrs) {
+    				console.warn("Don't reuse attrs object, use new object for every redraw, this will throw in next major");
+    			}
+    			if (attrs != null) {
+    				// If you assign an input type that is not supported by IE 11 with an assignment expression, an error will occur.
+    				//
+    				// Also, the DOM does things to inputs based on the value, so it needs set first.
+    				// See: https://github.com/MithrilJS/mithril.js/issues/2622
+    				if (vnode.tag === "input" && attrs.type != null) vnode.dom.setAttribute("type", attrs.type);
+    				var isFileInput = vnode.tag === "input" && attrs.type === "file";
+    				for (var key in attrs) {
+    					setAttr(vnode, key, old && old[key], attrs[key], ns, isFileInput);
+    				}
+    			}
+    			var val;
+    			if (old != null) {
+    				for (var key in old) {
+    					if (((val = old[key]) != null) && (attrs == null || attrs[key] == null)) {
+    						removeAttr(vnode, key, val, ns);
+    					}
+    				}
+    			}
+    		}
+    		function isFormAttribute(vnode, attr) {
+    			return attr === "value" || attr === "checked" || attr === "selectedIndex" || attr === "selected" && vnode.dom === activeElement() || vnode.tag === "option" && vnode.dom.parentNode === $doc.activeElement
+    		}
+    		function isLifecycleMethod(attr) {
+    			return attr === "oninit" || attr === "oncreate" || attr === "onupdate" || attr === "onremove" || attr === "onbeforeremove" || attr === "onbeforeupdate"
+    		}
+    		function hasPropertyKey(vnode, key, ns) {
+    			// Filter out namespaced keys
+    			return ns === undefined && (
+    				// If it's a custom element, just keep it.
+    				vnode.tag.indexOf("-") > -1 || vnode.attrs != null && vnode.attrs.is ||
+    				// If it's a normal element, let's try to avoid a few browser bugs.
+    				key !== "href" && key !== "list" && key !== "form" && key !== "width" && key !== "height"// && key !== "type"
+    				// Defer the property check until *after* we check everything.
+    			) && key in vnode.dom
+    		}
+
+    		//style
+    		var uppercaseRegex = /[A-Z]/g;
+    		function toLowerCase(capital) { return "-" + capital.toLowerCase() }
+    		function normalizeKey(key) {
+    			return key[0] === "-" && key[1] === "-" ? key :
+    				key === "cssFloat" ? "float" :
+    					key.replace(uppercaseRegex, toLowerCase)
+    		}
+    		function updateStyle(element, old, style) {
+    			if (old === style) ; else if (style == null) {
+    				// New style is missing, just clear it.
+    				element.style.cssText = "";
+    			} else if (typeof style !== "object") {
+    				// New style is a string, let engine deal with patching.
+    				element.style.cssText = style;
+    			} else if (old == null || typeof old !== "object") {
+    				// `old` is missing or a string, `style` is an object.
+    				element.style.cssText = "";
+    				// Add new style properties
+    				for (var key in style) {
+    					var value = style[key];
+    					if (value != null) element.style.setProperty(normalizeKey(key), String(value));
+    				}
+    			} else {
+    				// Both old & new are (different) objects.
+    				// Update style properties that have changed
+    				for (var key in style) {
+    					var value = style[key];
+    					if (value != null && (value = String(value)) !== String(old[key])) {
+    						element.style.setProperty(normalizeKey(key), value);
+    					}
+    				}
+    				// Remove style properties that no longer exist
+    				for (var key in old) {
+    					if (old[key] != null && style[key] == null) {
+    						element.style.removeProperty(normalizeKey(key));
+    					}
+    				}
+    			}
+    		}
+
+    		// Here's an explanation of how this works:
+    		// 1. The event names are always (by design) prefixed by `on`.
+    		// 2. The EventListener interface accepts either a function or an object
+    		//    with a `handleEvent` method.
+    		// 3. The object does not inherit from `Object.prototype`, to avoid
+    		//    any potential interference with that (e.g. setters).
+    		// 4. The event name is remapped to the handler before calling it.
+    		// 5. In function-based event handlers, `ev.target === this`. We replicate
+    		//    that below.
+    		// 6. In function-based event handlers, `return false` prevents the default
+    		//    action and stops event propagation. We replicate that below.
+    		function EventDict() {
+    			// Save this, so the current redraw is correctly tracked.
+    			this._ = currentRedraw;
+    		}
+    		EventDict.prototype = Object.create(null);
+    		EventDict.prototype.handleEvent = function (ev) {
+    			var handler = this["on" + ev.type];
+    			var result;
+    			if (typeof handler === "function") result = handler.call(ev.currentTarget, ev);
+    			else if (typeof handler.handleEvent === "function") handler.handleEvent(ev);
+    			if (this._ && ev.redraw !== false) (0, this._)();
+    			if (result === false) {
+    				ev.preventDefault();
+    				ev.stopPropagation();
+    			}
+    		};
+
+    		//event
+    		function updateEvent(vnode, key, value) {
+    			if (vnode.events != null) {
+    				vnode.events._ = currentRedraw;
+    				if (vnode.events[key] === value) return
+    				if (value != null && (typeof value === "function" || typeof value === "object")) {
+    					if (vnode.events[key] == null) vnode.dom.addEventListener(key.slice(2), vnode.events, false);
+    					vnode.events[key] = value;
+    				} else {
+    					if (vnode.events[key] != null) vnode.dom.removeEventListener(key.slice(2), vnode.events, false);
+    					vnode.events[key] = undefined;
+    				}
+    			} else if (value != null && (typeof value === "function" || typeof value === "object")) {
+    				vnode.events = new EventDict();
+    				vnode.dom.addEventListener(key.slice(2), vnode.events, false);
+    				vnode.events[key] = value;
+    			}
+    		}
+
+    		//lifecycle
+    		function initLifecycle(source, vnode, hooks) {
+    			if (typeof source.oninit === "function") callHook.call(source.oninit, vnode);
+    			if (typeof source.oncreate === "function") hooks.push(callHook.bind(source.oncreate, vnode));
+    		}
+    		function updateLifecycle(source, vnode, hooks) {
+    			if (typeof source.onupdate === "function") hooks.push(callHook.bind(source.onupdate, vnode));
+    		}
+    		function shouldNotUpdate(vnode, old) {
+    			do {
+    				if (vnode.attrs != null && typeof vnode.attrs.onbeforeupdate === "function") {
+    					var force = callHook.call(vnode.attrs.onbeforeupdate, vnode, old);
+    					if (force !== undefined && !force) break
+    				}
+    				if (typeof vnode.tag !== "string" && typeof vnode.state.onbeforeupdate === "function") {
+    					var force = callHook.call(vnode.state.onbeforeupdate, vnode, old);
+    					if (force !== undefined && !force) break
+    				}
+    				return false
+    			} while (false); // eslint-disable-line no-constant-condition
+    			vnode.dom = old.dom;
+    			vnode.domSize = old.domSize;
+    			vnode.instance = old.instance;
+    			// One would think having the actual latest attributes would be ideal,
+    			// but it doesn't let us properly diff based on our current internal
+    			// representation. We have to save not only the old DOM info, but also
+    			// the attributes used to create it, as we diff *that*, not against the
+    			// DOM directly (with a few exceptions in `setAttr`). And, of course, we
+    			// need to save the children and text as they are conceptually not
+    			// unlike special "attributes" internally.
+    			vnode.attrs = old.attrs;
+    			vnode.children = old.children;
+    			vnode.text = old.text;
+    			return true
+    		}
+
+    		var currentDOM;
+
+    		return function(dom, vnodes, redraw) {
+    			if (!dom) throw new TypeError("DOM element being rendered to does not exist.")
+    			if (currentDOM != null && dom.contains(currentDOM)) {
+    				throw new TypeError("Node is currently being rendered to and thus is locked.")
+    			}
+    			var prevRedraw = currentRedraw;
+    			var prevDOM = currentDOM;
+    			var hooks = [];
+    			var active = activeElement();
+    			var namespace = dom.namespaceURI;
+
+    			currentDOM = dom;
+    			currentRedraw = typeof redraw === "function" ? redraw : undefined;
+    			try {
+    				// First time rendering into a node clears it out
+    				if (dom.vnodes == null) dom.textContent = "";
+    				vnodes = Vnode.normalizeChildren(Array.isArray(vnodes) ? vnodes : [vnodes]);
+    				updateNodes(dom, dom.vnodes, vnodes, hooks, null, namespace === "http://www.w3.org/1999/xhtml" ? undefined : namespace);
+    				dom.vnodes = vnodes;
+    				// `document.activeElement` can return null: https://html.spec.whatwg.org/multipage/interaction.html#dom-document-activeelement
+    				if (active != null && activeElement() !== active && typeof active.focus === "function") active.focus();
+    				for (var i = 0; i < hooks.length; i++) hooks[i]();
+    			} finally {
+    				currentRedraw = prevRedraw;
+    				currentDOM = prevDOM;
+    			}
+    		}
+    	};
+    	return render$2;
+    }
+
+    var render$1 = requireRender()(typeof window !== "undefined" ? window : null);
+
+    var Vnode = requireVnode();
+
+    var mountRedraw$3 = function(render, schedule, console) {
+    	var subscriptions = [];
+    	var pending = false;
+    	var offset = -1;
+
+    	function sync() {
+    		for (offset = 0; offset < subscriptions.length; offset += 2) {
+    			try { render(subscriptions[offset], Vnode(subscriptions[offset + 1]), redraw); }
+    			catch (e) { console.error(e); }
+    		}
+    		offset = -1;
+    	}
+
+    	function redraw() {
+    		if (!pending) {
+    			pending = true;
+    			schedule(function() {
+    				pending = false;
+    				sync();
+    			});
+    		}
+    	}
+
+    	redraw.sync = sync;
+
+    	function mount(root, component) {
+    		if (component != null && component.view == null && typeof component !== "function") {
+    			throw new TypeError("m.mount expects a component, not a vnode.")
+    		}
+
+    		var index = subscriptions.indexOf(root);
+    		if (index >= 0) {
+    			subscriptions.splice(index, 2);
+    			if (index <= offset) offset -= 2;
+    			render(root, []);
+    		}
+
+    		if (component != null) {
+    			subscriptions.push(root, component);
+    			render(root, Vnode(component), redraw);
+    		}
+    	}
+
+    	return {mount: mount, redraw: redraw}
+    };
+
+    var render = render$1;
+
+    var mountRedraw$2 = mountRedraw$3(render, typeof requestAnimationFrame !== "undefined" ? requestAnimationFrame : null, typeof console !== "undefined" ? console : null);
+
+    var build$1;
+    var hasRequiredBuild$1;
+
+    function requireBuild$1 () {
+    	if (hasRequiredBuild$1) return build$1;
+    	hasRequiredBuild$1 = 1;
+
+    	build$1 = function(object) {
+    		if (Object.prototype.toString.call(object) !== "[object Object]") return ""
+
+    		var args = [];
+    		for (var key in object) {
+    			destructure(key, object[key]);
+    		}
+
+    		return args.join("&")
+
+    		function destructure(key, value) {
+    			if (Array.isArray(value)) {
+    				for (var i = 0; i < value.length; i++) {
+    					destructure(key + "[" + i + "]", value[i]);
+    				}
+    			}
+    			else if (Object.prototype.toString.call(value) === "[object Object]") {
+    				for (var i in value) {
+    					destructure(key + "[" + i + "]", value[i]);
+    				}
+    			}
+    			else args.push(encodeURIComponent(key) + (value != null && value !== "" ? "=" + encodeURIComponent(value) : ""));
+    		}
+    	};
+    	return build$1;
+    }
+
+    var assign;
+    var hasRequiredAssign;
+
+    function requireAssign () {
+    	if (hasRequiredAssign) return assign;
+    	hasRequiredAssign = 1;
+
+    	var hasOwn = hasOwn$2;
+
+    	assign = Object.assign || function(target, source) {
+    		for (var key in source) {
+    			if (hasOwn.call(source, key)) target[key] = source[key];
+    		}
+    	};
+    	return assign;
+    }
+
+    var build;
+    var hasRequiredBuild;
+
+    function requireBuild () {
+    	if (hasRequiredBuild) return build;
+    	hasRequiredBuild = 1;
+
+    	var buildQueryString = requireBuild$1();
+    	var assign = requireAssign();
+
+    	// Returns `path` from `template` + `params`
+    	build = function(template, params) {
+    		if ((/:([^\/\.-]+)(\.{3})?:/).test(template)) {
+    			throw new SyntaxError("Template parameter names must be separated by either a '/', '-', or '.'.")
+    		}
+    		if (params == null) return template
+    		var queryIndex = template.indexOf("?");
+    		var hashIndex = template.indexOf("#");
+    		var queryEnd = hashIndex < 0 ? template.length : hashIndex;
+    		var pathEnd = queryIndex < 0 ? queryEnd : queryIndex;
+    		var path = template.slice(0, pathEnd);
+    		var query = {};
+
+    		assign(query, params);
+
+    		var resolved = path.replace(/:([^\/\.-]+)(\.{3})?/g, function(m, key, variadic) {
+    			delete query[key];
+    			// If no such parameter exists, don't interpolate it.
+    			if (params[key] == null) return m
+    			// Escape normal parameters, but not variadic ones.
+    			return variadic ? params[key] : encodeURIComponent(String(params[key]))
+    		});
+
+    		// In case the template substitution adds new query/hash parameters.
+    		var newQueryIndex = resolved.indexOf("?");
+    		var newHashIndex = resolved.indexOf("#");
+    		var newQueryEnd = newHashIndex < 0 ? resolved.length : newHashIndex;
+    		var newPathEnd = newQueryIndex < 0 ? newQueryEnd : newQueryIndex;
+    		var result = resolved.slice(0, newPathEnd);
+
+    		if (queryIndex >= 0) result += template.slice(queryIndex, queryEnd);
+    		if (newQueryIndex >= 0) result += (queryIndex < 0 ? "?" : "&") + resolved.slice(newQueryIndex, newQueryEnd);
+    		var querystring = buildQueryString(query);
+    		if (querystring) result += (queryIndex < 0 && newQueryIndex < 0 ? "?" : "&") + querystring;
+    		if (hashIndex >= 0) result += template.slice(hashIndex);
+    		if (newHashIndex >= 0) result += (hashIndex < 0 ? "" : "&") + resolved.slice(newHashIndex);
+    		return result
+    	};
+    	return build;
+    }
+
+    var buildPathname = requireBuild();
+    var hasOwn = hasOwn$2;
+
+    var request$2 = function($window, Promise, oncompletion) {
+    	var callbackCount = 0;
+
+    	function PromiseProxy(executor) {
+    		return new Promise(executor)
+    	}
+
+    	// In case the global Promise is some userland library's where they rely on
+    	// `foo instanceof this.constructor`, `this.constructor.resolve(value)`, or
+    	// similar. Let's *not* break them.
+    	PromiseProxy.prototype = Promise.prototype;
+    	PromiseProxy.__proto__ = Promise; // eslint-disable-line no-proto
+
+    	function makeRequest(factory) {
+    		return function(url, args) {
+    			if (typeof url !== "string") { args = url; url = url.url; }
+    			else if (args == null) args = {};
+    			var promise = new Promise(function(resolve, reject) {
+    				factory(buildPathname(url, args.params), args, function (data) {
+    					if (typeof args.type === "function") {
+    						if (Array.isArray(data)) {
+    							for (var i = 0; i < data.length; i++) {
+    								data[i] = new args.type(data[i]);
+    							}
+    						}
+    						else data = new args.type(data);
+    					}
+    					resolve(data);
+    				}, reject);
+    			});
+    			if (args.background === true) return promise
+    			var count = 0;
+    			function complete() {
+    				if (--count === 0 && typeof oncompletion === "function") oncompletion();
+    			}
+
+    			return wrap(promise)
+
+    			function wrap(promise) {
+    				var then = promise.then;
+    				// Set the constructor, so engines know to not await or resolve
+    				// this as a native promise. At the time of writing, this is
+    				// only necessary for V8, but their behavior is the correct
+    				// behavior per spec. See this spec issue for more details:
+    				// https://github.com/tc39/ecma262/issues/1577. Also, see the
+    				// corresponding comment in `request/tests/test-request.js` for
+    				// a bit more background on the issue at hand.
+    				promise.constructor = PromiseProxy;
+    				promise.then = function() {
+    					count++;
+    					var next = then.apply(promise, arguments);
+    					next.then(complete, function(e) {
+    						complete();
+    						if (count === 0) throw e
+    					});
+    					return wrap(next)
+    				};
+    				return promise
+    			}
+    		}
+    	}
+
+    	function hasHeader(args, name) {
+    		for (var key in args.headers) {
+    			if (hasOwn.call(args.headers, key) && key.toLowerCase() === name) return true
+    		}
+    		return false
+    	}
+
+    	return {
+    		request: makeRequest(function(url, args, resolve, reject) {
+    			var method = args.method != null ? args.method.toUpperCase() : "GET";
+    			var body = args.body;
+    			var assumeJSON = (args.serialize == null || args.serialize === JSON.serialize) && !(body instanceof $window.FormData || body instanceof $window.URLSearchParams);
+    			var responseType = args.responseType || (typeof args.extract === "function" ? "" : "json");
+
+    			var xhr = new $window.XMLHttpRequest(), aborted = false, isTimeout = false;
+    			var original = xhr, replacedAbort;
+    			var abort = xhr.abort;
+
+    			xhr.abort = function() {
+    				aborted = true;
+    				abort.call(this);
+    			};
+
+    			xhr.open(method, url, args.async !== false, typeof args.user === "string" ? args.user : undefined, typeof args.password === "string" ? args.password : undefined);
+
+    			if (assumeJSON && body != null && !hasHeader(args, "content-type")) {
+    				xhr.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+    			}
+    			if (typeof args.deserialize !== "function" && !hasHeader(args, "accept")) {
+    				xhr.setRequestHeader("Accept", "application/json, text/*");
+    			}
+    			if (args.withCredentials) xhr.withCredentials = args.withCredentials;
+    			if (args.timeout) xhr.timeout = args.timeout;
+    			xhr.responseType = responseType;
+
+    			for (var key in args.headers) {
+    				if (hasOwn.call(args.headers, key)) {
+    					xhr.setRequestHeader(key, args.headers[key]);
+    				}
+    			}
+
+    			xhr.onreadystatechange = function(ev) {
+    				// Don't throw errors on xhr.abort().
+    				if (aborted) return
+
+    				if (ev.target.readyState === 4) {
+    					try {
+    						var success = (ev.target.status >= 200 && ev.target.status < 300) || ev.target.status === 304 || (/^file:\/\//i).test(url);
+    						// When the response type isn't "" or "text",
+    						// `xhr.responseText` is the wrong thing to use.
+    						// Browsers do the right thing and throw here, and we
+    						// should honor that and do the right thing by
+    						// preferring `xhr.response` where possible/practical.
+    						var response = ev.target.response, message;
+
+    						if (responseType === "json") {
+    							// For IE and Edge, which don't implement
+    							// `responseType: "json"`.
+    							if (!ev.target.responseType && typeof args.extract !== "function") {
+    								// Handle no-content which will not parse.
+    								try { response = JSON.parse(ev.target.responseText); }
+    								catch (e) { response = null; }
+    							}
+    						} else if (!responseType || responseType === "text") {
+    							// Only use this default if it's text. If a parsed
+    							// document is needed on old IE and friends (all
+    							// unsupported), the user should use a custom
+    							// `config` instead. They're already using this at
+    							// their own risk.
+    							if (response == null) response = ev.target.responseText;
+    						}
+
+    						if (typeof args.extract === "function") {
+    							response = args.extract(ev.target, args);
+    							success = true;
+    						} else if (typeof args.deserialize === "function") {
+    							response = args.deserialize(response);
+    						}
+    						if (success) resolve(response);
+    						else {
+    							var completeErrorResponse = function() {
+    								try { message = ev.target.responseText; }
+    								catch (e) { message = response; }
+    								var error = new Error(message);
+    								error.code = ev.target.status;
+    								error.response = response;
+    								reject(error);
+    							};
+
+    							if (xhr.status === 0) {
+    								// Use setTimeout to push this code block onto the event queue
+    								// This allows `xhr.ontimeout` to run in the case that there is a timeout
+    								// Without this setTimeout, `xhr.ontimeout` doesn't have a chance to reject
+    								// as `xhr.onreadystatechange` will run before it
+    								setTimeout(function() {
+    									if (isTimeout) return
+    									completeErrorResponse();
+    								});
+    							} else completeErrorResponse();
+    						}
+    					}
+    					catch (e) {
+    						reject(e);
+    					}
+    				}
+    			};
+
+    			xhr.ontimeout = function (ev) {
+    				isTimeout = true;
+    				var error = new Error("Request timed out");
+    				error.code = ev.target.status;
+    				reject(error);
+    			};
+
+    			if (typeof args.config === "function") {
+    				xhr = args.config(xhr, args, url) || xhr;
+
+    				// Propagate the `abort` to any replacement XHR as well.
+    				if (xhr !== original) {
+    					replacedAbort = xhr.abort;
+    					xhr.abort = function() {
+    						aborted = true;
+    						replacedAbort.call(this);
+    					};
+    				}
+    			}
+
+    			if (body == null) xhr.send();
+    			else if (typeof args.serialize === "function") xhr.send(args.serialize(body));
+    			else if (body instanceof $window.FormData || body instanceof $window.URLSearchParams) xhr.send(body);
+    			else xhr.send(JSON.stringify(body));
+    		}),
+    		jsonp: makeRequest(function(url, args, resolve, reject) {
+    			var callbackName = args.callbackName || "_mithril_" + Math.round(Math.random() * 1e16) + "_" + callbackCount++;
+    			var script = $window.document.createElement("script");
+    			$window[callbackName] = function(data) {
+    				delete $window[callbackName];
+    				script.parentNode.removeChild(script);
+    				resolve(data);
+    			};
+    			script.onerror = function() {
+    				delete $window[callbackName];
+    				script.parentNode.removeChild(script);
+    				reject(new Error("JSONP request failed"));
+    			};
+    			script.src = url + (url.indexOf("?") < 0 ? "?" : "&") +
+    				encodeURIComponent(args.callbackKey || "callback") + "=" +
+    				encodeURIComponent(callbackName);
+    			$window.document.documentElement.appendChild(script);
+    		}),
+    	}
+    };
+
+    var PromisePolyfill = promise.exports;
+    var mountRedraw$1 = mountRedraw$2;
+
+    var request$1 = request$2(typeof window !== "undefined" ? window : null, PromisePolyfill, mountRedraw$1.redraw);
+
+    var parse$1;
+    var hasRequiredParse$1;
+
+    function requireParse$1 () {
+    	if (hasRequiredParse$1) return parse$1;
+    	hasRequiredParse$1 = 1;
+
+    	function decodeURIComponentSave(str) {
+    		try {
+    			return decodeURIComponent(str)
+    		} catch(err) {
+    			return str
+    		}
+    	}
+
+    	parse$1 = function(string) {
+    		if (string === "" || string == null) return {}
+    		if (string.charAt(0) === "?") string = string.slice(1);
+
+    		var entries = string.split("&"), counters = {}, data = {};
+    		for (var i = 0; i < entries.length; i++) {
+    			var entry = entries[i].split("=");
+    			var key = decodeURIComponentSave(entry[0]);
+    			var value = entry.length === 2 ? decodeURIComponentSave(entry[1]) : "";
+
+    			if (value === "true") value = true;
+    			else if (value === "false") value = false;
+
+    			var levels = key.split(/\]\[?|\[/);
+    			var cursor = data;
+    			if (key.indexOf("[") > -1) levels.pop();
+    			for (var j = 0; j < levels.length; j++) {
+    				var level = levels[j], nextLevel = levels[j + 1];
+    				var isNumber = nextLevel == "" || !isNaN(parseInt(nextLevel, 10));
+    				if (level === "") {
+    					var key = levels.slice(0, j).join();
+    					if (counters[key] == null) {
+    						counters[key] = Array.isArray(cursor) ? cursor.length : 0;
+    					}
+    					level = counters[key]++;
+    				}
+    				// Disallow direct prototype pollution
+    				else if (level === "__proto__") break
+    				if (j === levels.length - 1) cursor[level] = value;
+    				else {
+    					// Read own properties exclusively to disallow indirect
+    					// prototype pollution
+    					var desc = Object.getOwnPropertyDescriptor(cursor, level);
+    					if (desc != null) desc = desc.value;
+    					if (desc == null) cursor[level] = desc = isNumber ? [] : {};
+    					cursor = desc;
+    				}
+    			}
+    		}
+    		return data
+    	};
+    	return parse$1;
+    }
+
+    var parse;
+    var hasRequiredParse;
+
+    function requireParse () {
+    	if (hasRequiredParse) return parse;
+    	hasRequiredParse = 1;
+
+    	var parseQueryString = requireParse$1();
+
+    	// Returns `{path, params}` from `url`
+    	parse = function(url) {
+    		var queryIndex = url.indexOf("?");
+    		var hashIndex = url.indexOf("#");
+    		var queryEnd = hashIndex < 0 ? url.length : hashIndex;
+    		var pathEnd = queryIndex < 0 ? queryEnd : queryIndex;
+    		var path = url.slice(0, pathEnd).replace(/\/{2,}/g, "/");
+
+    		if (!path) path = "/";
+    		else {
+    			if (path[0] !== "/") path = "/" + path;
+    			if (path.length > 1 && path[path.length - 1] === "/") path = path.slice(0, -1);
+    		}
+    		return {
+    			path: path,
+    			params: queryIndex < 0
+    				? {}
+    				: parseQueryString(url.slice(queryIndex + 1, queryEnd)),
+    		}
+    	};
+    	return parse;
+    }
+
+    var compileTemplate;
+    var hasRequiredCompileTemplate;
+
+    function requireCompileTemplate () {
+    	if (hasRequiredCompileTemplate) return compileTemplate;
+    	hasRequiredCompileTemplate = 1;
+
+    	var parsePathname = requireParse();
+
+    	// Compiles a template into a function that takes a resolved path (without query
+    	// strings) and returns an object containing the template parameters with their
+    	// parsed values. This expects the input of the compiled template to be the
+    	// output of `parsePathname`. Note that it does *not* remove query parameters
+    	// specified in the template.
+    	compileTemplate = function(template) {
+    		var templateData = parsePathname(template);
+    		var templateKeys = Object.keys(templateData.params);
+    		var keys = [];
+    		var regexp = new RegExp("^" + templateData.path.replace(
+    			// I escape literal text so people can use things like `:file.:ext` or
+    			// `:lang-:locale` in routes. This is all merged into one pass so I
+    			// don't also accidentally escape `-` and make it harder to detect it to
+    			// ban it from template parameters.
+    			/:([^\/.-]+)(\.{3}|\.(?!\.)|-)?|[\\^$*+.()|\[\]{}]/g,
+    			function(m, key, extra) {
+    				if (key == null) return "\\" + m
+    				keys.push({k: key, r: extra === "..."});
+    				if (extra === "...") return "(.*)"
+    				if (extra === ".") return "([^/]+)\\."
+    				return "([^/]+)" + (extra || "")
+    			}
+    		) + "$");
+    		return function(data) {
+    			// First, check the params. Usually, there isn't any, and it's just
+    			// checking a static set.
+    			for (var i = 0; i < templateKeys.length; i++) {
+    				if (templateData.params[templateKeys[i]] !== data.params[templateKeys[i]]) return false
+    			}
+    			// If no interpolations exist, let's skip all the ceremony
+    			if (!keys.length) return regexp.test(data.path)
+    			var values = regexp.exec(data.path);
+    			if (values == null) return false
+    			for (var i = 0; i < keys.length; i++) {
+    				data.params[keys[i].k] = keys[i].r ? values[i + 1] : decodeURIComponent(values[i + 1]);
+    			}
+    			return true
+    		}
+    	};
+    	return compileTemplate;
+    }
+
+    var censor;
+    var hasRequiredCensor;
+
+    function requireCensor () {
+    	if (hasRequiredCensor) return censor;
+    	hasRequiredCensor = 1;
+
+    	// Note: this is mildly perf-sensitive.
+    	//
+    	// It does *not* use `delete` - dynamic `delete`s usually cause objects to bail
+    	// out into dictionary mode and just generally cause a bunch of optimization
+    	// issues within engines.
+    	//
+    	// Ideally, I would've preferred to do this, if it weren't for the optimization
+    	// issues:
+    	//
+    	// ```js
+    	// const hasOwn = require("./hasOwn")
+    	// const magic = [
+    	//     "key", "oninit", "oncreate", "onbeforeupdate", "onupdate",
+    	//     "onbeforeremove", "onremove",
+    	// ]
+    	// module.exports = (attrs, extras) => {
+    	//     const result = Object.assign(Object.create(null), attrs)
+    	//     for (const key of magic) delete result[key]
+    	//     if (extras != null) for (const key of extras) delete result[key]
+    	//     return result
+    	// }
+    	// ```
+
+    	var hasOwn = hasOwn$2;
+    	// Words in RegExp literals are sometimes mangled incorrectly by the internal bundler, so use RegExp().
+    	var magic = new RegExp("^(?:key|oninit|oncreate|onbeforeupdate|onupdate|onbeforeremove|onremove)$");
+
+    	censor = function(attrs, extras) {
+    		var result = {};
+
+    		if (extras != null) {
+    			for (var key in attrs) {
+    				if (hasOwn.call(attrs, key) && !magic.test(key) && extras.indexOf(key) < 0) {
+    					result[key] = attrs[key];
+    				}
+    			}
+    		} else {
+    			for (var key in attrs) {
+    				if (hasOwn.call(attrs, key) && !magic.test(key)) {
+    					result[key] = attrs[key];
+    				}
+    			}
+    		}
+
+    		return result
+    	};
+    	return censor;
+    }
+
+    var router;
+    var hasRequiredRouter;
+
+    function requireRouter () {
+    	if (hasRequiredRouter) return router;
+    	hasRequiredRouter = 1;
+
+    	var Vnode = requireVnode();
+    	var m = hyperscript_1$1;
+    	var Promise = promise.exports;
+
+    	var buildPathname = requireBuild();
+    	var parsePathname = requireParse();
+    	var compileTemplate = requireCompileTemplate();
+    	var assign = requireAssign();
+    	var censor = requireCensor();
+
+    	var sentinel = {};
+
+    	function decodeURIComponentSave(component) {
+    		try {
+    			return decodeURIComponent(component)
+    		} catch(e) {
+    			return component
+    		}
+    	}
+
+    	router = function($window, mountRedraw) {
+    		var callAsync = $window == null
+    			// In case Mithril.js' loaded globally without the DOM, let's not break
+    			? null
+    			: typeof $window.setImmediate === "function" ? $window.setImmediate : $window.setTimeout;
+    		var p = Promise.resolve();
+
+    		var scheduled = false;
+
+    		// state === 0: init
+    		// state === 1: scheduled
+    		// state === 2: done
+    		var ready = false;
+    		var state = 0;
+
+    		var compiled, fallbackRoute;
+
+    		var currentResolver = sentinel, component, attrs, currentPath, lastUpdate;
+
+    		var RouterRoot = {
+    			onbeforeupdate: function() {
+    				state = state ? 2 : 1;
+    				return !(!state || sentinel === currentResolver)
+    			},
+    			onremove: function() {
+    				$window.removeEventListener("popstate", fireAsync, false);
+    				$window.removeEventListener("hashchange", resolveRoute, false);
+    			},
+    			view: function() {
+    				if (!state || sentinel === currentResolver) return
+    				// Wrap in a fragment to preserve existing key semantics
+    				var vnode = [Vnode(component, attrs.key, attrs)];
+    				if (currentResolver) vnode = currentResolver.render(vnode[0]);
+    				return vnode
+    			},
+    		};
+
+    		var SKIP = route.SKIP = {};
+
+    		function resolveRoute() {
+    			scheduled = false;
+    			// Consider the pathname holistically. The prefix might even be invalid,
+    			// but that's not our problem.
+    			var prefix = $window.location.hash;
+    			if (route.prefix[0] !== "#") {
+    				prefix = $window.location.search + prefix;
+    				if (route.prefix[0] !== "?") {
+    					prefix = $window.location.pathname + prefix;
+    					if (prefix[0] !== "/") prefix = "/" + prefix;
+    				}
+    			}
+    			// This seemingly useless `.concat()` speeds up the tests quite a bit,
+    			// since the representation is consistently a relatively poorly
+    			// optimized cons string.
+    			var path = prefix.concat()
+    				.replace(/(?:%[a-f89][a-f0-9])+/gim, decodeURIComponentSave)
+    				.slice(route.prefix.length);
+    			var data = parsePathname(path);
+
+    			assign(data.params, $window.history.state);
+
+    			function reject(e) {
+    				console.error(e);
+    				setPath(fallbackRoute, null, {replace: true});
+    			}
+
+    			loop(0);
+    			function loop(i) {
+    				// state === 0: init
+    				// state === 1: scheduled
+    				// state === 2: done
+    				for (; i < compiled.length; i++) {
+    					if (compiled[i].check(data)) {
+    						var payload = compiled[i].component;
+    						var matchedRoute = compiled[i].route;
+    						var localComp = payload;
+    						var update = lastUpdate = function(comp) {
+    							if (update !== lastUpdate) return
+    							if (comp === SKIP) return loop(i + 1)
+    							component = comp != null && (typeof comp.view === "function" || typeof comp === "function")? comp : "div";
+    							attrs = data.params, currentPath = path, lastUpdate = null;
+    							currentResolver = payload.render ? payload : null;
+    							if (state === 2) mountRedraw.redraw();
+    							else {
+    								state = 2;
+    								mountRedraw.redraw.sync();
+    							}
+    						};
+    						// There's no understating how much I *wish* I could
+    						// use `async`/`await` here...
+    						if (payload.view || typeof payload === "function") {
+    							payload = {};
+    							update(localComp);
+    						}
+    						else if (payload.onmatch) {
+    							p.then(function () {
+    								return payload.onmatch(data.params, path, matchedRoute)
+    							}).then(update, path === fallbackRoute ? null : reject);
+    						}
+    						else update("div");
+    						return
+    					}
+    				}
+
+    				if (path === fallbackRoute) {
+    					throw new Error("Could not resolve default route " + fallbackRoute + ".")
+    				}
+    				setPath(fallbackRoute, null, {replace: true});
+    			}
+    		}
+
+    		// Set it unconditionally so `m.route.set` and `m.route.Link` both work,
+    		// even if neither `pushState` nor `hashchange` are supported. It's
+    		// cleared if `hashchange` is used, since that makes it automatically
+    		// async.
+    		function fireAsync() {
+    			if (!scheduled) {
+    				scheduled = true;
+    				// TODO: just do `mountRedraw.redraw()` here and elide the timer
+    				// dependency. Note that this will muck with tests a *lot*, so it's
+    				// not as easy of a change as it sounds.
+    				callAsync(resolveRoute);
+    			}
+    		}
+
+    		function setPath(path, data, options) {
+    			path = buildPathname(path, data);
+    			if (ready) {
+    				fireAsync();
+    				var state = options ? options.state : null;
+    				var title = options ? options.title : null;
+    				if (options && options.replace) $window.history.replaceState(state, title, route.prefix + path);
+    				else $window.history.pushState(state, title, route.prefix + path);
+    			}
+    			else {
+    				$window.location.href = route.prefix + path;
+    			}
+    		}
+
+    		function route(root, defaultRoute, routes) {
+    			if (!root) throw new TypeError("DOM element being rendered to does not exist.")
+
+    			compiled = Object.keys(routes).map(function(route) {
+    				if (route[0] !== "/") throw new SyntaxError("Routes must start with a '/'.")
+    				if ((/:([^\/\.-]+)(\.{3})?:/).test(route)) {
+    					throw new SyntaxError("Route parameter names must be separated with either '/', '.', or '-'.")
+    				}
+    				return {
+    					route: route,
+    					component: routes[route],
+    					check: compileTemplate(route),
+    				}
+    			});
+    			fallbackRoute = defaultRoute;
+    			if (defaultRoute != null) {
+    				var defaultData = parsePathname(defaultRoute);
+
+    				if (!compiled.some(function (i) { return i.check(defaultData) })) {
+    					throw new ReferenceError("Default route doesn't match any known routes.")
+    				}
+    			}
+
+    			if (typeof $window.history.pushState === "function") {
+    				$window.addEventListener("popstate", fireAsync, false);
+    			} else if (route.prefix[0] === "#") {
+    				$window.addEventListener("hashchange", resolveRoute, false);
+    			}
+
+    			ready = true;
+    			mountRedraw.mount(root, RouterRoot);
+    			resolveRoute();
+    		}
+    		route.set = function(path, data, options) {
+    			if (lastUpdate != null) {
+    				options = options || {};
+    				options.replace = true;
+    			}
+    			lastUpdate = null;
+    			setPath(path, data, options);
+    		};
+    		route.get = function() {return currentPath};
+    		route.prefix = "#!";
+    		route.Link = {
+    			view: function(vnode) {
+    				// Omit the used parameters from the rendered element - they are
+    				// internal. Also, censor the various lifecycle methods.
+    				//
+    				// We don't strip the other parameters because for convenience we
+    				// let them be specified in the selector as well.
+    				var child = m(
+    					vnode.attrs.selector || "a",
+    					censor(vnode.attrs, ["options", "params", "selector", "onclick"]),
+    					vnode.children
+    				);
+    				var options, onclick, href;
+
+    				// Let's provide a *right* way to disable a route link, rather than
+    				// letting people screw up accessibility on accident.
+    				//
+    				// The attribute is coerced so users don't get surprised over
+    				// `disabled: 0` resulting in a button that's somehow routable
+    				// despite being visibly disabled.
+    				if (child.attrs.disabled = Boolean(child.attrs.disabled)) {
+    					child.attrs.href = null;
+    					child.attrs["aria-disabled"] = "true";
+    					// If you *really* do want add `onclick` on a disabled link, use
+    					// an `oncreate` hook to add it.
+    				} else {
+    					options = vnode.attrs.options;
+    					onclick = vnode.attrs.onclick;
+    					// Easier to build it now to keep it isomorphic.
+    					href = buildPathname(child.attrs.href, vnode.attrs.params);
+    					child.attrs.href = route.prefix + href;
+    					child.attrs.onclick = function(e) {
+    						var result;
+    						if (typeof onclick === "function") {
+    							result = onclick.call(e.currentTarget, e);
+    						} else if (onclick == null || typeof onclick !== "object") ; else if (typeof onclick.handleEvent === "function") {
+    							onclick.handleEvent(e);
+    						}
+
+    						// Adapted from React Router's implementation:
+    						// https://github.com/ReactTraining/react-router/blob/520a0acd48ae1b066eb0b07d6d4d1790a1d02482/packages/react-router-dom/modules/Link.js
+    						//
+    						// Try to be flexible and intuitive in how we handle links.
+    						// Fun fact: links aren't as obvious to get right as you
+    						// would expect. There's a lot more valid ways to click a
+    						// link than this, and one might want to not simply click a
+    						// link, but right click or command-click it to copy the
+    						// link target, etc. Nope, this isn't just for blind people.
+    						if (
+    							// Skip if `onclick` prevented default
+    							result !== false && !e.defaultPrevented &&
+    							// Ignore everything but left clicks
+    							(e.button === 0 || e.which === 0 || e.which === 1) &&
+    							// Let the browser handle `target=_blank`, etc.
+    							(!e.currentTarget.target || e.currentTarget.target === "_self") &&
+    							// No modifier keys
+    							!e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey
+    						) {
+    							e.preventDefault();
+    							e.redraw = false;
+    							route.set(href, null, options);
+    						}
+    					};
+    				}
+    				return child
+    			},
+    		};
+    		route.param = function(key) {
+    			return attrs && key != null ? attrs[key] : attrs
+    		};
+
+    		return route
+    	};
+    	return router;
+    }
+
+    var route;
+    var hasRequiredRoute;
+
+    function requireRoute () {
+    	if (hasRequiredRoute) return route;
+    	hasRequiredRoute = 1;
+
+    	var mountRedraw = mountRedraw$2;
+
+    	route = requireRouter()(typeof window !== "undefined" ? window : null, mountRedraw);
+    	return route;
+    }
+
+    var hyperscript = hyperscript_1;
+    var request = request$1;
+    var mountRedraw = mountRedraw$2;
+
+    var m = function m() { return hyperscript.apply(this, arguments) };
+    m.m = hyperscript;
+    m.trust = hyperscript.trust;
+    m.fragment = hyperscript.fragment;
+    m.Fragment = "[";
+    m.mount = mountRedraw.mount;
+    m.route = requireRoute();
+    m.render = render$1;
+    m.redraw = mountRedraw.redraw;
+    m.request = request.request;
+    m.jsonp = request.jsonp;
+    m.parseQueryString = requireParse$1();
+    m.buildQueryString = requireBuild$1();
+    m.parsePathname = requireParse();
+    m.buildPathname = requireBuild();
+    m.vnode = requireVnode();
+    m.PromisePolyfill = requirePolyfill();
+    m.censor = requireCensor();
+
+    var mithril = m;
+
+    var global$1 = (typeof global !== "undefined" ? global :
+      typeof self !== "undefined" ? self :
+      typeof window !== "undefined" ? window : {});
+
+    // shim for using process in browser
+    // based off https://github.com/defunctzombie/node-process/blob/master/browser.js
+
+    function defaultSetTimout() {
+        throw new Error('setTimeout has not been defined');
+    }
+    function defaultClearTimeout () {
+        throw new Error('clearTimeout has not been defined');
+    }
+    var cachedSetTimeout = defaultSetTimout;
+    var cachedClearTimeout = defaultClearTimeout;
+    if (typeof global$1.setTimeout === 'function') {
+        cachedSetTimeout = setTimeout;
+    }
+    if (typeof global$1.clearTimeout === 'function') {
+        cachedClearTimeout = clearTimeout;
+    }
+
+    function runTimeout(fun) {
+        if (cachedSetTimeout === setTimeout) {
+            //normal enviroments in sane situations
+            return setTimeout(fun, 0);
+        }
+        // if setTimeout wasn't available but was latter defined
+        if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+            cachedSetTimeout = setTimeout;
+            return setTimeout(fun, 0);
+        }
+        try {
+            // when when somebody has screwed with setTimeout but no I.E. maddness
+            return cachedSetTimeout(fun, 0);
+        } catch(e){
+            try {
+                // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+                return cachedSetTimeout.call(null, fun, 0);
+            } catch(e){
+                // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+                return cachedSetTimeout.call(this, fun, 0);
+            }
+        }
+
+
+    }
+    function runClearTimeout(marker) {
+        if (cachedClearTimeout === clearTimeout) {
+            //normal enviroments in sane situations
+            return clearTimeout(marker);
+        }
+        // if clearTimeout wasn't available but was latter defined
+        if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+            cachedClearTimeout = clearTimeout;
+            return clearTimeout(marker);
+        }
+        try {
+            // when when somebody has screwed with setTimeout but no I.E. maddness
+            return cachedClearTimeout(marker);
+        } catch (e){
+            try {
+                // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+                return cachedClearTimeout.call(null, marker);
+            } catch (e){
+                // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+                // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+                return cachedClearTimeout.call(this, marker);
+            }
+        }
+
+
+
+    }
+    var queue = [];
+    var draining = false;
+    var currentQueue;
+    var queueIndex = -1;
+
+    function cleanUpNextTick() {
+        if (!draining || !currentQueue) {
+            return;
+        }
+        draining = false;
+        if (currentQueue.length) {
+            queue = currentQueue.concat(queue);
+        } else {
+            queueIndex = -1;
+        }
+        if (queue.length) {
+            drainQueue();
+        }
+    }
+
+    function drainQueue() {
+        if (draining) {
+            return;
+        }
+        var timeout = runTimeout(cleanUpNextTick);
+        draining = true;
+
+        var len = queue.length;
+        while(len) {
+            currentQueue = queue;
+            queue = [];
+            while (++queueIndex < len) {
+                if (currentQueue) {
+                    currentQueue[queueIndex].run();
                 }
-                else if (keymap.next.includes(key) || key == 'ArrowRight') {
-                    setScenario(null, +1);
+            }
+            queueIndex = -1;
+            len = queue.length;
+        }
+        currentQueue = null;
+        draining = false;
+        runClearTimeout(timeout);
+    }
+    function nextTick(fun) {
+        var args = new Array(arguments.length - 1);
+        if (arguments.length > 1) {
+            for (var i = 1; i < arguments.length; i++) {
+                args[i - 1] = arguments[i];
+            }
+        }
+        queue.push(new Item(fun, args));
+        if (queue.length === 1 && !draining) {
+            runTimeout(drainQueue);
+        }
+    }
+    // v8 likes predictible objects
+    function Item(fun, array) {
+        this.fun = fun;
+        this.array = array;
+    }
+    Item.prototype.run = function () {
+        this.fun.apply(null, this.array);
+    };
+    var title = 'browser';
+    var platform = 'browser';
+    var browser = true;
+    var env = {};
+    var argv = [];
+    var version = ''; // empty string to avoid regexp issues
+    var versions = {};
+    var release = {};
+    var config = {};
+
+    function noop() {}
+
+    var on = noop;
+    var addListener = noop;
+    var once = noop;
+    var off = noop;
+    var removeListener = noop;
+    var removeAllListeners = noop;
+    var emit = noop;
+
+    function binding(name) {
+        throw new Error('process.binding is not supported');
+    }
+
+    function cwd () { return '/' }
+    function chdir (dir) {
+        throw new Error('process.chdir is not supported');
+    }function umask() { return 0; }
+
+    // from https://github.com/kumavis/browser-process-hrtime/blob/master/index.js
+    var performance$1 = global$1.performance || {};
+    var performanceNow =
+      performance$1.now        ||
+      performance$1.mozNow     ||
+      performance$1.msNow      ||
+      performance$1.oNow       ||
+      performance$1.webkitNow  ||
+      function(){ return (new Date()).getTime() };
+
+    // generate timestamp or delta
+    // see http://nodejs.org/api/process.html#process_process_hrtime
+    function hrtime(previousTimestamp){
+      var clocktime = performanceNow.call(performance$1)*1e-3;
+      var seconds = Math.floor(clocktime);
+      var nanoseconds = Math.floor((clocktime%1)*1e9);
+      if (previousTimestamp) {
+        seconds = seconds - previousTimestamp[0];
+        nanoseconds = nanoseconds - previousTimestamp[1];
+        if (nanoseconds<0) {
+          seconds--;
+          nanoseconds += 1e9;
+        }
+      }
+      return [seconds,nanoseconds]
+    }
+
+    var startTime = new Date();
+    function uptime() {
+      var currentTime = new Date();
+      var dif = currentTime - startTime;
+      return dif / 1000;
+    }
+
+    var browser$1 = {
+      nextTick: nextTick,
+      title: title,
+      browser: browser,
+      env: env,
+      argv: argv,
+      version: version,
+      versions: versions,
+      on: on,
+      addListener: addListener,
+      once: once,
+      off: off,
+      removeListener: removeListener,
+      removeAllListeners: removeAllListeners,
+      emit: emit,
+      binding: binding,
+      cwd: cwd,
+      chdir: chdir,
+      umask: umask,
+      hrtime: hrtime,
+      platform: platform,
+      release: release,
+      config: config,
+      uptime: uptime
+    };
+
+    /*
+
+    Based off glamor's StyleSheet, thanks Sunil ❤️
+
+    high performance StyleSheet for css-in-js systems
+
+    - uses multiple style tags behind the scenes for millions of rules
+    - uses `insertRule` for appending in production for *much* faster performance
+
+    // usage
+
+    import { StyleSheet } from '@emotion/sheet'
+
+    let styleSheet = new StyleSheet({ key: '', container: document.head })
+
+    styleSheet.insert('#box { border: 1px solid red; }')
+    - appends a css rule into the stylesheet
+
+    styleSheet.flush()
+    - empties the stylesheet of all its contents
+
+    */
+    // $FlowFixMe
+    function sheetForTag(tag) {
+      if (tag.sheet) {
+        // $FlowFixMe
+        return tag.sheet;
+      } // this weirdness brought to you by firefox
+
+      /* istanbul ignore next */
+
+
+      for (var i = 0; i < document.styleSheets.length; i++) {
+        if (document.styleSheets[i].ownerNode === tag) {
+          // $FlowFixMe
+          return document.styleSheets[i];
+        }
+      }
+    }
+
+    function createStyleElement(options) {
+      var tag = document.createElement('style');
+      tag.setAttribute('data-emotion', options.key);
+
+      if (options.nonce !== undefined) {
+        tag.setAttribute('nonce', options.nonce);
+      }
+
+      tag.appendChild(document.createTextNode(''));
+      tag.setAttribute('data-s', '');
+      return tag;
+    }
+
+    var StyleSheet = /*#__PURE__*/function () {
+      // Using Node instead of HTMLElement since container may be a ShadowRoot
+      function StyleSheet(options) {
+        var _this = this;
+
+        this._insertTag = function (tag) {
+          var before;
+
+          if (_this.tags.length === 0) {
+            if (_this.insertionPoint) {
+              before = _this.insertionPoint.nextSibling;
+            } else if (_this.prepend) {
+              before = _this.container.firstChild;
+            } else {
+              before = _this.before;
+            }
+          } else {
+            before = _this.tags[_this.tags.length - 1].nextSibling;
+          }
+
+          _this.container.insertBefore(tag, before);
+
+          _this.tags.push(tag);
+        };
+
+        this.isSpeedy = options.speedy === undefined ? browser$1.env.NODE_ENV === 'production' : options.speedy;
+        this.tags = [];
+        this.ctr = 0;
+        this.nonce = options.nonce; // key is the value of the data-emotion attribute, it's used to identify different sheets
+
+        this.key = options.key;
+        this.container = options.container;
+        this.prepend = options.prepend;
+        this.insertionPoint = options.insertionPoint;
+        this.before = null;
+      }
+
+      var _proto = StyleSheet.prototype;
+
+      _proto.hydrate = function hydrate(nodes) {
+        nodes.forEach(this._insertTag);
+      };
+
+      _proto.insert = function insert(rule) {
+        // the max length is how many rules we have per style tag, it's 65000 in speedy mode
+        // it's 1 in dev because we insert source maps that map a single rule to a location
+        // and you can only have one source map per style tag
+        if (this.ctr % (this.isSpeedy ? 65000 : 1) === 0) {
+          this._insertTag(createStyleElement(this));
+        }
+
+        var tag = this.tags[this.tags.length - 1];
+
+        if (browser$1.env.NODE_ENV !== 'production') {
+          var isImportRule = rule.charCodeAt(0) === 64 && rule.charCodeAt(1) === 105;
+
+          if (isImportRule && this._alreadyInsertedOrderInsensitiveRule) {
+            // this would only cause problem in speedy mode
+            // but we don't want enabling speedy to affect the observable behavior
+            // so we report this error at all times
+            console.error("You're attempting to insert the following rule:\n" + rule + '\n\n`@import` rules must be before all other types of rules in a stylesheet but other rules have already been inserted. Please ensure that `@import` rules are before all other rules.');
+          }
+          this._alreadyInsertedOrderInsensitiveRule = this._alreadyInsertedOrderInsensitiveRule || !isImportRule;
+        }
+
+        if (this.isSpeedy) {
+          var sheet = sheetForTag(tag);
+
+          try {
+            // this is the ultrafast version, works across browsers
+            // the big drawback is that the css won't be editable in devtools
+            sheet.insertRule(rule, sheet.cssRules.length);
+          } catch (e) {
+            if (browser$1.env.NODE_ENV !== 'production' && !/:(-moz-placeholder|-moz-focus-inner|-moz-focusring|-ms-input-placeholder|-moz-read-write|-moz-read-only|-ms-clear|-ms-expand|-ms-reveal){/.test(rule)) {
+              console.error("There was a problem inserting the following rule: \"" + rule + "\"", e);
+            }
+          }
+        } else {
+          tag.appendChild(document.createTextNode(rule));
+        }
+
+        this.ctr++;
+      };
+
+      _proto.flush = function flush() {
+        // $FlowFixMe
+        this.tags.forEach(function (tag) {
+          return tag.parentNode && tag.parentNode.removeChild(tag);
+        });
+        this.tags = [];
+        this.ctr = 0;
+
+        if (browser$1.env.NODE_ENV !== 'production') {
+          this._alreadyInsertedOrderInsensitiveRule = false;
+        }
+      };
+
+      return StyleSheet;
+    }();
+
+    var stylis = {exports: {}};
+
+    (function (module, exports) {
+    	(function(e,r){r(exports);})(commonjsGlobal,(function(e){var r="-ms-";var a="-moz-";var c="-webkit-";var t="comm";var n="rule";var s="decl";var i="@page";var u="@media";var o="@import";var f="@charset";var l="@viewport";var p="@supports";var h="@document";var v="@namespace";var d="@keyframes";var b="@font-face";var w="@counter-style";var m="@font-feature-values";var g=Math.abs;var k=String.fromCharCode;var $=Object.assign;function x(e,r){return A(e,0)^45?(((r<<2^A(e,0))<<2^A(e,1))<<2^A(e,2))<<2^A(e,3):0}function E(e){return e.trim()}function y(e,r){return (e=r.exec(e))?e[0]:e}function T(e,r,a){return e.replace(r,a)}function O(e,r){return e.indexOf(r)}function A(e,r){return e.charCodeAt(r)|0}function M(e,r,a){return e.slice(r,a)}function C(e){return e.length}function S(e){return e.length}function R(e,r){return r.push(e),e}function z(e,r){return e.map(r).join("")}e.line=1;e.column=1;e.length=0;e.position=0;e.character=0;e.characters="";function N(r,a,c,t,n,s,i){return {value:r,root:a,parent:c,type:t,props:n,children:s,line:e.line,column:e.column,length:i,return:""}}function P(e,r){return $(N("",null,null,"",null,null,0),e,{length:-e.length},r)}function j(){return e.character}function U(){e.character=e.position>0?A(e.characters,--e.position):0;if(e.column--,e.character===10)e.column=1,e.line--;return e.character}function _(){e.character=e.position<e.length?A(e.characters,e.position++):0;if(e.column++,e.character===10)e.column=1,e.line++;return e.character}function F(){return A(e.characters,e.position)}function I(){return e.position}function L(r,a){return M(e.characters,r,a)}function D(e){switch(e){case 0:case 9:case 10:case 13:case 32:return 5;case 33:case 43:case 44:case 47:case 62:case 64:case 126:case 59:case 123:case 125:return 4;case 58:return 3;case 34:case 39:case 40:case 91:return 2;case 41:case 93:return 1}return 0}function K(r){return e.line=e.column=1,e.length=C(e.characters=r),e.position=0,[]}function V(r){return e.characters="",r}function W(r){return E(L(e.position-1,Z(r===91?r+2:r===40?r+1:r)))}function Y(e){return V(G(K(e)))}function B(r){while(e.character=F())if(e.character<33)_();else break;return D(r)>2||D(e.character)>3?"":" "}function G(r){while(_())switch(D(e.character)){case 0:R(J(e.position-1),r);break;case 2:R(W(e.character),r);break;default:R(k(e.character),r);}return r}function H(r,a){while(--a&&_())if(e.character<48||e.character>102||e.character>57&&e.character<65||e.character>70&&e.character<97)break;return L(r,I()+(a<6&&F()==32&&_()==32))}function Z(r){while(_())switch(e.character){case r:return e.position;case 34:case 39:if(r!==34&&r!==39)Z(e.character);break;case 40:if(r===41)Z(r);break;case 92:_();break}return e.position}function q(r,a){while(_())if(r+e.character===47+10)break;else if(r+e.character===42+42&&F()===47)break;return "/*"+L(a,e.position-1)+"*"+k(r===47?r:_())}function J(r){while(!D(F()))_();return L(r,e.position)}function Q(e){return V(X("",null,null,null,[""],e=K(e),0,[0],e))}function X(e,r,a,c,t,n,s,i,u){var o=0;var f=0;var l=s;var p=0;var h=0;var v=0;var d=1;var b=1;var w=1;var m=0;var g="";var $=t;var x=n;var E=c;var y=g;while(b)switch(v=m,m=_()){case 40:if(v!=108&&A(y,l-1)==58){if(O(y+=T(W(m),"&","&\f"),"&\f")!=-1)w=-1;break}case 34:case 39:case 91:y+=W(m);break;case 9:case 10:case 13:case 32:y+=B(v);break;case 92:y+=H(I()-1,7);continue;case 47:switch(F()){case 42:case 47:R(re(q(_(),I()),r,a),u);break;default:y+="/";}break;case 123*d:i[o++]=C(y)*w;case 125*d:case 59:case 0:switch(m){case 0:case 125:b=0;case 59+f:if(h>0&&C(y)-l)R(h>32?ae(y+";",c,a,l-1):ae(T(y," ","")+";",c,a,l-2),u);break;case 59:y+=";";default:R(E=ee(y,r,a,o,f,t,i,g,$=[],x=[],l),n);if(m===123)if(f===0)X(y,r,E,E,$,n,l,i,x);else switch(p===99&&A(y,3)===110?100:p){case 100:case 109:case 115:X(e,E,E,c&&R(ee(e,E,E,0,0,t,i,g,t,$=[],l),x),t,x,l,i,c?$:x);break;default:X(y,E,E,E,[""],x,0,i,x);}}o=f=h=0,d=w=1,g=y="",l=s;break;case 58:l=1+C(y),h=v;default:if(d<1)if(m==123)--d;else if(m==125&&d++==0&&U()==125)continue;switch(y+=k(m),m*d){case 38:w=f>0?1:(y+="\f",-1);break;case 44:i[o++]=(C(y)-1)*w,w=1;break;case 64:if(F()===45)y+=W(_());p=F(),f=l=C(g=y+=J(I())),m++;break;case 45:if(v===45&&C(y)==2)d=0;}}return n}function ee(e,r,a,c,t,s,i,u,o,f,l){var p=t-1;var h=t===0?s:[""];var v=S(h);for(var d=0,b=0,w=0;d<c;++d)for(var m=0,k=M(e,p+1,p=g(b=i[d])),$=e;m<v;++m)if($=E(b>0?h[m]+" "+k:T(k,/&\f/g,h[m])))o[w++]=$;return N(e,r,a,t===0?n:u,o,f,l)}function re(e,r,a){return N(e,r,a,t,k(j()),M(e,2,-2),0)}function ae(e,r,a,c){return N(e,r,a,s,M(e,0,c),M(e,c+1,-1),c)}function ce(e,t,n){switch(x(e,t)){case 5103:return c+"print-"+e+e;case 5737:case 4201:case 3177:case 3433:case 1641:case 4457:case 2921:case 5572:case 6356:case 5844:case 3191:case 6645:case 3005:case 6391:case 5879:case 5623:case 6135:case 4599:case 4855:case 4215:case 6389:case 5109:case 5365:case 5621:case 3829:return c+e+e;case 4789:return a+e+e;case 5349:case 4246:case 4810:case 6968:case 2756:return c+e+a+e+r+e+e;case 5936:switch(A(e,t+11)){case 114:return c+e+r+T(e,/[svh]\w+-[tblr]{2}/,"tb")+e;case 108:return c+e+r+T(e,/[svh]\w+-[tblr]{2}/,"tb-rl")+e;case 45:return c+e+r+T(e,/[svh]\w+-[tblr]{2}/,"lr")+e}case 6828:case 4268:case 2903:return c+e+r+e+e;case 6165:return c+e+r+"flex-"+e+e;case 5187:return c+e+T(e,/(\w+).+(:[^]+)/,c+"box-$1$2"+r+"flex-$1$2")+e;case 5443:return c+e+r+"flex-item-"+T(e,/flex-|-self/g,"")+(!y(e,/flex-|baseline/)?r+"grid-row-"+T(e,/flex-|-self/g,""):"")+e;case 4675:return c+e+r+"flex-line-pack"+T(e,/align-content|flex-|-self/g,"")+e;case 5548:return c+e+r+T(e,"shrink","negative")+e;case 5292:return c+e+r+T(e,"basis","preferred-size")+e;case 6060:return c+"box-"+T(e,"-grow","")+c+e+r+T(e,"grow","positive")+e;case 4554:return c+T(e,/([^-])(transform)/g,"$1"+c+"$2")+e;case 6187:return T(T(T(e,/(zoom-|grab)/,c+"$1"),/(image-set)/,c+"$1"),e,"")+e;case 5495:case 3959:return T(e,/(image-set\([^]*)/,c+"$1"+"$`$1");case 4968:return T(T(e,/(.+:)(flex-)?(.*)/,c+"box-pack:$3"+r+"flex-pack:$3"),/s.+-b[^;]+/,"justify")+c+e+e;case 4200:if(!y(e,/flex-|baseline/))return r+"grid-column-align"+M(e,t)+e;break;case 2592:case 3360:return r+T(e,"template-","")+e;case 4384:case 3616:if(n&&n.some((function(e,r){return t=r,y(e.props,/grid-\w+-end/)}))){return ~O(e+(n=n[t].value),"span")?e:r+T(e,"-start","")+e+r+"grid-row-span:"+(~O(n,"span")?y(n,/\d+/):+y(n,/\d+/)-+y(e,/\d+/))+";"}return r+T(e,"-start","")+e;case 4896:case 4128:return n&&n.some((function(e){return y(e.props,/grid-\w+-start/)}))?e:r+T(T(e,"-end","-span"),"span ","")+e;case 4095:case 3583:case 4068:case 2532:return T(e,/(.+)-inline(.+)/,c+"$1$2")+e;case 8116:case 7059:case 5753:case 5535:case 5445:case 5701:case 4933:case 4677:case 5533:case 5789:case 5021:case 4765:if(C(e)-1-t>6)switch(A(e,t+1)){case 109:if(A(e,t+4)!==45)break;case 102:return T(e,/(.+:)(.+)-([^]+)/,"$1"+c+"$2-$3"+"$1"+a+(A(e,t+3)==108?"$3":"$2-$3"))+e;case 115:return ~O(e,"stretch")?ce(T(e,"stretch","fill-available"),t,n)+e:e}break;case 5152:case 5920:return T(e,/(.+?):(\d+)(\s*\/\s*(span)?\s*(\d+))?(.*)/,(function(a,c,t,n,s,i,u){return r+c+":"+t+u+(n?r+c+"-span:"+(s?i:+i-+t)+u:"")+e}));case 4949:if(A(e,t+6)===121)return T(e,":",":"+c)+e;break;case 6444:switch(A(e,A(e,14)===45?18:11)){case 120:return T(e,/(.+:)([^;\s!]+)(;|(\s+)?!.+)?/,"$1"+c+(A(e,14)===45?"inline-":"")+"box$3"+"$1"+c+"$2$3"+"$1"+r+"$2box$3")+e;case 100:return T(e,":",":"+r)+e}break;case 5719:case 2647:case 2135:case 3927:case 2391:return T(e,"scroll-","scroll-snap-")+e}return e}function te(e,r){var a="";var c=S(e);for(var t=0;t<c;t++)a+=r(e[t],t,e,r)||"";return a}function ne(e,r,a,c){switch(e.type){case o:case s:return e.return=e.return||e.value;case t:return "";case d:return e.return=e.value+"{"+te(e.children,c)+"}";case n:e.value=e.props.join(",");}return C(a=te(e.children,c))?e.return=e.value+"{"+a+"}":""}function se(e){var r=S(e);return function(a,c,t,n){var s="";for(var i=0;i<r;i++)s+=e[i](a,c,t,n)||"";return s}}function ie(e){return function(r){if(!r.root)if(r=r.return)e(r);}}function ue(e,t,i,u){if(e.length>-1)if(!e.return)switch(e.type){case s:e.return=ce(e.value,e.length,i);return;case d:return te([P(e,{value:T(e.value,"@","@"+c)})],u);case n:if(e.length)return z(e.props,(function(t){switch(y(t,/(::plac\w+|:read-\w+)/)){case":read-only":case":read-write":return te([P(e,{props:[T(t,/:(read-\w+)/,":"+a+"$1")]})],u);case"::placeholder":return te([P(e,{props:[T(t,/:(plac\w+)/,":"+c+"input-$1")]}),P(e,{props:[T(t,/:(plac\w+)/,":"+a+"$1")]}),P(e,{props:[T(t,/:(plac\w+)/,r+"input-$1")]})],u)}return ""}))}}function oe(e){switch(e.type){case n:e.props=e.props.map((function(r){return z(Y(r),(function(r,a,c){switch(A(r,0)){case 12:return M(r,1,C(r));case 0:case 40:case 43:case 62:case 126:return r;case 58:if(c[++a]==="global")c[a]="",c[++a]="\f"+M(c[a],a=1,-1);case 32:return a===1?"":r;default:switch(a){case 0:e=r;return S(c)>1?"":r;case a=S(c)-1:case 2:return a===2?r+e+e:r+e;default:return r}}}))}));}}e.CHARSET=f;e.COMMENT=t;e.COUNTER_STYLE=w;e.DECLARATION=s;e.DOCUMENT=h;e.FONT_FACE=b;e.FONT_FEATURE_VALUES=m;e.IMPORT=o;e.KEYFRAMES=d;e.MEDIA=u;e.MOZ=a;e.MS=r;e.NAMESPACE=v;e.PAGE=i;e.RULESET=n;e.SUPPORTS=p;e.VIEWPORT=l;e.WEBKIT=c;e.abs=g;e.alloc=K;e.append=R;e.assign=$;e.caret=I;e.char=j;e.charat=A;e.combine=z;e.comment=re;e.commenter=q;e.compile=Q;e.copy=P;e.dealloc=V;e.declaration=ae;e.delimit=W;e.delimiter=Z;e.escaping=H;e.from=k;e.hash=x;e.identifier=J;e.indexof=O;e.match=y;e.middleware=se;e.namespace=oe;e.next=_;e.node=N;e.parse=X;e.peek=F;e.prefix=ce;e.prefixer=ue;e.prev=U;e.replace=T;e.ruleset=ee;e.rulesheet=ie;e.serialize=te;e.sizeof=S;e.slice=L;e.stringify=ne;e.strlen=C;e.substr=M;e.token=D;e.tokenize=Y;e.tokenizer=G;e.trim=E;e.whitespace=B;Object.defineProperty(e,"__esModule",{value:true});}));
+    	
+    } (stylis, stylis.exports));
+
+    var weakMemoize = function weakMemoize(func) {
+      // $FlowFixMe flow doesn't include all non-primitive types as allowed for weakmaps
+      var cache = new WeakMap();
+      return function (arg) {
+        if (cache.has(arg)) {
+          // $FlowFixMe
+          return cache.get(arg);
+        }
+
+        var ret = func(arg);
+        cache.set(arg, ret);
+        return ret;
+      };
+    };
+
+    function memoize(fn) {
+      var cache = Object.create(null);
+      return function (arg) {
+        if (cache[arg] === undefined) cache[arg] = fn(arg);
+        return cache[arg];
+      };
+    }
+
+    var identifierWithPointTracking = function identifierWithPointTracking(begin, points, index) {
+      var previous = 0;
+      var character = 0;
+
+      while (true) {
+        previous = character;
+        character = stylis.exports.peek(); // &\f
+
+        if (previous === 38 && character === 12) {
+          points[index] = 1;
+        }
+
+        if (stylis.exports.token(character)) {
+          break;
+        }
+
+        stylis.exports.next();
+      }
+
+      return stylis.exports.slice(begin, stylis.exports.position);
+    };
+
+    var toRules = function toRules(parsed, points) {
+      // pretend we've started with a comma
+      var index = -1;
+      var character = 44;
+
+      do {
+        switch (stylis.exports.token(character)) {
+          case 0:
+            // &\f
+            if (character === 38 && stylis.exports.peek() === 12) {
+              // this is not 100% correct, we don't account for literal sequences here - like for example quoted strings
+              // stylis inserts \f after & to know when & where it should replace this sequence with the context selector
+              // and when it should just concatenate the outer and inner selectors
+              // it's very unlikely for this sequence to actually appear in a different context, so we just leverage this fact here
+              points[index] = 1;
+            }
+
+            parsed[index] += identifierWithPointTracking(stylis.exports.position - 1, points, index);
+            break;
+
+          case 2:
+            parsed[index] += stylis.exports.delimit(character);
+            break;
+
+          case 4:
+            // comma
+            if (character === 44) {
+              // colon
+              parsed[++index] = stylis.exports.peek() === 58 ? '&\f' : '';
+              points[index] = parsed[index].length;
+              break;
+            }
+
+          // fallthrough
+
+          default:
+            parsed[index] += stylis.exports.from(character);
+        }
+      } while (character = stylis.exports.next());
+
+      return parsed;
+    };
+
+    var getRules = function getRules(value, points) {
+      return stylis.exports.dealloc(toRules(stylis.exports.alloc(value), points));
+    }; // WeakSet would be more appropriate, but only WeakMap is supported in IE11
+
+
+    var fixedElements = /* #__PURE__ */new WeakMap();
+    var compat = function compat(element) {
+      if (element.type !== 'rule' || !element.parent || // positive .length indicates that this rule contains pseudo
+      // negative .length indicates that this rule has been already prefixed
+      element.length < 1) {
+        return;
+      }
+
+      var value = element.value,
+          parent = element.parent;
+      var isImplicitRule = element.column === parent.column && element.line === parent.line;
+
+      while (parent.type !== 'rule') {
+        parent = parent.parent;
+        if (!parent) return;
+      } // short-circuit for the simplest case
+
+
+      if (element.props.length === 1 && value.charCodeAt(0) !== 58
+      /* colon */
+      && !fixedElements.get(parent)) {
+        return;
+      } // if this is an implicitly inserted rule (the one eagerly inserted at the each new nested level)
+      // then the props has already been manipulated beforehand as they that array is shared between it and its "rule parent"
+
+
+      if (isImplicitRule) {
+        return;
+      }
+
+      fixedElements.set(element, true);
+      var points = [];
+      var rules = getRules(value, points);
+      var parentRules = parent.props;
+
+      for (var i = 0, k = 0; i < rules.length; i++) {
+        for (var j = 0; j < parentRules.length; j++, k++) {
+          element.props[k] = points[i] ? rules[i].replace(/&\f/g, parentRules[j]) : parentRules[j] + " " + rules[i];
+        }
+      }
+    };
+    var removeLabel = function removeLabel(element) {
+      if (element.type === 'decl') {
+        var value = element.value;
+
+        if ( // charcode for l
+        value.charCodeAt(0) === 108 && // charcode for b
+        value.charCodeAt(2) === 98) {
+          // this ignores label
+          element["return"] = '';
+          element.value = '';
+        }
+      }
+    };
+    var ignoreFlag = 'emotion-disable-server-rendering-unsafe-selector-warning-please-do-not-use-this-the-warning-exists-for-a-reason';
+
+    var isIgnoringComment = function isIgnoringComment(element) {
+      return element.type === 'comm' && element.children.indexOf(ignoreFlag) > -1;
+    };
+
+    var createUnsafeSelectorsAlarm = function createUnsafeSelectorsAlarm(cache) {
+      return function (element, index, children) {
+        if (element.type !== 'rule' || cache.compat) return;
+        var unsafePseudoClasses = element.value.match(/(:first|:nth|:nth-last)-child/g);
+
+        if (unsafePseudoClasses) {
+          var isNested = element.parent === children[0]; // in nested rules comments become children of the "auto-inserted" rule
+          //
+          // considering this input:
+          // .a {
+          //   .b /* comm */ {}
+          //   color: hotpink;
+          // }
+          // we get output corresponding to this:
+          // .a {
+          //   & {
+          //     /* comm */
+          //     color: hotpink;
+          //   }
+          //   .b {}
+          // }
+
+          var commentContainer = isNested ? children[0].children : // global rule at the root level
+          children;
+
+          for (var i = commentContainer.length - 1; i >= 0; i--) {
+            var node = commentContainer[i];
+
+            if (node.line < element.line) {
+              break;
+            } // it is quite weird but comments are *usually* put at `column: element.column - 1`
+            // so we seek *from the end* for the node that is earlier than the rule's `element` and check that
+            // this will also match inputs like this:
+            // .a {
+            //   /* comm */
+            //   .b {}
+            // }
+            //
+            // but that is fine
+            //
+            // it would be the easiest to change the placement of the comment to be the first child of the rule:
+            // .a {
+            //   .b { /* comm */ }
+            // }
+            // with such inputs we wouldn't have to search for the comment at all
+            // TODO: consider changing this comment placement in the next major version
+
+
+            if (node.column < element.column) {
+              if (isIgnoringComment(node)) {
+                return;
+              }
+
+              break;
+            }
+          }
+
+          unsafePseudoClasses.forEach(function (unsafePseudoClass) {
+            console.error("The pseudo class \"" + unsafePseudoClass + "\" is potentially unsafe when doing server-side rendering. Try changing it to \"" + unsafePseudoClass.split('-child')[0] + "-of-type\".");
+          });
+        }
+      };
+    };
+
+    var isImportRule = function isImportRule(element) {
+      return element.type.charCodeAt(1) === 105 && element.type.charCodeAt(0) === 64;
+    };
+
+    var isPrependedWithRegularRules = function isPrependedWithRegularRules(index, children) {
+      for (var i = index - 1; i >= 0; i--) {
+        if (!isImportRule(children[i])) {
+          return true;
+        }
+      }
+
+      return false;
+    }; // use this to remove incorrect elements from further processing
+    // so they don't get handed to the `sheet` (or anything else)
+    // as that could potentially lead to additional logs which in turn could be overhelming to the user
+
+
+    var nullifyElement = function nullifyElement(element) {
+      element.type = '';
+      element.value = '';
+      element["return"] = '';
+      element.children = '';
+      element.props = '';
+    };
+
+    var incorrectImportAlarm = function incorrectImportAlarm(element, index, children) {
+      if (!isImportRule(element)) {
+        return;
+      }
+
+      if (element.parent) {
+        console.error("`@import` rules can't be nested inside other rules. Please move it to the top level and put it before regular rules. Keep in mind that they can only be used within global styles.");
+        nullifyElement(element);
+      } else if (isPrependedWithRegularRules(index, children)) {
+        console.error("`@import` rules can't be after other rules. Please put your `@import` rules before your other rules.");
+        nullifyElement(element);
+      }
+    };
+
+    /* eslint-disable no-fallthrough */
+
+    function prefix(value, length) {
+      switch (stylis.exports.hash(value, length)) {
+        // color-adjust
+        case 5103:
+          return stylis.exports.WEBKIT + 'print-' + value + value;
+        // animation, animation-(delay|direction|duration|fill-mode|iteration-count|name|play-state|timing-function)
+
+        case 5737:
+        case 4201:
+        case 3177:
+        case 3433:
+        case 1641:
+        case 4457:
+        case 2921: // text-decoration, filter, clip-path, backface-visibility, column, box-decoration-break
+
+        case 5572:
+        case 6356:
+        case 5844:
+        case 3191:
+        case 6645:
+        case 3005: // mask, mask-image, mask-(mode|clip|size), mask-(repeat|origin), mask-position, mask-composite,
+
+        case 6391:
+        case 5879:
+        case 5623:
+        case 6135:
+        case 4599:
+        case 4855: // background-clip, columns, column-(count|fill|gap|rule|rule-color|rule-style|rule-width|span|width)
+
+        case 4215:
+        case 6389:
+        case 5109:
+        case 5365:
+        case 5621:
+        case 3829:
+          return stylis.exports.WEBKIT + value + value;
+        // appearance, user-select, transform, hyphens, text-size-adjust
+
+        case 5349:
+        case 4246:
+        case 4810:
+        case 6968:
+        case 2756:
+          return stylis.exports.WEBKIT + value + stylis.exports.MOZ + value + stylis.exports.MS + value + value;
+        // flex, flex-direction
+
+        case 6828:
+        case 4268:
+          return stylis.exports.WEBKIT + value + stylis.exports.MS + value + value;
+        // order
+
+        case 6165:
+          return stylis.exports.WEBKIT + value + stylis.exports.MS + 'flex-' + value + value;
+        // align-items
+
+        case 5187:
+          return stylis.exports.WEBKIT + value + stylis.exports.replace(value, /(\w+).+(:[^]+)/, stylis.exports.WEBKIT + 'box-$1$2' + stylis.exports.MS + 'flex-$1$2') + value;
+        // align-self
+
+        case 5443:
+          return stylis.exports.WEBKIT + value + stylis.exports.MS + 'flex-item-' + stylis.exports.replace(value, /flex-|-self/, '') + value;
+        // align-content
+
+        case 4675:
+          return stylis.exports.WEBKIT + value + stylis.exports.MS + 'flex-line-pack' + stylis.exports.replace(value, /align-content|flex-|-self/, '') + value;
+        // flex-shrink
+
+        case 5548:
+          return stylis.exports.WEBKIT + value + stylis.exports.MS + stylis.exports.replace(value, 'shrink', 'negative') + value;
+        // flex-basis
+
+        case 5292:
+          return stylis.exports.WEBKIT + value + stylis.exports.MS + stylis.exports.replace(value, 'basis', 'preferred-size') + value;
+        // flex-grow
+
+        case 6060:
+          return stylis.exports.WEBKIT + 'box-' + stylis.exports.replace(value, '-grow', '') + stylis.exports.WEBKIT + value + stylis.exports.MS + stylis.exports.replace(value, 'grow', 'positive') + value;
+        // transition
+
+        case 4554:
+          return stylis.exports.WEBKIT + stylis.exports.replace(value, /([^-])(transform)/g, '$1' + stylis.exports.WEBKIT + '$2') + value;
+        // cursor
+
+        case 6187:
+          return stylis.exports.replace(stylis.exports.replace(stylis.exports.replace(value, /(zoom-|grab)/, stylis.exports.WEBKIT + '$1'), /(image-set)/, stylis.exports.WEBKIT + '$1'), value, '') + value;
+        // background, background-image
+
+        case 5495:
+        case 3959:
+          return stylis.exports.replace(value, /(image-set\([^]*)/, stylis.exports.WEBKIT + '$1' + '$`$1');
+        // justify-content
+
+        case 4968:
+          return stylis.exports.replace(stylis.exports.replace(value, /(.+:)(flex-)?(.*)/, stylis.exports.WEBKIT + 'box-pack:$3' + stylis.exports.MS + 'flex-pack:$3'), /s.+-b[^;]+/, 'justify') + stylis.exports.WEBKIT + value + value;
+        // (margin|padding)-inline-(start|end)
+
+        case 4095:
+        case 3583:
+        case 4068:
+        case 2532:
+          return stylis.exports.replace(value, /(.+)-inline(.+)/, stylis.exports.WEBKIT + '$1$2') + value;
+        // (min|max)?(width|height|inline-size|block-size)
+
+        case 8116:
+        case 7059:
+        case 5753:
+        case 5535:
+        case 5445:
+        case 5701:
+        case 4933:
+        case 4677:
+        case 5533:
+        case 5789:
+        case 5021:
+        case 4765:
+          // stretch, max-content, min-content, fill-available
+          if (stylis.exports.strlen(value) - 1 - length > 6) switch (stylis.exports.charat(value, length + 1)) {
+            // (m)ax-content, (m)in-content
+            case 109:
+              // -
+              if (stylis.exports.charat(value, length + 4) !== 45) break;
+            // (f)ill-available, (f)it-content
+
+            case 102:
+              return stylis.exports.replace(value, /(.+:)(.+)-([^]+)/, '$1' + stylis.exports.WEBKIT + '$2-$3' + '$1' + stylis.exports.MOZ + (stylis.exports.charat(value, length + 3) == 108 ? '$3' : '$2-$3')) + value;
+            // (s)tretch
+
+            case 115:
+              return ~stylis.exports.indexof(value, 'stretch') ? prefix(stylis.exports.replace(value, 'stretch', 'fill-available'), length) + value : value;
+          }
+          break;
+        // position: sticky
+
+        case 4949:
+          // (s)ticky?
+          if (stylis.exports.charat(value, length + 1) !== 115) break;
+        // display: (flex|inline-flex)
+
+        case 6444:
+          switch (stylis.exports.charat(value, stylis.exports.strlen(value) - 3 - (~stylis.exports.indexof(value, '!important') && 10))) {
+            // stic(k)y
+            case 107:
+              return stylis.exports.replace(value, ':', ':' + stylis.exports.WEBKIT) + value;
+            // (inline-)?fl(e)x
+
+            case 101:
+              return stylis.exports.replace(value, /(.+:)([^;!]+)(;|!.+)?/, '$1' + stylis.exports.WEBKIT + (stylis.exports.charat(value, 14) === 45 ? 'inline-' : '') + 'box$3' + '$1' + stylis.exports.WEBKIT + '$2$3' + '$1' + stylis.exports.MS + '$2box$3') + value;
+          }
+
+          break;
+        // writing-mode
+
+        case 5936:
+          switch (stylis.exports.charat(value, length + 11)) {
+            // vertical-l(r)
+            case 114:
+              return stylis.exports.WEBKIT + value + stylis.exports.MS + stylis.exports.replace(value, /[svh]\w+-[tblr]{2}/, 'tb') + value;
+            // vertical-r(l)
+
+            case 108:
+              return stylis.exports.WEBKIT + value + stylis.exports.MS + stylis.exports.replace(value, /[svh]\w+-[tblr]{2}/, 'tb-rl') + value;
+            // horizontal(-)tb
+
+            case 45:
+              return stylis.exports.WEBKIT + value + stylis.exports.MS + stylis.exports.replace(value, /[svh]\w+-[tblr]{2}/, 'lr') + value;
+          }
+
+          return stylis.exports.WEBKIT + value + stylis.exports.MS + value + value;
+      }
+
+      return value;
+    }
+
+    var prefixer = function prefixer(element, index, children, callback) {
+      if (element.length > -1) if (!element["return"]) switch (element.type) {
+        case stylis.exports.DECLARATION:
+          element["return"] = prefix(element.value, element.length);
+          break;
+
+        case stylis.exports.KEYFRAMES:
+          return stylis.exports.serialize([stylis.exports.copy(element, {
+            value: stylis.exports.replace(element.value, '@', '@' + stylis.exports.WEBKIT)
+          })], callback);
+
+        case stylis.exports.RULESET:
+          if (element.length) return stylis.exports.combine(element.props, function (value) {
+            switch (stylis.exports.match(value, /(::plac\w+|:read-\w+)/)) {
+              // :read-(only|write)
+              case ':read-only':
+              case ':read-write':
+                return stylis.exports.serialize([stylis.exports.copy(element, {
+                  props: [stylis.exports.replace(value, /:(read-\w+)/, ':' + stylis.exports.MOZ + '$1')]
+                })], callback);
+              // :placeholder
+
+              case '::placeholder':
+                return stylis.exports.serialize([stylis.exports.copy(element, {
+                  props: [stylis.exports.replace(value, /:(plac\w+)/, ':' + stylis.exports.WEBKIT + 'input-$1')]
+                }), stylis.exports.copy(element, {
+                  props: [stylis.exports.replace(value, /:(plac\w+)/, ':' + stylis.exports.MOZ + '$1')]
+                }), stylis.exports.copy(element, {
+                  props: [stylis.exports.replace(value, /:(plac\w+)/, stylis.exports.MS + 'input-$1')]
+                })], callback);
+            }
+
+            return '';
+          });
+      }
+    };
+
+    var isBrowser$1 = typeof document !== 'undefined';
+    var getServerStylisCache = isBrowser$1 ? undefined : weakMemoize(function () {
+      return memoize(function () {
+        var cache = {};
+        return function (name) {
+          return cache[name];
+        };
+      });
+    });
+    var defaultStylisPlugins = [prefixer];
+
+    var createCache = function createCache(options) {
+      var key = options.key;
+
+      if (browser$1.env.NODE_ENV !== 'production' && !key) {
+        throw new Error("You have to configure `key` for your cache. Please make sure it's unique (and not equal to 'css') as it's used for linking styles to your cache.\n" + "If multiple caches share the same key they might \"fight\" for each other's style elements.");
+      }
+
+      if (isBrowser$1 && key === 'css') {
+        var ssrStyles = document.querySelectorAll("style[data-emotion]:not([data-s])"); // get SSRed styles out of the way of React's hydration
+        // document.head is a safe place to move them to(though note document.head is not necessarily the last place they will be)
+        // note this very very intentionally targets all style elements regardless of the key to ensure
+        // that creating a cache works inside of render of a React component
+
+        Array.prototype.forEach.call(ssrStyles, function (node) {
+          // we want to only move elements which have a space in the data-emotion attribute value
+          // because that indicates that it is an Emotion 11 server-side rendered style elements
+          // while we will already ignore Emotion 11 client-side inserted styles because of the :not([data-s]) part in the selector
+          // Emotion 10 client-side inserted styles did not have data-s (but importantly did not have a space in their data-emotion attributes)
+          // so checking for the space ensures that loading Emotion 11 after Emotion 10 has inserted some styles
+          // will not result in the Emotion 10 styles being destroyed
+          var dataEmotionAttribute = node.getAttribute('data-emotion');
+
+          if (dataEmotionAttribute.indexOf(' ') === -1) {
+            return;
+          }
+          document.head.appendChild(node);
+          node.setAttribute('data-s', '');
+        });
+      }
+
+      var stylisPlugins = options.stylisPlugins || defaultStylisPlugins;
+
+      if (browser$1.env.NODE_ENV !== 'production') {
+        // $FlowFixMe
+        if (/[^a-z-]/.test(key)) {
+          throw new Error("Emotion key must only contain lower case alphabetical characters and - but \"" + key + "\" was passed");
+        }
+      }
+
+      var inserted = {};
+      var container;
+      var nodesToHydrate = [];
+
+      if (isBrowser$1) {
+        container = options.container || document.head;
+        Array.prototype.forEach.call( // this means we will ignore elements which don't have a space in them which
+        // means that the style elements we're looking at are only Emotion 11 server-rendered style elements
+        document.querySelectorAll("style[data-emotion^=\"" + key + " \"]"), function (node) {
+          var attrib = node.getAttribute("data-emotion").split(' '); // $FlowFixMe
+
+          for (var i = 1; i < attrib.length; i++) {
+            inserted[attrib[i]] = true;
+          }
+
+          nodesToHydrate.push(node);
+        });
+      }
+
+      var _insert;
+
+      var omnipresentPlugins = [compat, removeLabel];
+
+      if (browser$1.env.NODE_ENV !== 'production') {
+        omnipresentPlugins.push(createUnsafeSelectorsAlarm({
+          get compat() {
+            return cache.compat;
+          }
+
+        }), incorrectImportAlarm);
+      }
+
+      if (isBrowser$1) {
+        var currentSheet;
+        var finalizingPlugins = [stylis.exports.stringify, browser$1.env.NODE_ENV !== 'production' ? function (element) {
+          if (!element.root) {
+            if (element["return"]) {
+              currentSheet.insert(element["return"]);
+            } else if (element.value && element.type !== stylis.exports.COMMENT) {
+              // insert empty rule in non-production environments
+              // so @emotion/jest can grab `key` from the (JS)DOM for caches without any rules inserted yet
+              currentSheet.insert(element.value + "{}");
+            }
+          }
+        } : stylis.exports.rulesheet(function (rule) {
+          currentSheet.insert(rule);
+        })];
+        var serializer = stylis.exports.middleware(omnipresentPlugins.concat(stylisPlugins, finalizingPlugins));
+
+        var stylis$1 = function stylis$1(styles) {
+          return stylis.exports.serialize(stylis.exports.compile(styles), serializer);
+        };
+
+        _insert = function insert(selector, serialized, sheet, shouldCache) {
+          currentSheet = sheet;
+
+          if (browser$1.env.NODE_ENV !== 'production' && serialized.map !== undefined) {
+            currentSheet = {
+              insert: function insert(rule) {
+                sheet.insert(rule + serialized.map);
+              }
+            };
+          }
+
+          stylis$1(selector ? selector + "{" + serialized.styles + "}" : serialized.styles);
+
+          if (shouldCache) {
+            cache.inserted[serialized.name] = true;
+          }
+        };
+      } else {
+        var _finalizingPlugins = [stylis.exports.stringify];
+
+        var _serializer = stylis.exports.middleware(omnipresentPlugins.concat(stylisPlugins, _finalizingPlugins));
+
+        var _stylis = function _stylis(styles) {
+          return stylis.exports.serialize(stylis.exports.compile(styles), _serializer);
+        }; // $FlowFixMe
+
+
+        var serverStylisCache = getServerStylisCache(stylisPlugins)(key);
+
+        var getRules = function getRules(selector, serialized) {
+          var name = serialized.name;
+
+          if (serverStylisCache[name] === undefined) {
+            serverStylisCache[name] = _stylis(selector ? selector + "{" + serialized.styles + "}" : serialized.styles);
+          }
+
+          return serverStylisCache[name];
+        };
+
+        _insert = function _insert(selector, serialized, sheet, shouldCache) {
+          var name = serialized.name;
+          var rules = getRules(selector, serialized);
+
+          if (cache.compat === undefined) {
+            // in regular mode, we don't set the styles on the inserted cache
+            // since we don't need to and that would be wasting memory
+            // we return them so that they are rendered in a style tag
+            if (shouldCache) {
+              cache.inserted[name] = true;
+            }
+
+            if ( // using === development instead of !== production
+            // because if people do ssr in tests, the source maps showing up would be annoying
+            browser$1.env.NODE_ENV === 'development' && serialized.map !== undefined) {
+              return rules + serialized.map;
+            }
+
+            return rules;
+          } else {
+            // in compat mode, we put the styles on the inserted cache so
+            // that emotion-server can pull out the styles
+            // except when we don't want to cache it which was in Global but now
+            // is nowhere but we don't want to do a major right now
+            // and just in case we're going to leave the case here
+            // it's also not affecting client side bundle size
+            // so it's really not a big deal
+            if (shouldCache) {
+              cache.inserted[name] = rules;
+            } else {
+              return rules;
+            }
+          }
+        };
+      }
+
+      var cache = {
+        key: key,
+        sheet: new StyleSheet({
+          key: key,
+          container: container,
+          nonce: options.nonce,
+          speedy: options.speedy,
+          prepend: options.prepend,
+          insertionPoint: options.insertionPoint
+        }),
+        nonce: options.nonce,
+        inserted: inserted,
+        registered: {},
+        insert: _insert
+      };
+      cache.sheet.hydrate(nodesToHydrate);
+      return cache;
+    };
+
+    /* eslint-disable */
+    // Inspired by https://github.com/garycourt/murmurhash-js
+    // Ported from https://github.com/aappleby/smhasher/blob/61a0530f28277f2e850bfc39600ce61d02b518de/src/MurmurHash2.cpp#L37-L86
+    function murmur2(str) {
+      // 'm' and 'r' are mixing constants generated offline.
+      // They're not really 'magic', they just happen to work well.
+      // const m = 0x5bd1e995;
+      // const r = 24;
+      // Initialize the hash
+      var h = 0; // Mix 4 bytes at a time into the hash
+
+      var k,
+          i = 0,
+          len = str.length;
+
+      for (; len >= 4; ++i, len -= 4) {
+        k = str.charCodeAt(i) & 0xff | (str.charCodeAt(++i) & 0xff) << 8 | (str.charCodeAt(++i) & 0xff) << 16 | (str.charCodeAt(++i) & 0xff) << 24;
+        k =
+        /* Math.imul(k, m): */
+        (k & 0xffff) * 0x5bd1e995 + ((k >>> 16) * 0xe995 << 16);
+        k ^=
+        /* k >>> r: */
+        k >>> 24;
+        h =
+        /* Math.imul(k, m): */
+        (k & 0xffff) * 0x5bd1e995 + ((k >>> 16) * 0xe995 << 16) ^
+        /* Math.imul(h, m): */
+        (h & 0xffff) * 0x5bd1e995 + ((h >>> 16) * 0xe995 << 16);
+      } // Handle the last few bytes of the input array
+
+
+      switch (len) {
+        case 3:
+          h ^= (str.charCodeAt(i + 2) & 0xff) << 16;
+
+        case 2:
+          h ^= (str.charCodeAt(i + 1) & 0xff) << 8;
+
+        case 1:
+          h ^= str.charCodeAt(i) & 0xff;
+          h =
+          /* Math.imul(h, m): */
+          (h & 0xffff) * 0x5bd1e995 + ((h >>> 16) * 0xe995 << 16);
+      } // Do a few final mixes of the hash to ensure the last few
+      // bytes are well-incorporated.
+
+
+      h ^= h >>> 13;
+      h =
+      /* Math.imul(h, m): */
+      (h & 0xffff) * 0x5bd1e995 + ((h >>> 16) * 0xe995 << 16);
+      return ((h ^ h >>> 15) >>> 0).toString(36);
+    }
+
+    var unitlessKeys = {
+      animationIterationCount: 1,
+      borderImageOutset: 1,
+      borderImageSlice: 1,
+      borderImageWidth: 1,
+      boxFlex: 1,
+      boxFlexGroup: 1,
+      boxOrdinalGroup: 1,
+      columnCount: 1,
+      columns: 1,
+      flex: 1,
+      flexGrow: 1,
+      flexPositive: 1,
+      flexShrink: 1,
+      flexNegative: 1,
+      flexOrder: 1,
+      gridRow: 1,
+      gridRowEnd: 1,
+      gridRowSpan: 1,
+      gridRowStart: 1,
+      gridColumn: 1,
+      gridColumnEnd: 1,
+      gridColumnSpan: 1,
+      gridColumnStart: 1,
+      msGridRow: 1,
+      msGridRowSpan: 1,
+      msGridColumn: 1,
+      msGridColumnSpan: 1,
+      fontWeight: 1,
+      lineHeight: 1,
+      opacity: 1,
+      order: 1,
+      orphans: 1,
+      tabSize: 1,
+      widows: 1,
+      zIndex: 1,
+      zoom: 1,
+      WebkitLineClamp: 1,
+      // SVG-related properties
+      fillOpacity: 1,
+      floodOpacity: 1,
+      stopOpacity: 1,
+      strokeDasharray: 1,
+      strokeDashoffset: 1,
+      strokeMiterlimit: 1,
+      strokeOpacity: 1,
+      strokeWidth: 1
+    };
+
+    var ILLEGAL_ESCAPE_SEQUENCE_ERROR = "You have illegal escape sequence in your template literal, most likely inside content's property value.\nBecause you write your CSS inside a JavaScript string you actually have to do double escaping, so for example \"content: '\\00d7';\" should become \"content: '\\\\00d7';\".\nYou can read more about this here:\nhttps://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#ES2018_revision_of_illegal_escape_sequences";
+    var UNDEFINED_AS_OBJECT_KEY_ERROR = "You have passed in falsy value as style object's key (can happen when in example you pass unexported component as computed key).";
+    var hyphenateRegex = /[A-Z]|^ms/g;
+    var animationRegex = /_EMO_([^_]+?)_([^]*?)_EMO_/g;
+
+    var isCustomProperty = function isCustomProperty(property) {
+      return property.charCodeAt(1) === 45;
+    };
+
+    var isProcessableValue = function isProcessableValue(value) {
+      return value != null && typeof value !== 'boolean';
+    };
+
+    var processStyleName = /* #__PURE__ */memoize(function (styleName) {
+      return isCustomProperty(styleName) ? styleName : styleName.replace(hyphenateRegex, '-$&').toLowerCase();
+    });
+
+    var processStyleValue = function processStyleValue(key, value) {
+      switch (key) {
+        case 'animation':
+        case 'animationName':
+          {
+            if (typeof value === 'string') {
+              return value.replace(animationRegex, function (match, p1, p2) {
+                cursor = {
+                  name: p1,
+                  styles: p2,
+                  next: cursor
+                };
+                return p1;
+              });
+            }
+          }
+      }
+
+      if (unitlessKeys[key] !== 1 && !isCustomProperty(key) && typeof value === 'number' && value !== 0) {
+        return value + 'px';
+      }
+
+      return value;
+    };
+
+    if (browser$1.env.NODE_ENV !== 'production') {
+      var contentValuePattern = /(var|attr|counters?|url|element|(((repeating-)?(linear|radial))|conic)-gradient)\(|(no-)?(open|close)-quote/;
+      var contentValues = ['normal', 'none', 'initial', 'inherit', 'unset'];
+      var oldProcessStyleValue = processStyleValue;
+      var msPattern = /^-ms-/;
+      var hyphenPattern = /-(.)/g;
+      var hyphenatedCache = {};
+
+      processStyleValue = function processStyleValue(key, value) {
+        if (key === 'content') {
+          if (typeof value !== 'string' || contentValues.indexOf(value) === -1 && !contentValuePattern.test(value) && (value.charAt(0) !== value.charAt(value.length - 1) || value.charAt(0) !== '"' && value.charAt(0) !== "'")) {
+            throw new Error("You seem to be using a value for 'content' without quotes, try replacing it with `content: '\"" + value + "\"'`");
+          }
+        }
+
+        var processed = oldProcessStyleValue(key, value);
+
+        if (processed !== '' && !isCustomProperty(key) && key.indexOf('-') !== -1 && hyphenatedCache[key] === undefined) {
+          hyphenatedCache[key] = true;
+          console.error("Using kebab-case for css properties in objects is not supported. Did you mean " + key.replace(msPattern, 'ms-').replace(hyphenPattern, function (str, _char) {
+            return _char.toUpperCase();
+          }) + "?");
+        }
+
+        return processed;
+      };
+    }
+
+    var noComponentSelectorMessage = 'Component selectors can only be used in conjunction with ' + '@emotion/babel-plugin, the swc Emotion plugin, or another Emotion-aware ' + 'compiler transform.';
+
+    function handleInterpolation(mergedProps, registered, interpolation) {
+      if (interpolation == null) {
+        return '';
+      }
+
+      if (interpolation.__emotion_styles !== undefined) {
+        if (browser$1.env.NODE_ENV !== 'production' && interpolation.toString() === 'NO_COMPONENT_SELECTOR') {
+          throw new Error(noComponentSelectorMessage);
+        }
+
+        return interpolation;
+      }
+
+      switch (typeof interpolation) {
+        case 'boolean':
+          {
+            return '';
+          }
+
+        case 'object':
+          {
+            if (interpolation.anim === 1) {
+              cursor = {
+                name: interpolation.name,
+                styles: interpolation.styles,
+                next: cursor
+              };
+              return interpolation.name;
+            }
+
+            if (interpolation.styles !== undefined) {
+              var next = interpolation.next;
+
+              if (next !== undefined) {
+                // not the most efficient thing ever but this is a pretty rare case
+                // and there will be very few iterations of this generally
+                while (next !== undefined) {
+                  cursor = {
+                    name: next.name,
+                    styles: next.styles,
+                    next: cursor
+                  };
+                  next = next.next;
                 }
-                else if (keymap.scenario.includes(key)) {
-                    setScenario(parseInt(key));
+              }
+
+              var styles = interpolation.styles + ";";
+
+              if (browser$1.env.NODE_ENV !== 'production' && interpolation.map !== undefined) {
+                styles += interpolation.map;
+              }
+
+              return styles;
+            }
+
+            return createStringFromObject(mergedProps, registered, interpolation);
+          }
+
+        case 'function':
+          {
+            if (mergedProps !== undefined) {
+              var previousCursor = cursor;
+              var result = interpolation(mergedProps);
+              cursor = previousCursor;
+              return handleInterpolation(mergedProps, registered, result);
+            } else if (browser$1.env.NODE_ENV !== 'production') {
+              console.error('Functions that are interpolated in css calls will be stringified.\n' + 'If you want to have a css call based on props, create a function that returns a css call like this\n' + 'let dynamicStyle = (props) => css`color: ${props.color}`\n' + 'It can be called directly with props or interpolated in a styled call like this\n' + "let SomeComponent = styled('div')`${dynamicStyle}`");
+            }
+
+            break;
+          }
+
+        case 'string':
+          if (browser$1.env.NODE_ENV !== 'production') {
+            var matched = [];
+            var replaced = interpolation.replace(animationRegex, function (match, p1, p2) {
+              var fakeVarName = "animation" + matched.length;
+              matched.push("const " + fakeVarName + " = keyframes`" + p2.replace(/^@keyframes animation-\w+/, '') + "`");
+              return "${" + fakeVarName + "}";
+            });
+
+            if (matched.length) {
+              console.error('`keyframes` output got interpolated into plain string, please wrap it with `css`.\n\n' + 'Instead of doing this:\n\n' + [].concat(matched, ["`" + replaced + "`"]).join('\n') + '\n\nYou should wrap it with `css` like this:\n\n' + ("css`" + replaced + "`"));
+            }
+          }
+
+          break;
+      } // finalize string values (regular strings and functions interpolated into css calls)
+
+
+      if (registered == null) {
+        return interpolation;
+      }
+
+      var cached = registered[interpolation];
+      return cached !== undefined ? cached : interpolation;
+    }
+
+    function createStringFromObject(mergedProps, registered, obj) {
+      var string = '';
+
+      if (Array.isArray(obj)) {
+        for (var i = 0; i < obj.length; i++) {
+          string += handleInterpolation(mergedProps, registered, obj[i]) + ";";
+        }
+      } else {
+        for (var _key in obj) {
+          var value = obj[_key];
+
+          if (typeof value !== 'object') {
+            if (registered != null && registered[value] !== undefined) {
+              string += _key + "{" + registered[value] + "}";
+            } else if (isProcessableValue(value)) {
+              string += processStyleName(_key) + ":" + processStyleValue(_key, value) + ";";
+            }
+          } else {
+            if (_key === 'NO_COMPONENT_SELECTOR' && browser$1.env.NODE_ENV !== 'production') {
+              throw new Error(noComponentSelectorMessage);
+            }
+
+            if (Array.isArray(value) && typeof value[0] === 'string' && (registered == null || registered[value[0]] === undefined)) {
+              for (var _i = 0; _i < value.length; _i++) {
+                if (isProcessableValue(value[_i])) {
+                  string += processStyleName(_key) + ":" + processStyleValue(_key, value[_i]) + ";";
                 }
-                else if (key == 'Enter') {
-                    setMode(1 /* UIModeKey.orders */);
-                }
-                else {
-                    return false;
-                }
-                return true;
-            },
+              }
+            } else {
+              var interpolated = handleInterpolation(mergedProps, registered, value);
+
+              switch (_key) {
+                case 'animation':
+                case 'animationName':
+                  {
+                    string += processStyleName(_key) + ":" + interpolated + ";";
+                    break;
+                  }
+
+                default:
+                  {
+                    if (browser$1.env.NODE_ENV !== 'production' && _key === 'undefined') {
+                      console.error(UNDEFINED_AS_OBJECT_KEY_ERROR);
+                    }
+
+                    string += _key + "{" + interpolated + "}";
+                  }
+              }
+            }
+          }
+        }
+      }
+
+      return string;
+    }
+
+    var labelPattern = /label:\s*([^\s;\n{]+)\s*(;|$)/g;
+    var sourceMapPattern;
+
+    if (browser$1.env.NODE_ENV !== 'production') {
+      sourceMapPattern = /\/\*#\ssourceMappingURL=data:application\/json;\S+\s+\*\//g;
+    } // this is the cursor for keyframes
+    // keyframes are stored on the SerializedStyles object as a linked list
+
+
+    var cursor;
+    var serializeStyles = function serializeStyles(args, registered, mergedProps) {
+      if (args.length === 1 && typeof args[0] === 'object' && args[0] !== null && args[0].styles !== undefined) {
+        return args[0];
+      }
+
+      var stringMode = true;
+      var styles = '';
+      cursor = undefined;
+      var strings = args[0];
+
+      if (strings == null || strings.raw === undefined) {
+        stringMode = false;
+        styles += handleInterpolation(mergedProps, registered, strings);
+      } else {
+        if (browser$1.env.NODE_ENV !== 'production' && strings[0] === undefined) {
+          console.error(ILLEGAL_ESCAPE_SEQUENCE_ERROR);
+        }
+
+        styles += strings[0];
+      } // we start at 1 since we've already handled the first arg
+
+
+      for (var i = 1; i < args.length; i++) {
+        styles += handleInterpolation(mergedProps, registered, args[i]);
+
+        if (stringMode) {
+          if (browser$1.env.NODE_ENV !== 'production' && strings[i] === undefined) {
+            console.error(ILLEGAL_ESCAPE_SEQUENCE_ERROR);
+          }
+
+          styles += strings[i];
+        }
+      }
+
+      var sourceMap;
+
+      if (browser$1.env.NODE_ENV !== 'production') {
+        styles = styles.replace(sourceMapPattern, function (match) {
+          sourceMap = match;
+          return '';
+        });
+      } // using a global regex with .exec is stateful so lastIndex has to be reset each time
+
+
+      labelPattern.lastIndex = 0;
+      var identifierName = '';
+      var match; // https://esbench.com/bench/5b809c2cf2949800a0f61fb5
+
+      while ((match = labelPattern.exec(styles)) !== null) {
+        identifierName += '-' + // $FlowFixMe we know it's not null
+        match[1];
+      }
+
+      var name = murmur2(styles) + identifierName;
+
+      if (browser$1.env.NODE_ENV !== 'production') {
+        // $FlowFixMe SerializedStyles type doesn't have toString property (and we don't want to add it)
+        return {
+          name: name,
+          styles: styles,
+          map: sourceMap,
+          next: cursor,
+          toString: function toString() {
+            return "You have tried to stringify object returned from `css` function. It isn't supposed to be used directly (e.g. as value of the `className` prop), but rather handed to emotion so it can handle it (e.g. as value of `css` prop).";
+          }
+        };
+      }
+
+      return {
+        name: name,
+        styles: styles,
+        next: cursor
+      };
+    };
+
+    var isBrowser = typeof document !== 'undefined';
+    function getRegisteredStyles(registered, registeredStyles, classNames) {
+      var rawClassName = '';
+      classNames.split(' ').forEach(function (className) {
+        if (registered[className] !== undefined) {
+          registeredStyles.push(registered[className] + ";");
+        } else {
+          rawClassName += className + " ";
+        }
+      });
+      return rawClassName;
+    }
+    var registerStyles = function registerStyles(cache, serialized, isStringTag) {
+      var className = cache.key + "-" + serialized.name;
+
+      if ( // we only need to add the styles to the registered cache if the
+      // class name could be used further down
+      // the tree but if it's a string tag, we know it won't
+      // so we don't have to add it to registered cache.
+      // this improves memory usage since we can avoid storing the whole style string
+      (isStringTag === false || // we need to always store it if we're in compat mode and
+      // in node since emotion-server relies on whether a style is in
+      // the registered cache to know whether a style is global or not
+      // also, note that this check will be dead code eliminated in the browser
+      isBrowser === false && cache.compat !== undefined) && cache.registered[className] === undefined) {
+        cache.registered[className] = serialized.styles;
+      }
+    };
+    var insertStyles = function insertStyles(cache, serialized, isStringTag) {
+      registerStyles(cache, serialized, isStringTag);
+      var className = cache.key + "-" + serialized.name;
+
+      if (cache.inserted[serialized.name] === undefined) {
+        var stylesForSSR = '';
+        var current = serialized;
+
+        do {
+          var maybeStyles = cache.insert(serialized === current ? "." + className : '', current, cache.sheet, true);
+
+          if (!isBrowser && maybeStyles !== undefined) {
+            stylesForSSR += maybeStyles;
+          }
+
+          current = current.next;
+        } while (current !== undefined);
+
+        if (!isBrowser && stylesForSSR.length !== 0) {
+          return stylesForSSR;
+        }
+      }
+    };
+
+    function insertWithoutScoping(cache, serialized) {
+      if (cache.inserted[serialized.name] === undefined) {
+        return cache.insert('', serialized, cache.sheet, true);
+      }
+    }
+
+    function merge(registered, css, className) {
+      var registeredStyles = [];
+      var rawClassName = getRegisteredStyles(registered, registeredStyles, className);
+
+      if (registeredStyles.length < 2) {
+        return className;
+      }
+
+      return rawClassName + css(registeredStyles);
+    }
+
+    var createEmotion = function createEmotion(options) {
+      var cache = createCache(options); // $FlowFixMe
+
+      cache.sheet.speedy = function (value) {
+        if (browser$1.env.NODE_ENV !== 'production' && this.ctr !== 0) {
+          throw new Error('speedy must be changed before any rules are inserted');
+        }
+
+        this.isSpeedy = value;
+      };
+
+      cache.compat = true;
+
+      var css = function css() {
+        for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+          args[_key] = arguments[_key];
+        }
+
+        var serialized = serializeStyles(args, cache.registered, undefined);
+        insertStyles(cache, serialized, false);
+        return cache.key + "-" + serialized.name;
+      };
+
+      var keyframes = function keyframes() {
+        for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+          args[_key2] = arguments[_key2];
+        }
+
+        var serialized = serializeStyles(args, cache.registered);
+        var animation = "animation-" + serialized.name;
+        insertWithoutScoping(cache, {
+          name: serialized.name,
+          styles: "@keyframes " + animation + "{" + serialized.styles + "}"
+        });
+        return animation;
+      };
+
+      var injectGlobal = function injectGlobal() {
+        for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+          args[_key3] = arguments[_key3];
+        }
+
+        var serialized = serializeStyles(args, cache.registered);
+        insertWithoutScoping(cache, serialized);
+      };
+
+      var cx = function cx() {
+        for (var _len4 = arguments.length, args = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+          args[_key4] = arguments[_key4];
+        }
+
+        return merge(cache.registered, css, classnames(args));
+      };
+
+      return {
+        css: css,
+        cx: cx,
+        injectGlobal: injectGlobal,
+        keyframes: keyframes,
+        hydrate: function hydrate(ids) {
+          ids.forEach(function (key) {
+            cache.inserted[key] = true;
+          });
         },
-        [1 /* UIModeKey.orders */]: {
-            enter: () => {
-                window.location.hash = game.token;
-                // start thinking...
-                ai.forEach(t => t.thinkRecurring(250));
-            },
-            keyHandler: (key) => {
-                if (keymap.prev.includes(key)) {
-                    focusUnitRelative(-1);
+        flush: function flush() {
+          cache.registered = {};
+          cache.inserted = {};
+          cache.sheet.flush();
+        },
+        // $FlowFixMe
+        sheet: cache.sheet,
+        cache: cache,
+        getRegisteredStyles: getRegisteredStyles.bind(null, cache.registered),
+        merge: merge.bind(null, cache.registered, css)
+      };
+    };
+
+    var classnames = function classnames(args) {
+      var cls = '';
+
+      for (var i = 0; i < args.length; i++) {
+        var arg = args[i];
+        if (arg == null) continue;
+        var toAdd = void 0;
+
+        switch (typeof arg) {
+          case 'boolean':
+            break;
+
+          case 'object':
+            {
+              if (Array.isArray(arg)) {
+                toAdd = classnames(arg);
+              } else {
+                toAdd = '';
+
+                for (var k in arg) {
+                  if (arg[k] && k) {
+                    toAdd && (toAdd += ' ');
+                    toAdd += k;
+                  }
                 }
-                else if (keymap.next.includes(key) || key == 'Enter') {
-                    focusUnitRelative(+1);
+              }
+
+              break;
+            }
+
+          default:
+            {
+              toAdd = arg;
+            }
+        }
+
+        if (toAdd) {
+          cls && (cls += ' ');
+          cls += toAdd;
+        }
+      }
+
+      return cls;
+    };
+
+    var _createEmotion = createEmotion({
+      key: 'css'
+    }),
+        injectGlobal = _createEmotion.injectGlobal,
+        css = _createEmotion.css;
+
+    injectGlobal(`
+body {
+    background-color: ${antic2rgb(0xD4)};
+}
+`);
+    function cssobj(ds, ...rest) {
+        return { class: css(ds, ...rest) };
+    }
+    function renderScreen(model, helpMode = false) {
+        mithril.render(document.body, mithril(Layout, helpMode
+            ? mithril(HelpComponent, { key: 'help', model })
+            : mithril(GameComponent, { key: 'game', model })));
+    }
+    const Layout = {
+        view: ({ children }) => {
+            return mithril('', cssobj `
+                width: 320px;        /* 40x24 8px characters */
+                height: 192px;
+                transform: scale(4);
+                transform-origin: top center;
+                margin: 0 auto;
+                position: relative;
+            `, children);
+        }
+    };
+    const HelpComponent = {
+        view: ({ attrs: { model: { helpWindow, clickHandler } } }) => mithril('', { onclick: clickHandler }, mithril(DisplayComponent, { display: helpWindow }))
+    };
+    const GameComponent = {
+        view: ({ attrs: { model: { dateWindow, infoWindow, errorWindow, mapLayer, labelLayer, unitLayer } } }) => {
+            return [
+                mithril('', // double-width date-window
+                cssobj `
+                    transform-origin: top left;
+                    transform: scale(2, 1);
+                `, mithril(DisplayComponent, { display: dateWindow })),
+                mithril(DividerComponent, { color: 0x1A }),
+                mithril('', // map container
+                cssobj `
+                    height: 144px;
+                    overflow: scroll;
+                `, mithril('', // map panel
+                cssobj `
+                        /* 48 x 41  8px sq cells */
+                        width: 384px;
+                        height: 328px;
+                        overflow: hidden;
+                        position: relative;
+
+                        /* stack the layers */
+                        .display-layer {
+                            position: absolute;
+                            top: 0;
+                        }
+                    `, [
+                    mithril('.terrain', cssobj `
+                                .display-layer, .glyph-foreground {
+                                    transition: background-color 1s linear;
+                                }
+                            `, mithril(DisplayComponent, { display: mapLayer })),
+                    mithril('.labels', mithril(DisplayComponent, {
+                        display: labelLayer,
+                        glyphComponent: LabelComponent,
+                    })),
+                    mithril('.units', cssobj `
+                                .glyph {
+                                    transition: transform 250ms linear;
+                                }
+                                .glyph-background {
+                                    transition: background-color 1s linear;
+                                }
+                            `, mithril(DisplayComponent, {
+                        display: unitLayer,
+                        glyphComponent: HealthBarGlyphComponent,
+                    })),
+                    mithril('.orders', mithril(SVGDisplayComponent, {
+                        display: unitLayer
+                    }))
+                ])),
+                mithril(DividerComponent, { color: 0x02 }),
+                mithril(DisplayComponent, { display: infoWindow }),
+                mithril(DividerComponent, { color: 0x8A }),
+                mithril(DisplayComponent, { display: errorWindow }),
+                mithril(DividerComponent, { color: 0x8A }),
+            ];
+        }
+    };
+    const DividerComponent = {
+        view: ({ attrs: { color } }) => {
+            return mithril('', cssobj `
+            height: 2px;
+            background-color: ${antic2rgb(color)};
+        `);
+        }
+    };
+    const DisplayComponent = {
+        onbeforeupdate({ attrs: { display } }) {
+            // false prevents diff for current element
+            console.log('display.onbeforeupdate', display.dirty);
+            //TODO        return display.dirty;
+        },
+        view: ({ attrs: { display, glyphComponent } }) => {
+            console.log('display.view', display.dirty);
+            //TODO        display.dirty = false;
+            const f = display.fontmap, sz = f.glyphSize, mx = f.glyphsPerRow * sz, my = Math.ceil(f.numGlyphs / f.glyphsPerRow) * sz;
+            return mithril('.display-layer', cssobj `
+                position: relative;
+                width: ${sz * display.width}px;
+                height: ${sz * display.height}px;
+                background-color: ${antic2rgb(display.layerColor)};
+
+                .glyph {
+                    position: absolute;
+                    width: ${sz}px;
+                    height: ${sz}px;
                 }
-                else if (key in arrowmap) {
-                    showNewOrder(arrowmap[key]);
+                .glyph-foreground, .glyph-background {
+                    width: 100%;
+                    height: 100%;
+                    position: absolute;
                 }
-                else if (keymap.cancel.includes(key)) {
-                    showNewOrder(null);
+                .glyph-background {
+                    background-color: ${antic2rgb(display.backgroundColor)};
                 }
-                else if (key == 'Backspace') {
-                    showNewOrder(-1);
+                .glyph-foreground {
+                    image-rendering: pixelated;
+                    -webkit-mask-image: url(${f.maskImage});
+                    -webkit-mask-size: ${mx}px ${my}px;
+                    background-color: ${antic2rgb(display.foregroundColor)};
                 }
-                else if (key == 'End') {
-                    setMode(2 /* UIModeKey.resolve */);
+            `, display.spritelist().map(g => mithril(SpriteComponent, { g, f, defaults: display }, mithril(glyphComponent !== null && glyphComponent !== void 0 ? glyphComponent : GlyphComponent, { g, f, defaults: display }))));
+        }
+    };
+    const SpriteComponent = {
+        view: ({ attrs: { g, f }, children }) => {
+            const sz = f.glyphSize;
+            return mithril('.glyph', {
+                key: g.key,
+                style: {
+                    transform: `translate(${g.x * sz}px, ${g.y * sz}px)`
+                }
+            }, children);
+        }
+    };
+    const GlyphComponent = {
+        view: ({ attrs: { g, f } }) => {
+            const k = g.c + f.startOffset, sz = f.glyphSize;
+            return [
+                mithril('.glyph-background', {
+                    style: {
+                        'background-color': antic2rgb(g.backgroundColor),
+                    }
+                }),
+                mithril('.glyph-foreground', {
+                    style: {
+                        'background-color': antic2rgb(g.foregroundColor),
+                        '-webkit-mask-position': `${-(k % f.glyphsPerRow) * sz}px ${-Math.floor(k / f.glyphsPerRow) * sz}px`
+                    }
+                }),
+            ];
+        }
+    };
+    const LabelComponent = {
+        view: ({ attrs: { g: { props }, defaults: { foregroundColor } } }) => {
+            let label = props === null || props === void 0 ? void 0 : props.label;
+            return mithril('', cssobj `
+                transform: translate(4px, -4px);
+                font-family: verdana;
+                font-size: 2pt;
+                white-space: nowrap;
+                display: flex;
+                justify-content: center;
+                width: 0;
+                color: ${antic2rgb(foregroundColor)}}};
+            `, label);
+        }
+    };
+    const HealthBarGlyphComponent = {
+        view: ({ attrs: { g, f, defaults } }) => {
+            var _a;
+            // add an optional health bar
+            let { cstrng, mstrng } = ((_a = g.props) !== null && _a !== void 0 ? _a : {});
+            if (cstrng == null || mstrng == null)
+                return;
+            return [
+                mithril(GlyphComponent, { g, f, defaults }),
+                mithril('', cssobj `
+                    position:  absolute;
+                    bottom: 0;
+                    right: 0;
+                    width: 6px;
+                    height: 6px;
+                    padding: 0.5px;
+                `, mithril('', {
+                    class: css `
+                            position: absolute;
+                            bottom: 0;
+                            left: 0;
+                            margin: 5%;
+                            width: 90%;
+                            height: 1px;
+                            background-color: rgb(50,205,50, 0.4);
+                            border-radius: 1px;
+                            overflow: hidden;
+                        `,
+                    style: { width: `${90 * mstrng / 255}%` },
+                }, mithril('', {
+                    class: css `
+                                background-color: rgb(50,205,50, 0.8);
+                                height: 100%;
+                            `,
+                    style: { width: `${100 * cstrng / mstrng}%` },
+                })))
+            ];
+        }
+    };
+    const SVGDisplayComponent = {
+        onbeforeupdate({ attrs: { display } }) {
+            // false prevents diff for current element
+            console.log('display.onbeforeupdate', display.dirty);
+            //TODO won't work if we render twice        return display.dirty;
+        },
+        view: ({ attrs: { display } }) => {
+            console.log('display.view', display.dirty);
+            //TODO        display.dirty = false;
+            const f = display.fontmap, sz = f.glyphSize;
+            return mithril('svg[version="1.1"][xmlns="http://www.w3.org/2000/svg"].display-layer', {
+                width: sz * display.width,
+                height: sz * display.height,
+                class: css `
+                    position: relative;
+                    background-color: ${antic2rgb(display.layerColor)};
+                    opacity: 0.5;
+                `
+            }, mithril('g', {
+                transform: "scale(8)"
+            }, display.spritelist().map(g => {
+                var _a, _b;
+                const orders = (_b = ((_a = g.props) !== null && _a !== void 0 ? _a : {}).orders) !== null && _b !== void 0 ? _b : [];
+                return mithril('g', {
+                    key: g.key,
+                    transform: `translate(${g.x + 0.5},${g.y + 0.5}) scale(-1)`,
+                    class: css `
+                                fill: ${antic2rgb(g.foregroundColor)};
+                                stroke: ${antic2rgb(g.foregroundColor)};
+                            `
+                }, mithril(UnitPathComponent, { orders }));
+            })));
+        }
+    };
+    const UnitPathComponent = {
+        view: ({ attrs: { orders } }) => {
+            // form the path element from the list of orders
+            const r = 0.25;
+            let x = 0, y = 0, lastd = null, s = "M0,0";
+            orders.forEach(d => {
+                let dir = directions[d], dx = dir.dlon, dy = dir.dlat;
+                // add prev corner
+                if (lastd == null) {
+                    s = `M${dx * r},${dy * r}`;
                 }
                 else {
-                    return false;
-                }
-                return true;
-            },
-            mapClickHandler: (ev, loc) => {
-                let u = getFocusedUnit();
-                display.errmsg(); // clear errror window
-                if (loc.unitid == null || (u && u.id == loc.unitid)) {
-                    // clicking an empty square or already-focused unit unfocuses
-                    blurUnit();
-                    if (loc.cityid) {
-                        const label = game.mapboard.cities[loc.cityid].label.toUpperCase();
-                        display.infomsg(display.centered(label));
+                    const turn = (lastd - d + 4) % 4;
+                    if (turn == 0) {
+                        s += ` l${dx * 2 * r},${dy * 2 * r}`;
+                    }
+                    else if (turn % 2) {
+                        let cx = (dx + directions[lastd].dlon) * r, cy = (dy + directions[lastd].dlat) * r;
+                        s += ` a${r},${r} 0 0 ${turn == 1 ? 0 : 1} ${cx},${cy}`;
                     }
                 }
-                else {
-                    focusUnit(game.oob.at(loc.unitid));
-                }
-            },
-        },
-        [2 /* UIModeKey.resolve */]: {
-            enter: () => {
-                // finalize AI orders
+                lastd = d;
+                s += ` l${dx * (1 - 2 * r)},${dy * (1 - 2 * r)}`;
+                x += dx;
+                y += dy;
+            });
+            if (orders.length)
+                s += ` L${x},${y}`;
+            return [
+                mithril('path', { d: s, class: css `
+                fill: none;
+                stroke-linecap: round;
+                stroke-width: 1px;
+                vector-effect: non-scaling-stroke;
+            ` }),
+                orders.length
+                    ? mithril('circle', { r, cx: x, cy: y, class: css `
+                    stroke: none;
+                ` })
+                    : undefined
+            ];
+        }
+    };
+
+    /*
+    TODO
+     - kill all logging inside game, just events
+     - kill complex event properties/callbacks
+     - map event on city ownership change
+    */
+    const helpText = `
+\x11${'\x12'.repeat(38)}\x05
+|                                      |
+|                                      |
+|                                      |
+|                                      |
+|     Welcome to Chris Crawford's      |
+|         Eastern Front  1941          |
+|                                      |
+|      Ported by Patrick Surry }       |
+|                                      |
+| Select: Click, [n]ext, [p]rev        |
+| Orders: \x1f, \x1c, \x1d, \x1e, [Bksp]           |
+| Cancel: [Space], [Esc]               |
+| Submit: [End], [Fn \x1f]                |
+| Toggle: [z]oom, e[x]tras, debu[g]    |
+|                                      |
+|         [?] shows this help          |
+|                                      |
+|        Press any key to play!        |
+|                                      |
+|                                      |
+|                                      |
+|                                      |
+\x1a${'\x12'.repeat(38)}\x03
+`.trim().split('\n');
+    //TODO via scenario
+    const apxmap = fontMap('static/fontmap-apx.png', 260);
+    var game = new Game();
+    function start() {
+        const { width, height } = game.mapboard.size, topleft = game.mapboard.locations[0][0].point;
+        var helpWindow = new MappedDisplayLayer(40, 24, apxmap, { foregroundColor: 0x04, layerColor: 0x0E }), dateWindow = new MappedDisplayLayer(20, 2, apxmap, { foregroundColor: 0x6A, layerColor: 0xB0 }), infoWindow = new MappedDisplayLayer(40, 2, apxmap, { foregroundColor: 0x28, layerColor: 0x22 }), errorWindow = new MappedDisplayLayer(40, 1, apxmap, { foregroundColor: 0x22, layerColor: 0x3A }), mapLayer = new MappedDisplayLayer(width, height, apxmap), labelLayer = new SpriteDisplayLayer(width, height, apxmap, { foregroundColor: undefined }), unitLayer = new SpriteDisplayLayer(width, height, apxmap);
+        const model = {
+            helpWindow,
+            dateWindow,
+            infoWindow,
+            errorWindow,
+            mapLayer,
+            labelLayer,
+            unitLayer,
+            clickHandler: play
+        };
+        helpWindow.putlines(helpText);
+        helpText.forEach((s, y) => s.split('').forEach((c, x) => {
+            if (c == '}')
+                helpWindow.puts(c, { x, y, foregroundColor: 0x94 });
+            // TODO via decorator or glyphopts?  .on('click', () => window.open(helpUrl))
+        }));
+        game.mapboard.cities.forEach((c, i) => {
+            labelLayer.put(i.toString(), 32, topleft.lon - c.lon, topleft.lat - c.lat, { props: { label: c.label } });
+        });
+        dateWindow.puts(' EASTERN FRONT 1941 ', { y: 1 });
+        infoWindow.puts('PLEASE ENTER YOUR ORDERS NOW', { x: 6 });
+        let ai = Object.keys(players)
+            .filter(player => +player != game.human)
+            .map(player => new Thinker(game, +player));
+        console.log(`set up ${ai.length} AIs`);
+        function repaint() {
+            const { earth, contrast } = weatherdata[game.weather];
+            labelLayer.setcolors({ foregroundColor: contrast });
+            mapLayer.setcolors({ layerColor: earth });
+            game.mapboard.locations.forEach(row => row.forEach(loc => {
+                const t = terraintypes[loc.terrain], city = loc.cityid != null ? game.mapboard.cities[loc.cityid] : null, color = city ? players[city === null || city === void 0 ? void 0 : city.owner].color : (loc.alt ? t.altcolor : t.color);
+                mapLayer.putc(loc.icon, { foregroundColor: color });
+            }));
+            game.oob.activeUnits().forEach(u => {
+                let p = u.point, opts = {
+                    backgroundColor: earth,
+                    foregroundColor: players[u.player].color,
+                    props: { cstrng: u.cstrng, mstrng: u.mstrng, orders: u.orders },
+                };
+                unitLayer.put(u.id.toString(), unitkinds[u.kind].icon, topleft.lon - p.lon, topleft.lat - p.lat, opts);
+            });
+            renderScreen(model);
+        }
+        function play() {
+            console.log('repaint & start thinking...');
+            repaint();
+            ai.forEach(t => t.thinkRecurring(250));
+            setTimeout(() => {
+                console.log('stop thinking and nextTurn ticktock');
                 ai.forEach(t => t.finalize());
-                blurUnit();
-                display.errmsg('EXECUTING MOVE');
-                game.nextTurn(250);
-            },
-            keyHandler: (key) => {
-                if (keymap.prev.includes(key)) {
-                    focusUnitRelative(-1);
-                }
-                else if (keymap.next.includes(key) || key == 'Enter') {
-                    focusUnitRelative(+1);
-                }
-                else {
-                    return false;
-                }
-                return true;
-            }
+                game.nextTurn(100);
+            }, 32 * 100 + 500);
         }
-    };
-    function setMode(m) {
-        if (uimode && modes[uimode].exit != null)
-            modes[uimode].exit();
-        uimode = m;
-        if (modes[m].enter != null)
-            modes[m].enter();
-    }
-    const keymap = {
-        help: '?/',
-        prev: '<,p',
-        next: '>.n',
-        cancel: ['Escape', ' '],
-        scenario: '0123456789'.slice(0, Object.keys(scenarios).length),
-        extras: 'xX',
-        zoom: 'zZ',
-        debug: 'gG',
-    }, arrowmap = {
-        ArrowUp: 0 /* DirectionKey.north */,
-        ArrowDown: 2 /* DirectionKey.south */,
-        ArrowRight: 1 /* DirectionKey.east */,
-        ArrowLeft: 3 /* DirectionKey.west */,
-    };
-    function keyHandler(e) {
-        let handled = true;
-        display.errmsg(); // clear error
-        if (help || keymap.help.includes(e.key)) {
-            toggleHelp();
-        }
-        else if (keymap.zoom.includes(e.key)) {
-            toggleZoom();
-        }
-        else if (keymap.extras.includes(e.key)) {
-            toggleExtras();
-        }
-        else if (keymap.debug.includes(e.key)) {
-            toggleDebug();
-        }
-        else if (uimode && modes[uimode].keyHandler != null) {
-            handled = modes[uimode].keyHandler(e.key);
-        }
-        if (handled)
-            e.preventDefault(); // eat event if handled
-    }
-    function mapClickHandler(ev, loc) {
-        if (uimode && modes[uimode].mapClickHandler != null)
-            modes[uimode].mapClickHandler(ev, loc);
-    }
-    function mapHoverHandler(ev, loc) {
-        let s = loc.describe();
-        if (loc.unitid != null)
-            s += '\n' + game.oob.at(loc.unitid).describe(!!game.debug);
-        select(this).attr('title', s);
-    }
-    function toggleHelp() {
-        help = help ? 0 : 1;
-        display.setVisibility('#help-window', !!help);
-        display.setVisibility('#map-scroller', !help); //TODO needs to be display not visibility
-    }
-    function toggleZoom() {
-        zoom = zoom ? 0 : 1;
-        display.setZoom(!!zoom, getFocusedUnit());
-    }
-    function toggleExtras() {
-        game.extras = game.extras ? 0 : 1;
-        display.setVisibility('.extra', !!game.extras);
-    }
-    function toggleDebug() {
-        game.debug = game.debug ? 0 : 1;
-        display.setVisibility('.debug', !!game.debug);
-    }
-    function setScenario(scenario, inc) {
-        /*
-            orginal game shows errmsg "[SELECT]: LEARNER  [START] TO BEGIN" with copyright in txt window,
-            where [] is reverse video.  could switch to "[< >]: LEARNER  [ENTER] TO BEGIN(RESUME)"
-            so < > increments scenario, # picks directly
-        */
-        inc !== null && inc !== void 0 ? inc : (inc = 0);
-        let n = Object.keys(scenarios).length;
-        if (scenario == null) {
-            scenario = (game.scenario + inc + n) % n;
-        }
-        // TODO setter
-        game.scenario = scenario;
-        let label = scenarios[scenario].label.padEnd(8, ' ');
-        display.errmsg(display.centered(`[<] ${label} [>]  [ENTER] TO START`));
-    }
-    function focusUnit(u) {
-        blurUnit();
-        if (!u)
-            return;
-        focusid = u.id;
-        lastid = focusid;
-        display.infomsg(`     ${u.label}`, `     MUSTER: ${u.mstrng}  COMBAT: ${u.cstrng}`);
-        if (game.extras) {
-            let locs = u.reach();
-            selectAll('.chr-dim').filter((d) => !(d.id in locs)).style('opacity', 0.5);
-        }
-        game.emit('unit', 'focus', u);
-    }
-    function focusUnitRelative(offset) {
-        // sort active germans descending by location id (right => left reading order)
-        let humanUnits = game.oob.activeUnits(game.human)
-            .sort((a, b) => game.mapboard.locationOf(b).id - game.mapboard.locationOf(a).id), n = humanUnits.length;
-        var i;
-        if (lastid) {
-            i = humanUnits.findIndex(u => u.id == lastid);
-            if (i < 0) {
-                // if last unit no longer active, find the nearest active unit
-                let locid = game.mapboard.locationOf(game.oob.at(lastid)).id;
-                while (++i < humanUnits.length && game.mapboard.locationOf(humanUnits[i]).id > locid) { /**/ }
-            }
-        }
-        else {
-            i = offset > 0 ? -1 : 0;
-        }
-        i = (i + n + offset) % n;
-        focusUnit(humanUnits[i]);
-    }
-    function getFocusedUnit() {
-        return focusid === null ? null : game.oob.at(focusid);
-    }
-    function blurUnit() {
-        const u = getFocusedUnit();
-        if (u)
-            game.emit('unit', 'blur', u);
-        display.infomsg();
-        focusid = null;
-        selectAll('.chr-dim').style('opacity', 0);
-        window.location.hash = game.token;
-    }
-    function showNewOrder(dir) {
-        let u = getFocusedUnit();
-        if (!u)
-            return;
-        if (!u.human) {
-            display.errmsg(`THAT IS A ${players[u.player].label.toUpperCase()} UNIT!`);
-            return;
-        }
-        if (dir == null) {
-            if (u.orders.length == 0) {
-                blurUnit();
-                return;
-            }
-            u.resetOrders();
-        }
-        else if (dir == -1) {
-            u.delOrder();
-        }
-        else {
-            u.addOrder(dir);
-        }
-        focusUnit(u);
+        game.on('game', (action) => {
+            //        console.log('game event', action);
+            if (action == 'turn')
+                play();
+            else
+                repaint();
+        });
+        game.start(); // TODO
+        renderScreen(model);
     }
 
     exports.start = start;
-
-    Object.defineProperty(exports, '__esModule', { value: true });
 
     return exports;
 

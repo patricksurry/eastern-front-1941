@@ -60,7 +60,7 @@ class Thinker {
         if (firstpass) {
             ofr = calcForceRatios(this.#game.oob, this.#player).ofr;
             console.log('Overall force ratio (OFR) is', ofr);
-            friends.forEach(u => {u.objective = u.location});
+            friends.forEach(u => {u.objective = u.point});
         }
 
         friends.filter(u => u.canMove).forEach(u => {
@@ -69,10 +69,11 @@ class Thinker {
                 // head to reinforce if no local threat since (Local + OFR) / 2 = OFR / 2
                 //TODO this tends to send most units to same beleagured square
                 let v = this.#findBeleaguered(u, friends);
-                if (v) u.objective = v.location;
+                if (v) u.objective = v.point;
             } else if (firstpass && (u.cstrng <= (u.mstrng >> 1) || u.ifrdir[pinfo.homedir] >= 16)) {
                 // run home if hurting or outnumbered in the rear
                 //TODO could look for farthest legal square (valid & not impassable) 5, 4, ...
+                //!this fails if the target point is impassable, better to aim for nearest valid point on home border
                 let d = directions[pinfo.homedir];
                 u.objective = {lon: u.lon + 5 * d.dlon, lat: u.lat + 5 * d.dlat};
             } else {
@@ -85,7 +86,7 @@ class Thinker {
                     let sqval = this.#evalLocation(u, loc, friends, foes);
                     if (sqval > bestval) {
                         bestval = sqval;
-                        loc.put(u.objective!);
+                        u.objective = loc.point;
                     }
                 });
             }
@@ -155,12 +156,12 @@ function calcForceRatios(oob: Oob, player: PlayerKey) {
     active.forEach(u => {
         let nearby = active.filter(v => GridPoint.manhattanDistance(u, v) <= 8),
             friend = 0,
-            loc = u.location;
+            p = u.point;
         u.ifrdir = [0, 0, 0, 0];
         nearby.forEach(v => {
             let inc = v.cstrng >> 4;
             if (v.player == u.player) friend += inc;
-            else u.ifrdir[GridPoint.directionFrom(loc, v.location)!] += inc;
+            else u.ifrdir[GridPoint.directionFrom(p, v.point)!] += inc;
         })
         // individual and overall ifr max 255
         let ifr = Math.floor((sum(u.ifrdir) << 4) / friend);
