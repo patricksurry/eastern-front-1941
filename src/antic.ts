@@ -91,7 +91,7 @@ abstract class DisplayLayer implements LayerOpts {
     dirty = true;
 
     constructor(width: number, height: number, fontmap: FontMap, opts: LayerOpts = {}) {
-        // explicitly set foregroundColor: undefined for transparent grl can be explicitly undefined
+        // explicitly set foregroundColor: undefined for transparent glyphs
         if (!('foregroundColor' in opts)) opts.foregroundColor = 0x0f;
         this.width = width;
         this.height = height;
@@ -106,31 +106,36 @@ abstract class DisplayLayer implements LayerOpts {
         this.layerColor = opts.layerColor;
     }
 
+    abstract cls(): void
+
     abstract spritelist(): Sprite[]
 }
 
 class MappedDisplayLayer extends DisplayLayer {
     x: number = 0;
     y: number = 0;
-    glyphs: Glyph[][];
+    glyphs: (Glyph|undefined)[][];
 
     constructor(width: number, height: number, fontmap: FontMap, opts: LayerOpts = {}) {
         super(width, height, fontmap, opts);
         this.glyphs = new Array(height).fill(undefined).map(() => new Array(width).fill(undefined));
     }
+    cls(c?: number) {
+        this.glyphs = this.glyphs.map(row => row.map(() => c ? {c}: undefined));
+    }
     spritelist() {
         return this.glyphs.flatMap(
             (row, y) => row.map((g, x) => g && {key: `${x},${y}`, x, y, ...g}).filter(d => d)
-        );
+        ) as Sprite[];
     }
     setpos(x: number, y: number): void {
         this.x = x % this.width;
         this.y = y % this.height;
     }
-    putc(c: number, opts: GlyphOpts = {}) {
+    putc(c?: number, opts: GlyphOpts = {}) {
         this.dirty = true;
         this.setpos(opts.x ?? this.x, opts.y ?? this.y);
-        this.glyphs[this.y][this.x] = Object.assign({c}, opts);
+        this.glyphs[this.y][this.x] = c ? Object.assign({c}, opts) : undefined;
         this.x = (this.x + 1) % this.width;
         if (this.x == 0) this.y = (this.y + 1) % this.height;
     }
@@ -148,6 +153,10 @@ class MappedDisplayLayer extends DisplayLayer {
 
 class SpriteDisplayLayer extends DisplayLayer {
     sprites: Record<string, Sprite> = {};
+
+    cls() {
+        this.sprites = {};
+    }
     put(key: string, c: number, x: number, y: number, opts: SpriteOpts = {}) {
         this.dirty = true;
         this.sprites[key] = Object.assign({key, c, x, y}, opts);

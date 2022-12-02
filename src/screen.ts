@@ -15,14 +15,16 @@ function cssobj(ds: TemplateStringsArray, ...rest: any[]) {
 }
 
 interface ScreenModel {
+    helpWindow: DisplayLayer,
+
     dateWindow: DisplayLayer,
+    infoWindow: DisplayLayer,
+    errorWindow: DisplayLayer,
+
     mapLayer: DisplayLayer,
     labelLayer: DisplayLayer,
     unitLayer: DisplayLayer,
-    infoWindow: DisplayLayer,
-    errorWindow: DisplayLayer,
-    helpWindow: DisplayLayer,
-    clickHandler: () => void,
+    maskLayer: DisplayLayer,
 }
 
 function renderScreen(model: ScreenModel, helpMode: boolean = false) {
@@ -52,8 +54,7 @@ const Layout: m.Component = {
 }
 
 const HelpComponent: m.Component<{model: ScreenModel}> = {
-    view: ({attrs: {model: {helpWindow, clickHandler}}}) => m('',
-        {onclick: clickHandler},
+    view: ({attrs: {model: {helpWindow}}}) => m('',
         m(DisplayComponent, {display: helpWindow}),
     )
 }
@@ -61,7 +62,7 @@ const HelpComponent: m.Component<{model: ScreenModel}> = {
 const GameComponent: m.Component<{model: ScreenModel}> = {
     view: ({attrs: {model: {
             dateWindow, infoWindow, errorWindow,
-            mapLayer, labelLayer, unitLayer}}}) => {
+            mapLayer, labelLayer, unitLayer, maskLayer}}}) => {
         return [
             m('',       // double-width date-window
                 cssobj`
@@ -120,8 +121,21 @@ const GameComponent: m.Component<{model: ScreenModel}> = {
                             }),
                         ),
                         m('.orders',
+                            cssobj`
+                                opacity: 0.5;
+                                pointer-events: none;
+                            `,
                             m(SVGDisplayComponent, {
                                 display: unitLayer
+                            })
+                        ),
+                        m('.mask',
+                            cssobj`
+                                opacity: 0.5;
+                                pointer-events: none;
+                            `,
+                            m(DisplayComponent, {
+                                display: maskLayer,
                             })
                         )
                     ]
@@ -183,11 +197,13 @@ const DisplayComponent: m.Component<DisplayAttr> = {
                     position: absolute;
                     width: ${sz}px;
                     height: ${sz}px;
+                    pointer-events: auto;
                 }
                 .glyph-foreground, .glyph-background {
                     width: 100%;
                     height: 100%;
                     position: absolute;
+                    pointer-events: none;  /* reduce hit-testing by just looking at parent */
                 }
                 .glyph-background {
                     background-color: ${antic2rgb(display.backgroundColor)};
@@ -201,7 +217,7 @@ const DisplayComponent: m.Component<DisplayAttr> = {
             `,
             display.spritelist().map(g =>
                 m(SpriteComponent,
-                    {g, f, defaults: display},
+                    {key: g.key, g, f, defaults: display},
                     m(glyphComponent ?? GlyphComponent,
                         {g, f, defaults: display}
                     )
@@ -211,15 +227,23 @@ const DisplayComponent: m.Component<DisplayAttr> = {
     }
 }
 
+function maybeHandler(props: {[k: string]: unknown}|undefined, name: string) {
+    const f = (props && (name in props))
+        ? props[name] as (e: Event) => void
+        : undefined;
+    return f;
+}
+
 const SpriteComponent: m.Component<SpriteAttr> = {
     view: ({attrs: {g, f}, children}) => {
         const sz = f.glyphSize;
         return m('.glyph',
             {
-                key: g.key,
-                style: {
-                    transform: `translate(${g.x * sz}px, ${g.y * sz}px)`
-                }
+                onclick: maybeHandler(g.props, 'onclick'),
+                onmouseover: maybeHandler(g.props, 'onmouseover'),
+                class: css`
+                    transform: translate(${g.x * sz}px, ${g.y * sz}px)
+                `,
             },
             children
         );
@@ -334,7 +358,6 @@ const SVGDisplayComponent: m.Component<DisplayAttr> = {
                 class: css`
                     position: relative;
                     background-color: ${antic2rgb(display.layerColor)};
-                    opacity: 0.5;
                 `
             },
             m('g',

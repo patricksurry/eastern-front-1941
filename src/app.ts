@@ -3,6 +3,7 @@ import {Game} from './game';
 import {Thinker} from './think';
 import {MappedDisplayLayer, SpriteDisplayLayer, fontMap} from './antic';
 import {renderScreen, type ScreenModel} from './screen';
+import { GridPoint } from './map';
 
 /*
 TODO
@@ -52,7 +53,8 @@ function start() {
         errorWindow = new MappedDisplayLayer(40, 1, apxmap, {foregroundColor: 0x22, layerColor: 0x3A}),
         mapLayer = new MappedDisplayLayer(width, height, apxmap),
         labelLayer = new SpriteDisplayLayer(width, height, apxmap, {foregroundColor: undefined}),
-        unitLayer = new SpriteDisplayLayer(width, height, apxmap);
+        unitLayer = new SpriteDisplayLayer(width, height, apxmap),
+        maskLayer = new MappedDisplayLayer(width, height, apxmap, {foregroundColor: 0x00});
 
     const model: ScreenModel = {
         helpWindow,
@@ -62,10 +64,10 @@ function start() {
         mapLayer,
         labelLayer,
         unitLayer,
-        clickHandler: play
+        maskLayer,
     }
 
-    helpWindow.putlines(helpText);
+    helpWindow.putlines(helpText, {props: {onclick: play}});
     helpText.forEach((s, y) => s.split('').forEach((c, x) => {
         if (c == '}') helpWindow.puts(c, {x, y, foregroundColor: 0x94})
         // TODO via decorator or glyphopts?  .on('click', () => window.open(helpUrl))
@@ -104,7 +106,12 @@ function start() {
                 opts = {
                     backgroundColor: earth,
                     foregroundColor: players[u.player].color,
-                    props: {cstrng: u.cstrng, mstrng: u.mstrng, orders: u.orders},
+                    props: {
+                        cstrng: u.cstrng,
+                        mstrng: u.mstrng,
+                        orders: u.orders,
+                        onclick: () => alert(`Clicked ${u.label}`)
+                    },
                 };
 
             unitLayer.put(
@@ -114,6 +121,13 @@ function start() {
                 opts,
             )
         });
+
+        maskLayer.cls(255);
+        let reachmap = game.oob.activeUnits()[10].reach();
+        Object.keys(reachmap).forEach(v => {
+            const {lon, lat} = GridPoint.fromid(+v);
+            maskLayer.putc(undefined, {x: topleft.lon - lon, y: topleft.lat - lat});
+        })
 
         renderScreen(model);
     }
