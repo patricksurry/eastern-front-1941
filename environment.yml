@@ -1,0 +1,14 @@
+name: ef1941
+dependencies:
+- python=3.9
+- pip
+- pytest
+- pillow
+- pip:
+  - numpy
+  - pydantic
+  - typing_extensions
+  # Code static analysis
+  - flake8
+  - flake8-black
+  - mypy

@@ -1,7 +1,7 @@
 
 from base64 import b64encode
 import numpy as np
-from PIL import Image
+from PIL import Image       # type: ignore
 
 
 def writefontpng(fonts, outfile, nc=16):

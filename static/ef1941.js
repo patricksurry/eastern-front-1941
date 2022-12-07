@@ -101,9 +101,9 @@ var ef1941 = (function (exports, node_crypto) {
         [11 /* MonthKey.Dec */]: { label: "December", trees: 0x12, weather: 2 /* WeatherKey.snow */ },
     };
     const unitkinds = {
-        [0 /* UnitKindKey.infantry */]: { key: 'infantry', icon: 0xfd },
-        [1 /* UnitKindKey.armor */]: { key: 'armor', icon: 0xfe },
-        [2 /* UnitKindKey.air */]: { key: 'air', icon: 0xfc },
+        [0 /* UnitKindKey.infantry */]: { key: 'infantry', icon: 0x7d },
+        [1 /* UnitKindKey.armor */]: { key: 'armor', icon: 0x7e },
+        [2 /* UnitKindKey.air */]: { key: 'air', icon: 0x7c },
     };
     function moveCost(terrain, kind, weather) {
         return kind == 2 /* UnitKindKey.air */ ? 4 : (terraintypes[terrain].movecost[kind][weather] || 255);
@@ -112,6 +112,31 @@ var ef1941 = (function (exports, node_crypto) {
         // return a table of movement costs based on armor/inf and weather
         return Object.keys(terraintypes).map(t => moveCost(+t, kind, weather));
     }
+
+    const scenarios = {
+        [0 /* ScenarioKey.apx */]: {
+            label: 'APX MODE', map: 0 /* MapVariantKey.apx */, oob: 0 /* OobVariantKey.apx */, level: 3 /* LevelKey.advanced */, start: '1941/6/22'
+        },
+        [1 /* ScenarioKey.learner */]: {
+            label: 'LEARNER', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 0 /* LevelKey.learner */, start: '1941/6/22'
+        },
+        [2 /* ScenarioKey.beginner */]: {
+            label: 'BEGINNER', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 1 /* LevelKey.beginner */, start: '1941/6/22'
+        },
+        [3 /* ScenarioKey.intermediate */]: {
+            label: 'INTERMED', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 2 /* LevelKey.intermediate */, start: '1941/6/22'
+        },
+        [4 /* ScenarioKey.advanced */]: {
+            label: 'ADVANCED', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 3 /* LevelKey.advanced */, start: '1941/6/22'
+        },
+        [5 /* ScenarioKey.expert41 */]: {
+            label: 'EXPERT41', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 4 /* LevelKey.expert */, start: '1941/6/22'
+        },
+        [6 /* ScenarioKey.expert42 */]: {
+            //TODO arrival turns for '42 scenario seem to be calculated in cartridge.asm:3709
+            label: 'EXPERT42', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 4 /* LevelKey.expert */, start: '1942/5/24'
+        },
+    };
 
     /******************************************************************************
     Copyright (c) Microsoft Corporation.
@@ -450,31 +475,6 @@ var ef1941 = (function (exports, node_crypto) {
         return vs;
     }
 
-    const scenarios = {
-        [0 /* ScenarioKey.apx */]: {
-            label: 'APX MODE', map: 0 /* MapVariantKey.apx */, oob: 0 /* OobVariantKey.apx */, level: 3 /* LevelKey.advanced */, start: '1941/6/22'
-        },
-        [1 /* ScenarioKey.learner */]: {
-            label: 'LEARNER', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 0 /* LevelKey.learner */, start: '1941/6/22'
-        },
-        [2 /* ScenarioKey.beginner */]: {
-            label: 'BEGINNER', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 1 /* LevelKey.beginner */, start: '1941/6/22'
-        },
-        [3 /* ScenarioKey.intermediate */]: {
-            label: 'INTERMED', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 2 /* LevelKey.intermediate */, start: '1941/6/22'
-        },
-        [4 /* ScenarioKey.advanced */]: {
-            label: 'ADVANCED', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 3 /* LevelKey.advanced */, start: '1941/6/22'
-        },
-        [5 /* ScenarioKey.expert41 */]: {
-            label: 'EXPERT41', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 4 /* LevelKey.expert */, start: '1941/6/22'
-        },
-        [6 /* ScenarioKey.expert42 */]: {
-            //TODO arrival turns for '42 scenario seem to be calculated in cartridge.asm:3709
-            label: 'EXPERT42', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, level: 4 /* LevelKey.expert */, start: '1942/5/24'
-        },
-    };
-
     const mapVariants = {
         [0 /* MapVariantKey.apx */]: {
             font: 'apx',
@@ -745,7 +745,7 @@ var ef1941 = (function (exports, node_crypto) {
                     if (ch == 0x40)
                         ch--;
                     lookup[c] = {
-                        icon: 0x80 + i * 0x40 + ch++,
+                        icon: i * 0x40 + ch++,
                         terrain: t,
                         alt: alt
                     };
@@ -754,6 +754,7 @@ var ef1941 = (function (exports, node_crypto) {
             }), 
             // decode the map into a 2-d array of rows x cols of  {lon: , lat:, icon:, terrain:, alt:}
             mapdata = variant.ascii.split(/\n/).slice(1, -1).map((row, i) => row.split('').map(c => Object.assign({}, mapencoding[i <= 25 ? 0 : 1][c])));
+            this.font = variant.font;
             // excluding the impassable border valid is 0..maxlon-1, 0..maxlat-1
             __classPrivateFieldSet(this, _Mapboard_maxlon, mapdata[0].length - 2, "f");
             __classPrivateFieldSet(this, _Mapboard_maxlat, mapdata.length - 2, "f");
@@ -793,7 +794,7 @@ var ef1941 = (function (exports, node_crypto) {
                 labelcolor: mdata.weather == 2 /* WeatherKey.snow */ ? '04' : '08'
             });
         }
-        get size() {
+        get extent() {
             return { width: this.locations[0].length, height: this.locations.length };
         }
         get memento() {
@@ -2507,8 +2508,6 @@ var ef1941 = (function (exports, node_crypto) {
             this.weather = 0 /* WeatherKey.dry */;
             // flags
             this.handicap = 0; // whether the game is handicapped
-            this.extras = 1; // display extras like labels, health, zoc
-            this.debug = 0; // whether to display debug info for Russian units
             this.on('message', (typ, obj) => {
                 if (this.listenerCount('message') == 1) {
                     let s = typeof obj === 'string' ? obj : obj.join('\n'), logger = (typ == 'error' ? console.warn : console.info);
@@ -2529,8 +2528,6 @@ var ef1941 = (function (exports, node_crypto) {
                 this.human = memento.shift();
                 this.turn = memento.shift();
                 this.handicap = memento.shift();
-                this.extras = memento.shift();
-                this.debug = memento.shift();
             }
             this.mapboard = new Mapboard(this, memento);
             this.oob = new Oob(this, memento);
@@ -2546,8 +2543,6 @@ var ef1941 = (function (exports, node_crypto) {
                 this.human,
                 this.turn,
                 +this.handicap,
-                +this.extras,
-                +this.debug,
             ].concat(this.mapboard.memento, this.oob.memento);
         }
         get token() {
@@ -2788,38 +2783,9 @@ var ef1941 = (function (exports, node_crypto) {
         return score;
     }
 
-    const 
-    // Antic NTSC palette via https://en.wikipedia.org/wiki/List_of_video_game_console_palettes#NTSC
-    // 128 colors indexed via high 7 bits, e.g. 0x00 and 0x01 refer to the first entry
-    anticPaletteRGB = [
-        "#000000", "#404040", "#6c6c6c", "#909090", "#b0b0b0", "#c8c8c8", "#dcdcdc", "#ececec",
-        "#444400", "#646410", "#848424", "#a0a034", "#b8b840", "#d0d050", "#e8e85c", "#fcfc68",
-        "#702800", "#844414", "#985c28", "#ac783c", "#bc8c4c", "#cca05c", "#dcb468", "#ecc878",
-        "#841800", "#983418", "#ac5030", "#c06848", "#d0805c", "#e09470", "#eca880", "#fcbc94",
-        "#880000", "#9c2020", "#b03c3c", "#c05858", "#d07070", "#e08888", "#eca0a0", "#fcb4b4",
-        "#78005c", "#8c2074", "#a03c88", "#b0589c", "#c070b0", "#d084c0", "#dc9cd0", "#ecb0e0",
-        "#480078", "#602090", "#783ca4", "#8c58b8", "#a070cc", "#b484dc", "#c49cec", "#d4b0fc",
-        "#140084", "#302098", "#4c3cac", "#6858c0", "#7c70d0", "#9488e0", "#a8a0ec", "#bcb4fc",
-        "#000088", "#1c209c", "#3840b0", "#505cc0", "#6874d0", "#7c8ce0", "#90a4ec", "#a4b8fc",
-        "#00187c", "#1c3890", "#3854a8", "#5070bc", "#6888cc", "#7c9cdc", "#90b4ec", "#a4c8fc",
-        "#002c5c", "#1c4c78", "#386890", "#5084ac", "#689cc0", "#7cb4d4", "#90cce8", "#a4e0fc",
-        "#003c2c", "#1c5c48", "#387c64", "#509c80", "#68b494", "#7cd0ac", "#90e4c0", "#a4fcd4",
-        "#003c00", "#205c20", "#407c40", "#5c9c5c", "#74b474", "#8cd08c", "#a4e4a4", "#b8fcb8",
-        "#143800", "#345c1c", "#507c38", "#6c9850", "#84b468", "#9ccc7c", "#b4e490", "#c8fca4",
-        "#2c3000", "#4c501c", "#687034", "#848c4c", "#9ca864", "#b4c078", "#ccd488", "#e0ec9c",
-        "#442800", "#644818", "#846830", "#a08444", "#b89c58", "#d0b46c", "#e8cc7c", "#fce08c",
-    ];
-    function antic2rgb(color) {
-        if (color == null)
-            return undefined;
-        if (!Number.isInteger(color) || color < 0 || color > 255) {
-            throw new Error(`DisplayLayer: Invalid antic color ${color}`);
-        }
-        return anticPaletteRGB[color >> 1];
-    }
     const atascii = (c) => c.charCodeAt(0) & 0x7f;
-    function fontMap(maskImage, numGlyphs, glyphSize = 8, glyphsPerRow = 16, startOffset = 0) {
-        return { maskImage, numGlyphs, glyphSize, glyphsPerRow, startOffset };
+    function fontMap(maskImage, numGlyphs, glyphSize = 8, glyphsPerRow = 16) {
+        return { maskImage, numGlyphs, glyphSize, glyphsPerRow };
     }
     class DisplayLayer {
         constructor(width, height, fontmap, opts = {}) {
@@ -2832,11 +2798,23 @@ var ef1941 = (function (exports, node_crypto) {
             this.fontmap = fontmap;
             this.setcolors(opts);
         }
+        get opts() {
+            return {
+                foregroundColor: this.foregroundColor,
+                backgroundColor: this.backgroundColor,
+                layerColor: this.layerColor,
+                opacity: this.opacity,
+            };
+        }
         setcolors(opts) {
             this.dirty = true;
             this.foregroundColor = opts.foregroundColor;
             this.backgroundColor = opts.backgroundColor;
             this.layerColor = opts.layerColor;
+            this.opacity = opts.opacity;
+        }
+        cls() {
+            this.dirty = true;
         }
     }
     class MappedDisplayLayer extends DisplayLayer {
@@ -2847,7 +2825,12 @@ var ef1941 = (function (exports, node_crypto) {
             this.glyphs = new Array(height).fill(undefined).map(() => new Array(width).fill(undefined));
         }
         cls(c) {
-            this.glyphs = this.glyphs.map(row => row.map(() => c ? { c } : undefined));
+            super.cls();
+            // with no argument, clear all glyphs (so we see the container layer)
+            // otherwise set all glyphs to a specific
+            this.x = 0;
+            this.y = 0;
+            this.glyphs = this.glyphs.map(row => row.map(() => c != null ? { c } : undefined));
         }
         spritelist() {
             return this.glyphs.flatMap((row, y) => row.map((g, x) => g && Object.assign({ key: `${x},${y}`, x, y }, g)).filter(d => d));
@@ -2858,22 +2841,36 @@ var ef1941 = (function (exports, node_crypto) {
         }
         putc(c, opts = {}) {
             var _a, _b;
+            // put a character at current position, with options.  put undefined to clear current chr
             this.dirty = true;
             this.setpos((_a = opts.x) !== null && _a !== void 0 ? _a : this.x, (_b = opts.y) !== null && _b !== void 0 ? _b : this.y);
-            this.glyphs[this.y][this.x] = c ? Object.assign({ c }, opts) : undefined;
+            this.glyphs[this.y][this.x] = c != null ? Object.assign({ c }, opts) : undefined;
             this.x = (this.x + 1) % this.width;
             if (this.x == 0)
                 this.y = (this.y + 1) % this.height;
         }
         puts(s, opts = {}) {
             let { x, y } = opts, rest = __rest(opts, ["x", "y"]); // drop x and y
+            switch (opts.justify) {
+                case 'center':
+                    x = Math.floor((this.width - s.length) / 2);
+                    break;
+                case 'left':
+                    x = 0;
+                    break;
+                case 'right':
+                    x = this.width - s.length;
+                    break;
+            }
             this.setpos(x !== null && x !== void 0 ? x : this.x, y !== null && y !== void 0 ? y : this.y);
             s.split('').forEach((c) => { var _a; return this.putc(((_a = opts.charMap) !== null && _a !== void 0 ? _a : atascii)(c), rest); });
         }
         putlines(lines, opts = {}) {
             var _a, _b;
             const x0 = (_a = opts.x) !== null && _a !== void 0 ? _a : this.x, y0 = (_b = opts.y) !== null && _b !== void 0 ? _b : this.y;
-            lines.forEach((s, j) => this.puts(s, Object.assign({}, opts, { x: x0, y: y0 + j })));
+            lines.forEach((s, j) => {
+                this.puts(s, Object.assign({}, opts, { x: x0, y: y0 + j }));
+            });
         }
     }
     class SpriteDisplayLayer extends DisplayLayer {
@@ -2882,6 +2879,7 @@ var ef1941 = (function (exports, node_crypto) {
             this.sprites = {};
         }
         cls() {
+            super.cls();
             this.sprites = {};
         }
         put(key, c, x, y, opts = {}) {
@@ -2889,17 +2887,17 @@ var ef1941 = (function (exports, node_crypto) {
             this.sprites[key] = Object.assign({ key, c, x, y }, opts);
         }
         moveto(key, x, y) {
-            this.dirty = true;
             if (!(key in this.sprites)) {
                 throw new Error(`SpriteDisplayLayer.moveto: key error for '${key}'`);
             }
+            this.dirty = true;
             Object.assign(this.sprites[key], { x: x, y: y });
         }
         delete(key) {
-            this.dirty = true;
             if (!(key in this.sprites)) {
                 throw new Error(`SpriteDisplayLayer.delete: key error for '${key}'`);
             }
+            this.dirty = true;
             delete this.sprites[key];
         }
         spritelist() {
@@ -6806,96 +6804,230 @@ var ef1941 = (function (exports, node_crypto) {
     var _createEmotion = createEmotion({
       key: 'css'
     }),
-        injectGlobal = _createEmotion.injectGlobal,
+        cx = _createEmotion.cx,
+        keyframes = _createEmotion.keyframes,
         css = _createEmotion.css;
 
-    injectGlobal(`
-body {
-    background-color: ${antic2rgb(0xD4)};
-}
-`);
-    function cssobj(ds, ...rest) {
-        return { class: css(ds, ...rest) };
+    const 
+    // Antic NTSC palette via https://en.wikipedia.org/wiki/List_of_video_game_console_palettes#NTSC
+    // 128 colors indexed via high 7 bits, e.g. 0x00 and 0x01 refer to the first entry
+    anticPaletteRGB = [
+        "#000000", "#404040", "#6c6c6c", "#909090", "#b0b0b0", "#c8c8c8", "#dcdcdc", "#ececec",
+        "#444400", "#646410", "#848424", "#a0a034", "#b8b840", "#d0d050", "#e8e85c", "#fcfc68",
+        "#702800", "#844414", "#985c28", "#ac783c", "#bc8c4c", "#cca05c", "#dcb468", "#ecc878",
+        "#841800", "#983418", "#ac5030", "#c06848", "#d0805c", "#e09470", "#eca880", "#fcbc94",
+        "#880000", "#9c2020", "#b03c3c", "#c05858", "#d07070", "#e08888", "#eca0a0", "#fcb4b4",
+        "#78005c", "#8c2074", "#a03c88", "#b0589c", "#c070b0", "#d084c0", "#dc9cd0", "#ecb0e0",
+        "#480078", "#602090", "#783ca4", "#8c58b8", "#a070cc", "#b484dc", "#c49cec", "#d4b0fc",
+        "#140084", "#302098", "#4c3cac", "#6858c0", "#7c70d0", "#9488e0", "#a8a0ec", "#bcb4fc",
+        "#000088", "#1c209c", "#3840b0", "#505cc0", "#6874d0", "#7c8ce0", "#90a4ec", "#a4b8fc",
+        "#00187c", "#1c3890", "#3854a8", "#5070bc", "#6888cc", "#7c9cdc", "#90b4ec", "#a4c8fc",
+        "#002c5c", "#1c4c78", "#386890", "#5084ac", "#689cc0", "#7cb4d4", "#90cce8", "#a4e0fc",
+        "#003c2c", "#1c5c48", "#387c64", "#509c80", "#68b494", "#7cd0ac", "#90e4c0", "#a4fcd4",
+        "#003c00", "#205c20", "#407c40", "#5c9c5c", "#74b474", "#8cd08c", "#a4e4a4", "#b8fcb8",
+        "#143800", "#345c1c", "#507c38", "#6c9850", "#84b468", "#9ccc7c", "#b4e490", "#c8fca4",
+        "#2c3000", "#4c501c", "#687034", "#848c4c", "#9ca864", "#b4c078", "#ccd488", "#e0ec9c",
+        "#442800", "#644818", "#846830", "#a08444", "#b89c58", "#d0b46c", "#e8cc7c", "#fce08c",
+    ];
+    function antic2rgb(color) {
+        if (color == null)
+            return undefined;
+        if (!Number.isInteger(color) || color < 0 || color > 255) {
+            throw new Error(`DisplayLayer: Invalid antic color ${color}`);
+        }
+        return anticPaletteRGB[color >> 1];
     }
-    function renderScreen(model, helpMode = false) {
-        mithril.render(document.body, mithril(Layout, helpMode
-            ? mithril(HelpComponent, { key: 'help', model })
-            : mithril(GameComponent, { key: 'game', model })));
-    }
+    const DisplayComponent = {
+        onbeforeupdate({ attrs: { display } }) {
+            // false prevents diff for current element
+            return display.dirty;
+        },
+        view: ({ attrs: { class: kls = [], display, glyphComponent } }) => {
+            const gc = glyphComponent !== null && glyphComponent !== void 0 ? glyphComponent : GlyphComponent, f = display.fontmap, sz = f.glyphSize, mx = f.glyphsPerRow * sz, my = Math.ceil(f.numGlyphs / f.glyphsPerRow) * sz;
+            //TODO clean up the styles here and (maybe?) do pointer-events none for transparent
+            return mithril('.display-layer', {
+                class: cx(css `
+                        position: relative;
+                        width: ${sz * display.width}px;
+                        height: ${sz * display.height}px;
+                        opacity: ${display.opacity};
+                        background-color: ${antic2rgb(display.layerColor)};
+                        pointer-events: ${display.layerColor != null ? 'auto' : 'none'};
+                        .glyph {
+                            position: absolute;
+                            width: ${sz}px;
+                            height: ${sz}px;
+                            background-color: ${antic2rgb(display.backgroundColor)};
+                            pointer-events: ${display.backgroundColor != null ? 'auto' : 'none'}
+                        }
+                        .glyph-foreground {
+                            width: 100%;
+                            height: 100%;
+                            position: absolute;
+                            image-rendering: pixelated;
+                            -webkit-mask-image: url(${f.maskImage});
+                            -webkit-mask-size: ${mx}px ${my}px;
+                            background-color: ${antic2rgb(display.foregroundColor)};
+                            pointer-events: ${display.foregroundColor != null ? 'auto' : 'none'}
+                        }
+                    `, ...(typeof (kls) === 'string' ? [kls] : kls)),
+            }, display.spritelist().map(g => mithril(SpriteComponent, { key: g.key, g, f, gc, defaults: display.opts })));
+        }
+    };
+    const SpriteComponent = {
+        view: ({ attrs: { g, f, gc, defaults } }) => {
+            const sz = f.glyphSize, kf = keyframes `
+                0% {opacity: 1.0;}
+                50% {opacity: 1.0;}
+                75% {opacity:  0.0;}
+                100% {opacity: 0.0;}
+            `;
+            return mithril('.glyph', {
+                onclick: g.onclick,
+                onmouseover: g.onmouseover,
+                style: {
+                    opacity: g.opacity,
+                    'background-color': antic2rgb(g.backgroundColor),
+                    'pointer-events': g.backgroundColor != null ? 'auto' : null,
+                    transform: `translate(${g.x * sz}px, ${g.y * sz}px)`,
+                    animation: g.animate == 0 /* GlyphAnimation.blink */ ? `${kf} 1.0s ease-in infinite` : undefined,
+                },
+            }, mithril(gc, { g, f, defaults }));
+        }
+    };
+    // a nil glyph which draws blocks of backgroundColor ignoring font and foreground
+    const BlockComponent = {
+        view: () => null,
+    };
+    const GlyphComponent = {
+        view: ({ attrs: { g, f } }) => {
+            const { glyphSize: sz, glyphsPerRow: nc } = f, kf = keyframes `
+                0% {-webkit-mask-image: none; }
+                100% {-webkit-mask-image: url(${f.maskImage});
+            `;
+            return mithril('.glyph-foreground', {
+                style: {
+                    'background-color': antic2rgb(g.foregroundColor),
+                    'pointer-events': g.foregroundColor != null ? 'auto' : null,
+                    '-webkit-mask-position': `${-(g.c % nc) * sz}px ${-Math.floor(g.c / nc) * sz}px`,
+                    animation: g.animate == 1 /* GlyphAnimation.flash */ ? `${kf} 0.25s infinite` : undefined,
+                }
+            });
+        }
+    };
+
     const Layout = {
-        view: ({ children }) => {
-            return mithril('', cssobj `
-                width: 320px;        /* 40x24 8px characters */
-                height: 192px;
-                transform: scale(4);
-                transform-origin: top center;
-                margin: 0 auto;
-                position: relative;
-            `, children);
+        view: ({ attrs: { hscr, scr, flags } }) => {
+            return mithril('.layout', {
+                class: css `
+                    background-color: ${antic2rgb(0xD4)};
+                    padding: 12px;
+                    height: 100%;
+                    width: 100%;
+                `
+            }, mithril('.screen', {
+                class: css `
+                        width: 320px;        /* 40x24 8px characters */
+                        height: 192px;
+                        transform: scale(4);
+                        transform-origin: top center;
+                        margin: 0 auto;
+                        position: relative;
+                    `,
+            }, flags.help ? mithril(HelpComponent, { hscr }) : mithril(GameComponent, { scr, flags })));
         }
     };
     const HelpComponent = {
-        view: ({ attrs: { model: { helpWindow } } }) => mithril('', mithril(DisplayComponent, { display: helpWindow }))
+        onupdate: ({ attrs: { hscr: { window } } }) => {
+            window.dirty = false;
+        },
+        view: ({ attrs: { hscr: { window } } }) => {
+            return mithril(DisplayComponent, {
+                display: window,
+                class: 'help',
+            });
+        },
     };
     const GameComponent = {
-        view: ({ attrs: { model: { dateWindow, infoWindow, errorWindow, mapLayer, labelLayer, unitLayer, maskLayer } } }) => {
+        onupdate: ({ attrs: { scr } }) => {
+            Object.values(scr).forEach(layer => layer.dirty = false);
+        },
+        view: ({ attrs: { flags, scr: { dateWindow, infoWindow, errorWindow, mapLayer, labelLayer, unitLayer, maskLayer } } }) => {
             return [
-                mithril('', // double-width date-window
-                cssobj `
+                mithril(DisplayComponent, {
+                    display: dateWindow,
+                    class: ['game', css `
                     transform-origin: top left;
                     transform: scale(2, 1);
-                `, mithril(DisplayComponent, { display: dateWindow })),
+                `],
+                }),
                 mithril(DividerComponent, { color: 0x1A }),
-                mithril('', // map container
-                cssobj `
-                    height: 144px;
-                    overflow: scroll;
-                `, mithril('', // map panel
-                cssobj `
-                        /* 48 x 41  8px sq cells */
-                        width: 384px;
-                        height: 328px;
-                        overflow: hidden;
-                        position: relative;
+                mithril('.map-scroller', {
+                    class: css `
+                        height: 144px;
+                        overflow: scroll;
+                    `,
+                }, mithril('.map-panel', {
+                    class: css `
+                            /* 48 x 41  8px sq cells */
+                            width: 384px;
+                            height: 328px;
+                            overflow: hidden;
+                            position: relative;
+                            transform-origin: top left;
 
-                        /* stack the layers */
-                        .display-layer {
-                            position: absolute;
-                            top: 0;
-                        }
-                    `, [
-                    mithril('.terrain', cssobj `
+                            /* stack the layers */
+                            .display-layer {
+                                position: absolute;
+                                top: 0;
+                            }
+                        `,
+                    style: { transform: flags.zoom ? 'scale(2)' : null },
+                }, [
+                    mithril(DisplayComponent, {
+                        display: mapLayer,
+                        class: ['terrain', css `
                                 .display-layer, .glyph-foreground {
                                     transition: background-color 1s linear;
                                 }
-                            `, mithril(DisplayComponent, { display: mapLayer })),
-                    mithril('.labels', mithril(DisplayComponent, {
+                            `],
+                    }),
+                    flags.extras ? mithril(DisplayComponent, {
                         display: labelLayer,
                         glyphComponent: LabelComponent,
-                    })),
-                    mithril('.units', cssobj `
+                        class: ['labels', css `
+                                pointer-events: none;
+                            `],
+                    }) : null,
+                    mithril(DisplayComponent, {
+                        display: unitLayer,
+                        glyphComponent: flags.extras ? HealthBarGlyphComponent : undefined,
+                        class: ['units', css `
                                 .glyph {
                                     transition: transform 250ms linear;
+                                    transition: opacity 500ms linear;
                                 }
-                                .glyph-background {
+                                .glyph-background, .glyph-foreground {
                                     transition: background-color 1s linear;
                                 }
-                            `, mithril(DisplayComponent, {
+                            `],
+                    }),
+                    flags.extras ? mithril(SVGDisplayComponent, {
                         display: unitLayer,
-                        glyphComponent: HealthBarGlyphComponent,
-                    })),
-                    mithril('.orders', cssobj `
+                        class: ['orders', css `
                                 opacity: 0.5;
-                                pointer-events: none;
-                            `, mithril(SVGDisplayComponent, {
-                        display: unitLayer
-                    })),
-                    mithril('.mask', cssobj `
-                                opacity: 0.5;
-                                pointer-events: none;
-                            `, mithril(DisplayComponent, {
+                            `],
+                    }) : null,
+                    flags.extras ? mithril(DisplayComponent, {
                         display: maskLayer,
-                    }))
+                        glyphComponent: BlockComponent,
+                        class: ['mask', css `
+                                opacity: 0.5;
+                                .glyph {
+                                    pointer-events: none;
+                                }
+                            `]
+                    }) : null
                 ])),
                 mithril(DividerComponent, { color: 0x02 }),
                 mithril(DisplayComponent, { display: infoWindow }),
@@ -6907,92 +7039,16 @@ body {
     };
     const DividerComponent = {
         view: ({ attrs: { color } }) => {
-            return mithril('', cssobj `
+            return mithril('.' + css `
             height: 2px;
             background-color: ${antic2rgb(color)};
         `);
         }
     };
-    const DisplayComponent = {
-        onbeforeupdate({ attrs: { display } }) {
-            // false prevents diff for current element
-            console.log('display.onbeforeupdate', display.dirty);
-            //TODO        return display.dirty;
-        },
-        view: ({ attrs: { display, glyphComponent } }) => {
-            console.log('display.view', display.dirty);
-            //TODO        display.dirty = false;
-            const f = display.fontmap, sz = f.glyphSize, mx = f.glyphsPerRow * sz, my = Math.ceil(f.numGlyphs / f.glyphsPerRow) * sz;
-            return mithril('.display-layer', cssobj `
-                position: relative;
-                width: ${sz * display.width}px;
-                height: ${sz * display.height}px;
-                background-color: ${antic2rgb(display.layerColor)};
-
-                .glyph {
-                    position: absolute;
-                    width: ${sz}px;
-                    height: ${sz}px;
-                    pointer-events: auto;
-                }
-                .glyph-foreground, .glyph-background {
-                    width: 100%;
-                    height: 100%;
-                    position: absolute;
-                    pointer-events: none;  /* reduce hit-testing by just looking at parent */
-                }
-                .glyph-background {
-                    background-color: ${antic2rgb(display.backgroundColor)};
-                }
-                .glyph-foreground {
-                    image-rendering: pixelated;
-                    -webkit-mask-image: url(${f.maskImage});
-                    -webkit-mask-size: ${mx}px ${my}px;
-                    background-color: ${antic2rgb(display.foregroundColor)};
-                }
-            `, display.spritelist().map(g => mithril(SpriteComponent, { key: g.key, g, f, defaults: display }, mithril(glyphComponent !== null && glyphComponent !== void 0 ? glyphComponent : GlyphComponent, { g, f, defaults: display }))));
-        }
-    };
-    function maybeHandler(props, name) {
-        const f = (props && (name in props))
-            ? props[name]
-            : undefined;
-        return f;
-    }
-    const SpriteComponent = {
-        view: ({ attrs: { g, f }, children }) => {
-            const sz = f.glyphSize;
-            return mithril('.glyph', {
-                onclick: maybeHandler(g.props, 'onclick'),
-                onmouseover: maybeHandler(g.props, 'onmouseover'),
-                class: css `
-                    transform: translate(${g.x * sz}px, ${g.y * sz}px)
-                `,
-            }, children);
-        }
-    };
-    const GlyphComponent = {
-        view: ({ attrs: { g, f } }) => {
-            const k = g.c + f.startOffset, sz = f.glyphSize;
-            return [
-                mithril('.glyph-background', {
-                    style: {
-                        'background-color': antic2rgb(g.backgroundColor),
-                    }
-                }),
-                mithril('.glyph-foreground', {
-                    style: {
-                        'background-color': antic2rgb(g.foregroundColor),
-                        '-webkit-mask-position': `${-(k % f.glyphsPerRow) * sz}px ${-Math.floor(k / f.glyphsPerRow) * sz}px`
-                    }
-                }),
-            ];
-        }
-    };
     const LabelComponent = {
         view: ({ attrs: { g: { props }, defaults: { foregroundColor } } }) => {
             let label = props === null || props === void 0 ? void 0 : props.label;
-            return mithril('', cssobj `
+            return mithril('.' + css `
                 transform: translate(4px, -4px);
                 font-family: verdana;
                 font-size: 2pt;
@@ -7013,53 +7069,45 @@ body {
                 return;
             return [
                 mithril(GlyphComponent, { g, f, defaults }),
-                mithril('', cssobj `
+                mithril('.' + css `
                     position:  absolute;
                     bottom: 0;
                     right: 0;
                     width: 6px;
                     height: 6px;
                     padding: 0.5px;
-                `, mithril('', {
-                    class: css `
-                            position: absolute;
-                            bottom: 0;
-                            left: 0;
-                            margin: 5%;
-                            width: 90%;
-                            height: 1px;
-                            background-color: rgb(50,205,50, 0.4);
-                            border-radius: 1px;
-                            overflow: hidden;
-                        `,
-                    style: { width: `${90 * mstrng / 255}%` },
-                }, mithril('', {
-                    class: css `
-                                background-color: rgb(50,205,50, 0.8);
-                                height: 100%;
-                            `,
-                    style: { width: `${100 * cstrng / mstrng}%` },
-                })))
+                `, mithril('.' + css `
+                        position: absolute;
+                        bottom: 0;
+                        left: 0;
+                        margin: 5%;
+                        width: 90%;
+                        height: 1px;
+                        background-color: rgb(50,205,50, 0.4);
+                        border-radius: 1px;
+                        overflow: hidden;
+                    `, { style: { width: `${90 * mstrng / 255}%` } }, mithril('.' + css `
+                            background-color: rgb(50,205,50, 0.8);
+                            height: 100%;
+                        `, { style: { width: `${100 * cstrng / mstrng}%` } })))
             ];
         }
     };
     const SVGDisplayComponent = {
         onbeforeupdate({ attrs: { display } }) {
             // false prevents diff for current element
-            console.log('display.onbeforeupdate', display.dirty);
-            //TODO won't work if we render twice        return display.dirty;
+            return display.dirty;
         },
-        view: ({ attrs: { display } }) => {
-            console.log('display.view', display.dirty);
-            //TODO        display.dirty = false;
+        view: ({ attrs: { display, class: kls = [] } }) => {
             const f = display.fontmap, sz = f.glyphSize;
             return mithril('svg[version="1.1"][xmlns="http://www.w3.org/2000/svg"].display-layer', {
                 width: sz * display.width,
                 height: sz * display.height,
-                class: css `
+                class: cx(css `
                     position: relative;
                     background-color: ${antic2rgb(display.layerColor)};
-                `
+                    pointer-events: ${display.layerColor != null ? 'auto' : 'none'};
+                `, ...(typeof (kls) === 'string' ? [kls] : kls))
             }, mithril('g', {
                 transform: "scale(8)"
             }, display.spritelist().map(g => {
@@ -7067,7 +7115,8 @@ body {
                 const orders = (_b = ((_a = g.props) !== null && _a !== void 0 ? _a : {}).orders) !== null && _b !== void 0 ? _b : [];
                 return mithril('g', {
                     key: g.key,
-                    transform: `translate(${g.x + 0.5},${g.y + 0.5}) scale(-1)`,
+                    // unit icon centers are 1 pixel offset, so adjust by 1/16
+                    transform: `translate(${g.x + 0.5625},${g.y + 0.5625}) scale(-1)`,
                     class: css `
                                 fill: ${antic2rgb(g.foregroundColor)};
                                 stroke: ${antic2rgb(g.foregroundColor)};
@@ -7120,13 +7169,16 @@ body {
         }
     };
 
-    /*
-    TODO
-     - kill all logging inside game, just events
-     - kill complex event properties/callbacks
-     - map event on city ownership change
-    */
-    const helpText = `
+    const resume = window.location.hash.slice(1) || undefined;
+    var game = new Game(resume), uimode = resume ? 1 /* UIModeKey.orders */ : 0 /* UIModeKey.setup */, flags = {
+        help: resume ? false : true,
+        extras: true,
+        debug: false,
+        zoom: false, // zoom 2x or not?
+    }, ai = Object.keys(players)
+        .filter(player => +player != game.human)
+        .map(player => new Thinker(game, +player));
+    const helpUrl = 'https://github.com/patricksurry/eastern-front-1941', helpText = `
 \x11${'\x12'.repeat(38)}\x05
 |                                      |
 |                                      |
@@ -7151,86 +7203,355 @@ body {
 |                                      |
 |                                      |
 \x1a${'\x12'.repeat(38)}\x03
-`.trim().split('\n');
-    //TODO via scenario
-    const apxmap = fontMap('static/fontmap-apx.png', 260);
-    var game = new Game();
-    function start() {
-        const { width, height } = game.mapboard.size, topleft = game.mapboard.locations[0][0].point;
-        var helpWindow = new MappedDisplayLayer(40, 24, apxmap, { foregroundColor: 0x04, layerColor: 0x0E }), dateWindow = new MappedDisplayLayer(20, 2, apxmap, { foregroundColor: 0x6A, layerColor: 0xB0 }), infoWindow = new MappedDisplayLayer(40, 2, apxmap, { foregroundColor: 0x28, layerColor: 0x22 }), errorWindow = new MappedDisplayLayer(40, 1, apxmap, { foregroundColor: 0x22, layerColor: 0x3A }), mapLayer = new MappedDisplayLayer(width, height, apxmap), labelLayer = new SpriteDisplayLayer(width, height, apxmap, { foregroundColor: undefined }), unitLayer = new SpriteDisplayLayer(width, height, apxmap), maskLayer = new MappedDisplayLayer(width, height, apxmap, { foregroundColor: 0x00 });
-        const model = {
-            helpWindow,
-            dateWindow,
-            infoWindow,
-            errorWindow,
-            mapLayer,
-            labelLayer,
-            unitLayer,
-            maskLayer,
-        };
-        helpWindow.putlines(helpText, { props: { onclick: play } });
-        helpText.forEach((s, y) => s.split('').forEach((c, x) => {
-            if (c == '}')
-                helpWindow.puts(c, { x, y, foregroundColor: 0x94 });
-            // TODO via decorator or glyphopts?  .on('click', () => window.open(helpUrl))
+`.trim().split('\n'), helpScrambleMillis = 2000, helpScramble = helpText.map(line => line.split('').map(() => Math.random())), t0 = +new Date();
+    const atasciiFont = fontMap('static/fontmap-atascii.png', 128);
+    const hscr = {
+        window: new MappedDisplayLayer(40, 24, atasciiFont, { foregroundColor: 0x04, layerColor: 0x0E }),
+    };
+    const scr = {
+        dateWindow: new MappedDisplayLayer(20, 2, atasciiFont, { foregroundColor: 0x6A, layerColor: 0xB0 }),
+        infoWindow: new MappedDisplayLayer(40, 2, atasciiFont, { foregroundColor: 0x28, layerColor: 0x22 }),
+        errorWindow: new MappedDisplayLayer(40, 1, atasciiFont, { foregroundColor: 0x22, layerColor: 0x3A }),
+        mapLayer: new MappedDisplayLayer(0, 0, atasciiFont),
+        labelLayer: new SpriteDisplayLayer(0, 0, atasciiFont),
+        unitLayer: new SpriteDisplayLayer(0, 0, atasciiFont),
+        maskLayer: new MappedDisplayLayer(0, 0, atasciiFont),
+    };
+    function paintHelp(h) {
+        const t = +new Date();
+        h.window.setpos(0, 0);
+        helpText.forEach((line, y) => line.split('').forEach((c, x) => {
+            if ((t - t0) / helpScrambleMillis < helpScramble[y][x]) {
+                h.window.putc(Math.floor(Math.random() * 128), {
+                    foregroundColor: Math.floor(Math.random() * 128),
+                    backgroundColor: Math.floor(Math.random() * 128),
+                });
+            }
+            else if (c == '}') {
+                h.window.puts(c, {
+                    foregroundColor: 0x94,
+                    onclick: () => window.open(helpUrl)
+                });
+            }
+            else {
+                h.window.puts(c, {
+                    onclick: () => flags.help = !flags.help
+                });
+            }
         }));
-        game.mapboard.cities.forEach((c, i) => {
-            labelLayer.put(i.toString(), 32, topleft.lon - c.lon, topleft.lat - c.lat, { props: { label: c.label } });
+    }
+    function setMap() {
+        const m = game.mapboard, font = fontMap(`static/fontmap-custom-${m.font}.png`, 128 + 6), { width, height } = m.extent, { lon: left, lat: top } = game.mapboard.locations[0][0].point;
+        scr.mapLayer = new MappedDisplayLayer(width, height, font);
+        scr.labelLayer = new SpriteDisplayLayer(width, height, font, { foregroundColor: undefined });
+        scr.unitLayer = new SpriteDisplayLayer(width, height, font);
+        scr.maskLayer = new MappedDisplayLayer(width, height, font, { backgroundColor: 0x00 });
+        //TOOD repaint city if change ownership, with color animation
+        m.locations.forEach(row => row.forEach(loc => {
+            const t = terraintypes[loc.terrain], city = loc.cityid != null ? game.mapboard.cities[loc.cityid] : null, color = city ? players[city === null || city === void 0 ? void 0 : city.owner].color : (loc.alt ? t.altcolor : t.color);
+            scr.mapLayer.putc(loc.icon, {
+                foregroundColor: color,
+                onclick: () => {
+                    focus.off();
+                    if (city)
+                        scr.infoWindow.puts(city.label.toUpperCase(), { justify: 'center' });
+                },
+                onmouseover: (e) => {
+                    e.currentTarget.title = loc.describe();
+                },
+            });
+        }));
+        m.cities.forEach((c, i) => {
+            scr.labelLayer.put(i.toString(), 32, left - c.lon, top - c.lat, {
+                props: { label: c.label }
+            });
         });
-        dateWindow.puts(' EASTERN FRONT 1941 ', { y: 1 });
-        infoWindow.puts('PLEASE ENTER YOUR ORDERS NOW', { x: 6 });
+    }
+    function paintMap() {
+        const { earth, contrast } = weatherdata[game.weather];
+        scr.labelLayer.setcolors({ foregroundColor: contrast });
+        scr.mapLayer.setcolors({ layerColor: earth });
+        game.oob.forEach(u => paintUnit(u));
+    }
+    function paintUnit(u, focussed = false) {
+        const { earth } = weatherdata[game.weather], { lon: left, lat: top } = game.mapboard.locations[0][0].point;
+        let p = u.point, opts = {
+            backgroundColor: earth,
+            foregroundColor: players[u.player].color,
+            opacity: u.active ? 1 : 0,
+            animate: focussed ? 0 /* GlyphAnimation.blink */ : undefined,
+            onclick: () => {
+                var _a;
+                if (((_a = focus.u()) === null || _a === void 0 ? void 0 : _a.id) != u.id)
+                    focus.on(u);
+                else
+                    focus.off();
+            },
+            onmouseover: (e) => {
+                e.currentTarget.title = u.location.describe();
+            },
+            props: {
+                cstrng: u.cstrng,
+                mstrng: u.mstrng,
+                orders: u.orders,
+            },
+        };
+        scr.unitLayer.put(u.id.toString(), unitkinds[u.kind].icon, left - p.lon, top - p.lat, opts);
+    }
+    function paintReach(u) {
+        if (!u) {
+            scr.maskLayer.cls(); // remove all mask glyphs
+            return;
+        }
+        const { lon: left, lat: top } = game.mapboard.locations[0][0].point, reachmap = u.reach();
+        scr.maskLayer.cls(0); // mask everything, then clear reach squares
+        Object.keys(reachmap).forEach(v => {
+            const { lon, lat } = GridPoint.fromid(+v);
+            scr.maskLayer.putc(undefined, { x: left - lon, y: top - lat });
+        });
+    }
+    function setScenario(scenario, inc) {
+        /*
+            orginal game shows errmsg "[SELECT]: LEARNER  [START] TO BEGIN" with copyright in txt window,
+            where [] is reverse video.  could switch to "[< >]: LEARNER  [ENTER] TO BEGIN(RESUME)"
+            so < > increments scenario, # picks directly
+        */
+        inc !== null && inc !== void 0 ? inc : (inc = 0);
+        let n = Object.keys(scenarios).length;
+        if (scenario == null) {
+            scenario = (game.scenario + inc + n) % n;
+        }
+        // TODO setter
+        game.scenario = scenario;
+        let label = scenarios[scenario].label.padEnd(8, ' ');
+        scr.errorWindow.puts(`[<] ${label} [>]  [ENTER] TO START`, { justify: 'center' });
+    }
+    var focus = {
+        id: -1,
+        active: false,
+        u: () => focus.active ? game.oob.at(focus.id) : undefined,
+        on: (u) => {
+            focus.off();
+            focus.id = u.id;
+            focus.active = true;
+            scr.infoWindow.putlines([
+                u.label,
+                `MUSTER: ${u.mstrng}  COMBAT: ${u.cstrng}`
+            ], { x: 6 });
+            paintUnit(u, true);
+            paintReach(u);
+        },
+        off: () => {
+            const u = focus.u();
+            if (u) {
+                // clear blink and reach
+                paintUnit(u, false);
+                paintReach(undefined);
+            }
+            scr.infoWindow.cls();
+            focus.active = false;
+        },
+        shift: (offset) => {
+            const locid = (u) => game.mapboard.locationOf(u).id, humanUnits = game.oob.activeUnits(game.human).sort((a, b) => locid(b) - locid(a)), n = humanUnits.length;
+            var i;
+            if (focus.id >= 0) {
+                i = humanUnits.findIndex(u => u.id == focus.id);
+                if (i < 0) {
+                    // if last unit no longer active, find the nearest active unit
+                    let id = locid(game.oob.at(focus.id));
+                    while (++i < n && locid(humanUnits[i]) > id) { /**/ }
+                }
+            }
+            else {
+                i = offset > 0 ? -1 : 0;
+            }
+            i = (i + n + offset) % n;
+            focus.on(humanUnits[i]);
+        },
+    };
+    function editOrders(dir) {
+        // dir => add step, -1 => remove step, null => clear or unfocus
+        let u = focus.u();
+        if (!u)
+            return;
+        if (!u.human) {
+            scr.errorWindow.puts(`THAT IS A ${players[u.player].label.toUpperCase()} UNIT!`, { justify: 'center' });
+            return;
+        }
+        if (dir == null) {
+            if (u.orders.length == 0) {
+                focus.off();
+                return;
+            }
+            u.resetOrders();
+        }
+        else if (dir == -1) {
+            u.delOrder();
+        }
+        else {
+            u.addOrder(dir);
+        }
+        paintUnit(u, true);
+    }
+    const keymap = {
+        help: '?/',
+        prev: '<,p',
+        next: '>.n',
+        cancel: ['Escape', ' '],
+        scenario: '0123456789'.slice(0, Object.keys(scenarios).length),
+        extras: 'xX',
+        zoom: 'zZ',
+        debug: 'gG',
+    }, arrowmap = {
+        ArrowUp: 0 /* DirectionKey.north */,
+        ArrowDown: 2 /* DirectionKey.south */,
+        ArrowRight: 1 /* DirectionKey.east */,
+        ArrowLeft: 3 /* DirectionKey.west */,
+    };
+    function keyHandler(e) {
+        let handled = true;
+        console.log('keyhandler', e.key);
+        scr.errorWindow.cls(); // clear error
+        if (flags.help || keymap.help.includes(e.key)) {
+            flags.help = !flags.help;
+        }
+        else if (keymap.zoom.includes(e.key)) {
+            flags.zoom = !flags.zoom;
+        }
+        else if (keymap.extras.includes(e.key)) {
+            flags.extras = !flags.extras;
+        }
+        else if (keymap.debug.includes(e.key)) {
+            flags.debug = !flags.debug;
+        }
+        else {
+            const f = modes[uimode].keyHandler;
+            if (f)
+                handled = f(e.key);
+        }
+        if (handled) {
+            mithril.redraw();
+            e.preventDefault(); // eat event if handled
+        }
+    }
+    function setMode(m) {
+        const exit = modes[uimode].exit, enter = modes[m].enter;
+        if (exit)
+            exit();
+        uimode = m;
+        if (enter)
+            enter();
+    }
+    const modes = {
+        [0 /* UIModeKey.setup */]: {
+            enter: () => {
+                scr.infoWindow.putlines([
+                    'COPYRIGHT 1982 ATARI',
+                    'ALL RIGHTS RESERVED',
+                ], { justify: 'center' });
+                //TODO setScenario(ScenarioKey.beginner);
+            },
+            keyHandler: (key) => {
+                if (keymap.prev.includes(key) || key == 'ArrowLeft') {
+                    setScenario(null, -1);
+                }
+                else if (keymap.next.includes(key) || key == 'ArrowRight') {
+                    setScenario(null, +1);
+                }
+                else if (keymap.scenario.includes(key)) {
+                    setScenario(parseInt(key));
+                }
+                else if (key == 'Enter') {
+                    setMode(1 /* UIModeKey.orders */);
+                }
+                else {
+                    return false;
+                }
+                return true;
+            },
+        },
+        [1 /* UIModeKey.orders */]: {
+            enter: () => {
+                // save game state
+                window.location.hash = game.token;
+                // start thinking...
+                ai.forEach(t => t.thinkRecurring(250));
+            },
+            keyHandler: (key) => {
+                if (keymap.prev.includes(key)) {
+                    focus.shift(-1);
+                }
+                else if (keymap.next.includes(key) || key == 'Enter') {
+                    focus.shift(+1);
+                }
+                else if (key in arrowmap) {
+                    editOrders(arrowmap[key]);
+                }
+                else if (keymap.cancel.includes(key)) {
+                    editOrders(null);
+                }
+                else if (key == 'Backspace') {
+                    editOrders(-1);
+                }
+                else if (key == 'End') {
+                    setMode(2 /* UIModeKey.resolve */);
+                }
+                else {
+                    return false;
+                }
+                return true;
+            },
+        },
+        [2 /* UIModeKey.resolve */]: {
+            enter: () => {
+                // finalize AI orders
+                ai.forEach(t => t.finalize());
+                focus.off();
+                scr.errorWindow.puts('EXECUTING MOVE', { justify: 'center' });
+                game.nextTurn(250);
+            },
+            keyHandler: (key) => {
+                if (keymap.prev.includes(key)) {
+                    focus.shift(-1);
+                }
+                else if (keymap.next.includes(key) || key == 'Enter') {
+                    focus.shift(+1);
+                }
+                else {
+                    return false;
+                }
+                return true;
+            }
+        }
+    };
+    function start() {
+        const scramble = setInterval(() => {
+            paintHelp(hscr);
+            mithril.redraw();
+            if (+new Date() > t0 + helpScrambleMillis)
+                clearInterval(scramble);
+        }, 150);
+        setMap();
+        paintMap();
+        document.addEventListener('keydown', keyHandler);
+        scr.dateWindow.puts('EASTERN FRONT 1941', { justify: 'center', y: 1 });
+        scr.infoWindow.puts('PLEASE ENTER YOUR ORDERS NOW', { x: 6 });
         let ai = Object.keys(players)
             .filter(player => +player != game.human)
             .map(player => new Thinker(game, +player));
         console.log(`set up ${ai.length} AIs`);
-        function repaint() {
-            const { earth, contrast } = weatherdata[game.weather];
-            labelLayer.setcolors({ foregroundColor: contrast });
-            mapLayer.setcolors({ layerColor: earth });
-            game.mapboard.locations.forEach(row => row.forEach(loc => {
-                const t = terraintypes[loc.terrain], city = loc.cityid != null ? game.mapboard.cities[loc.cityid] : null, color = city ? players[city === null || city === void 0 ? void 0 : city.owner].color : (loc.alt ? t.altcolor : t.color);
-                mapLayer.putc(loc.icon, { foregroundColor: color });
-            }));
-            game.oob.activeUnits().forEach(u => {
-                let p = u.point, opts = {
-                    backgroundColor: earth,
-                    foregroundColor: players[u.player].color,
-                    props: {
-                        cstrng: u.cstrng,
-                        mstrng: u.mstrng,
-                        orders: u.orders,
-                        onclick: () => alert(`Clicked ${u.label}`)
-                    },
-                };
-                unitLayer.put(u.id.toString(), unitkinds[u.kind].icon, topleft.lon - p.lon, topleft.lat - p.lat, opts);
+        mithril.mount(document.body, { view: () => mithril(Layout, { scr, hscr, flags }) });
+        /*
+            game.on('game', (action) => {
+        //        console.log('game event', action);
+                if (action == 'turn') play();
+                else repaint();
             });
-            maskLayer.cls(255);
-            let reachmap = game.oob.activeUnits()[10].reach();
-            Object.keys(reachmap).forEach(v => {
-                const { lon, lat } = GridPoint.fromid(+v);
-                maskLayer.putc(undefined, { x: topleft.lon - lon, y: topleft.lat - lat });
-            });
-            renderScreen(model);
-        }
-        function play() {
-            console.log('repaint & start thinking...');
-            repaint();
-            ai.forEach(t => t.thinkRecurring(250));
-            setTimeout(() => {
-                console.log('stop thinking and nextTurn ticktock');
-                ai.forEach(t => t.finalize());
-                game.nextTurn(100);
-            }, 32 * 100 + 500);
-        }
-        game.on('game', (action) => {
-            //        console.log('game event', action);
-            if (action == 'turn')
-                play();
-            else
-                repaint();
-        });
-        game.start(); // TODO
-        renderScreen(model);
+        
+            game.start();       // TODO
+        
+            renderScreen(gameModel);
+        */
     }
 
     exports.start = start;

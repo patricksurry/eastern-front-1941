@@ -61,22 +61,25 @@
     width: 0;
     white-space: nowrap;
 }
+
 @keyframes flash {
   0% {-webkit-mask-image: none; }
   100% {-webkit-mask-image: var(--fontmap); }
 }
+.flash {
+    animation: flash 0.25s infinite;
+}
+
 @keyframes blink {
   0% {opacity: 1.0;}
   50% {opacity: 1.0;}
   75% {opacity:  0.0;}
   100% {opacity: 0.0;}
 }
-.flash {
-    animation: flash 0.25s infinite;
-}
 .blink {
     animation: blink 1.0s ease-in infinite;
 }
+
 .chr, .chr-bg, .chr-fg, .chr-dim {
     width: 8px;
     height: 8px;

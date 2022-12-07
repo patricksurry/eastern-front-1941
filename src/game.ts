@@ -24,8 +24,6 @@ class Game extends EventEmitter {
 
     // flags
     handicap = 0;    // whether the game is handicapped
-    extras = 1;      // display extras like labels, health, zoc
-    debug = 0;       // whether to display debug info for Russian units
 
     mapboard: Mapboard;
     oob: Oob;
@@ -59,8 +57,6 @@ class Game extends EventEmitter {
             this.turn = memento.shift()!;
 
             this.handicap = memento.shift()!;
-            this.extras = memento.shift()!;
-            this.debug = memento.shift()!;
         }
         this.mapboard = new Mapboard(this, memento);
         this.oob = new Oob(this, memento);
@@ -78,8 +74,6 @@ class Game extends EventEmitter {
             this.turn,
 
             +this.handicap,
-            +this.extras,
-            +this.debug,
         ].concat(
             this.mapboard.memento,
             this.oob.memento,

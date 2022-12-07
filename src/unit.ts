@@ -1,10 +1,10 @@
 import {
     type Point, type Flag,
-    players, PlayerKey, 
-    terraintypes, TerrainKey, 
-    directions, DirectionKey, 
+    players, PlayerKey,
+    terraintypes, TerrainKey,
+    directions, DirectionKey,
     WeatherKey,
-    unitkinds, UnitKindKey, 
+    UnitKindKey,
     moveCost, moveCosts,
 } from './defs';
 
@@ -27,13 +27,13 @@ const unittypes: Record<UnitTypeKey, UnitType | null> = {
 };
 
 const apxXref: Record<number, UnitTypeKey> = {
-        0: UnitTypeKey.infantry, 
-        1: UnitTypeKey.tank, 
-        2: UnitTypeKey.cavalry, 
+        0: UnitTypeKey.infantry,
+        1: UnitTypeKey.tank,
+        2: UnitTypeKey.cavalry,
         3: UnitTypeKey.panzer,
-        4: UnitTypeKey.militia, 
-        5: UnitTypeKey.unused /* shock */, 
-        6: UnitTypeKey.unused /* paratrp */, 
+        4: UnitTypeKey.militia,
+        5: UnitTypeKey.unused /* shock */,
+        6: UnitTypeKey.unused /* paratrp */,
         7: UnitTypeKey.pzgrndr,
     },
     modifiers = [

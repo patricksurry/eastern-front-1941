@@ -1,34 +1,4 @@
-type AnticColor = number;
-
-const
-    // Antic NTSC palette via https://en.wikipedia.org/wiki/List_of_video_game_console_palettes#NTSC
-    // 128 colors indexed via high 7 bits, e.g. 0x00 and 0x01 refer to the first entry
-    anticPaletteRGB = [
-        "#000000",  "#404040",  "#6c6c6c",  "#909090",  "#b0b0b0",  "#c8c8c8",  "#dcdcdc",  "#ececec",
-        "#444400",  "#646410",  "#848424",  "#a0a034",  "#b8b840",  "#d0d050",  "#e8e85c",  "#fcfc68",
-        "#702800",  "#844414",  "#985c28",  "#ac783c",  "#bc8c4c",  "#cca05c",  "#dcb468",  "#ecc878",
-        "#841800",  "#983418",  "#ac5030",  "#c06848",  "#d0805c",  "#e09470",  "#eca880",  "#fcbc94",
-        "#880000",  "#9c2020",  "#b03c3c",  "#c05858",  "#d07070",  "#e08888",  "#eca0a0",  "#fcb4b4",
-        "#78005c",  "#8c2074",  "#a03c88",  "#b0589c",  "#c070b0",  "#d084c0",  "#dc9cd0",  "#ecb0e0",
-        "#480078",  "#602090",  "#783ca4",  "#8c58b8",  "#a070cc",  "#b484dc",  "#c49cec",  "#d4b0fc",
-        "#140084",  "#302098",  "#4c3cac",  "#6858c0",  "#7c70d0",  "#9488e0",  "#a8a0ec",  "#bcb4fc",
-        "#000088",  "#1c209c",  "#3840b0",  "#505cc0",  "#6874d0",  "#7c8ce0",  "#90a4ec",  "#a4b8fc",
-        "#00187c",  "#1c3890",  "#3854a8",  "#5070bc",  "#6888cc",  "#7c9cdc",  "#90b4ec",  "#a4c8fc",
-        "#002c5c",  "#1c4c78",  "#386890",  "#5084ac",  "#689cc0",  "#7cb4d4",  "#90cce8",  "#a4e0fc",
-        "#003c2c",  "#1c5c48",  "#387c64",  "#509c80",  "#68b494",  "#7cd0ac",  "#90e4c0",  "#a4fcd4",
-        "#003c00",  "#205c20",  "#407c40",  "#5c9c5c",  "#74b474",  "#8cd08c",  "#a4e4a4",  "#b8fcb8",
-        "#143800",  "#345c1c",  "#507c38",  "#6c9850",  "#84b468",  "#9ccc7c",  "#b4e490",  "#c8fca4",
-        "#2c3000",  "#4c501c",  "#687034",  "#848c4c",  "#9ca864",  "#b4c078",  "#ccd488",  "#e0ec9c",
-        "#442800",  "#644818",  "#846830",  "#a08444",  "#b89c58",  "#d0b46c",  "#e8cc7c",  "#fce08c",
-    ];
-
-function antic2rgb(color?: AnticColor): string|undefined {
-    if (color == null) return undefined;
-    if (!Number.isInteger(color) || color < 0 || color > 255) {
-        throw new Error(`DisplayLayer: Invalid antic color ${color}`);
-    }
-    return anticPaletteRGB[color >> 1];
-}
+type AnticColor = number;  // a hex value like 0x23, see anticview.ts
 
 type CharMapper = (c: string) => number;
 
@@ -37,8 +7,15 @@ const atascii: CharMapper = (c: string) => c.charCodeAt(0) & 0x7f;
 interface SpriteColors {
     foregroundColor?: AnticColor,
     backgroundColor?: AnticColor,
+    opacity?: number,
 }
+
+const enum GlyphAnimation {blink, flash};
+
 interface SpriteOpts extends SpriteColors {
+    animate?: GlyphAnimation,
+    onclick?: (e: Event) => void,
+    onmouseover?: (e: Event) => void,
     props?: {[k: string]: unknown},
 };
 
@@ -63,8 +40,9 @@ interface GlyphOpts extends SpriteOpts {
     y?: number,
 }
 
-interface CharOpts extends GlyphOpts {
+interface LineOpts extends GlyphOpts {
     charMap?: CharMapper
+    justify?: 'center' | 'left' | 'right'
 }
 
 interface FontMap {
@@ -72,13 +50,12 @@ interface FontMap {
     numGlyphs: number,
     glyphSize: number,
     glyphsPerRow: number,
-    startOffset: number,
 }
 
 function fontMap(
         maskImage: string, numGlyphs: number,
-        glyphSize = 8, glyphsPerRow = 16, startOffset = 0): FontMap {
-    return {maskImage, numGlyphs, glyphSize, glyphsPerRow, startOffset};
+        glyphSize = 8, glyphsPerRow = 16): FontMap {
+    return {maskImage, numGlyphs, glyphSize, glyphsPerRow};
 }
 
 abstract class DisplayLayer implements LayerOpts {
@@ -88,6 +65,7 @@ abstract class DisplayLayer implements LayerOpts {
     foregroundColor?: AnticColor;
     backgroundColor?: AnticColor;
     layerColor?: AnticColor;
+    opacity?: number;
     dirty = true;
 
     constructor(width: number, height: number, fontmap: FontMap, opts: LayerOpts = {}) {
@@ -98,15 +76,25 @@ abstract class DisplayLayer implements LayerOpts {
         this.fontmap = fontmap;
         this.setcolors(opts);
     }
-
+    get opts(): LayerOpts {
+        return {
+            foregroundColor: this.foregroundColor,
+            backgroundColor: this.backgroundColor,
+            layerColor: this.layerColor,
+            opacity: this.opacity,
+        }
+    }
     setcolors(opts: LayerColors) {
         this.dirty = true;
         this.foregroundColor = opts.foregroundColor;
         this.backgroundColor = opts.backgroundColor;
         this.layerColor = opts.layerColor;
+        this.opacity = opts.opacity;
     }
 
-    abstract cls(): void
+    cls(): void {
+        this.dirty = true;
+    }
 
     abstract spritelist(): Sprite[]
 }
@@ -121,7 +109,12 @@ class MappedDisplayLayer extends DisplayLayer {
         this.glyphs = new Array(height).fill(undefined).map(() => new Array(width).fill(undefined));
     }
     cls(c?: number) {
-        this.glyphs = this.glyphs.map(row => row.map(() => c ? {c}: undefined));
+        super.cls();
+        // with no argument, clear all glyphs (so we see the container layer)
+        // otherwise set all glyphs to a specific
+        this.x = 0;
+        this.y = 0;
+        this.glyphs = this.glyphs.map(row => row.map(() => c != null ? {c}: undefined));
     }
     spritelist() {
         return this.glyphs.flatMap(
@@ -133,21 +126,30 @@ class MappedDisplayLayer extends DisplayLayer {
         this.y = y % this.height;
     }
     putc(c?: number, opts: GlyphOpts = {}) {
+        // put a character at current position, with options.  put undefined to clear current chr
         this.dirty = true;
         this.setpos(opts.x ?? this.x, opts.y ?? this.y);
-        this.glyphs[this.y][this.x] = c ? Object.assign({c}, opts) : undefined;
+        this.glyphs[this.y][this.x] = c != null ? Object.assign({c}, opts) : undefined;
         this.x = (this.x + 1) % this.width;
         if (this.x == 0) this.y = (this.y + 1) % this.height;
     }
-    puts(s: string, opts: CharOpts = {}) {
+    puts(s: string, opts: LineOpts = {}) {
         let {x, y, ...rest} = opts; // drop x and y
+        switch (opts.justify) {
+            case 'center': x = Math.floor((this.width - s.length)/2); break;
+            case 'left': x = 0; break;
+            case 'right': x = this.width - s.length; break;
+            default: // no change
+        }
         this.setpos(x ?? this.x, y ?? this.y);
         s.split('').forEach((c) => this.putc((opts.charMap ?? atascii)(c), rest));
     }
-    putlines(lines: string[], opts: CharOpts = {}) {
+    putlines(lines: string[], opts: LineOpts = {}) {
         const x0 = opts.x ?? this.x,
             y0 = opts.y ?? this.y;
-        lines.forEach((s, j) => this.puts(s, Object.assign({}, opts, {x: x0, y: y0 + j})));
+        lines.forEach((s, j) => {
+            this.puts(s, Object.assign({}, opts, {x: x0, y: y0 + j}))
+        });
     }
 }
 
@@ -155,6 +157,7 @@ class SpriteDisplayLayer extends DisplayLayer {
     sprites: Record<string, Sprite> = {};
 
     cls() {
+        super.cls();
         this.sprites = {};
     }
     put(key: string, c: number, x: number, y: number, opts: SpriteOpts = {}) {
@@ -162,17 +165,17 @@ class SpriteDisplayLayer extends DisplayLayer {
         this.sprites[key] = Object.assign({key, c, x, y}, opts);
     }
     moveto(key: string, x: number, y: number) {
-        this.dirty = true;
         if (!(key in this.sprites)) {
             throw new Error(`SpriteDisplayLayer.moveto: key error for '${key}'`)
         }
+        this.dirty = true;
         Object.assign(this.sprites[key], {x: x, y: y});
     }
     delete(key: string) {
-        this.dirty = true;
         if (!(key in this.sprites)) {
             throw new Error(`SpriteDisplayLayer.delete: key error for '${key}'`)
         }
+        this.dirty = true;
         delete this.sprites[key];
     }
     spritelist() {
@@ -180,6 +183,6 @@ class SpriteDisplayLayer extends DisplayLayer {
     }
 }
 
-export type {AnticColor, FontMap, Glyph, Sprite, LayerOpts, DisplayLayer};
+export type {AnticColor, FontMap, Glyph, GlyphOpts, Sprite, SpriteOpts, LayerOpts, DisplayLayer};
 
-export {antic2rgb, fontMap, MappedDisplayLayer, SpriteDisplayLayer};
+export {fontMap, GlyphAnimation, MappedDisplayLayer, SpriteDisplayLayer};

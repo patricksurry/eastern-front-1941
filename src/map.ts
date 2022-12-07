@@ -112,6 +112,7 @@ class MapPoint extends GridPoint {
 class Mapboard {
     locations: MapPoint[][];
     cities;
+    font;
     #game;      //TODO only wants .month, .emit, .rand
     #maxlon;
     #maxlat;
@@ -128,7 +129,7 @@ class Mapboard {
                         let alt: Flag = ((t == 1 && i == 0) || ch == 0x40) ? 1 : 0;
                         if (ch==0x40) ch--;
                         lookup[c] = {
-                            icon: 0x80 + i * 0x40 + ch++,
+                            icon: i * 0x40 + ch++,
                             terrain: t as TerrainKey,
                             alt: alt
                         };
@@ -143,6 +144,8 @@ class Mapboard {
                     c => Object.assign({}, mapencoding[i <= 25 ? 0: 1][c])
                 )
             );
+
+        this.font = variant.font;
 
         // excluding the impassable border valid is 0..maxlon-1, 0..maxlat-1
         this.#maxlon = mapdata[0].length-2;
@@ -172,7 +175,7 @@ class Mapboard {
             row => row.filter(
                 loc => loc.terrain == TerrainKey.city && typeof loc.cityid === 'undefined'
             )).flat();
-        if (missing.length > 0) 
+        if (missing.length > 0)
             throw new Error(`Mapboard: city terrain missing city details at ${missing}`);
 
         if (memento) {
@@ -197,7 +200,7 @@ class Mapboard {
             labelcolor: mdata.weather == WeatherKey.snow ? '04': '08'
         });
     }
-    get size() {
+    get extent() {
         return {width: this.locations[0].length, height: this.locations.length}
     }
     get memento(): number[] {
@@ -344,7 +347,7 @@ class Mapboard {
             } else {
                 frontier.delete(_head);
             }
-            
+
             Object.keys(directions).forEach(i => {
                 const d = +i as DirectionKey,
                     dst = this.neighborOf(src, d);

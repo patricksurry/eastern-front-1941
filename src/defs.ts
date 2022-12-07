@@ -1,8 +1,7 @@
-import type {AnticColor} from './antic';
-
+import type {AnticColor} from './anticmodel';
 
 type Flag = 0 | 1;
-type Point = {lon: number, lat: number};
+interface Point {lon: number, lat: number};
 
 function sum(xs: number[]): number {
     return xs.reduce((s: number, x: number) => s + x, 0);
@@ -21,7 +20,7 @@ function memoize<S, T>(fn: (x: S) => T): (x: S) => T {
 
 // mimic logic from STKTABlon looking for zeroed pins
 // see https://forums.atariage.com/topic/275027-joystick-value-logic/:
-type Direction = {label: string, dlon: number, dlat: number, icon: number};
+interface Direction {label: string, dlon: number, dlat: number, icon: number};
 const enum DirectionKey {north, east, south, west};
 const directions: Record<DirectionKey, Direction> = {
     [DirectionKey.north]: {label: 'N', dlon: 0,  dlat: 1,  icon: 257},   // up    1110 => 0
@@ -30,10 +29,10 @@ const directions: Record<DirectionKey, Direction> = {
     [DirectionKey.west]:  {label: 'W', dlon: 1,  dlat: 0,  icon: 260},   // left  1011 => 3
 } as const;
 
-type Supply = {
+interface Supply {
     sea: number, replacements: number, freeze: number, maxfail: readonly [number, number, number]
 }
-type Player = {
+interface Player {
     label: string, unit: string, color: AnticColor, homedir: DirectionKey, supply: Supply
 }
 // note we rely on Player.german = 1 - Player.russian and vice versa
@@ -62,7 +61,7 @@ const enum TerrainKey {
 };
 type WeatherCosts = readonly [number, number, number];
 type UnitKindCosts = readonly [WeatherCosts, WeatherCosts];
-type Terrain = {
+interface Terrain {
     label: string, color: AnticColor, altcolor?: AnticColor,
     offence: number, defence: number, movecost: UnitKindCosts
 }
@@ -111,7 +110,7 @@ const terraintypes: Record<TerrainKey, Terrain> = {
 } as const;
 
 // adds contrast color for optional labels
-type Weather = {label: string, earth: AnticColor, contrast: AnticColor};
+interface Weather {label: string, earth: AnticColor, contrast: AnticColor};
 const enum WeatherKey {dry, mud, snow};
 const weatherdata: Record<WeatherKey, Weather> = {
     [WeatherKey.dry]:  {label: 'dry',  earth: 0x10, contrast: 0x06},
@@ -119,7 +118,7 @@ const weatherdata: Record<WeatherKey, Weather> = {
     [WeatherKey.snow]: {label: 'snow', earth: 0x0A, contrast: 0x04},
 } as const;
 
-type WaterState = {
+interface WaterState {
     dir: DirectionKey, terrain: readonly[TerrainKey, TerrainKey]
 };
 const enum WaterStateKey {freeze, thaw};
@@ -133,7 +132,7 @@ const waterstate: Record<WaterStateKey, WaterState> = {
 } as const;
 
 // combines D.asm:2690 TRTAB and 5430 SSNCOD, also annotated PDF p71 (labelled -63-)
-type Month = {label: string, trees: AnticColor, weather: WeatherKey, water?: WaterStateKey};
+interface Month {label: string, trees: AnticColor, weather: WeatherKey, water?: WaterStateKey};
 const enum MonthKey {
     Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec
 }
@@ -152,12 +151,12 @@ const monthdata: Record<MonthKey, Month> = {
     [MonthKey.Dec]: {label: "December",  trees: 0x12, weather: WeatherKey.snow},
 } as const;
 
-type UnitKind = {key: string, icon: number};
+interface UnitKind {key: string, icon: number};
 const enum UnitKindKey {infantry, armor, air};
 const unitkinds: Record<UnitKindKey, UnitKind> = {
-    [UnitKindKey.infantry]: {key: 'infantry',   icon: 0xfd},
-    [UnitKindKey.armor]:    {key: 'armor',      icon: 0xfe},
-    [UnitKindKey.air]:      {key: 'air',        icon: 0xfc},
+    [UnitKindKey.infantry]: {key: 'infantry',   icon: 0x7d},
+    [UnitKindKey.armor]:    {key: 'armor',      icon: 0x7e},
+    [UnitKindKey.air]:      {key: 'air',        icon: 0x7c},
 } as const;
 
 // cartridge offers selection of levels which modify various parameters:
@@ -168,7 +167,7 @@ const unitkinds: Record<UnitKindKey, UnitKind> = {
 //  nunit: gives index of first ineligbile unit, e.g. 0x2 means control first 2 ids
 //  endturn: when the scneario ends
 //  score required to win
-type Level = {
+interface Level {
     label: string, ncity: number, mdmg: number, cdmg: number, cadj: number,
     fog: number, nunit: readonly [number, number], endturn: number, win: number,
 }
@@ -190,9 +189,10 @@ function moveCosts(kind: UnitKindKey, weather: WeatherKey): number[] {
     return Object.keys(terraintypes).map(t => moveCost(+t, kind, weather));
 }
 
+export type {Flag, Point};
+
 export {
     sum, memoize,
-    Flag, Point, AnticColor,
     directions, DirectionKey,
     players, PlayerKey,
     terraintypes, TerrainKey,

@@ -19,7 +19,7 @@ def readapxdisk() -> Dict[str, bytes]:
     return readchunks(data, symtab)
 
 
-def readchunks(data: bytes, symtab: Dict[str, Dict[str, Any]]) -> Dict[str, bytes]:
+def readchunks(data: bytes, symtab: Dict[str, Any]) -> Dict[str, bytes]:
     base = int(symtab['startaddress'], 16)
     chunks = {
         re.split(r'[^a-zA-Z0-9]', s['symbol'])[0]: _chunk(data, base, s['addr'], s['length'])
@@ -59,7 +59,10 @@ def buildfontmap(chunks, outbase):
         specials += chunks['DIAMOND']
     specials += bytes([0] * (16*8 - len(specials)))
 
-    fontmap = open('atascii.dat', 'rb').read() + fontdata + specials
+    atascii = open('atascii.dat', 'rb').read()
+    writefontpng(atascii, 'fontmap-atascii.png')
+
+    fontmap = fontdata + specials
     open(outbase + '.dat', 'wb').write(fontmap)
     writefontpng(fontmap, outbase + '.png')
 
@@ -235,7 +238,7 @@ versions = dict(
 buildcolormap()
 
 for ver, chunks in versions.items():
-    buildfontmap(chunks, f'fontmap-{ver}')
+    buildfontmap(chunks, f'fontmap-custom-{ver}')
     if 'MAPRLE' in chunks:
         chunks['MAPDATA'] = decodemaprle(chunks['MAPRLE'])
     buildasciimap(chunks['MAPDATA'], f'mapboard-{ver}', ver == 'cart')
