@@ -47,6 +47,8 @@ const apxXref: Record<number, UnitTypeKey> = {
         {key: 'guards'},
     ];
 
+type UnitEvent = 'orders' | 'attack' | 'defend' | 'damage' | 'move' | 'enter' | 'exit';
+
 class Unit implements Point {
     id: number;
     player: PlayerKey;
@@ -70,6 +72,7 @@ class Unit implements Point {
     ifrdir: [number, number, number, number] = [0, 0, 0, 0];
     objective?: Point;
 
+    #status?: UnitEvent;
     #game: Game;
 
     constructor(game: Game, id: number, ...args: number[]) {
@@ -88,7 +91,7 @@ class Unit implements Point {
         this.player = (corpt & 0x80) ? PlayerKey.Russian : PlayerKey.German;  // german=0, russian=1; equiv i >= 55
         this.unitno = corpno;
         this.type = corpt & 0x7 as UnitTypeKey;
-        let ut = unittypes[this.type];
+        const ut = unittypes[this.type];
         if (ut == null) throw new Error(`Unused unit type for unit id ${id}`)
         this.kind = ut.kind;
         this.modifier = (corpt >> 4) & 0x7;
@@ -114,6 +117,13 @@ class Unit implements Point {
     get active() {
         return this.arrive <= this.#game.turn && this.cstrng > 0;
     }
+    get status() {
+        return this.#status;
+    }
+    set status(event: UnitEvent|undefined) {
+        this.#status = event;
+        if (event) this.#game.emit('unit', event, this);
+    }
     get human() {
         return this.player == this.#game.human;
     }
@@ -123,11 +133,11 @@ class Unit implements Point {
     get point(): Point {
         return {lon: this.lon, lat: this.lat}
     }
-    get path(): MapPoint[] {
-        let loc = this.location,
-            path = [loc];
+    get path(): MapPoint[] {  // note returns non-empty list
+        let loc = this.location;
+        const path = [loc];
         this.orders.forEach(dir => {
-            let dst = this.#game.mapboard.neighborOf(loc, dir);
+            const dst = this.#game.mapboard.neighborOf(loc, dir);
             if (!dst) return;
             path.push(loc = dst)
         });
@@ -141,6 +151,7 @@ class Unit implements Point {
         } else if (this.orders.length == 8) {
             err ="ONLY 8 ORDERS ARE ALLOWED!";
         } else {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             dst = this.#game.mapboard.neighborOf(this.path.pop()!, dir);
             if (!dst) {
                 err = "IMPASSABLE!";
@@ -151,28 +162,28 @@ class Unit implements Point {
         if (err) {
             this.#game.emit('message', 'error', err)
         } else {
-            this.#game.emit('unit', 'orders', this);
+            this.status = 'orders';
         }
         return dst;
     }
     delOrder() {
         if (this.orders.length) {
-            this.#game.emit('unit', 'orders', this);
             this.orders.pop();
+            this.status = 'orders';
         }
     }
     setOrders(dirs: DirectionKey[]) {
         this.orders = dirs;
-        this.#game.emit('unit', 'orders', this);
+        this.status = 'orders';
     }
     resetOrders() {
         this.orders = [];
         this.tick = 255;
-        this.#game.emit('unit', 'orders', this);
+        this.status = 'orders';
     }
     moveCost(dir: DirectionKey): number {
         if (!this.canMove) return 255;
-        let dst = this.#game.mapboard.neighborOf(GridPoint.get(this), dir);
+        const dst = this.#game.mapboard.neighborOf(GridPoint.get(this), dir);
         if (!dst) return 255;
         return moveCost(dst.terrain, this.kind, this.#game.weather);
     }
@@ -185,11 +196,11 @@ class Unit implements Point {
         //TODO config directPath for comparison
         return this.#game.mapboard.bestPath(this, goal, moveCosts(this.kind, this.#game.weather));
     }
-    reach(range: number = 32) {
+    reach(range = 32) {
         return this.#game.mapboard.reach(this, range, moveCosts(this.kind, this.#game.weather));
     }
     moveTo(dst: MapPoint|null) {
-        let action = 'move';
+        let action: UnitEvent = 'move';
 
         if (this.location.unitid) {
             this.location.unitid = undefined;  // leave the current location
@@ -204,18 +215,18 @@ class Unit implements Point {
         } else {
             action = 'exit';
         }
-        this.#game.emit('unit', action, this);
+        this.status = action;
     }
     tryOrder() {
         if (this.tick == null) throw new Error('Unit:tryOrder tick not set');
 
-        let src = this.location,
+        const src = this.location,
             dst = this.#game.mapboard.neighborOf(src, this.orders[0]);  // assumes already validated
 
         if (dst == null) throw new Error("Unit.tryOrder: invalid order");
 
         if (dst.unitid != null) {
-            let opp = this.#game.oob.at(dst.unitid);
+            const opp = this.#game.oob.at(dst.unitid);
             if (opp.player != this.player) {
                 if (!this.#resolveCombat(opp)) {
                     this.tick++;
@@ -241,8 +252,8 @@ class Unit implements Point {
         // return 1 if target square is vacant
         if (!this.canAttack) return 0;
 
-        this.#game.emit('unit', 'attack', this);
-        this.#game.emit('unit', 'defend', opp);
+        this.status = 'attack';
+        opp.status = 'defend';
 
         let modifier = terraintypes[this.#game.mapboard.locationOf(opp).terrain].defence;
         if (opp.orders.length) modifier--;  // movement penalty
@@ -254,7 +265,7 @@ class Unit implements Point {
             this.#takeDamage(1, 5, true);
             if (!this.orders) return 0;
         }
-        let t = this.#game.mapboard.locationOf(opp).terrain;
+        const t = this.#game.mapboard.locationOf(opp).terrain;
         modifier = terraintypes[t].offence;
         str = modifyStrength(this.cstrng, modifier);
         if (str >= this.#game.rand.byte()) {
@@ -281,13 +292,13 @@ class Unit implements Point {
             this.moveTo(null);
             return 1;
         }
-        this.#game.emit('unit', 'damage', this);
+        this.status = 'damage';
 
         if (!checkBreak) return 0;
 
         // russian (& ger allies) break if cstrng <= 7/8 mstrng
         // german regulars break if cstrng < 1/2 mstrng
-        let brkpt = this.mstrng - (this.mstrng >> (this.resolute ? 1: 3));
+        const brkpt = this.mstrng - (this.mstrng >> (this.resolute ? 1: 3));
         if (this.cstrng < brkpt) {
             this.resetOrders();
 
@@ -296,8 +307,8 @@ class Unit implements Point {
                     nxtdir = this.#game.rand.bit() ? DirectionKey.north : DirectionKey.south,
                     dirs = [retreatDir, homedir,  nxtdir, (nxtdir + 2) % 4, (homedir + 2) % 4];
 
-                for (let dir of dirs) {
-                    let src = this.location,
+                for (const dir of dirs) {
+                    const src = this.location,
                         dst = this.#game.mapboard.neighborOf(src, dir);
                     if (!dst || dst.unitid != null || this.#game.oob.zocBlocked(this.player, src, dst)) {
                         if (this.#takeDamage(0, 5)) return 1;  // dead
@@ -330,8 +341,8 @@ class Unit implements Point {
             }
         }
         while(fail < supply.maxfail[this.#game.weather]) {
-            let dst = this.#game.mapboard.locationOf(loc.next(dir)),
-                cost = 0;
+            const dst = this.#game.mapboard.locationOf(loc.next(dir));
+            let cost = 0;
 
             if (this.#game.mapboard.boundaryDistance(this, player.homedir) < 0) {
                 return 1;
@@ -355,8 +366,8 @@ class Unit implements Point {
         return 0;
     }
     score() {
-        let v = 0,
-            dist = this.#game.mapboard.boundaryDistance(this, players[this.player].homedir);
+        const dist = this.#game.mapboard.boundaryDistance(this, players[this.player].homedir);
+        let v = 0;
         // see M.ASM:4050 - note even inactive units are scored based on future arrival/strength
         if (this.player == PlayerKey.German) {
             // maxlon + 2 == #$30 per M.ASM:4110
@@ -374,7 +385,7 @@ class Unit implements Point {
         if (debug && this.ifr !== undefined && this.ifrdir !== undefined) {
             s += `ifr: ${this.ifr}; `;
             s += Object.entries(directions)
-                .map(([i, d]) => `${d.label}: ${this.ifrdir![+i]}`).join(' ') + '\n';
+                .map(([i, d]) => `${d.label}: ${this.ifrdir[+i as DirectionKey]}`).join(' ') + '\n';
             s += this.objective
                 ? `obj: lon ${this.objective.lon} lat ${this.objective.lat}\n`
                 : 'no objective\n'
@@ -382,7 +393,6 @@ class Unit implements Point {
         return s;
     }
 }
-
 
 function modifyStrength(strength: number, modifier: number): number {
     if (modifier > 0) {
@@ -393,4 +403,4 @@ function modifyStrength(strength: number, modifier: number): number {
     return strength;
 }
 
-export {Unit};
+export {Unit, type UnitEvent};

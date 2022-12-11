@@ -10,19 +10,20 @@ interface SpriteColors {
     opacity?: number,
 }
 
-const enum GlyphAnimation {blink, flash};
+const enum GlyphAnimation {blink, flash, flash_reverse}
 
 interface SpriteOpts extends SpriteColors {
     animate?: GlyphAnimation,
     onclick?: (e: Event) => void,
     onmouseover?: (e: Event) => void,
     props?: {[k: string]: unknown},
-};
+}
 
 interface LayerColors extends SpriteColors {
     // controls default glyph fg/bg plus layer bg and decoration
     layerColor?: AnticColor,
 }
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface LayerOpts extends LayerColors {}
 
 interface Glyph extends SpriteOpts {
@@ -100,8 +101,8 @@ abstract class DisplayLayer implements LayerOpts {
 }
 
 class MappedDisplayLayer extends DisplayLayer {
-    x: number = 0;
-    y: number = 0;
+    x = 0;
+    y = 0;
     glyphs: (Glyph|undefined)[][];
 
     constructor(width: number, height: number, fontmap: FontMap, opts: LayerOpts = {}) {
@@ -134,7 +135,8 @@ class MappedDisplayLayer extends DisplayLayer {
         if (this.x == 0) this.y = (this.y + 1) % this.height;
     }
     puts(s: string, opts: LineOpts = {}) {
-        let {x, y, ...rest} = opts; // drop x and y
+        const {x: x0, y, ...rest} = opts; // drop x and y
+        let x = x0;
         switch (opts.justify) {
             case 'center': x = Math.floor((this.width - s.length)/2); break;
             case 'left': x = 0; break;

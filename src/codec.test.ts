@@ -36,7 +36,7 @@ test("zigzag is reversible", () => {
 })
 
 test("zigzag is compact", () => {
-    let xs: number[] = [], 
+    const xs: number[] = [],
         ys: number[] = [];
     for (let k=0; k<31; k++) {
         xs.push(k-15);
@@ -46,7 +46,7 @@ test("zigzag is compact", () => {
 })
 
 test("run-length is reversible", () => {
-    let vs = [0, 1, 1, 1, 1, 2, 2, 3, 4, 5, 5, 6, 7, 8, 8, 8];
+    const vs = [0, 1, 1, 1, 1, 2, 2, 3, 4, 5, 5, 6, 7, 8, 8, 8];
     expect(rldecode(rlencode(vs))).toEqual(vs);
 
     expect(rldecode(rlencode(vs, 4), 4)).toEqual(vs);
@@ -59,9 +59,9 @@ test("codec throws on negative", () => {
 test("codec uses 64 chrs", () => {
     // need to simulate a small-number-biased distrib with runs of zeros particularly
     // since that's the only way to get long sequences of 1s
-    let rng = lfsr24(112358),
+    const rng = lfsr24(112358),
         vs = [...Array(1<<12).keys()]
-            .map(k => Math.floor(Math.exp(10.*rng.bits(24)/(1<<24))) - 1),
+            .map(() => Math.floor(Math.exp(10*rng.bits(24)/(1<<24))) - 1),
         s = fibencode(vs),
         uniq = new Set(s);
     expect(uniq.size).toBe(64);

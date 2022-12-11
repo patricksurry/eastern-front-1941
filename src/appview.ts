@@ -1,7 +1,7 @@
 import m from 'mithril';
 import {DirectionKey, directions} from './defs';
-import type {AnticColor, DisplayLayer, MappedDisplayLayer, SpriteDisplayLayer} from './anticmodel';
-import {BlockComponent, DisplayAttr, GlyphAttr} from './anticview';
+import {AnticColor, DisplayLayer, MappedDisplayLayer, SpriteDisplayLayer} from './anticmodel';
+import {BlockComponent, DisplayAttr, GlyphAttr, type Glyph} from './anticview';
 import {antic2rgb, DisplayComponent, GlyphComponent} from './anticview';
 import {css, cx} from '@emotion/css';
 
@@ -17,6 +17,7 @@ interface ScreenModel {
     mapLayer: MappedDisplayLayer,
     labelLayer: SpriteDisplayLayer,
     unitLayer: SpriteDisplayLayer,
+    kreuzeLayer: SpriteDisplayLayer,
     maskLayer: MappedDisplayLayer,
 }
 
@@ -27,7 +28,7 @@ interface FlagModel {
     zoom: boolean,
 }
 
-interface LayerAttrs {hscr: HelpScreenModel, scr: ScreenModel, flags: FlagModel};
+interface LayerAttrs {hscr: HelpScreenModel, scr: ScreenModel, flags: FlagModel}
 
 const Layout: m.Component<LayerAttrs> = {
     view: ({attrs: {hscr, scr, flags}}) => {
@@ -73,9 +74,10 @@ const GameComponent: m.Component<{scr: ScreenModel, flags: FlagModel}> = {
     },
     view: ({attrs: {flags, scr: {
             dateWindow, infoWindow, errorWindow,
-            mapLayer, labelLayer, unitLayer, maskLayer}}}) => {
+            mapLayer, labelLayer, unitLayer, kreuzeLayer, maskLayer}}}) => {
         return [
-            m(DisplayComponent, {   // double-width date-window
+            // double-width date-window at the top
+            m(DisplayComponent, {
                 display: dateWindow,
                 class: ['game', css`
                     transform-origin: top left;
@@ -83,12 +85,14 @@ const GameComponent: m.Component<{scr: ScreenModel, flags: FlagModel}> = {
                 `],
             }),
             m(DividerComponent, {color: 0x1A}),
+            // central fixed-size window containing the scrollable map
             m('.map-scroller', {
                     class: css`
                         height: 144px;
                         overflow: scroll;
                     `,
                 },
+                // the full-sized map
                 m('.map-panel', {
                         class: css`
                             /* 48 x 41  8px sq cells */
@@ -107,50 +111,77 @@ const GameComponent: m.Component<{scr: ScreenModel, flags: FlagModel}> = {
                         style: {transform: flags.zoom ? 'scale(2)': null},
                     },
                     [
+                        // bottom layer showing terrain
                         m(DisplayComponent, {
                             display: mapLayer,
-                            class: ['terrain', css`
-                                .display-layer, .glyph-foreground {
-                                    transition: background-color 1s linear;
-                                }
-                            `],
+                            class: [
+                                'terrain',
+                                css`
+                                    .display-layer, .glyph-foreground {
+                                        transition: background-color 1s linear;
+                                    }
+                                `
+                            ],
                         }),
+                        // conditionally show text labels near cities
                         flags.extras ? m(DisplayComponent, {
                             display: labelLayer,
                             glyphComponent: LabelComponent,
-                            class: ['labels', css`
-                                pointer-events: none;
-                            `],
+                            class: [
+                                'labels',
+                                css`
+                                    pointer-events: none;
+                                `
+                            ],
                         }) : null,
+                        // layer with unit icons as sprites
+                        //TODO does flags conditional work with dirty indicator
                         m(DisplayComponent, {
                             display: unitLayer,
-                            glyphComponent: flags.extras ? HealthBarGlyphComponent: undefined,
-                            class: ['units', css`
-                                .glyph {
-                                    transition: transform 250ms linear;
-                                    transition: opacity 500ms linear;
-                                }
-                                .glyph-background, .glyph-foreground {
-                                    transition: background-color 1s linear;
-                                }
-                            `],
+                            glyphComponent: flags.extras ? HealthBarGlyphComponent: GlyphComponent,
+                            class: [
+                                'units',
+                                css`
+                                    .glyph {
+                                        transition: transform 250ms linear;
+                                        transition: opacity 500ms linear;
+                                    }
+                                    .glyph-background, .glyph-foreground {
+                                        transition: background-color 1s linear;
+                                    }
+                                `
+                            ],
                         }),
+                        // conditionally show current order paths for all units
                         flags.extras ? m(SVGDisplayComponent, {
                             display: unitLayer,
-                            class: ['orders', css`
-                                opacity: 0.5;
-                            `],
+                            class: [
+                                'orders',
+                                css`
+                                    opacity: 0.5;
+                                `
+                            ],
                         }) : null,
+                        // conditionally show a semit-transparent mask to highlight unit reach
                         flags.extras ? m(DisplayComponent, {
                             display: maskLayer,
                             glyphComponent: BlockComponent,
-                            class: ['mask', css`
-                                opacity: 0.5;
-                                .glyph {
-                                    pointer-events: none;
-                                }
-                            `]
-                        }) : null
+                            class: [
+                                'mask',
+                                css`
+                                    opacity: 0.5;
+                                    .glyph {
+                                        pointer-events: none;
+                                    }
+                                `
+                            ]
+                        }) : null,
+                        // show animated orders for focussed unit
+                        m(DisplayComponent, {
+                            display: kreuzeLayer,
+                            glyphComponent: KreuzeComponent,
+                            class: ['kreuze'],
+                        }),
                     ]
                 ),
             ),
@@ -178,7 +209,7 @@ const DividerComponent: m.Component<DividerAttr> = {
 
 const LabelComponent: m.Component<GlyphAttr> = {
     view: ({attrs: {g: {props}, defaults: {foregroundColor}}}) => {
-        let label = props?.label as string;
+        const label = props?.label as string;
         return m('.' + css`
                 transform: translate(4px, -4px);
                 font-family: verdana;
@@ -194,16 +225,16 @@ const LabelComponent: m.Component<GlyphAttr> = {
     }
 }
 
-interface HealthBarAttr {cstrng?: number, mstrng?: number};
+interface HealthBarAttr {cstrng?: number, mstrng?: number}
 
 const HealthBarGlyphComponent: m.Component<GlyphAttr> = {
     view: ({attrs: {g, f, defaults}}) => {
         // add an optional health bar
-        let {cstrng, mstrng} = (g.props ?? {}) as HealthBarAttr;
-        if (cstrng == null || mstrng == null) return;
+        const {cstrng, mstrng} = (g.props ?? {}) as HealthBarAttr;
         return [
             m(GlyphComponent, {g, f, defaults}),
-            m('.' + css`
+            (cstrng != null && mstrng != null)
+            ? m('.' + css`
                     position:  absolute;
                     bottom: 0;
                     right: 0;
@@ -230,7 +261,7 @@ const HealthBarGlyphComponent: m.Component<GlyphAttr> = {
                         {style: {width: `${100 * cstrng/mstrng}%`}},
                     )
                 )
-            )
+            ) : null,
         ]
     }
 }
@@ -259,8 +290,9 @@ const SVGDisplayComponent: m.Component<DisplayAttr> = {
                 {
                     transform: "scale(8)"
                 },
-                display.spritelist().map(g => {
-                    const orders = ((g.props ?? {}).orders as DirectionKey[]|undefined) ?? [];
+                display.spritelist().filter(g => g.props?.orders).map(g => {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    const orders = g.props!.orders as DirectionKey[];
                     return m('g',
                         {
                             key: g.key,
@@ -272,11 +304,44 @@ const SVGDisplayComponent: m.Component<DisplayAttr> = {
                             `
                         },
                         m(UnitPathComponent, {orders})
-                    )
+                    );
                 })
             )
         );
     }
+}
+
+function kreuzeAnimation(elt: HTMLElement, g: Glyph) {
+    const orders = (g.props?.orders ?? []) as DirectionKey[],
+        arrow = Object.values(directions).findIndex(d => d.icon == g.c) as DirectionKey|-1,
+        steps = [{
+            transform: 'translate(0px, 0px)',
+            opacity: orders.length && orders[0] == arrow ? 1: 0
+        }];
+    let dx = 0, dy = 0;
+    orders.forEach(d => {
+        const {dlon, dlat} = directions[d];
+        for (let i=0; i<2; i++) {
+            // take two half steps so opacity transition is quicker
+            dx -= dlon/2; dy -= dlat/2;
+            steps.push({transform: `translate(${dx*8}px, ${dy*8}px)`, opacity: d == arrow ? 1: 0});
+        }
+    })
+    if (arrow == -1) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        elt.style.transform = steps.pop()!.transform;
+    } else {
+        elt.getAnimations().forEach(a => a.cancel());
+        if (orders.length) {
+            elt.animate(steps, {duration: 500*orders.length, iterations: Infinity});
+        }
+    }
+}
+
+const KreuzeComponent: m.Component<GlyphAttr> = {
+    oncreate: ({dom, attrs: {g}}) => kreuzeAnimation(dom as HTMLElement, g),
+    onupdate: ({dom, attrs: {g}}) => kreuzeAnimation(dom as HTMLElement, g),
+    view: GlyphComponent.view,
 }
 
 const UnitPathComponent: m.Component<{orders: DirectionKey[]}> = {
@@ -289,9 +354,7 @@ const UnitPathComponent: m.Component<{orders: DirectionKey[]}> = {
             s = "M0,0";
 
         orders.forEach(d => {
-            let dir = directions[d],
-                dx = dir.dlon,
-                dy = dir.dlat;
+            const {dlon: dx, dlat: dy} = directions[d];
             // add prev corner
             if (lastd == null) {
                 s = `M${dx*r},${dy*r}`;
@@ -300,7 +363,7 @@ const UnitPathComponent: m.Component<{orders: DirectionKey[]}> = {
                 if (turn == 0) {
                     s += ` l${dx*2*r},${dy*2*r}`;
                 } else if (turn % 2) {
-                    let cx = (dx + directions[lastd].dlon)*r,
+                    const cx = (dx + directions[lastd].dlon)*r,
                         cy = (dy + directions[lastd].dlat)*r;
                     s += ` a${r},${r} 0 0 ${turn==1?0:1} ${cx},${cy}`
                 }

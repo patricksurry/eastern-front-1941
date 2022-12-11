@@ -1,5 +1,5 @@
 import {DirectionKey, WeatherKey, UnitKindKey, moveCosts} from './defs';
-import {MapPoint, GridPoint, Mapboard} from './map';
+import {GridPoint, Mapboard} from './map';
 import {Game} from './game';
 
 //TODO test cities <=> city terrain       console.assert(loc.terrain == Terrain.city, `Expected city terrain for ${city}`);
@@ -17,8 +17,8 @@ test("Location.fromid round-trip failed", () => {
 })
 
 test("Consistent self locations", () => {
-    mapboard.locations.forEach((row, y) =>
-        row.forEach((loc, x) => mapboard.valid(loc) && expect(mapboard.locationOf(loc).id).toBe(loc.id)))
+    mapboard.locations.forEach(row =>
+        row.forEach(loc => mapboard.valid(loc) && expect(mapboard.locationOf(loc).id).toBe(loc.id)))
 })
 
 test("unique locations", () => {
@@ -61,7 +61,7 @@ test("squareSpiral sizes", () => {
 })
 
 test("squareSpiral ids", () => {
-    let ids = new Set(GridPoint.squareSpiral(loc34, 3).map(loc => loc.id));
+    const ids = new Set(GridPoint.squareSpiral(loc34, 3).map(loc => loc.id));
     expect(ids.size).toBe(9);
 })
 
@@ -70,17 +70,17 @@ test("even diameter squareSpiral should throw", () => {
 })
 
 test("directionFrom tie-breaking should be unbiased", () => {
-    let bydir: Record<DirectionKey, number> = {0: 0, 1: 0, 2: 0, 3: 0},
-        nils = 0;
+    const bydir: Record<DirectionKey, number> = {0: 0, 1: 0, 2: 0, 3: 0};
+    let nils = 0;
     GridPoint.squareSpiral(loc34, 7)
         .forEach(loc => {
-            let dk = GridPoint.directionFrom(loc34, loc);
+            const dk = GridPoint.directionFrom(loc34, loc);
             if (dk != null) bydir[dk]++;
             else nils++;
         });
 
     // directionFrom(a, a) returns null, others are equally distributed
-    Object.entries(bydir).forEach(([k, v]) => expect(v).toBe(12));
+    Object.entries(bydir).forEach(([ , v]) => expect(v).toBe(12));
     expect(nils).toBe(1);
 })
 
@@ -88,11 +88,12 @@ const finn2 = mapboard.locationOf(new GridPoint(35, 38)),
     costs = moveCosts(UnitKindKey.infantry, WeatherKey.dry); // oob.at(42)
 
 test("Unexpected bestPath() for 2 Finn Inf", () => {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     expect(mapboard.bestPath(finn2, new GridPoint(36, 33), costs)!.orders.length).toBe(10);
 })
 
 test("Unexpected reach() for 2 Finn Inf", () => {
-    let data = mapboard.reach(finn2, 32, costs);
+    const data = mapboard.reach(finn2, 32, costs);
     expect(Object.keys(data).length).toBe(18);
     expect(Math.max(...Object.values(data))).toBeLessThanOrEqual(32);
 })

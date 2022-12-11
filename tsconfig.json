@@ -3,6 +3,7 @@
         "strict": true,
         "moduleResolution": "node",
         "target": "ES6",
-        "allowSyntheticDefaultImports": true
+        "allowSyntheticDefaultImports": true,
+        "noUnusedLocals": true,
     }
 }

@@ -23,7 +23,7 @@ type City = Point & {owner: PlayerKey, points: number, label: string};
 type MapVariant = {
     font: string, encoding: readonly [string, string], ascii: string, cities: readonly City[]
 } ;
-const enum MapVariantKey {apx, cart};
+const enum MapVariantKey {apx, cart}
 const mapVariants: Record<MapVariantKey, MapVariant> = {
     [MapVariantKey.apx]: {
         font: 'apx',

@@ -16,7 +16,7 @@ test("CORPT bit 4 is unused", () => {
 })
 
 test("Unit counts", () => {
-    let counts = [0, 0];
+    const counts = [0, 0];
     game.oob.forEach(u => counts[u.player]++);
     expect(counts).toEqual([55, 104])
 });
@@ -32,7 +32,7 @@ test("ZoC is calculated correctly", () => {
     in spiral ordering that's []. O . X . X X . .] => [5 0 2 5 4 7 6 3 0]
     */
 
-    let locs = GridPoint.squareSpiral({lon: 20, lat: 20}, 3)
+    const locs = GridPoint.squareSpiral({lon: 20, lat: 20}, 3)
             .map(p => game.mapboard.locationOf(p)),
         p0 = oob.findIndex(u => u.player == PlayerKey.German),
         p1 = oob.findIndex(u => u.player == PlayerKey.Russian);
@@ -41,6 +41,6 @@ test("ZoC is calculated correctly", () => {
     locs[3].unitid = p1;
     locs[5].unitid = p1;
     locs[6].unitid = p1;
-    let zocs = locs.map(loc => oob.zocAffecting(PlayerKey.German, loc));
+    const zocs = locs.map(loc => oob.zocAffecting(PlayerKey.German, loc));
     expect(zocs).toEqual([5,0,2,5,4,7,6,3,0]);
 });

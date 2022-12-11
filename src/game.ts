@@ -1,16 +1,21 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {wrap64, unwrap64, fibencode, fibdecode, rlencode, rldecode, bitsencode, bitsdecode} from './codec';
 import {sum, PlayerKey, monthdata, MonthKey, WeatherKey} from './defs';
 import {scenarios, ScenarioKey} from './scenarios';
-import {Mapboard} from './map';
+import {Mapboard, type MapEvent} from './map';
 import {Oob} from './oob';
+import type {Unit, UnitEvent} from './unit';
 import {lfsr24, GeneratorT} from './rng';
 
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
 
 const
     tokenPrefix = 'EF41',
     tokenVersion = 1,
     rlSigil = 6;  // highest 5-bit coded value, so values 0..3 (& 4,5) are unchanged by rlencode
+
+type GameEvent = 'turn' | 'tick';
+type MessageLevel = 'error'; // currently only error is defined
 
 class Game extends EventEmitter {
     scenario = ScenarioKey.apx;
@@ -32,6 +37,7 @@ class Game extends EventEmitter {
     constructor(token?: string) {
         super();
 
+/* TODO
         this.on('message', (typ, obj) => {
             if (this.listenerCount('message') == 1) {
                 let s = typeof obj === 'string' ? obj: obj.join('\n'),
@@ -39,11 +45,11 @@ class Game extends EventEmitter {
                 logger(s);
             }
         });
-
+*/
         let memento: number[] | undefined = undefined,
             seed: number | undefined = undefined;
         if (token != null) {
-            let payload = unwrap64(token, tokenPrefix);
+            const payload = unwrap64(token, tokenPrefix);
 
             seed = bitsdecode(payload, 24);
             memento = rldecode(fibdecode(payload), rlSigil);
@@ -64,6 +70,22 @@ class Game extends EventEmitter {
 
         if (memento && memento.length != 0) throw new Error("Game: unexpected save data overflow");
     }
+    emit(event: 'game', action: GameEvent): boolean;
+    emit(event: 'map', action: MapEvent): boolean;
+    emit(event: 'unit', action: UnitEvent, u: Unit): boolean;
+    emit(event: 'message', level: MessageLevel, message: string): boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    emit(event: string, ...args: any[]): boolean {
+        return super.emit(event, ...args)
+    }
+    on(event: 'game', listener: (action: GameEvent) => void): this;
+    on(event: 'map', listener: (action: MapEvent) => void): this;
+    on(event: 'unit', listener: (action: UnitEvent, u: Unit) => void): this;
+    on(event: 'message', listener: (level: MessageLevel, message: string) => void): this;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    on(event: string, listener: (...args: any[]) => void): this {
+        return super.on(event, listener)
+    }
     get memento() {
         // return a list of uint representing the state of the game
         return [
@@ -80,7 +102,7 @@ class Game extends EventEmitter {
         );
     }
     get token() {
-        let payload = ([] as number[]).concat(
+        const payload = ([] as number[]).concat(
             bitsencode(this.rand.state(), 24),
             fibencode(rlencode(this.memento, rlSigil))
         );
@@ -91,7 +113,7 @@ class Game extends EventEmitter {
         return this;
     }
     #setDates(start: Date) {
-        let dt = new Date(start);
+        const dt = new Date(start);
         this.date = new Date(dt.setDate(dt.getDate() + 7 * this.turn));
         this.month = this.date.getMonth() as MonthKey;     // note JS getMonth is 0-indexed
         this.weather = monthdata[this.month].weather;
@@ -104,22 +126,21 @@ class Game extends EventEmitter {
         this.mapboard.newTurn(initialize);
         this.oob.newTurn(initialize);
 
-        this.emit('game', 'turn', this);
+        this.emit('game', 'turn');
     }
     nextTurn(delay?: number) {
         // process the orders for this turn, if delay we tick asynchrnously,
         // otherwise we resolve synchronously
         // either way we proceed to subsequent startTurn or game end
-        let tick = 0,
-            g = this;  // for the closure
+        let tick = 0;
 
         this.oob.scheduleOrders();
 
         // Set up for a sync or async loop
-        function tickTock() {
-            g.oob.executeOrders(tick);
-            g.emit('game', 'tick', tick);
-            let next = ++tick < 32 ? tickTock : () => g.#newTurn();
+        const tickTock = () => {
+            this.oob.executeOrders(tick);
+            this.emit('game', 'tick');
+            const next = ++tick < 32 ? tickTock : () => this.#newTurn();
             if (delay) setTimeout(next, delay);
             else next();
         }
@@ -127,9 +148,9 @@ class Game extends EventEmitter {
     }
     score(player: PlayerKey): number {
         // M.asm:4050
-        let eastwest = sum(this.oob.map(u => u.score() * (u.player == player ? 1: -1))),
-            bonus = sum(this.mapboard.cities.filter(c => c.owner == player).map(c => c.points)),
-            score = Math.max(0, eastwest) + bonus;
+        const eastwest = sum(this.oob.map(u => u.score() * (u.player == player ? 1: -1))),
+            bonus = sum(this.mapboard.cities.filter(c => c.owner == player).map(c => c.points));
+        let score = Math.max(0, eastwest) + bonus;
         if (this.handicap) score >>= 1;
         return score;
     }

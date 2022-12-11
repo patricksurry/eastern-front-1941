@@ -8,7 +8,7 @@ import {Game} from './game';
 import {type MapPoint, GridPoint} from './map';
 
 type UnitPredicate = (u: Unit, index: number) => boolean;
-type UnitMap = (u: Unit, index: number) => any;
+type UnitMap<T> = (u: Unit, index: number) => T;
 type UnitForeach = (u: Unit, index: number) => void;
 
 class Oob {
@@ -21,11 +21,12 @@ class Oob {
         this.#game = game;
 
         if (memento) {
-            let scheduled: Unit[] = this.filter(u => u.scheduled <= game.turn);
-            if (memento.length < scheduled.length) 
+            const scheduled: Unit[] = this.filter(u => u.scheduled <= game.turn);
+            if (memento.length < scheduled.length)
                 throw new Error('Oob: malformed save data for scheduled unit status');
             scheduled.forEach(u => {
-                    let status: number = memento.shift()!;
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    const status: number = memento.shift()!;
                     if (status == 1) { // eliminated
                         //TODO via unit function to match with unit elimination code
                         u.mstrng = 0;
@@ -35,57 +36,62 @@ class Oob {
                         u.arrive = game.turn + 1;
                     }
                 });
-            let active = this.activeUnits(),
+            const active = this.activeUnits(),
                 human = active.filter(u => u.human);
 
             if (memento.length < 4*active.length + human.length)
                 throw new Error('oob: malformed save data for active unit properties');
-            
-            let lats = zagzig(memento.splice(0, active.length)),
+
+            const lats = zagzig(memento.splice(0, active.length)),
                 lons = zagzig(memento.splice(0, active.length)),
                 mstrs = zagzig(memento.splice(0, active.length)),
                 cdmgs = memento.splice(0, active.length),
-                nords = memento.splice(0, human.length),
-                lat = 0, lon = 0, mstr = 255;
+                nords = memento.splice(0, human.length);
+            let lat = 0, lon = 0, mstr = 255;
             active.forEach(u => {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 lat += lats.shift()!;
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 lon += lons.shift()!;
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 mstr += mstrs.shift()!;
                 [u.lat, u.lon, u.mstrng] = [lat, lon, mstr];
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 u.cstrng = u.mstrng - cdmgs.shift()!;
             });
             if (memento.length < sum(nords))
                 throw new Error('oob: malformed save data for unit orders');
             human.forEach(u => {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 u.orders = memento.splice(0, nords.shift()!);
             });
         }
     }
-    at(index: number): Unit { 
+    at(index: number): Unit {
         const u = this.#units.at(index);
         if (!u) throw new Error(`Oob.at(${index}): Invalid unit index`);
         return u;
     }
-    every(f: UnitPredicate) { return this.#units.every(f) } 
+    every(f: UnitPredicate) { return this.#units.every(f) }
     some(f: UnitPredicate) { return this.#units.some(f) }
     filter(f: UnitPredicate) { return this.#units.filter(f) }
     find(f: UnitPredicate) { return this.#units.find(f) }
     findIndex(f: UnitPredicate) { return this.#units.findIndex(f) }
     forEach(f: UnitForeach) { this.#units.forEach(f); }
-    map(f: UnitMap) { return this.#units.map(f); }
+    map<T>(f: UnitMap<T>) { return this.#units.map(f); }
     slice(start?: number, end?: number) { return this.#units.slice(start, end)}
 
     get memento() {
-        let lats: number[] = [], 
-            lons: number[] = [], 
-            mstrs: number[] = [], 
-            cdmgs: number[] = [], 
-            nords: number[] = [], 
-            ords: number[] = [],
-            lat = 0, lon = 0, mstr = 255;
+        const lats: number[] = [],
+            lons: number[] = [],
+            mstrs: number[] = [],
+            cdmgs: number[] = [],
+            nords: number[] = [],
+            ords: number[] = [];
+        let lat = 0, lon = 0, mstr = 255;
 
         // for scheduled units, status = 0 (active), 1 (dead), 2 (delayed)
-        let scheduled = this.filter(u => u.scheduled <= this.#game.turn),
+        const scheduled = this.filter(u => u.scheduled <= this.#game.turn),
             status = scheduled.map(u => u.active ? 0: (u.cstrng == 0 ? 1: 2)),
             active = scheduled.filter(u => u.active);
 
@@ -98,7 +104,7 @@ class Oob {
             cdmgs.push(u.mstrng - u.cstrng);
             if (u.human) {
                 nords.push(u.orders.length);
-                ords = ords.concat(u.orders);
+                ords.push(...u.orders);
             }
         });
 
@@ -112,6 +118,7 @@ class Oob {
             // TODO trace supply, with CSTR >> 1 if not, russian MSTR+2 (for apx)
             this.reinforce();
         }
+        this.activeUnits().forEach(u => u.status = undefined);
     }
     activeUnits(player?: number): Unit[] {
         return this.filter((u: Unit) => u.active && (player == null || u.player == player));

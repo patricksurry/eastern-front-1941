@@ -1,7 +1,7 @@
 import m from 'mithril';
 import type {AnticColor, Glyph, Sprite, DisplayLayer, FontMap, LayerOpts} from './anticmodel';
 import {GlyphAnimation} from './anticmodel';
-import {css, cx, keyframes} from '@emotion/css';
+import {css, cx} from '@emotion/css';
 
 const
     // Antic NTSC palette via https://en.wikipedia.org/wiki/List_of_video_game_console_palettes#NTSC
@@ -33,12 +33,12 @@ function antic2rgb(color?: AnticColor): string|undefined {
     return anticPaletteRGB[color >> 1];
 }
 
-interface GlyphAttr {g: Glyph, f: FontMap, defaults: LayerOpts};
-interface SpriteAttr extends GlyphAttr {g: Sprite, gc: m.Component<GlyphAttr>};
+interface GlyphAttr {g: Glyph, f: FontMap, defaults: LayerOpts}
+interface SpriteAttr extends GlyphAttr {g: Sprite, gc: m.Component<GlyphAttr>}
 interface DisplayAttr {
     display: DisplayLayer,
     glyphComponent?: m.Component<GlyphAttr>,
-    class?: string | string[],
+    class?: string | string[],  //TODO dagngerous if class is non-constant with display.dirty
 }
 
 const DisplayComponent: m.Component<DisplayAttr> = {
@@ -52,9 +52,10 @@ const DisplayComponent: m.Component<DisplayAttr> = {
             f = display.fontmap,
             sz = f.glyphSize,
             mx = f.glyphsPerRow * sz,
-            my = Math.ceil(f.numGlyphs / f.glyphsPerRow) * sz;
+            my = Math.ceil(f.numGlyphs / f.glyphsPerRow) * sz,
+            visible = (display.opacity ?? 1) > 0;
 
-//TODO clean up the styles here and (maybe?) do pointer-events none for transparent
+//TODO clean up the styles here
         return m('.display-layer', {
                 class: cx(
                     css`
@@ -69,7 +70,7 @@ const DisplayComponent: m.Component<DisplayAttr> = {
                             width: ${sz}px;
                             height: ${sz}px;
                             background-color: ${antic2rgb(display.backgroundColor)};
-                            pointer-events: ${display.backgroundColor != null ? 'auto':'none'}
+                            pointer-events: ${visible && display.backgroundColor != null ? 'auto':'none'}
                         }
                         .glyph-foreground {
                             width: 100%;
@@ -79,7 +80,7 @@ const DisplayComponent: m.Component<DisplayAttr> = {
                             -webkit-mask-image: url(${f.maskImage});
                             -webkit-mask-size: ${mx}px ${my}px;
                             background-color: ${antic2rgb(display.foregroundColor)};
-                            pointer-events: ${display.foregroundColor != null ? 'auto':'none'}
+                            pointer-events: ${visible && display.foregroundColor != null ? 'auto':'none'}
                         }
                     `,
                     ...(typeof(kls) === 'string' ? [kls]: kls)
@@ -92,15 +93,50 @@ const DisplayComponent: m.Component<DisplayAttr> = {
     }
 }
 
+function maybeAnimate(elt: Element, animate: GlyphAnimation|undefined, f: FontMap) {
+    if (animate == null) {
+        elt.getAnimations().forEach(a => a.cancel());
+        return;
+    }
+    switch (animate) {
+        case GlyphAnimation.blink:
+            elt.animate(
+                [
+                    {opacity: 0.0},
+                    {opacity: 0.0},
+                    {opacity: 1.0},
+                    {opacity: 1.0},
+                ],
+                {duration: 1000, easing: 'ease-in', iterations: Infinity}
+            );
+            break;
+        case GlyphAnimation.flash:
+        case GlyphAnimation.flash_reverse:
+            {
+                const dir = animate == GlyphAnimation.flash ? 'normal': 'reverse';
+                elt.animate(
+                    [
+                        {'-webkit-mask-image': 'none'},
+                        {'-webkit-mask-image': `url(${f.maskImage})`},
+                    ],
+                    {duration: 250, iterations: Infinity, direction: dir}
+                );
+            }
+            break;
+        default: {
+            const fail: never = animate;
+            throw new Error(`Unhandled animation type: ${fail}`)
+        }
+    }
+
+}
+
 const SpriteComponent: m.Component<SpriteAttr> = {
+    oncreate: ({dom, attrs: {g: {animate}, f}}) => maybeAnimate(dom, animate, f),
+    onupdate: ({dom, attrs: {g: {animate}, f}}) => maybeAnimate(dom, animate, f),
     view: ({attrs: {g, f, gc, defaults}}) => {
         const sz = f.glyphSize,
-            kf = keyframes`
-                0% {opacity: 1.0;}
-                50% {opacity: 1.0;}
-                75% {opacity:  0.0;}
-                100% {opacity: 0.0;}
-            `;
+            visible = (g.opacity ?? 1) > 0;
 
         return m('.glyph',
             {
@@ -109,9 +145,8 @@ const SpriteComponent: m.Component<SpriteAttr> = {
                 style: {
                     opacity: g.opacity,
                     'background-color': antic2rgb(g.backgroundColor),
-                    'pointer-events': g.backgroundColor != null ? 'auto': null,
+                    'pointer-events': visible && g.backgroundColor != null ? 'auto': null,
                     transform: `translate(${g.x * sz}px, ${g.y * sz}px)`,
-                    animation: g.animate == GlyphAnimation.blink ? `${kf} 1.0s ease-in infinite`: undefined,
                 },
             },
             m(gc, {g, f, defaults})
@@ -125,23 +160,21 @@ const BlockComponent: m.Component<GlyphAttr> = {
 }
 
 const GlyphComponent: m.Component<GlyphAttr> = {
+    oncreate: ({dom, attrs: {g: {animate}, f}}) => maybeAnimate(dom, animate, f),
+    onupdate: ({dom, attrs: {g: {animate}, f}}) => maybeAnimate(dom, animate, f),
     view: ({attrs: {g, f}}): m.Children => {
         const {glyphSize: sz, glyphsPerRow: nc} = f,
-            kf = keyframes`
-                0% {-webkit-mask-image: none; }
-                100% {-webkit-mask-image: url(${f.maskImage});
-            `;
+            visible = (g.opacity ?? 1) > 0;
 
         return m('.glyph-foreground', {
             style: {
                 'background-color': antic2rgb(g.foregroundColor),
-                'pointer-events': g.foregroundColor != null ? 'auto': null,
+                'pointer-events': visible && g.foregroundColor != null ? 'auto': null,
                 '-webkit-mask-position': `${-(g.c % nc) * sz}px ${-Math.floor(g.c / nc) * sz}px`,
-                animation: g.animate == GlyphAnimation.flash ? `${kf} 0.25s infinite` : undefined,
             }
         })
     }
 }
 
-export type {DisplayAttr, GlyphAttr};
+export type {DisplayAttr, GlyphAttr, Glyph};
 export {antic2rgb, DisplayComponent, GlyphComponent, BlockComponent};

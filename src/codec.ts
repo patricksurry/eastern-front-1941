@@ -6,9 +6,9 @@
 import {memoize} from './defs';
 
 const chrs64 = [
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 
-    'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 
-    'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
+    'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
+    'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
     'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '-', '_'
 ] as const;
 
@@ -48,7 +48,7 @@ function str2seq(s: string): uint6[] {
 
 /** convert payload to string, wrapping with optional prefix string, length marker, and CRC check */
 function wrap64(payload: uint6[], prefix: string, length_maxbits = 12): string {
-    let seq = ([] as number[]).concat(
+    const seq = ([] as number[]).concat(
         bitsencode(payload.length, length_maxbits),
         payload,
         fletcher6(payload),
@@ -57,22 +57,22 @@ function wrap64(payload: uint6[], prefix: string, length_maxbits = 12): string {
 }
 
 /** unwrap payload to seqas wrapped by wrap64, ignoring garbage and trailing characters */
-function unwrap64(s: string, prefix: string, length_maxbits: number = 12): uint6[] {
+function unwrap64(s: string, prefix: string, length_maxbits = 12): uint6[] {
     prefix ||= '';
 
     // check prefix
     if (!s.startsWith(prefix)) throw new Error(`unwrap64: string didn't start with expected prefix '${prefix}'`);
 
     // remove prefix and extraenous characters, and convert to seq<uint64>
-    let seq = str2seq(s.slice(prefix.length).replace(/[^-\w]/g, ''));
+    const seq = str2seq(s.slice(prefix.length).replace(/[^-\w]/g, ''));
 
     // get payload length
-    let n = bitsdecode(seq, length_maxbits);
+    const n = bitsdecode(seq, length_maxbits);
     if (seq.length < n + 2) {
         throw new Error(`unwrap: expected at least ${n} + 2 characters after length marker, got ${seq.length}`);
     }
     // get payload and compute checksum
-    let payload = seq.slice(0, n),
+    const payload = seq.slice(0, n),
         chk = fletcher6(payload);
 
     // validate checksum
@@ -100,7 +100,7 @@ function fletcher6(seq: uint6[], modulus = 61): [uint6, uint6] {
 function bitsencode(n: uint, nbits: uint): uint6[] {
     if (!isuint(n) || n >= (1<<nbits))
         throw new Error(`bitsencode: value ${n} exceeds max ${1 << nbits}`)
-    let seq: number[] = [];
+    const seq: number[] = [];
     for (let i=0; i<Math.ceil(nbits/6); i++) {
         seq.push(n & 0x3f);
         n >>= 6;
@@ -113,13 +113,12 @@ function bitsencode(n: uint, nbits: uint): uint6[] {
  * modifying seq in place
  */
 function bitsdecode(seq: uint6[], nbits: uint): uint {
-    let nchars = Math.ceil(nbits/6);
+    const nchars = Math.ceil(nbits/6);
     if (nchars > seq.length) {
         throw new Error(`bitsdecode: expected at least ${nchars} characters, got ${seq.length}`);
     }
-    let n = 0,
-        us = seq.splice(0, nchars);
-    us.reverse().forEach(u => {n = (n << 6) + u});
+    let n = 0;
+    seq.splice(0, nchars).reverse().forEach(u => {n = (n << 6) + u});
     return n;
 }
 
@@ -157,7 +156,7 @@ function _fibdecode_uint(bits: uint): uint {
     if (!(isuint(bits) && bits >= 3)) throw new Error(`fibdecode_uint: Invalid encoded integer: ${bits.toString(2)}`)
 
     // sum the fibonacci numbers represented by the bit pattern, ignoring the MSB flag
-    var n=0;
+    let n = 0;
     for(let k=2; bits > 1; k++) {
         if (bits & 0x1) n += fib(k);
         bits >>= 1;
@@ -170,12 +169,13 @@ const fibdecode_uint = memoize(_fibdecode_uint);
 function fibencode(vs: uint[]): uint[] {
     if (typeof vs === 'number') return fibencode([vs]);
     if (!vs.every(isuint)) throw new Error(`fibencode: Expected list of unsigned integers ${vs}`);
-    let fibs = vs.map(fibencode_uint),
-        seq: number[] = [],
-        bits = 0,
+    const fibs = vs.map(fibencode_uint),
+        seq: number[] = [];
+    let bits = 0,
         k = 0,
         lead_bit = 0x1;
     while (fibs.length && k < 6) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         bits |= fibs.shift()! << k;
         while (lead_bit <= bits) {
             k++;
@@ -194,12 +194,13 @@ function fibencode(vs: uint[]): uint[] {
 
 /** Decode prefix-free Fibonacci coding chunked into seq<64> by fibencode() to recover original seq<uint> */
 function fibdecode(seq: uint[]): uint[] {
-    let vs: number[] = [],
-        bitseq = 0,
+    const vs: number[] = [];
+    let bitseq = 0,
         m = 0,
         mask = 0x3,
         k = 2;
     while (seq.length) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         bitseq |= (seq.shift()! << m);
         m += 6;
         while (k <= m) {
@@ -239,10 +240,10 @@ function rlencode(vs: uint[], marker = 0, vsize = fibencsize): uint[] {
 
     const rptlen = vsize(marker) + vsize(0);
 
-    let zs: number[] = [],
-        prev = -1,
-        repeat = 0,
+    const zs: number[] = [],
         seq = vs.map(v => v >= marker ? v + 1: v);
+    let prev = -1,
+        repeat = 0;
 
     seq.push(-1);  // dummy to make sure we flush final value(s)
     seq.forEach(v => {
@@ -272,17 +273,20 @@ function rldecode(zs: uint[], marker = 0, vsize = fibencsize): uint[] {
     if (!zs.every(isuint)) throw new Error(`rldecode: Expected list of unsigned integers: ${zs}`);
     if (!isuint(marker)) throw new Error(`rldecode: Expected unsigned integer marker: ${marker}`);
 
-    const rptlen = vsize(marker) + vsize(0);
+    const rptlen = vsize(marker) + vsize(0),
+        vs: number[] = [];
 
-    let vs: number[] = [];
     while(zs.length) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         let v = zs.shift()!;
         if (v != marker) {
             vs.push(v > marker ? v - 1: v);
         } else {
             if (zs.length < 2) throw new Error('rldecode: Malformed run definition');
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             v = zs.shift()!;
             const min_repeat = Math.ceil(rptlen/vsize(v)) + 1;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             let repeat = zs.shift()! + min_repeat;
             while(repeat--) vs.push(v);
         }
@@ -310,10 +314,10 @@ function ravel(vs: uint[]): uint {
     let z = 0, m = Math.max(...vs), bit = 1;
     if (!vs.every(isuint)) throw new Error(`ravel: Expected list of unsigned integers: ${vs}`);
     while(m) {
-        vs = vs.map(v => { 
-            if (v & 1) z |= bit; 
+        vs = vs.map(v => {
+            if (v & 1) z |= bit;
             bit <<= 1;
-            return v >> 1; 
+            return v >> 1;
         });
         m >>= 1;
     }

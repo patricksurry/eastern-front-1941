@@ -3,9 +3,7 @@ import {OobVariantKey} from './oob-data';
 import {MapVariantKey} from './map-data';
 
 type Scenario = {label: string, map: MapVariantKey, oob: OobVariantKey, level: LevelKey, start: string};
-const enum ScenarioKey {
-    apx, learner, beginner, intermediate, advanced, expert41, expert42
-};
+const enum ScenarioKey {apx, learner, beginner, intermediate, advanced, expert41, expert42}
 const scenarios: Record<ScenarioKey, Scenario> = {
     [ScenarioKey.apx]: {
         label: 'APX MODE', map: MapVariantKey.apx, oob: OobVariantKey.apx, level: LevelKey.advanced, start: '1941/6/22'

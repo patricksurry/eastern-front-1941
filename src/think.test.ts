@@ -9,14 +9,14 @@ const game = new Game();
 
 test("Unexpected linePoints() values", () => {
     // set up the linepts position from the PDF diagram, and test from all directions
-    let p = new GridPoint(102, 102),
+    const p = new GridPoint(102, 102),
         sq = GridPoint.squareSpiral(p, 5),
         occ: number[] = [[103, 103], [103, 101], [103, 100], [102, 102], [101, 101]].map(
             ([lon, lat]) => new GridPoint(lon, lat).id
         ),
         occfn = (pt: GridPoint) => occ.includes(pt.id);
 
-    let linepts = Object.keys(directions).map((d) =>
+    const linepts = Object.keys(directions).map((d) =>
         privateExports.linePoints(privateExports.sortSquareFacing(p, 5, +d, sq), 5, occfn));
     expect(linepts).toEqual([104, 162, 16, 146]);
 });
@@ -29,14 +29,14 @@ test("AI metrics", () => {
     game.turn = 0;
     game.oob.filter(u => u.arrive == 0).forEach(u => game.mapboard.locationOf(u).unitid = u.id);
 
-    let {ofr, friend, foe} = privateExports.calcForceRatios(game.oob, PlayerKey.Russian);
+    const {ofr, friend, foe} = privateExports.calcForceRatios(game.oob, PlayerKey.Russian);
     expect(friend).toBe(3533);          // $0d04 => 3332  actual 3533
     expect(foe).toBe(4705 - 205);       // $1261 => 4705  actual is 4500  but 205 gets double-counted
     // apx calculates ($12 << 3) / ($d >> 1) == 144 / 6 == 24 == $18
     // but we have 4500/3533*16 => 20
     expect(ofr).toBe(20);
 
-    let ai = new Thinker(game, PlayerKey.Russian),
+    const ai = new Thinker(game, PlayerKey.Russian),
         units = ai.think(),
         withobj = units.filter(u => u.objective),
         expected = {
@@ -59,16 +59,17 @@ test("AI metrics", () => {
     expect(withobj.map(u => u.id)).toEqual(expected.ids);
 
     expected.ifrdirs.forEach((s, i) => {
-        let actual = withobj.map(u => u.ifrdir[i]),
+        const actual = withobj.map(u => u.ifrdir[i]),
             wanted = hexvals(s);
 
         expect(actual).toEqual(wanted);
     });
 
+    /*
     let actual = withobj.map(u => u.ifr),
         wanted = hexvals(expected.ifrs);
-/*
-    // TODO test outcomes if we set APX IFRs to match
+
+        // TODO test outcomes if we set APX IFRs to match
     console.log('ifr')
     console.log(actual)
     console.log(wanted)

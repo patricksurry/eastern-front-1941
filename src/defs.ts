@@ -1,7 +1,7 @@
 import type {AnticColor} from './anticmodel';
 
 type Flag = 0 | 1;
-interface Point {lon: number, lat: number};
+interface Point {lon: number, lat: number}
 
 function sum(xs: number[]): number {
     return xs.reduce((s: number, x: number) => s + x, 0);
@@ -10,23 +10,22 @@ function sum(xs: number[]): number {
 function memoize<S, T>(fn: (x: S) => T): (x: S) => T {
     const cache = new Map<S, T>();
     const cached = function (x: S): T {
-        if (!cache.has(x)) {
-            cache.set(x, fn(x));
-        }
+        if (!cache.has(x)) cache.set(x, fn(x));
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         return cache.get(x)!;
     };
     return cached;
-};
+}
 
 // mimic logic from STKTABlon looking for zeroed pins
 // see https://forums.atariage.com/topic/275027-joystick-value-logic/:
-interface Direction {label: string, dlon: number, dlat: number, icon: number};
-const enum DirectionKey {north, east, south, west};
+interface Direction {label: string, dlon: number, dlat: number, icon: number}
+const enum DirectionKey {north, east, south, west}
 const directions: Record<DirectionKey, Direction> = {
-    [DirectionKey.north]: {label: 'N', dlon: 0,  dlat: 1,  icon: 257},   // up    1110 => 0
-    [DirectionKey.east]:  {label: 'E', dlon: -1, dlat: 0,  icon: 258},   // right 0111 => 1
-    [DirectionKey.south]: {label: 'S', dlon: 0,  dlat: -1, icon: 259},   // down  1101 => 2
-    [DirectionKey.west]:  {label: 'W', dlon: 1,  dlat: 0,  icon: 260},   // left  1011 => 3
+    [DirectionKey.north]: {label: 'N', dlon: 0,  dlat: 1,  icon: 0x81},   // up    1110 => 0
+    [DirectionKey.east]:  {label: 'E', dlon: -1, dlat: 0,  icon: 0x82},   // right 0111 => 1
+    [DirectionKey.south]: {label: 'S', dlon: 0,  dlat: -1, icon: 0x83},   // down  1101 => 2
+    [DirectionKey.west]:  {label: 'W', dlon: 1,  dlat: 0,  icon: 0x84},   // left  1011 => 3
 } as const;
 
 interface Supply {
@@ -36,7 +35,7 @@ interface Player {
     label: string, unit: string, color: AnticColor, homedir: DirectionKey, supply: Supply
 }
 // note we rely on Player.german = 1 - Player.russian and vice versa
-const enum PlayerKey {German, Russian};
+const enum PlayerKey {German, Russian}
 const players: Record<PlayerKey, Player> = {
     [PlayerKey.German]: {
         label: 'German',  unit: 'CORPS', color: 0x0C, homedir: DirectionKey.west,
@@ -58,7 +57,7 @@ const players: Record<PlayerKey, Player> = {
 const enum TerrainKey {
     clear, mountain_forest, city, frozen_swamp, frozen_river,
     swamp, river, coastline, estuary, impassable
-};
+}
 type WeatherCosts = readonly [number, number, number];
 type UnitKindCosts = readonly [WeatherCosts, WeatherCosts];
 interface Terrain {
@@ -110,8 +109,8 @@ const terraintypes: Record<TerrainKey, Terrain> = {
 } as const;
 
 // adds contrast color for optional labels
-interface Weather {label: string, earth: AnticColor, contrast: AnticColor};
-const enum WeatherKey {dry, mud, snow};
+interface Weather {label: string, earth: AnticColor, contrast: AnticColor}
+const enum WeatherKey {dry, mud, snow}
 const weatherdata: Record<WeatherKey, Weather> = {
     [WeatherKey.dry]:  {label: 'dry',  earth: 0x10, contrast: 0x06},
     [WeatherKey.mud]:  {label: 'mud',  earth: 0x02, contrast: 0x06},
@@ -120,8 +119,8 @@ const weatherdata: Record<WeatherKey, Weather> = {
 
 interface WaterState {
     dir: DirectionKey, terrain: readonly[TerrainKey, TerrainKey]
-};
-const enum WaterStateKey {freeze, thaw};
+}
+const enum WaterStateKey {freeze, thaw}
 const waterstate: Record<WaterStateKey, WaterState> = {
     [WaterStateKey.freeze]: {
         dir: DirectionKey.south, terrain: [TerrainKey.frozen_swamp, TerrainKey.frozen_river]
@@ -132,7 +131,7 @@ const waterstate: Record<WaterStateKey, WaterState> = {
 } as const;
 
 // combines D.asm:2690 TRTAB and 5430 SSNCOD, also annotated PDF p71 (labelled -63-)
-interface Month {label: string, trees: AnticColor, weather: WeatherKey, water?: WaterStateKey};
+interface Month {label: string, trees: AnticColor, weather: WeatherKey, water?: WaterStateKey}
 const enum MonthKey {
     Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec
 }
@@ -151,8 +150,8 @@ const monthdata: Record<MonthKey, Month> = {
     [MonthKey.Dec]: {label: "December",  trees: 0x12, weather: WeatherKey.snow},
 } as const;
 
-interface UnitKind {key: string, icon: number};
-const enum UnitKindKey {infantry, armor, air};
+interface UnitKind {key: string, icon: number}
+const enum UnitKindKey {infantry, armor, air}
 const unitkinds: Record<UnitKindKey, UnitKind> = {
     [UnitKindKey.infantry]: {key: 'infantry',   icon: 0x7d},
     [UnitKindKey.armor]:    {key: 'armor',      icon: 0x7e},
@@ -171,7 +170,7 @@ interface Level {
     label: string, ncity: number, mdmg: number, cdmg: number, cadj: number,
     fog: number, nunit: readonly [number, number], endturn: number, win: number,
 }
-const enum LevelKey {learner, beginner, intermediate, advanced, expert};
+const enum LevelKey {learner, beginner, intermediate, advanced, expert}
 const levels: Record<LevelKey, Level> = {
     [LevelKey.learner]: {label: "learner",  ncity: 1,  mdmg: 4, cdmg: 12, cadj: 255, fog: 0xff, nunit: [0x2,  0x31], endturn: 14, win: 5},
     [LevelKey.beginner]: {label: "beginner", ncity: 1,  mdmg: 4, cdmg: 12, cadj: 150, fog: 0xff, nunit: [0x12, 0x50], endturn: 14, win: 25},

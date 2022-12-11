@@ -1,4 +1,4 @@
-import {players, unitkinds, terraintypes, weatherdata, DirectionKey} from './defs';
+import {players, unitkinds, terraintypes, weatherdata, directions, DirectionKey} from './defs';
 import {ScenarioKey, scenarios} from './scenarios';
 import {Game} from './game';
 import {Unit} from './unit';
@@ -13,13 +13,10 @@ import m from 'mithril';
 /*
 TODO
 
+- using flags inside display component won't play nice with dirty flag
 - debug flag
-- change reach mask so it has transparent bkgrnd and uses new BlockGlyph to put
-mask elements outside reach
 
  - kill all logging inside game, just events
- - kill complex event properties/callbacks, switch to enumerated event type
- - trigger and catch a map event on city ownership change for repaint
 
      setZoom(zoomed: boolean, u: Unit | null) {
         var elt;
@@ -34,17 +31,13 @@ mask elements outside reach
         d3.select('#map-window .container').classed('doubled', zoomed);
         (elt as HTMLElement)!.scrollIntoView({block: "center", inline: "center"})
     }
-
-    function animateUnitPath(u: Unit | null) {
-...
 */
 
-const enum UIModeKey {setup, orders, resolve};
+const enum UIModeKey {setup, orders, resolve}
 
 const resume = window.location.hash.slice(1) || undefined;
 
-var game = new Game(resume),
-    uimode = resume ? UIModeKey.orders: UIModeKey.setup,
+const game = new Game(resume),
     flags: FlagModel = {
         help: resume ? false: true,
         extras: true,                      // whether to show extras
@@ -54,6 +47,8 @@ var game = new Game(resume),
     ai = Object.keys(players)
         .filter(player => +player != game.human)
         .map(player => new Thinker(game, +player));
+
+let uimode = resume ? UIModeKey.orders: UIModeKey.setup;
 
 const helpUrl = 'https://github.com/patricksurry/eastern-front-1941',
     helpText = `
@@ -100,6 +95,7 @@ const scr: ScreenModel = {
     mapLayer: new MappedDisplayLayer(0, 0, atasciiFont),
     labelLayer: new SpriteDisplayLayer(0, 0, atasciiFont),
     unitLayer: new SpriteDisplayLayer(0, 0, atasciiFont),
+    kreuzeLayer: new SpriteDisplayLayer(0, 0, atasciiFont),
     maskLayer: new MappedDisplayLayer(0, 0, atasciiFont),
 }
 
@@ -125,20 +121,44 @@ function paintHelp(h: HelpScreenModel) {
     }));
 }
 
-function setMap() {
+function initScreen() {
     const
         m = game.mapboard,
         font = fontMap(`static/fontmap-custom-${m.font}.png`, 128 + 6),
-        {width, height} = m.extent,
-        {lon: left, lat: top} = game.mapboard.locations[0][0].point;
+        {width, height} = m.extent;
 
     scr.mapLayer = new MappedDisplayLayer(width, height, font);
     scr.labelLayer = new SpriteDisplayLayer(width, height, font, {foregroundColor: undefined});
     scr.unitLayer = new SpriteDisplayLayer(width, height, font);
+    scr.kreuzeLayer = new SpriteDisplayLayer(width, height, font);
     scr.maskLayer = new MappedDisplayLayer(width, height, font, {backgroundColor: 0x00});
 
-    //TOOD repaint city if change ownership, with color animation
-    m.locations.forEach(row =>
+    paintMap();
+    paintCityLabels();
+    paintUnits();
+}
+
+function paintCityLabels() {
+    // these are static so never need redrawn, color changes via paintMap
+    const {lon: left, lat: top} = game.mapboard.locations[0][0].point;
+
+    game.mapboard.cities.forEach((c, i) => {
+        scr.labelLayer.put(
+            i.toString(), 32, left - c.lon, top - c.lat, {
+                props: {label: c.label}
+            }
+        )
+    });
+}
+
+function paintMap() {
+    const {earth, contrast} = weatherdata[game.weather];
+
+    scr.labelLayer.setcolors({foregroundColor: contrast});
+    scr.mapLayer.setcolors({layerColor: earth});
+    //TODO tree colors are updated in place in terrain defs :-(
+
+    game.mapboard.locations.forEach(row =>
         row.forEach(loc => {
             const t = terraintypes[loc.terrain],
                 city = loc.cityid != null ? game.mapboard.cities[loc.cityid] : null,
@@ -156,62 +176,61 @@ function setMap() {
             });
         })
     );
-
-    m.cities.forEach((c, i) => {
-        scr.labelLayer.put(
-            i.toString(), 32, left - c.lon, top - c.lat, {
-                props: {label: c.label}
-            }
-        )
-    });
 }
 
-function paintMap() {
-    const {earth, contrast} = weatherdata[game.weather];
-
-    scr.labelLayer.setcolors({foregroundColor: contrast});
-    scr.mapLayer.setcolors({layerColor: earth});
-    game.oob.forEach(u => paintUnit(u));
+function paintUnits() {
+    game.oob.forEach(paintUnit);
 }
 
-function paintUnit(u: Unit, focussed = false) {
+function paintUnit(u: Unit) {
     const
+        focussed = u === focus.u(),
         {earth} = weatherdata[game.weather],
-        {lon: left, lat: top} = game.mapboard.locations[0][0].point;
+        {lon: left, lat: top} = game.mapboard.locations[0][0].point,
+        ux = left - u.lon, uy = top - u.lat;
 
-    let p = u.point,
-        opts: SpriteOpts = {
+    let animation = undefined;
+    if (focussed && u.player == game.human) {
+        animation = GlyphAnimation.blink;
+
+        const props = {orders: u.orders};
+        scr.kreuzeLayer.put('#', 0x80, ux, uy, {foregroundColor: 0x1A, props}),
+        Object.values(directions).forEach(
+            d => scr.kreuzeLayer.put(d.label, d.icon, ux, uy, {foregroundColor: 0xDC, props})
+        )
+    } else if (u.status == 'attack') {
+        animation = GlyphAnimation.flash;
+    } else if (u.status == 'defend') {
+        animation = GlyphAnimation.flash_reverse;
+    }
+
+    const opts: SpriteOpts = {
             backgroundColor: earth,
             foregroundColor: players[u.player].color,
             opacity: u.active ? 1: 0,
-            animate: focussed ? GlyphAnimation.blink: undefined,
-            onclick: () => {
-                if (focus.u()?.id != u.id) focus.on(u)
-                else focus.off();
-            },
+            animate: animation,
             onmouseover: (e) => {
                 (e.currentTarget as HTMLElement).title = u.location.describe();
-            },
-            props: {
-                cstrng: u.cstrng,
-                mstrng: u.mstrng,
-                orders: u.orders,
-            },
+            }
         };
+    if (u.player == game.human || flags.debug) {
+        opts.props = {
+            cstrng: u.cstrng,
+            mstrng: u.mstrng,
+            orders: u.orders,
+        }
+    }
+    if (uimode == UIModeKey.orders) {
+        opts.onclick =  () => {
+            if (focus.u() !== u) focus.on(u)
+            else focus.off();
+        }
+    }
 
-    scr.unitLayer.put(
-        u.id.toString(),
-        unitkinds[u.kind].icon,
-        left - p.lon, top - p.lat,
-        opts,
-    )
+    scr.unitLayer.put( u.id.toString(), unitkinds[u.kind].icon, ux, uy, opts)
 }
 
-function paintReach(u?: Unit) {
-    if (!u) {
-        scr.maskLayer.cls();  // remove all mask glyphs
-        return;
-    }
+function paintReach(u: Unit) {
     const {lon: left, lat: top} = game.mapboard.locations[0][0].point,
         reachmap = u.reach();
 
@@ -229,7 +248,7 @@ function setScenario(scenario: ScenarioKey | null, inc?: number) {
     so < > increments scenario, # picks directly
 */
     inc ??= 0;
-    let n = Object.keys(scenarios).length;
+    const n = Object.keys(scenarios).length;
 
     if (scenario == null) {
         scenario = (game.scenario + inc + n) % n;
@@ -238,12 +257,11 @@ function setScenario(scenario: ScenarioKey | null, inc?: number) {
     // TODO setter
     game.scenario = scenario;
 
-    let label = scenarios[scenario].label.padEnd(8, ' ');
-
+    const label = scenarios[scenario].label.padEnd(8, ' ');
     scr.errorWindow.puts(`[<] ${label} [>]  [ENTER] TO START`, {justify: 'center'})
 }
 
-var focus = {
+const focus = {
     id: -1,         // most-recently focused unit
     active: false,  // focus currently active?
 
@@ -258,30 +276,30 @@ var focus = {
             `MUSTER: ${u.mstrng}  COMBAT: ${u.cstrng}`
         ], {x: 6});
 
-        paintUnit(u, true);
+        paintUnit(u);
         paintReach(u);
     },
     off: () => {
         const u = focus.u();
-        if (u) {
-            // clear blink and reach
-            paintUnit(u, false);
-            paintReach(undefined);
-        }
-        scr.infoWindow.cls();
         focus.active = false;
+        scr.infoWindow.cls();
+        if (u) {
+            paintUnit(u);           // repaint to clear blink etc
+            scr.maskLayer.cls();    // remove all mask glyphs
+            scr.kreuzeLayer.cls();  // remove any order animation
+        }
     },
     shift: (offset: number) => {
         const
             locid = (u: Unit) => game.mapboard.locationOf(u).id,
             humanUnits = game.oob.activeUnits(game.human).sort((a, b) => locid(b) - locid(a)),
             n = humanUnits.length;
-        var i;
+        let i;
         if (focus.id >= 0) {
             i = humanUnits.findIndex(u => u.id == focus.id);
             if (i < 0) {
                 // if last unit no longer active, find the nearest active unit
-                let id = locid(game.oob.at(focus.id));
+                const id = locid(game.oob.at(focus.id));
                 while (++i < n && locid(humanUnits[i]) > id) {/**/}
             }
         } else {
@@ -292,10 +310,9 @@ var focus = {
     },
 };
 
-
 function editOrders(dir: DirectionKey | null | -1) {
     // dir => add step, -1 => remove step, null => clear or unfocus
-    let u = focus.u();
+    const u = focus.u();
     if (!u) return;
     if (!u.human) {
         scr.errorWindow.puts(
@@ -315,7 +332,6 @@ function editOrders(dir: DirectionKey | null | -1) {
     } else {
         u.addOrder(dir);
     }
-    paintUnit(u, true);
 }
 
 const keymap = {
@@ -451,47 +467,51 @@ function start() {
     const scramble = setInterval(() => {
         paintHelp(hscr);
         m.redraw();
-
         if (+new Date() > t0 + helpScrambleMillis) clearInterval(scramble);
-    }, 150);
+    }, 250);
 
-    setMap();
-    paintMap();
+    initScreen();
 
     document.addEventListener('keydown', keyHandler);
 
     scr.dateWindow.puts('EASTERN FRONT 1941', {justify: 'center', y: 1});
     scr.infoWindow.puts('PLEASE ENTER YOUR ORDERS NOW', {x: 6});
-    let ai = Object.keys(players)
-        .filter(player => +player != game.human)
-        .map(player => new Thinker(game, +player));
-
-    console.log(`set up ${ai.length} AIs`);
 
     m.mount(document.body, {view: () => m(Layout, {scr, hscr, flags})});
 
-    function play() {
-        console.log('repaint & start thinking...');
-        paintMap();
-        ai.forEach(t => t.thinkRecurring(250));
-
-        setTimeout(() => {
-            console.log('stop thinking and nextTurn ticktock');
-            ai.forEach(t => t.finalize());
-            game.nextTurn(100);
-        }, 32*100 + 2500);
-    }
-/*
+    game.start();
     game.on('game', (action) => {
-//        console.log('game event', action);
-        if (action == 'turn') play();
-        else repaint();
-    });
-
-    game.start();       // TODO
-
-    renderScreen(gameModel);
-*/
+        console.log('game', action);
+        switch (action) {
+            case 'turn':
+                paintMap();
+                paintUnits();
+                if (uimode == UIModeKey.resolve) setMode(UIModeKey.orders);
+                break;
+            case 'tick':
+                paintUnits();
+                break;
+            default: {
+                const fail: never = action;
+                throw new Error(`Unhandled game action: ${fail}`)
+            }
+        }
+        m.redraw();
+    }).on('map', (action) => {
+        console.log('map', action);
+        switch (action) {
+            case 'citycontrol':
+                paintMap();
+                break;
+            default: {
+                const fail: never = action;
+                throw new Error(`Unhandled map action: ${fail}`)
+            }
+        }
+    }).on('unit', (action, u) => {
+        if (action == 'orders') paintUnit(u);
+        // the rest of the actions happen during turn processing, which we pick up via game.tick
+    })
 }
 
 export {start};

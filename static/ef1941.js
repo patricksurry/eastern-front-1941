@@ -7,18 +7,18 @@ var ef1941 = (function (exports, node_crypto) {
     function memoize$1(fn) {
         const cache = new Map();
         const cached = function (x) {
-            if (!cache.has(x)) {
+            if (!cache.has(x))
                 cache.set(x, fn(x));
-            }
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             return cache.get(x);
         };
         return cached;
     }
     const directions = {
-        [0 /* DirectionKey.north */]: { label: 'N', dlon: 0, dlat: 1, icon: 257 },
-        [1 /* DirectionKey.east */]: { label: 'E', dlon: -1, dlat: 0, icon: 258 },
-        [2 /* DirectionKey.south */]: { label: 'S', dlon: 0, dlat: -1, icon: 259 },
-        [3 /* DirectionKey.west */]: { label: 'W', dlon: 1, dlat: 0, icon: 260 }, // left  1011 => 3
+        [0 /* DirectionKey.north */]: { label: 'N', dlon: 0, dlat: 1, icon: 0x81 },
+        [1 /* DirectionKey.east */]: { label: 'E', dlon: -1, dlat: 0, icon: 0x82 },
+        [2 /* DirectionKey.south */]: { label: 'S', dlon: 0, dlat: -1, icon: 0x83 },
+        [3 /* DirectionKey.west */]: { label: 'W', dlon: 1, dlat: 0, icon: 0x84 }, // left  1011 => 3
     };
     const players = {
         [0 /* PlayerKey.German */]: {
@@ -212,7 +212,7 @@ var ef1941 = (function (exports, node_crypto) {
     }
     /** convert payload to string, wrapping with optional prefix string, length marker, and CRC check */
     function wrap64(payload, prefix, length_maxbits = 12) {
-        let seq = [].concat(bitsencode(payload.length, length_maxbits), payload, fletcher6(payload));
+        const seq = [].concat(bitsencode(payload.length, length_maxbits), payload, fletcher6(payload));
         return (prefix || '') + seq2str(seq);
     }
     /** unwrap payload to seqas wrapped by wrap64, ignoring garbage and trailing characters */
@@ -222,14 +222,14 @@ var ef1941 = (function (exports, node_crypto) {
         if (!s.startsWith(prefix))
             throw new Error(`unwrap64: string didn't start with expected prefix '${prefix}'`);
         // remove prefix and extraenous characters, and convert to seq<uint64>
-        let seq = str2seq(s.slice(prefix.length).replace(/[^-\w]/g, ''));
+        const seq = str2seq(s.slice(prefix.length).replace(/[^-\w]/g, ''));
         // get payload length
-        let n = bitsdecode(seq, length_maxbits);
+        const n = bitsdecode(seq, length_maxbits);
         if (seq.length < n + 2) {
             throw new Error(`unwrap: expected at least ${n} + 2 characters after length marker, got ${seq.length}`);
         }
         // get payload and compute checksum
-        let payload = seq.slice(0, n), chk = fletcher6(payload);
+        const payload = seq.slice(0, n), chk = fletcher6(payload);
         // validate checksum
         if (!chk.every((u, i) => u == seq[n + i]))
             throw new Error(`unwrap64: checksum mismatch got ${s.slice(0, 2)}, expected ${chk}`);
@@ -253,7 +253,7 @@ var ef1941 = (function (exports, node_crypto) {
     function bitsencode(n, nbits) {
         if (!isuint(n) || n >= (1 << nbits))
             throw new Error(`bitsencode: value ${n} exceeds max ${1 << nbits}`);
-        let seq = [];
+        const seq = [];
         for (let i = 0; i < Math.ceil(nbits / 6); i++) {
             seq.push(n & 0x3f);
             n >>= 6;
@@ -265,12 +265,12 @@ var ef1941 = (function (exports, node_crypto) {
      * modifying seq in place
      */
     function bitsdecode(seq, nbits) {
-        let nchars = Math.ceil(nbits / 6);
+        const nchars = Math.ceil(nbits / 6);
         if (nchars > seq.length) {
             throw new Error(`bitsdecode: expected at least ${nchars} characters, got ${seq.length}`);
         }
-        let n = 0, us = seq.splice(0, nchars);
-        us.reverse().forEach(u => { n = (n << 6) + u; });
+        let n = 0;
+        seq.splice(0, nchars).reverse().forEach(u => { n = (n << 6) + u; });
         return n;
     }
     /** Fibnonacci encode a single uint to a uint with prefix-free bit pattern,
@@ -305,7 +305,7 @@ var ef1941 = (function (exports, node_crypto) {
         if (!(isuint(bits) && bits >= 3))
             throw new Error(`fibdecode_uint: Invalid encoded integer: ${bits.toString(2)}`);
         // sum the fibonacci numbers represented by the bit pattern, ignoring the MSB flag
-        var n = 0;
+        let n = 0;
         for (let k = 2; bits > 1; k++) {
             if (bits & 0x1)
                 n += fib(k);
@@ -320,8 +320,10 @@ var ef1941 = (function (exports, node_crypto) {
             return fibencode([vs]);
         if (!vs.every(isuint))
             throw new Error(`fibencode: Expected list of unsigned integers ${vs}`);
-        let fibs = vs.map(fibencode_uint), seq = [], bits = 0, k = 0, lead_bit = 0x1;
+        const fibs = vs.map(fibencode_uint), seq = [];
+        let bits = 0, k = 0, lead_bit = 0x1;
         while (fibs.length && k < 6) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             bits |= fibs.shift() << k;
             while (lead_bit <= bits) {
                 k++;
@@ -340,8 +342,10 @@ var ef1941 = (function (exports, node_crypto) {
     }
     /** Decode prefix-free Fibonacci coding chunked into seq<64> by fibencode() to recover original seq<uint> */
     function fibdecode(seq) {
-        let vs = [], bitseq = 0, m = 0, mask = 0x3, k = 2;
+        const vs = [];
+        let bitseq = 0, m = 0, mask = 0x3, k = 2;
         while (seq.length) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             bitseq |= (seq.shift() << m);
             m += 6;
             while (k <= m) {
@@ -378,7 +382,8 @@ var ef1941 = (function (exports, node_crypto) {
         =>  repeat > len(<marker><0>) / len(<value>) + 1
         */
         const rptlen = vsize(marker) + vsize(0);
-        let zs = [], prev = -1, repeat = 0, seq = vs.map(v => v >= marker ? v + 1 : v);
+        const zs = [], seq = vs.map(v => v >= marker ? v + 1 : v);
+        let prev = -1, repeat = 0;
         seq.push(-1); // dummy to make sure we flush final value(s)
         seq.forEach(v => {
             if (v == prev) {
@@ -409,9 +414,9 @@ var ef1941 = (function (exports, node_crypto) {
             throw new Error(`rldecode: Expected list of unsigned integers: ${zs}`);
         if (!isuint(marker))
             throw new Error(`rldecode: Expected unsigned integer marker: ${marker}`);
-        const rptlen = vsize(marker) + vsize(0);
-        let vs = [];
+        const rptlen = vsize(marker) + vsize(0), vs = [];
         while (zs.length) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             let v = zs.shift();
             if (v != marker) {
                 vs.push(v > marker ? v - 1 : v);
@@ -419,8 +424,10 @@ var ef1941 = (function (exports, node_crypto) {
             else {
                 if (zs.length < 2)
                     throw new Error('rldecode: Malformed run definition');
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 v = zs.shift();
                 const min_repeat = Math.ceil(rptlen / vsize(v)) + 1;
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 let repeat = zs.shift() + min_repeat;
                 while (repeat--)
                     vs.push(v);
@@ -653,7 +660,7 @@ var ef1941 = (function (exports, node_crypto) {
         ]
     ];
 
-    var _Mapboard_instances, _Mapboard_game, _Mapboard_maxlon, _Mapboard_maxlat, _Mapboard_icelat, _Mapboard_fgcolor, _Mapboard_freezeThaw;
+    var _Mapboard_instances, _Mapboard_game, _Mapboard_maxlon, _Mapboard_maxlat, _Mapboard_icelat, _Mapboard_freezeThaw;
     // the map is made up of locations, each with a lon and lat
     // grid points have integer coordinates and a unique identifier
     class GridPoint {
@@ -682,7 +689,7 @@ var ef1941 = (function (exports, node_crypto) {
         }
         static directionsFrom(p, q) {
             // project all directions from p to q and rank them, ensuring tie breaking has no bias
-            let dlat = (q.lat - p.lat), dlon = (q.lon - p.lon);
+            const dlat = (q.lat - p.lat), dlon = (q.lon - p.lon);
             if (dlat == 0 && dlon == 0)
                 return [];
             return Object.entries(directions)
@@ -696,7 +703,8 @@ var ef1941 = (function (exports, node_crypto) {
             // that looks like N, E, S,S, W,W, N,N,N, E,E,E, S,S,S,S, W,W,W,W, ...
             if (diameter % 2 != 1)
                 throw (`squareSpiral: diameter should be odd, got ${diameter}`);
-            let loc = new GridPoint(center.lon, center.lat), locs = [loc], dir = 0, i = 0, side = 1;
+            let loc = new GridPoint(center.lon, center.lat), dir = 0, i = 0, side = 1;
+            const locs = [loc];
             while (++i < diameter) {
                 loc = loc.next(dir);
                 locs.push(loc);
@@ -715,7 +723,7 @@ var ef1941 = (function (exports, node_crypto) {
     };
     GridPoint.directionFrom = function (p, q) {
         // return the index of the winning direction
-        let projections = GridPoint.directionsFrom(p, q);
+        const projections = GridPoint.directionsFrom(p, q);
         return projections.length ? projections[0][1] : null;
     };
     class MapPoint extends GridPoint {
@@ -739,9 +747,10 @@ var ef1941 = (function (exports, node_crypto) {
             _Mapboard_maxlat.set(this, void 0);
             _Mapboard_icelat.set(this, 39); // via M.ASM:8600 PSXVAL initial value is 0x27
             const variant = mapVariants[scenarios[game.scenario].map], mapencoding = variant.encoding.map((enc, i) => {
-                let lookup = {}, ch = 0;
+                const lookup = {};
+                let ch = 0;
                 enc.split('|').forEach((s, t) => s.split('').forEach(c => {
-                    let alt = ((t == 1 && i == 0) || ch == 0x40) ? 1 : 0;
+                    const alt = ((t == 1 && i == 0) || ch == 0x40) ? 1 : 0;
                     if (ch == 0x40)
                         ch--;
                     lookup[c] = {
@@ -766,7 +775,7 @@ var ef1941 = (function (exports, node_crypto) {
             this.cities = variant.cities.map(c => { return Object.assign({}, c); });
             this.cities.forEach((city, i) => {
                 city.points || (city.points = 0);
-                let loc = this.locationOf(city);
+                const loc = this.locationOf(city);
                 if (loc.terrain != 2 /* TerrainKey.city */)
                     throw new Error(`Mapboard: city at (${loc.lon}, ${loc.lat}) missing city terrain`);
                 loc.cityid = i;
@@ -783,22 +792,17 @@ var ef1941 = (function (exports, node_crypto) {
             }
         }
         newTurn(initialize = false) {
-            let mdata = monthdata[__classPrivateFieldGet(this, _Mapboard_game, "f").month], earth = weatherdata[mdata.weather].earth;
-            // update the tree color in place in the terrain data :grimace:
+            const mdata = monthdata[__classPrivateFieldGet(this, _Mapboard_game, "f").month];
+            //TODO update the tree color in place in the terrain data :grimace:
             terraintypes[1 /* TerrainKey.mountain_forest */].altcolor = mdata.trees;
             if (!initialize && mdata.water != null)
                 __classPrivateFieldGet(this, _Mapboard_instances, "m", _Mapboard_freezeThaw).call(this, mdata.water);
-            __classPrivateFieldGet(this, _Mapboard_game, "f").emit('map', 'recolor', {
-                fgcolorfn: (loc) => __classPrivateFieldGet(this, _Mapboard_instances, "m", _Mapboard_fgcolor).call(this, loc),
-                bgcolor: earth,
-                labelcolor: mdata.weather == 2 /* WeatherKey.snow */ ? '04' : '08'
-            });
         }
         get extent() {
             return { width: this.locations[0].length, height: this.locations.length };
         }
         get memento() {
-            let vs = []
+            const vs = []
                 .concat([__classPrivateFieldGet(this, _Mapboard_icelat, "f")], this.cities.map(c => c.owner));
             return vs;
         }
@@ -819,10 +823,10 @@ var ef1941 = (function (exports, node_crypto) {
             }
         }
         neighborOf(pt, dir) {
-            let q = pt.next(dir);
+            const q = pt.next(dir);
             if (!this.valid(q))
                 return null;
-            let nbr = this.locationOf(q);
+            const nbr = this.locationOf(q);
             const legal = (nbr.terrain != 9 /* TerrainKey.impassable */
                 && !((dir == 0 /* DirectionKey.north */ || dir == 2 /* DirectionKey.south */)
                     ? blocked[0].find(d => d.lon == pt.lon && d.lat == (dir == 0 /* DirectionKey.north */ ? pt.lat : nbr.lat))
@@ -830,9 +834,13 @@ var ef1941 = (function (exports, node_crypto) {
             return legal ? nbr : null;
         }
         occupy(loc, player) {
-            if (loc.cityid != null)
-                this.cities[loc.cityid].owner = player;
-            //TODO repaint this square
+            if (loc.cityid != null) {
+                const c = this.cities[loc.cityid];
+                if (c.owner != player) {
+                    c.owner = player;
+                    __classPrivateFieldGet(this, _Mapboard_game, "f").emit('map', 'citycontrol');
+                }
+            }
         }
         directPath(p, q, costs) {
             /*
@@ -847,16 +855,18 @@ var ef1941 = (function (exports, node_crypto) {
             Taking a step in direction dx, dy will change E by A dx + B dy
             so we just keep choosing the step that moves E back towards zero.
             */
-            let loc = this.locationOf(p), goal = this.locationOf(q);
+            let loc = this.locationOf(p);
+            const goal = this.locationOf(q);
             if (loc.id == goal.id)
                 return { cost: 0, orders: [] };
             const A = q.lat - p.lat, B = -(q.lon - p.lon), 
             // C = q.lon * p.lat - q.lat * p.lon,
             projections = GridPoint.directionsFrom(p, q), i = projections[0][1], j = projections[1][1], // best two directinoe
             s = directions[i], t = directions[j], ds = A * s.dlon + B * s.dlat, dt = A * t.dlon + B * t.dlat;
-            let err = 0, cost = 0, orders = [];
+            let err = 0, cost = 0;
+            const orders = [];
             while (loc.id != goal.id) {
-                let [k, de] = Math.abs(err + ds) < Math.abs(err + dt) ? [i, ds] : [j, dt];
+                const [k, de] = Math.abs(err + ds) < Math.abs(err + dt) ? [i, ds] : [j, dt];
                 err += de;
                 orders.push(k);
                 //NB. not validating that we can actually take this path
@@ -870,7 +880,8 @@ var ef1941 = (function (exports, node_crypto) {
             // returns {cost: , orders: []} where cost is the movement cost (ticks), and orders is a seq of dir indices
             // or null if goal is unreachable
             const minCost = Math.min(...costs), _head = -1;
-            let src = this.locationOf(p), goal = this.locationOf(q), 
+            let src = this.locationOf(p);
+            const goal = this.locationOf(q), 
             // linked list of points to search next, ordered by estimated total cost via this point
             frontier = new Map([[_head, { id: src.id, est: 0 }]]), 
             // dir arrived from and cost from start to here
@@ -912,7 +923,8 @@ var ef1941 = (function (exports, node_crypto) {
             }
             if (src.id != goal.id)
                 throw new Error(`MapBoard.bestPath: no path from ${p} to ${q}`);
-            let orders = [], pt = goal;
+            const orders = [];
+            let pt = goal;
             for (;;) {
                 const dir = found.get(pt.id).dir;
                 if (dir == null)
@@ -924,19 +936,20 @@ var ef1941 = (function (exports, node_crypto) {
         }
         reach(src, range, costs) {
             // find all squares accessible to unit within range, ignoring other units, zoc
-            let cost = 0, start = this.locationOf(src), locs = { [start.id]: 0 };
+            let cost = 0;
+            const start = this.locationOf(src), locs = { [start.id]: 0 };
             while (cost < range) {
                 // eslint-disable-next-line no-unused-vars
-                Object.entries(locs).filter(([_, v]) => v == cost).forEach(([k, _]) => {
-                    let src = GridPoint.fromid(+k);
+                Object.entries(locs).filter(([, v]) => v == cost).forEach(([k,]) => {
+                    const src = GridPoint.fromid(+k);
                     Object.keys(directions).forEach(i => {
-                        let dst = this.neighborOf(src, +i);
+                        const dst = this.neighborOf(src, +i);
                         if (!dst)
                             return;
-                        let curr = dst.id in locs ? locs[dst.id] : 255;
+                        const curr = dst.id in locs ? locs[dst.id] : 255;
                         if (curr <= cost)
                             return;
-                        let c = cost + costs[dst.terrain];
+                        const c = cost + costs[dst.terrain];
                         if (c <= range && c < curr)
                             locs[dst.id] = c;
                     });
@@ -946,36 +959,32 @@ var ef1941 = (function (exports, node_crypto) {
             return locs;
         }
     }
-    _Mapboard_game = new WeakMap(), _Mapboard_maxlon = new WeakMap(), _Mapboard_maxlat = new WeakMap(), _Mapboard_icelat = new WeakMap(), _Mapboard_instances = new WeakSet(), _Mapboard_fgcolor = function _Mapboard_fgcolor(loc) {
-        // return the antic fg color for a given location
-        let tinfo = terraintypes[loc.terrain], alt = typeof loc.cityid === 'undefined' ? loc.alt : this.cities[loc.cityid].owner;
-        return alt ? tinfo.altcolor : tinfo.color;
-    }, _Mapboard_freezeThaw = function _Mapboard_freezeThaw(w, newlat) {
+    _Mapboard_game = new WeakMap(), _Mapboard_maxlon = new WeakMap(), _Mapboard_maxlat = new WeakMap(), _Mapboard_icelat = new WeakMap(), _Mapboard_instances = new WeakSet(), _Mapboard_freezeThaw = function _Mapboard_freezeThaw(w, newlat) {
         // move ice by freeze/thaw rivers and swamps, where w is Water.freeze or Water.thaw
         // ICELAT -= [7,14] incl]; clamp 1-39 incl
         // small bug in APX code? freeze chrs $0B - $29 (exclusive, seems like it could freeze Kerch straight?)
-        let state = waterstate[w], other = waterstate[1 - w], oldlat = __classPrivateFieldGet(this, _Mapboard_icelat, "f"), dlat = directions[state.dir].dlat;
+        const state = waterstate[w], other = waterstate[1 - w], oldlat = __classPrivateFieldGet(this, _Mapboard_icelat, "f"), dlat = directions[state.dir].dlat;
         if (newlat != null) {
             // initial setup where we freeze to saved value
             __classPrivateFieldSet(this, _Mapboard_icelat, newlat, "f");
         }
         else {
-            let change = __classPrivateFieldGet(this, _Mapboard_game, "f").rand.bits(3) + 7;
+            const change = __classPrivateFieldGet(this, _Mapboard_game, "f").rand.bits(3) + 7;
             __classPrivateFieldSet(this, _Mapboard_icelat, Math.min(__classPrivateFieldGet(this, _Mapboard_maxlat, "f"), Math.max(1, oldlat + dlat * change)), "f");
         }
-        let skip = (w == 0 /* WaterStateKey.freeze */) ? oldlat : __classPrivateFieldGet(this, _Mapboard_icelat, "f"); // for freeze skip old line, for thaw skip new new
+        const skip = (w == 0 /* WaterStateKey.freeze */) ? oldlat : __classPrivateFieldGet(this, _Mapboard_icelat, "f"); // for freeze skip old line, for thaw skip new new
         for (let i = oldlat; i != __classPrivateFieldGet(this, _Mapboard_icelat, "f") + dlat; i += dlat) {
             if (i == skip)
                 continue;
             this.locations[__classPrivateFieldGet(this, _Mapboard_maxlat, "f") - i].forEach(d => {
-                let k = other.terrain.indexOf(d.terrain);
+                const k = other.terrain.indexOf(d.terrain);
                 if (k != -1)
                     d.terrain = state.terrain[k];
             });
         }
     };
 
-    var _Unit_instances, _Unit_game, _Unit_resolveCombat, _Unit_takeDamage;
+    var _Unit_instances, _Unit_status, _Unit_game, _Unit_resolveCombat, _Unit_takeDamage;
     const unittypes = {
         [0 /* UnitTypeKey.infantry */]: { label: "infantry", kind: 0 /* UnitKindKey.infantry */ },
         [1 /* UnitTypeKey.militia */]: { label: "militia", kind: 0 /* UnitKindKey.infantry */, canMove: 0 },
@@ -1015,6 +1024,7 @@ var ef1941 = (function (exports, node_crypto) {
             this.orders = []; // WHORDRS, HMORDS
             this.ifr = 0;
             this.ifrdir = [0, 0, 0, 0];
+            _Unit_status.set(this, void 0);
             _Unit_game.set(this, void 0);
             let corpsx, corpsy, mstrng, arrive, corpt, corpno;
             if (args.length == 7) { // apx
@@ -1031,7 +1041,7 @@ var ef1941 = (function (exports, node_crypto) {
             this.player = (corpt & 0x80) ? 1 /* PlayerKey.Russian */ : 0 /* PlayerKey.German */; // german=0, russian=1; equiv i >= 55
             this.unitno = corpno;
             this.type = corpt & 0x7;
-            let ut = unittypes[this.type];
+            const ut = unittypes[this.type];
             if (ut == null)
                 throw new Error(`Unused unit type for unit id ${id}`);
             this.kind = ut.kind;
@@ -1056,6 +1066,14 @@ var ef1941 = (function (exports, node_crypto) {
         get active() {
             return this.arrive <= __classPrivateFieldGet(this, _Unit_game, "f").turn && this.cstrng > 0;
         }
+        get status() {
+            return __classPrivateFieldGet(this, _Unit_status, "f");
+        }
+        set status(event) {
+            __classPrivateFieldSet(this, _Unit_status, event, "f");
+            if (event)
+                __classPrivateFieldGet(this, _Unit_game, "f").emit('unit', event, this);
+        }
         get human() {
             return this.player == __classPrivateFieldGet(this, _Unit_game, "f").human;
         }
@@ -1066,9 +1084,10 @@ var ef1941 = (function (exports, node_crypto) {
             return { lon: this.lon, lat: this.lat };
         }
         get path() {
-            let loc = this.location, path = [loc];
+            let loc = this.location;
+            const path = [loc];
             this.orders.forEach(dir => {
-                let dst = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.neighborOf(loc, dir);
+                const dst = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.neighborOf(loc, dir);
                 if (!dst)
                     return;
                 path.push(loc = dst);
@@ -1084,6 +1103,7 @@ var ef1941 = (function (exports, node_crypto) {
                 err = "ONLY 8 ORDERS ARE ALLOWED!";
             }
             else {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 dst = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.neighborOf(this.path.pop(), dir);
                 if (!dst) {
                     err = "IMPASSABLE!";
@@ -1096,29 +1116,29 @@ var ef1941 = (function (exports, node_crypto) {
                 __classPrivateFieldGet(this, _Unit_game, "f").emit('message', 'error', err);
             }
             else {
-                __classPrivateFieldGet(this, _Unit_game, "f").emit('unit', 'orders', this);
+                this.status = 'orders';
             }
             return dst;
         }
         delOrder() {
             if (this.orders.length) {
-                __classPrivateFieldGet(this, _Unit_game, "f").emit('unit', 'orders', this);
                 this.orders.pop();
+                this.status = 'orders';
             }
         }
         setOrders(dirs) {
             this.orders = dirs;
-            __classPrivateFieldGet(this, _Unit_game, "f").emit('unit', 'orders', this);
+            this.status = 'orders';
         }
         resetOrders() {
             this.orders = [];
             this.tick = 255;
-            __classPrivateFieldGet(this, _Unit_game, "f").emit('unit', 'orders', this);
+            this.status = 'orders';
         }
         moveCost(dir) {
             if (!this.canMove)
                 return 255;
-            let dst = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.neighborOf(GridPoint.get(this), dir);
+            const dst = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.neighborOf(GridPoint.get(this), dir);
             if (!dst)
                 return 255;
             return moveCost(dst.terrain, this.kind, __classPrivateFieldGet(this, _Unit_game, "f").weather);
@@ -1155,16 +1175,16 @@ var ef1941 = (function (exports, node_crypto) {
             else {
                 action = 'exit';
             }
-            __classPrivateFieldGet(this, _Unit_game, "f").emit('unit', action, this);
+            this.status = action;
         }
         tryOrder() {
             if (this.tick == null)
                 throw new Error('Unit:tryOrder tick not set');
-            let src = this.location, dst = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.neighborOf(src, this.orders[0]); // assumes already validated
+            const src = this.location, dst = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.neighborOf(src, this.orders[0]); // assumes already validated
             if (dst == null)
                 throw new Error("Unit.tryOrder: invalid order");
             if (dst.unitid != null) {
-                let opp = __classPrivateFieldGet(this, _Unit_game, "f").oob.at(dst.unitid);
+                const opp = __classPrivateFieldGet(this, _Unit_game, "f").oob.at(dst.unitid);
                 if (opp.player != this.player) {
                     if (!__classPrivateFieldGet(this, _Unit_instances, "m", _Unit_resolveCombat).call(this, opp)) {
                         this.tick++;
@@ -1203,7 +1223,8 @@ var ef1941 = (function (exports, node_crypto) {
                 }
             }
             while (fail < supply.maxfail[__classPrivateFieldGet(this, _Unit_game, "f").weather]) {
-                let dst = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.locationOf(loc.next(dir)), cost = 0;
+                const dst = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.locationOf(loc.next(dir));
+                let cost = 0;
                 if (__classPrivateFieldGet(this, _Unit_game, "f").mapboard.boundaryDistance(this, player.homedir) < 0) {
                     return 1;
                 }
@@ -1231,7 +1252,8 @@ var ef1941 = (function (exports, node_crypto) {
             return 0;
         }
         score() {
-            let v = 0, dist = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.boundaryDistance(this, players[this.player].homedir);
+            const dist = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.boundaryDistance(this, players[this.player].homedir);
+            let v = 0;
             // see M.ASM:4050 - note even inactive units are scored based on future arrival/strength
             if (this.player == 0 /* PlayerKey.German */) {
                 // maxlon + 2 == #$30 per M.ASM:4110
@@ -1258,12 +1280,12 @@ var ef1941 = (function (exports, node_crypto) {
             return s;
         }
     }
-    _Unit_game = new WeakMap(), _Unit_instances = new WeakSet(), _Unit_resolveCombat = function _Unit_resolveCombat(opp) {
+    _Unit_status = new WeakMap(), _Unit_game = new WeakMap(), _Unit_instances = new WeakSet(), _Unit_resolveCombat = function _Unit_resolveCombat(opp) {
         // return 1 if target square is vacant
         if (!this.canAttack)
             return 0;
-        __classPrivateFieldGet(this, _Unit_game, "f").emit('unit', 'attack', this);
-        __classPrivateFieldGet(this, _Unit_game, "f").emit('unit', 'defend', opp);
+        this.status = 'attack';
+        opp.status = 'defend';
         let modifier = terraintypes[__classPrivateFieldGet(this, _Unit_game, "f").mapboard.locationOf(opp).terrain].defence;
         if (opp.orders.length)
             modifier--; // movement penalty
@@ -1275,7 +1297,7 @@ var ef1941 = (function (exports, node_crypto) {
             if (!this.orders)
                 return 0;
         }
-        let t = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.locationOf(opp).terrain;
+        const t = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.locationOf(opp).terrain;
         modifier = terraintypes[t].offence;
         str = modifyStrength(this.cstrng, modifier);
         if (str >= __classPrivateFieldGet(this, _Unit_game, "f").rand.byte()) {
@@ -1300,18 +1322,18 @@ var ef1941 = (function (exports, node_crypto) {
             this.moveTo(null);
             return 1;
         }
-        __classPrivateFieldGet(this, _Unit_game, "f").emit('unit', 'damage', this);
+        this.status = 'damage';
         if (!checkBreak)
             return 0;
         // russian (& ger allies) break if cstrng <= 7/8 mstrng
         // german regulars break if cstrng < 1/2 mstrng
-        let brkpt = this.mstrng - (this.mstrng >> (this.resolute ? 1 : 3));
+        const brkpt = this.mstrng - (this.mstrng >> (this.resolute ? 1 : 3));
         if (this.cstrng < brkpt) {
             this.resetOrders();
             if (retreatDir != null) {
                 const homedir = players[this.player].homedir, nxtdir = __classPrivateFieldGet(this, _Unit_game, "f").rand.bit() ? 0 /* DirectionKey.north */ : 2 /* DirectionKey.south */, dirs = [retreatDir, homedir, nxtdir, (nxtdir + 2) % 4, (homedir + 2) % 4];
-                for (let dir of dirs) {
-                    let src = this.location, dst = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.neighborOf(src, dir);
+                for (const dir of dirs) {
+                    const src = this.location, dst = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.neighborOf(src, dir);
                     if (!dst || dst.unitid != null || __classPrivateFieldGet(this, _Unit_game, "f").oob.zocBlocked(this.player, src, dst)) {
                         if (__classPrivateFieldGet(this, _Unit_instances, "m", _Unit_takeDamage).call(this, 0, 5))
                             return 1; // dead
@@ -1853,11 +1875,12 @@ var ef1941 = (function (exports, node_crypto) {
             __classPrivateFieldSet(this, _Oob_units, oobVariants[scenarios[game.scenario].oob].map((vs, i) => new Unit(game, i, ...vs)), "f");
             __classPrivateFieldSet(this, _Oob_game, game, "f");
             if (memento) {
-                let scheduled = this.filter(u => u.scheduled <= game.turn);
+                const scheduled = this.filter(u => u.scheduled <= game.turn);
                 if (memento.length < scheduled.length)
                     throw new Error('Oob: malformed save data for scheduled unit status');
                 scheduled.forEach(u => {
-                    let status = memento.shift();
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    const status = memento.shift();
                     if (status == 1) { // eliminated
                         //TODO via unit function to match with unit elimination code
                         u.mstrng = 0;
@@ -1868,20 +1891,26 @@ var ef1941 = (function (exports, node_crypto) {
                         u.arrive = game.turn + 1;
                     }
                 });
-                let active = this.activeUnits(), human = active.filter(u => u.human);
+                const active = this.activeUnits(), human = active.filter(u => u.human);
                 if (memento.length < 4 * active.length + human.length)
                     throw new Error('oob: malformed save data for active unit properties');
-                let lats = zagzig(memento.splice(0, active.length)), lons = zagzig(memento.splice(0, active.length)), mstrs = zagzig(memento.splice(0, active.length)), cdmgs = memento.splice(0, active.length), nords = memento.splice(0, human.length), lat = 0, lon = 0, mstr = 255;
+                const lats = zagzig(memento.splice(0, active.length)), lons = zagzig(memento.splice(0, active.length)), mstrs = zagzig(memento.splice(0, active.length)), cdmgs = memento.splice(0, active.length), nords = memento.splice(0, human.length);
+                let lat = 0, lon = 0, mstr = 255;
                 active.forEach(u => {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     lat += lats.shift();
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     lon += lons.shift();
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     mstr += mstrs.shift();
                     [u.lat, u.lon, u.mstrng] = [lat, lon, mstr];
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     u.cstrng = u.mstrng - cdmgs.shift();
                 });
                 if (memento.length < sum(nords))
                     throw new Error('oob: malformed save data for unit orders');
                 human.forEach(u => {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     u.orders = memento.splice(0, nords.shift());
                 });
             }
@@ -1901,9 +1930,10 @@ var ef1941 = (function (exports, node_crypto) {
         map(f) { return __classPrivateFieldGet(this, _Oob_units, "f").map(f); }
         slice(start, end) { return __classPrivateFieldGet(this, _Oob_units, "f").slice(start, end); }
         get memento() {
-            let lats = [], lons = [], mstrs = [], cdmgs = [], nords = [], ords = [], lat = 0, lon = 0, mstr = 255;
+            const lats = [], lons = [], mstrs = [], cdmgs = [], nords = [], ords = [];
+            let lat = 0, lon = 0, mstr = 255;
             // for scheduled units, status = 0 (active), 1 (dead), 2 (delayed)
-            let scheduled = this.filter(u => u.scheduled <= __classPrivateFieldGet(this, _Oob_game, "f").turn), status = scheduled.map(u => u.active ? 0 : (u.cstrng == 0 ? 1 : 2)), active = scheduled.filter(u => u.active);
+            const scheduled = this.filter(u => u.scheduled <= __classPrivateFieldGet(this, _Oob_game, "f").turn), status = scheduled.map(u => u.active ? 0 : (u.cstrng == 0 ? 1 : 2)), active = scheduled.filter(u => u.active);
             active.forEach(u => {
                 lats.push(u.lat - lat);
                 lons.push(u.lon - lon);
@@ -1912,7 +1942,7 @@ var ef1941 = (function (exports, node_crypto) {
                 cdmgs.push(u.mstrng - u.cstrng);
                 if (u.human) {
                     nords.push(u.orders.length);
-                    ords = ords.concat(u.orders);
+                    ords.push(...u.orders);
                 }
             });
             return status.concat(zigzag(lats), zigzag(lons), zigzag(mstrs), cdmgs, nords, ords);
@@ -1926,6 +1956,7 @@ var ef1941 = (function (exports, node_crypto) {
                 // TODO trace supply, with CSTR >> 1 if not, russian MSTR+2 (for apx)
                 this.reinforce();
             }
+            this.activeUnits().forEach(u => u.status = undefined);
         }
         activeUnits(player) {
             return this.filter((u) => u.active && (player == null || u.player == player));
@@ -1987,7 +2018,7 @@ var ef1941 = (function (exports, node_crypto) {
     function lfsr24(seed) {
         const beforezero = 0xEF41CC; // arbitrary location to insert zero in the sequence
         seed !== null && seed !== void 0 ? seed : (seed = _crypto.getRandomValues(new Uint32Array(1))[0]);
-        var r;
+        let r;
         function bit() {
             const v = r & 0x1;
             if (r == beforezero) {
@@ -2508,15 +2539,18 @@ var ef1941 = (function (exports, node_crypto) {
             this.weather = 0 /* WeatherKey.dry */;
             // flags
             this.handicap = 0; // whether the game is handicapped
-            this.on('message', (typ, obj) => {
-                if (this.listenerCount('message') == 1) {
-                    let s = typeof obj === 'string' ? obj : obj.join('\n'), logger = (typ == 'error' ? console.warn : console.info);
-                    logger(s);
-                }
-            });
+            /* TODO
+                    this.on('message', (typ, obj) => {
+                        if (this.listenerCount('message') == 1) {
+                            let s = typeof obj === 'string' ? obj: obj.join('\n'),
+                                logger = (typ == 'error' ? console.warn: console.info);
+                            logger(s);
+                        }
+                    });
+            */
             let memento = undefined, seed = undefined;
             if (token != null) {
-                let payload = unwrap64(token, tokenPrefix);
+                const payload = unwrap64(token, tokenPrefix);
                 seed = bitsdecode(payload, 24);
                 memento = rldecode(fibdecode(payload), rlSigil);
                 if (memento.length < 7)
@@ -2535,6 +2569,14 @@ var ef1941 = (function (exports, node_crypto) {
             if (memento && memento.length != 0)
                 throw new Error("Game: unexpected save data overflow");
         }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        emit(event, ...args) {
+            return super.emit(event, ...args);
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        on(event, listener) {
+            return super.on(event, listener);
+        }
         get memento() {
             // return a list of uint representing the state of the game
             return [
@@ -2546,7 +2588,7 @@ var ef1941 = (function (exports, node_crypto) {
             ].concat(this.mapboard.memento, this.oob.memento);
         }
         get token() {
-            let payload = [].concat(bitsencode(this.rand.state(), 24), fibencode(rlencode(this.memento, rlSigil)));
+            const payload = [].concat(bitsencode(this.rand.state(), 24), fibencode(rlencode(this.memento, rlSigil)));
             return wrap64(payload, tokenPrefix);
         }
         start() {
@@ -2557,30 +2599,31 @@ var ef1941 = (function (exports, node_crypto) {
             // process the orders for this turn, if delay we tick asynchrnously,
             // otherwise we resolve synchronously
             // either way we proceed to subsequent startTurn or game end
-            let tick = 0, g = this; // for the closure
+            let tick = 0;
             this.oob.scheduleOrders();
             // Set up for a sync or async loop
-            function tickTock() {
-                g.oob.executeOrders(tick);
-                g.emit('game', 'tick', tick);
-                let next = ++tick < 32 ? tickTock : () => __classPrivateFieldGet(g, _Game_instances, "m", _Game_newTurn).call(g);
+            const tickTock = () => {
+                this.oob.executeOrders(tick);
+                this.emit('game', 'tick');
+                const next = ++tick < 32 ? tickTock : () => __classPrivateFieldGet(this, _Game_instances, "m", _Game_newTurn).call(this);
                 if (delay)
                     setTimeout(next, delay);
                 else
                     next();
-            }
+            };
             tickTock();
         }
         score(player) {
             // M.asm:4050
-            let eastwest = sum(this.oob.map(u => u.score() * (u.player == player ? 1 : -1))), bonus = sum(this.mapboard.cities.filter(c => c.owner == player).map(c => c.points)), score = Math.max(0, eastwest) + bonus;
+            const eastwest = sum(this.oob.map(u => u.score() * (u.player == player ? 1 : -1))), bonus = sum(this.mapboard.cities.filter(c => c.owner == player).map(c => c.points));
+            let score = Math.max(0, eastwest) + bonus;
             if (this.handicap)
                 score >>= 1;
             return score;
         }
     }
     _Game_instances = new WeakSet(), _Game_setDates = function _Game_setDates(start) {
-        let dt = new Date(start);
+        const dt = new Date(start);
         this.date = new Date(dt.setDate(dt.getDate() + 7 * this.turn));
         this.month = this.date.getMonth(); // note JS getMonth is 0-indexed
         this.weather = monthdata[this.month].weather;
@@ -2590,10 +2633,10 @@ var ef1941 = (function (exports, node_crypto) {
         __classPrivateFieldGet(this, _Game_instances, "m", _Game_setDates).call(this, new Date(scenarios[this.scenario].start));
         this.mapboard.newTurn(initialize);
         this.oob.newTurn(initialize);
-        this.emit('game', 'turn', this);
+        this.emit('game', 'turn');
     };
 
-    var _Thinker_instances, _Thinker_game, _Thinker_player, _Thinker_trainOfThought, _Thinker_depth, _Thinker_delay, _Thinker_concluded, _Thinker_recur, _Thinker_findBeleaguered, _Thinker_evalLocation;
+    var _Thinker_instances, _Thinker_game, _Thinker_player, _Thinker_trainOfThought, _Thinker_depth, _Thinker_delay, _Thinker_recur, _Thinker_findBeleaguered, _Thinker_evalLocation;
     class Thinker {
         constructor(game, player) {
             _Thinker_instances.add(this);
@@ -2602,7 +2645,6 @@ var ef1941 = (function (exports, node_crypto) {
             _Thinker_trainOfThought.set(this, 0);
             _Thinker_depth.set(this, 0);
             _Thinker_delay.set(this, 0);
-            _Thinker_concluded.set(this, false);
             this.finalized = true;
             __classPrivateFieldSet(this, _Thinker_game, game, "f");
             __classPrivateFieldSet(this, _Thinker_player, player, "f");
@@ -2623,7 +2665,7 @@ var ef1941 = (function (exports, node_crypto) {
         think() {
             const firstpass = __classPrivateFieldGet(this, _Thinker_depth, "f") == 0, pinfo = players[__classPrivateFieldGet(this, _Thinker_player, "f")], friends = __classPrivateFieldGet(this, _Thinker_game, "f").oob.activeUnits(__classPrivateFieldGet(this, _Thinker_player, "f")), foes = __classPrivateFieldGet(this, _Thinker_game, "f").oob.activeUnits(1 - __classPrivateFieldGet(this, _Thinker_player, "f"));
             // set up the ghost army
-            var ofr = 0; // only used in first pass
+            let ofr = 0; // only used in first pass
             if (firstpass) {
                 ofr = calcForceRatios(__classPrivateFieldGet(this, _Thinker_game, "f").oob, __classPrivateFieldGet(this, _Thinker_player, "f")).ofr;
                 console.log('Overall force ratio (OFR) is', ofr);
@@ -2634,7 +2676,7 @@ var ef1941 = (function (exports, node_crypto) {
                 if (firstpass && u.ifr == (ofr >> 1)) {
                     // head to reinforce if no local threat since (Local + OFR) / 2 = OFR / 2
                     //TODO this tends to send most units to same beleagured square
-                    let v = __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_findBeleaguered).call(this, u, friends);
+                    const v = __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_findBeleaguered).call(this, u, friends);
                     if (v)
                         u.objective = v.point;
                 }
@@ -2642,17 +2684,18 @@ var ef1941 = (function (exports, node_crypto) {
                     // run home if hurting or outnumbered in the rear
                     //TODO could look for farthest legal square (valid & not impassable) 5, 4, ...
                     //!this fails if the target point is impassable, better to aim for nearest valid point on home border
-                    let d = directions[pinfo.homedir];
-                    u.objective = { lon: u.lon + 5 * d.dlon, lat: u.lat + 5 * d.dlat };
+                    const { dlon, dlat } = directions[pinfo.homedir];
+                    u.objective = { lon: u.lon + 5 * dlon, lat: u.lat + 5 * dlat };
                 }
                 else {
                     // find nearest best square
-                    let start = __classPrivateFieldGet(this, _Thinker_game, "f").mapboard.locationOf(u.objective), bestval = __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_evalLocation).call(this, u, start, friends, foes);
+                    const start = __classPrivateFieldGet(this, _Thinker_game, "f").mapboard.locationOf(u.objective);
+                    let bestval = __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_evalLocation).call(this, u, start, friends, foes);
                     Object.keys(directions).forEach(d => {
-                        let loc = __classPrivateFieldGet(this, _Thinker_game, "f").mapboard.neighborOf(start, +d);
+                        const loc = __classPrivateFieldGet(this, _Thinker_game, "f").mapboard.neighborOf(start, +d);
                         if (!loc)
                             return;
-                        let sqval = __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_evalLocation).call(this, u, loc, friends, foes);
+                        const sqval = __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_evalLocation).call(this, u, loc, friends, foes);
                         if (sqval > bestval) {
                             bestval = sqval;
                             u.objective = loc.point;
@@ -2661,7 +2704,7 @@ var ef1941 = (function (exports, node_crypto) {
                 }
                 if (!u.objective)
                     return;
-                let result = u.bestPath(u.objective);
+                const result = u.bestPath(u.objective);
                 if (!result)
                     return;
                 u.setOrders(result.orders); // We'll prune to 8 later
@@ -2669,7 +2712,7 @@ var ef1941 = (function (exports, node_crypto) {
             return friends.filter(u => u.objective);
         }
     }
-    _Thinker_game = new WeakMap(), _Thinker_player = new WeakMap(), _Thinker_trainOfThought = new WeakMap(), _Thinker_depth = new WeakMap(), _Thinker_delay = new WeakMap(), _Thinker_concluded = new WeakMap(), _Thinker_instances = new WeakSet(), _Thinker_recur = function _Thinker_recur(train) {
+    _Thinker_game = new WeakMap(), _Thinker_player = new WeakMap(), _Thinker_trainOfThought = new WeakMap(), _Thinker_depth = new WeakMap(), _Thinker_delay = new WeakMap(), _Thinker_instances = new WeakSet(), _Thinker_recur = function _Thinker_recur(train) {
         var _a;
         if (train != __classPrivateFieldGet(this, _Thinker_trainOfThought, "f")) {
             // skip pre-scheduled old train of thought
@@ -2686,10 +2729,10 @@ var ef1941 = (function (exports, node_crypto) {
     }, _Thinker_findBeleaguered = function _Thinker_findBeleaguered(u, friends) {
         let best = null, score = 0;
         friends.filter(v => v.ifr > u.ifr).forEach(v => {
-            let d = GridPoint.manhattanDistance(u, v);
+            const d = GridPoint.manhattanDistance(u, v);
             if (d <= 8)
                 return; // APX code does weird bit 3 check
-            let s = v.ifr - (d >> 3);
+            const s = v.ifr - (d >> 3);
             if (s > score) {
                 score = s;
                 best = v;
@@ -2697,7 +2740,7 @@ var ef1941 = (function (exports, node_crypto) {
         });
         return best;
     }, _Thinker_evalLocation = function _Thinker_evalLocation(u, loc, friends, foes) {
-        let ghosts = {}, range = GridPoint.manhattanDistance(u, loc);
+        const ghosts = {}, range = GridPoint.manhattanDistance(u, loc);
         // too far, early exit
         if (range >= 8)
             return 0;
@@ -2707,7 +2750,8 @@ var ef1941 = (function (exports, node_crypto) {
             return 0;
         friends.filter(v => v.id != u.id)
             .forEach(v => { ghosts[GridPoint.get(v.objective).id] = v.id; });
-        let isOccupied = (pt) => !!ghosts[pt.id], dibs = false;
+        const isOccupied = (pt) => !!ghosts[pt.id];
+        let dibs = false;
         if (isOccupied(loc))
             dibs = true; // someone else have dibs already?
         else
@@ -2721,19 +2765,20 @@ var ef1941 = (function (exports, node_crypto) {
         return sqval < 0 ? 0 : sqval;
     };
     function calcForceRatios(oob, player) {
-        let active = oob.activeUnits(), friend = sum(active.filter(u => u.player == player).map(u => u.cstrng)), foe = sum(active.filter(u => u.player != player).map(u => u.cstrng)), ofr = Math.floor((foe << 4) / friend), ofropp = Math.floor((friend << 4) / foe);
+        const active = oob.activeUnits(), friend = sum(active.filter(u => u.player == player).map(u => u.cstrng)), foe = sum(active.filter(u => u.player != player).map(u => u.cstrng)), ofr = Math.floor((foe << 4) / friend), ofropp = Math.floor((friend << 4) / foe);
         active.forEach(u => {
-            let nearby = active.filter(v => GridPoint.manhattanDistance(u, v) <= 8), friend = 0, p = u.point;
+            const nearby = active.filter(v => GridPoint.manhattanDistance(u, v) <= 8), p = u.point;
+            let friend = 0;
             u.ifrdir = [0, 0, 0, 0];
             nearby.forEach(v => {
-                let inc = v.cstrng >> 4;
+                const inc = v.cstrng >> 4;
                 if (v.player == u.player)
                     friend += inc;
                 else
                     u.ifrdir[GridPoint.directionFrom(p, v.point)] += inc;
             });
             // individual and overall ifr max 255
-            let ifr = Math.floor((sum(u.ifrdir) << 4) / friend);
+            const ifr = Math.floor((sum(u.ifrdir) << 4) / friend);
             // we actually work with average of IFR + OFR
             u.ifr = (ifr + (u.player == player ? ofr : ofropp)) >> 1;
         });
@@ -2744,9 +2789,9 @@ var ef1941 = (function (exports, node_crypto) {
             throw (`sortSquareFacing: diameter should be odd, got ${diameter}`);
         if (!locs || locs.length != diameter * diameter)
             throw (`sortSquareFacing: diameter : size mismatch ${locs.length} != ${diameter}^2`);
-        let r = (diameter - 1) / 2, minor = directions[(dir + 1) % 4], major = directions[(dir + 2) % 4], out = new Array(locs.length);
+        const r = (diameter - 1) / 2, minor = directions[(dir + 1) % 4], major = directions[(dir + 2) % 4], out = new Array(locs.length);
         locs.forEach(loc => {
-            let dlat = loc.lat - center.lat, dlon = loc.lon - center.lon, idx = (r + dlat * major.dlat + dlon * major.dlon
+            const dlat = loc.lat - center.lat, dlon = loc.lon - center.lon, idx = (r + dlat * major.dlat + dlon * major.dlon
                 + diameter * (r + dlat * minor.dlat + dlon * minor.dlon));
             out[idx] = loc;
         });
@@ -2754,7 +2799,8 @@ var ef1941 = (function (exports, node_crypto) {
     }
     function linePoints(locs, diameter, occupied) {
         // curious that this doesn't consider terrain, e.g. a line ending at the coast will get penalized heavily?
-        let r = (diameter - 1) / 2, frontline = Array(diameter).fill(diameter), counts = Array(diameter).fill(0), row = -1, col = -1, score = 0;
+        const r = (diameter - 1) / 2, frontline = Array(diameter).fill(diameter), counts = Array(diameter).fill(0);
+        let row = -1, col = -1, score = 0;
         locs.forEach(loc => {
             row = (row + 1) % diameter;
             if (row == 0)
@@ -2776,7 +2822,7 @@ var ef1941 = (function (exports, node_crypto) {
         // also curious that we look at all pairs not just adjacent ones?
         for (let i = 1; i < diameter; i++)
             for (let j = 0; j < i; j++) {
-                let delta = Math.abs(frontline[i] - frontline[j]);
+                const delta = Math.abs(frontline[i] - frontline[j]);
                 if (delta)
                     score -= 1 << delta;
             }
@@ -2850,7 +2896,8 @@ var ef1941 = (function (exports, node_crypto) {
                 this.y = (this.y + 1) % this.height;
         }
         puts(s, opts = {}) {
-            let { x, y } = opts, rest = __rest(opts, ["x", "y"]); // drop x and y
+            const { x: x0, y } = opts, rest = __rest(opts, ["x", "y"]); // drop x and y
+            let x = x0;
             switch (opts.justify) {
                 case 'center':
                     x = Math.floor((this.width - s.length) / 2);
@@ -2950,7 +2997,7 @@ var ef1941 = (function (exports, node_crypto) {
     	return vnode;
     }
 
-    var Vnode$5 = requireVnode();
+    var Vnode$4 = requireVnode();
 
     // Call via `hyperscriptVnode.apply(startOffset, arguments)`
     //
@@ -2999,12 +3046,12 @@ var ef1941 = (function (exports, node_crypto) {
     		while (start < arguments.length) children.push(arguments[start++]);
     	}
 
-    	return Vnode$5("", attrs.key, attrs, children)
+    	return Vnode$4("", attrs.key, attrs, children)
     };
 
     var hasOwn$2 = {}.hasOwnProperty;
 
-    var Vnode$4 = requireVnode();
+    var Vnode$3 = requireVnode();
     var hyperscriptVnode$1 = hyperscriptVnode$2;
     var hasOwn$1 = hasOwn$2;
 
@@ -3086,7 +3133,7 @@ var ef1941 = (function (exports, node_crypto) {
     	var vnode = hyperscriptVnode$1.apply(1, arguments);
 
     	if (typeof selector === "string") {
-    		vnode.children = Vnode$4.normalizeChildren(vnode.children);
+    		vnode.children = Vnode$3.normalizeChildren(vnode.children);
     		if (selector !== "[") return execSelector(selectorCache[selector] || compileSelector(selector), vnode)
     	}
 
@@ -3096,21 +3143,21 @@ var ef1941 = (function (exports, node_crypto) {
 
     var hyperscript_1$1 = hyperscript$2;
 
-    var Vnode$3 = requireVnode();
+    var Vnode$2 = requireVnode();
 
     var trust = function(html) {
     	if (html == null) html = "";
-    	return Vnode$3("<", undefined, undefined, html, undefined, undefined)
+    	return Vnode$2("<", undefined, undefined, html, undefined, undefined)
     };
 
-    var Vnode$2 = requireVnode();
+    var Vnode$1 = requireVnode();
     var hyperscriptVnode = hyperscriptVnode$2;
 
     var fragment = function() {
     	var vnode = hyperscriptVnode.apply(0, arguments);
 
     	vnode.tag = "[";
-    	vnode.children = Vnode$2.normalizeChildren(vnode.children);
+    	vnode.children = Vnode$1.normalizeChildren(vnode.children);
     	return vnode
     };
 
@@ -3265,987 +3312,1005 @@ var ef1941 = (function (exports, node_crypto) {
     	promise.exports = PromisePolyfill$1;
     }
 
-    var Vnode$1 = requireVnode();
+    var render$2;
+    var hasRequiredRender$1;
 
-    var render$2 = function($window) {
-    	var $doc = $window && $window.document;
-    	var currentRedraw;
+    function requireRender$1 () {
+    	if (hasRequiredRender$1) return render$2;
+    	hasRequiredRender$1 = 1;
 
-    	var nameSpace = {
-    		svg: "http://www.w3.org/2000/svg",
-    		math: "http://www.w3.org/1998/Math/MathML"
-    	};
+    	var Vnode = requireVnode();
 
-    	function getNameSpace(vnode) {
-    		return vnode.attrs && vnode.attrs.xmlns || nameSpace[vnode.tag]
-    	}
+    	render$2 = function($window) {
+    		var $doc = $window && $window.document;
+    		var currentRedraw;
 
-    	//sanity check to discourage people from doing `vnode.state = ...`
-    	function checkState(vnode, original) {
-    		if (vnode.state !== original) throw new Error("'vnode.state' must not be modified.")
-    	}
+    		var nameSpace = {
+    			svg: "http://www.w3.org/2000/svg",
+    			math: "http://www.w3.org/1998/Math/MathML"
+    		};
 
-    	//Note: the hook is passed as the `this` argument to allow proxying the
-    	//arguments without requiring a full array allocation to do so. It also
-    	//takes advantage of the fact the current `vnode` is the first argument in
-    	//all lifecycle methods.
-    	function callHook(vnode) {
-    		var original = vnode.state;
-    		try {
-    			return this.apply(original, arguments)
-    		} finally {
-    			checkState(vnode, original);
+    		function getNameSpace(vnode) {
+    			return vnode.attrs && vnode.attrs.xmlns || nameSpace[vnode.tag]
     		}
-    	}
 
-    	// IE11 (at least) throws an UnspecifiedError when accessing document.activeElement when
-    	// inside an iframe. Catch and swallow this error, and heavy-handidly return null.
-    	function activeElement() {
-    		try {
-    			return $doc.activeElement
-    		} catch (e) {
-    			return null
+    		//sanity check to discourage people from doing `vnode.state = ...`
+    		function checkState(vnode, original) {
+    			if (vnode.state !== original) throw new Error("'vnode.state' must not be modified.")
     		}
-    	}
-    	//create
-    	function createNodes(parent, vnodes, start, end, hooks, nextSibling, ns) {
-    		for (var i = start; i < end; i++) {
-    			var vnode = vnodes[i];
-    			if (vnode != null) {
+
+    		//Note: the hook is passed as the `this` argument to allow proxying the
+    		//arguments without requiring a full array allocation to do so. It also
+    		//takes advantage of the fact the current `vnode` is the first argument in
+    		//all lifecycle methods.
+    		function callHook(vnode) {
+    			var original = vnode.state;
+    			try {
+    				return this.apply(original, arguments)
+    			} finally {
+    				checkState(vnode, original);
+    			}
+    		}
+
+    		// IE11 (at least) throws an UnspecifiedError when accessing document.activeElement when
+    		// inside an iframe. Catch and swallow this error, and heavy-handidly return null.
+    		function activeElement() {
+    			try {
+    				return $doc.activeElement
+    			} catch (e) {
+    				return null
+    			}
+    		}
+    		//create
+    		function createNodes(parent, vnodes, start, end, hooks, nextSibling, ns) {
+    			for (var i = start; i < end; i++) {
+    				var vnode = vnodes[i];
+    				if (vnode != null) {
+    					createNode(parent, vnode, hooks, ns, nextSibling);
+    				}
+    			}
+    		}
+    		function createNode(parent, vnode, hooks, ns, nextSibling) {
+    			var tag = vnode.tag;
+    			if (typeof tag === "string") {
+    				vnode.state = {};
+    				if (vnode.attrs != null) initLifecycle(vnode.attrs, vnode, hooks);
+    				switch (tag) {
+    					case "#": createText(parent, vnode, nextSibling); break
+    					case "<": createHTML(parent, vnode, ns, nextSibling); break
+    					case "[": createFragment(parent, vnode, hooks, ns, nextSibling); break
+    					default: createElement(parent, vnode, hooks, ns, nextSibling);
+    				}
+    			}
+    			else createComponent(parent, vnode, hooks, ns, nextSibling);
+    		}
+    		function createText(parent, vnode, nextSibling) {
+    			vnode.dom = $doc.createTextNode(vnode.children);
+    			insertNode(parent, vnode.dom, nextSibling);
+    		}
+    		var possibleParents = {caption: "table", thead: "table", tbody: "table", tfoot: "table", tr: "tbody", th: "tr", td: "tr", colgroup: "table", col: "colgroup"};
+    		function createHTML(parent, vnode, ns, nextSibling) {
+    			var match = vnode.children.match(/^\s*?<(\w+)/im) || [];
+    			// not using the proper parent makes the child element(s) vanish.
+    			//     var div = document.createElement("div")
+    			//     div.innerHTML = "<td>i</td><td>j</td>"
+    			//     console.log(div.innerHTML)
+    			// --> "ij", no <td> in sight.
+    			var temp = $doc.createElement(possibleParents[match[1]] || "div");
+    			if (ns === "http://www.w3.org/2000/svg") {
+    				temp.innerHTML = "<svg xmlns=\"http://www.w3.org/2000/svg\">" + vnode.children + "</svg>";
+    				temp = temp.firstChild;
+    			} else {
+    				temp.innerHTML = vnode.children;
+    			}
+    			vnode.dom = temp.firstChild;
+    			vnode.domSize = temp.childNodes.length;
+    			// Capture nodes to remove, so we don't confuse them.
+    			vnode.instance = [];
+    			var fragment = $doc.createDocumentFragment();
+    			var child;
+    			while (child = temp.firstChild) {
+    				vnode.instance.push(child);
+    				fragment.appendChild(child);
+    			}
+    			insertNode(parent, fragment, nextSibling);
+    		}
+    		function createFragment(parent, vnode, hooks, ns, nextSibling) {
+    			var fragment = $doc.createDocumentFragment();
+    			if (vnode.children != null) {
+    				var children = vnode.children;
+    				createNodes(fragment, children, 0, children.length, hooks, null, ns);
+    			}
+    			vnode.dom = fragment.firstChild;
+    			vnode.domSize = fragment.childNodes.length;
+    			insertNode(parent, fragment, nextSibling);
+    		}
+    		function createElement(parent, vnode, hooks, ns, nextSibling) {
+    			var tag = vnode.tag;
+    			var attrs = vnode.attrs;
+    			var is = attrs && attrs.is;
+
+    			ns = getNameSpace(vnode) || ns;
+
+    			var element = ns ?
+    				is ? $doc.createElementNS(ns, tag, {is: is}) : $doc.createElementNS(ns, tag) :
+    				is ? $doc.createElement(tag, {is: is}) : $doc.createElement(tag);
+    			vnode.dom = element;
+
+    			if (attrs != null) {
+    				setAttrs(vnode, attrs, ns);
+    			}
+
+    			insertNode(parent, element, nextSibling);
+
+    			if (!maybeSetContentEditable(vnode)) {
+    				if (vnode.children != null) {
+    					var children = vnode.children;
+    					createNodes(element, children, 0, children.length, hooks, null, ns);
+    					if (vnode.tag === "select" && attrs != null) setLateSelectAttrs(vnode, attrs);
+    				}
+    			}
+    		}
+    		function initComponent(vnode, hooks) {
+    			var sentinel;
+    			if (typeof vnode.tag.view === "function") {
+    				vnode.state = Object.create(vnode.tag);
+    				sentinel = vnode.state.view;
+    				if (sentinel.$$reentrantLock$$ != null) return
+    				sentinel.$$reentrantLock$$ = true;
+    			} else {
+    				vnode.state = void 0;
+    				sentinel = vnode.tag;
+    				if (sentinel.$$reentrantLock$$ != null) return
+    				sentinel.$$reentrantLock$$ = true;
+    				vnode.state = (vnode.tag.prototype != null && typeof vnode.tag.prototype.view === "function") ? new vnode.tag(vnode) : vnode.tag(vnode);
+    			}
+    			initLifecycle(vnode.state, vnode, hooks);
+    			if (vnode.attrs != null) initLifecycle(vnode.attrs, vnode, hooks);
+    			vnode.instance = Vnode.normalize(callHook.call(vnode.state.view, vnode));
+    			if (vnode.instance === vnode) throw Error("A view cannot return the vnode it received as argument")
+    			sentinel.$$reentrantLock$$ = null;
+    		}
+    		function createComponent(parent, vnode, hooks, ns, nextSibling) {
+    			initComponent(vnode, hooks);
+    			if (vnode.instance != null) {
+    				createNode(parent, vnode.instance, hooks, ns, nextSibling);
+    				vnode.dom = vnode.instance.dom;
+    				vnode.domSize = vnode.dom != null ? vnode.instance.domSize : 0;
+    			}
+    			else {
+    				vnode.domSize = 0;
+    			}
+    		}
+
+    		//update
+    		/**
+    		 * @param {Element|Fragment} parent - the parent element
+    		 * @param {Vnode[] | null} old - the list of vnodes of the last `render()` call for
+    		 *                               this part of the tree
+    		 * @param {Vnode[] | null} vnodes - as above, but for the current `render()` call.
+    		 * @param {Function[]} hooks - an accumulator of post-render hooks (oncreate/onupdate)
+    		 * @param {Element | null} nextSibling - the next DOM node if we're dealing with a
+    		 *                                       fragment that is not the last item in its
+    		 *                                       parent
+    		 * @param {'svg' | 'math' | String | null} ns) - the current XML namespace, if any
+    		 * @returns void
+    		 */
+    		// This function diffs and patches lists of vnodes, both keyed and unkeyed.
+    		//
+    		// We will:
+    		//
+    		// 1. describe its general structure
+    		// 2. focus on the diff algorithm optimizations
+    		// 3. discuss DOM node operations.
+
+    		// ## Overview:
+    		//
+    		// The updateNodes() function:
+    		// - deals with trivial cases
+    		// - determines whether the lists are keyed or unkeyed based on the first non-null node
+    		//   of each list.
+    		// - diffs them and patches the DOM if needed (that's the brunt of the code)
+    		// - manages the leftovers: after diffing, are there:
+    		//   - old nodes left to remove?
+    		// 	 - new nodes to insert?
+    		// 	 deal with them!
+    		//
+    		// The lists are only iterated over once, with an exception for the nodes in `old` that
+    		// are visited in the fourth part of the diff and in the `removeNodes` loop.
+
+    		// ## Diffing
+    		//
+    		// Reading https://github.com/localvoid/ivi/blob/ddc09d06abaef45248e6133f7040d00d3c6be853/packages/ivi/src/vdom/implementation.ts#L617-L837
+    		// may be good for context on longest increasing subsequence-based logic for moving nodes.
+    		//
+    		// In order to diff keyed lists, one has to
+    		//
+    		// 1) match nodes in both lists, per key, and update them accordingly
+    		// 2) create the nodes present in the new list, but absent in the old one
+    		// 3) remove the nodes present in the old list, but absent in the new one
+    		// 4) figure out what nodes in 1) to move in order to minimize the DOM operations.
+    		//
+    		// To achieve 1) one can create a dictionary of keys => index (for the old list), then iterate
+    		// over the new list and for each new vnode, find the corresponding vnode in the old list using
+    		// the map.
+    		// 2) is achieved in the same step: if a new node has no corresponding entry in the map, it is new
+    		// and must be created.
+    		// For the removals, we actually remove the nodes that have been updated from the old list.
+    		// The nodes that remain in that list after 1) and 2) have been performed can be safely removed.
+    		// The fourth step is a bit more complex and relies on the longest increasing subsequence (LIS)
+    		// algorithm.
+    		//
+    		// the longest increasing subsequence is the list of nodes that can remain in place. Imagine going
+    		// from `1,2,3,4,5` to `4,5,1,2,3` where the numbers are not necessarily the keys, but the indices
+    		// corresponding to the keyed nodes in the old list (keyed nodes `e,d,c,b,a` => `b,a,e,d,c` would
+    		//  match the above lists, for example).
+    		//
+    		// In there are two increasing subsequences: `4,5` and `1,2,3`, the latter being the longest. We
+    		// can update those nodes without moving them, and only call `insertNode` on `4` and `5`.
+    		//
+    		// @localvoid adapted the algo to also support node deletions and insertions (the `lis` is actually
+    		// the longest increasing subsequence *of old nodes still present in the new list*).
+    		//
+    		// It is a general algorithm that is fireproof in all circumstances, but it requires the allocation
+    		// and the construction of a `key => oldIndex` map, and three arrays (one with `newIndex => oldIndex`,
+    		// the `LIS` and a temporary one to create the LIS).
+    		//
+    		// So we cheat where we can: if the tails of the lists are identical, they are guaranteed to be part of
+    		// the LIS and can be updated without moving them.
+    		//
+    		// If two nodes are swapped, they are guaranteed not to be part of the LIS, and must be moved (with
+    		// the exception of the last node if the list is fully reversed).
+    		//
+    		// ## Finding the next sibling.
+    		//
+    		// `updateNode()` and `createNode()` expect a nextSibling parameter to perform DOM operations.
+    		// When the list is being traversed top-down, at any index, the DOM nodes up to the previous
+    		// vnode reflect the content of the new list, whereas the rest of the DOM nodes reflect the old
+    		// list. The next sibling must be looked for in the old list using `getNextSibling(... oldStart + 1 ...)`.
+    		//
+    		// In the other scenarios (swaps, upwards traversal, map-based diff),
+    		// the new vnodes list is traversed upwards. The DOM nodes at the bottom of the list reflect the
+    		// bottom part of the new vnodes list, and we can use the `v.dom`  value of the previous node
+    		// as the next sibling (cached in the `nextSibling` variable).
+
+
+    		// ## DOM node moves
+    		//
+    		// In most scenarios `updateNode()` and `createNode()` perform the DOM operations. However,
+    		// this is not the case if the node moved (second and fourth part of the diff algo). We move
+    		// the old DOM nodes before updateNode runs because it enables us to use the cached `nextSibling`
+    		// variable rather than fetching it using `getNextSibling()`.
+    		//
+    		// The fourth part of the diff currently inserts nodes unconditionally, leading to issues
+    		// like #1791 and #1999. We need to be smarter about those situations where adjascent old
+    		// nodes remain together in the new list in a way that isn't covered by parts one and
+    		// three of the diff algo.
+
+    		function updateNodes(parent, old, vnodes, hooks, nextSibling, ns) {
+    			if (old === vnodes || old == null && vnodes == null) return
+    			else if (old == null || old.length === 0) createNodes(parent, vnodes, 0, vnodes.length, hooks, nextSibling, ns);
+    			else if (vnodes == null || vnodes.length === 0) removeNodes(parent, old, 0, old.length);
+    			else {
+    				var isOldKeyed = old[0] != null && old[0].key != null;
+    				var isKeyed = vnodes[0] != null && vnodes[0].key != null;
+    				var start = 0, oldStart = 0;
+    				if (!isOldKeyed) while (oldStart < old.length && old[oldStart] == null) oldStart++;
+    				if (!isKeyed) while (start < vnodes.length && vnodes[start] == null) start++;
+    				if (isOldKeyed !== isKeyed) {
+    					removeNodes(parent, old, oldStart, old.length);
+    					createNodes(parent, vnodes, start, vnodes.length, hooks, nextSibling, ns);
+    				} else if (!isKeyed) {
+    					// Don't index past the end of either list (causes deopts).
+    					var commonLength = old.length < vnodes.length ? old.length : vnodes.length;
+    					// Rewind if necessary to the first non-null index on either side.
+    					// We could alternatively either explicitly create or remove nodes when `start !== oldStart`
+    					// but that would be optimizing for sparse lists which are more rare than dense ones.
+    					start = start < oldStart ? start : oldStart;
+    					for (; start < commonLength; start++) {
+    						o = old[start];
+    						v = vnodes[start];
+    						if (o === v || o == null && v == null) continue
+    						else if (o == null) createNode(parent, v, hooks, ns, getNextSibling(old, start + 1, nextSibling));
+    						else if (v == null) removeNode(parent, o);
+    						else updateNode(parent, o, v, hooks, getNextSibling(old, start + 1, nextSibling), ns);
+    					}
+    					if (old.length > commonLength) removeNodes(parent, old, start, old.length);
+    					if (vnodes.length > commonLength) createNodes(parent, vnodes, start, vnodes.length, hooks, nextSibling, ns);
+    				} else {
+    					// keyed diff
+    					var oldEnd = old.length - 1, end = vnodes.length - 1, map, o, v, oe, ve, topSibling;
+
+    					// bottom-up
+    					while (oldEnd >= oldStart && end >= start) {
+    						oe = old[oldEnd];
+    						ve = vnodes[end];
+    						if (oe.key !== ve.key) break
+    						if (oe !== ve) updateNode(parent, oe, ve, hooks, nextSibling, ns);
+    						if (ve.dom != null) nextSibling = ve.dom;
+    						oldEnd--, end--;
+    					}
+    					// top-down
+    					while (oldEnd >= oldStart && end >= start) {
+    						o = old[oldStart];
+    						v = vnodes[start];
+    						if (o.key !== v.key) break
+    						oldStart++, start++;
+    						if (o !== v) updateNode(parent, o, v, hooks, getNextSibling(old, oldStart, nextSibling), ns);
+    					}
+    					// swaps and list reversals
+    					while (oldEnd >= oldStart && end >= start) {
+    						if (start === end) break
+    						if (o.key !== ve.key || oe.key !== v.key) break
+    						topSibling = getNextSibling(old, oldStart, nextSibling);
+    						moveNodes(parent, oe, topSibling);
+    						if (oe !== v) updateNode(parent, oe, v, hooks, topSibling, ns);
+    						if (++start <= --end) moveNodes(parent, o, nextSibling);
+    						if (o !== ve) updateNode(parent, o, ve, hooks, nextSibling, ns);
+    						if (ve.dom != null) nextSibling = ve.dom;
+    						oldStart++; oldEnd--;
+    						oe = old[oldEnd];
+    						ve = vnodes[end];
+    						o = old[oldStart];
+    						v = vnodes[start];
+    					}
+    					// bottom up once again
+    					while (oldEnd >= oldStart && end >= start) {
+    						if (oe.key !== ve.key) break
+    						if (oe !== ve) updateNode(parent, oe, ve, hooks, nextSibling, ns);
+    						if (ve.dom != null) nextSibling = ve.dom;
+    						oldEnd--, end--;
+    						oe = old[oldEnd];
+    						ve = vnodes[end];
+    					}
+    					if (start > end) removeNodes(parent, old, oldStart, oldEnd + 1);
+    					else if (oldStart > oldEnd) createNodes(parent, vnodes, start, end + 1, hooks, nextSibling, ns);
+    					else {
+    						// inspired by ivi https://github.com/ivijs/ivi/ by Boris Kaul
+    						var originalNextSibling = nextSibling, vnodesLength = end - start + 1, oldIndices = new Array(vnodesLength), li=0, i=0, pos = 2147483647, matched = 0, map, lisIndices;
+    						for (i = 0; i < vnodesLength; i++) oldIndices[i] = -1;
+    						for (i = end; i >= start; i--) {
+    							if (map == null) map = getKeyMap(old, oldStart, oldEnd + 1);
+    							ve = vnodes[i];
+    							var oldIndex = map[ve.key];
+    							if (oldIndex != null) {
+    								pos = (oldIndex < pos) ? oldIndex : -1; // becomes -1 if nodes were re-ordered
+    								oldIndices[i-start] = oldIndex;
+    								oe = old[oldIndex];
+    								old[oldIndex] = null;
+    								if (oe !== ve) updateNode(parent, oe, ve, hooks, nextSibling, ns);
+    								if (ve.dom != null) nextSibling = ve.dom;
+    								matched++;
+    							}
+    						}
+    						nextSibling = originalNextSibling;
+    						if (matched !== oldEnd - oldStart + 1) removeNodes(parent, old, oldStart, oldEnd + 1);
+    						if (matched === 0) createNodes(parent, vnodes, start, end + 1, hooks, nextSibling, ns);
+    						else {
+    							if (pos === -1) {
+    								// the indices of the indices of the items that are part of the
+    								// longest increasing subsequence in the oldIndices list
+    								lisIndices = makeLisIndices(oldIndices);
+    								li = lisIndices.length - 1;
+    								for (i = end; i >= start; i--) {
+    									v = vnodes[i];
+    									if (oldIndices[i-start] === -1) createNode(parent, v, hooks, ns, nextSibling);
+    									else {
+    										if (lisIndices[li] === i - start) li--;
+    										else moveNodes(parent, v, nextSibling);
+    									}
+    									if (v.dom != null) nextSibling = vnodes[i].dom;
+    								}
+    							} else {
+    								for (i = end; i >= start; i--) {
+    									v = vnodes[i];
+    									if (oldIndices[i-start] === -1) createNode(parent, v, hooks, ns, nextSibling);
+    									if (v.dom != null) nextSibling = vnodes[i].dom;
+    								}
+    							}
+    						}
+    					}
+    				}
+    			}
+    		}
+    		function updateNode(parent, old, vnode, hooks, nextSibling, ns) {
+    			var oldTag = old.tag, tag = vnode.tag;
+    			if (oldTag === tag) {
+    				vnode.state = old.state;
+    				vnode.events = old.events;
+    				if (shouldNotUpdate(vnode, old)) return
+    				if (typeof oldTag === "string") {
+    					if (vnode.attrs != null) {
+    						updateLifecycle(vnode.attrs, vnode, hooks);
+    					}
+    					switch (oldTag) {
+    						case "#": updateText(old, vnode); break
+    						case "<": updateHTML(parent, old, vnode, ns, nextSibling); break
+    						case "[": updateFragment(parent, old, vnode, hooks, nextSibling, ns); break
+    						default: updateElement(old, vnode, hooks, ns);
+    					}
+    				}
+    				else updateComponent(parent, old, vnode, hooks, nextSibling, ns);
+    			}
+    			else {
+    				removeNode(parent, old);
     				createNode(parent, vnode, hooks, ns, nextSibling);
     			}
     		}
-    	}
-    	function createNode(parent, vnode, hooks, ns, nextSibling) {
-    		var tag = vnode.tag;
-    		if (typeof tag === "string") {
-    			vnode.state = {};
-    			if (vnode.attrs != null) initLifecycle(vnode.attrs, vnode, hooks);
-    			switch (tag) {
-    				case "#": createText(parent, vnode, nextSibling); break
-    				case "<": createHTML(parent, vnode, ns, nextSibling); break
-    				case "[": createFragment(parent, vnode, hooks, ns, nextSibling); break
-    				default: createElement(parent, vnode, hooks, ns, nextSibling);
+    		function updateText(old, vnode) {
+    			if (old.children.toString() !== vnode.children.toString()) {
+    				old.dom.nodeValue = vnode.children;
+    			}
+    			vnode.dom = old.dom;
+    		}
+    		function updateHTML(parent, old, vnode, ns, nextSibling) {
+    			if (old.children !== vnode.children) {
+    				removeHTML(parent, old);
+    				createHTML(parent, vnode, ns, nextSibling);
+    			}
+    			else {
+    				vnode.dom = old.dom;
+    				vnode.domSize = old.domSize;
+    				vnode.instance = old.instance;
     			}
     		}
-    		else createComponent(parent, vnode, hooks, ns, nextSibling);
-    	}
-    	function createText(parent, vnode, nextSibling) {
-    		vnode.dom = $doc.createTextNode(vnode.children);
-    		insertNode(parent, vnode.dom, nextSibling);
-    	}
-    	var possibleParents = {caption: "table", thead: "table", tbody: "table", tfoot: "table", tr: "tbody", th: "tr", td: "tr", colgroup: "table", col: "colgroup"};
-    	function createHTML(parent, vnode, ns, nextSibling) {
-    		var match = vnode.children.match(/^\s*?<(\w+)/im) || [];
-    		// not using the proper parent makes the child element(s) vanish.
-    		//     var div = document.createElement("div")
-    		//     div.innerHTML = "<td>i</td><td>j</td>"
-    		//     console.log(div.innerHTML)
-    		// --> "ij", no <td> in sight.
-    		var temp = $doc.createElement(possibleParents[match[1]] || "div");
-    		if (ns === "http://www.w3.org/2000/svg") {
-    			temp.innerHTML = "<svg xmlns=\"http://www.w3.org/2000/svg\">" + vnode.children + "</svg>";
-    			temp = temp.firstChild;
-    		} else {
-    			temp.innerHTML = vnode.children;
-    		}
-    		vnode.dom = temp.firstChild;
-    		vnode.domSize = temp.childNodes.length;
-    		// Capture nodes to remove, so we don't confuse them.
-    		vnode.instance = [];
-    		var fragment = $doc.createDocumentFragment();
-    		var child;
-    		while (child = temp.firstChild) {
-    			vnode.instance.push(child);
-    			fragment.appendChild(child);
-    		}
-    		insertNode(parent, fragment, nextSibling);
-    	}
-    	function createFragment(parent, vnode, hooks, ns, nextSibling) {
-    		var fragment = $doc.createDocumentFragment();
-    		if (vnode.children != null) {
-    			var children = vnode.children;
-    			createNodes(fragment, children, 0, children.length, hooks, null, ns);
-    		}
-    		vnode.dom = fragment.firstChild;
-    		vnode.domSize = fragment.childNodes.length;
-    		insertNode(parent, fragment, nextSibling);
-    	}
-    	function createElement(parent, vnode, hooks, ns, nextSibling) {
-    		var tag = vnode.tag;
-    		var attrs = vnode.attrs;
-    		var is = attrs && attrs.is;
-
-    		ns = getNameSpace(vnode) || ns;
-
-    		var element = ns ?
-    			is ? $doc.createElementNS(ns, tag, {is: is}) : $doc.createElementNS(ns, tag) :
-    			is ? $doc.createElement(tag, {is: is}) : $doc.createElement(tag);
-    		vnode.dom = element;
-
-    		if (attrs != null) {
-    			setAttrs(vnode, attrs, ns);
-    		}
-
-    		insertNode(parent, element, nextSibling);
-
-    		if (!maybeSetContentEditable(vnode)) {
-    			if (vnode.children != null) {
-    				var children = vnode.children;
-    				createNodes(element, children, 0, children.length, hooks, null, ns);
-    				if (vnode.tag === "select" && attrs != null) setLateSelectAttrs(vnode, attrs);
-    			}
-    		}
-    	}
-    	function initComponent(vnode, hooks) {
-    		var sentinel;
-    		if (typeof vnode.tag.view === "function") {
-    			vnode.state = Object.create(vnode.tag);
-    			sentinel = vnode.state.view;
-    			if (sentinel.$$reentrantLock$$ != null) return
-    			sentinel.$$reentrantLock$$ = true;
-    		} else {
-    			vnode.state = void 0;
-    			sentinel = vnode.tag;
-    			if (sentinel.$$reentrantLock$$ != null) return
-    			sentinel.$$reentrantLock$$ = true;
-    			vnode.state = (vnode.tag.prototype != null && typeof vnode.tag.prototype.view === "function") ? new vnode.tag(vnode) : vnode.tag(vnode);
-    		}
-    		initLifecycle(vnode.state, vnode, hooks);
-    		if (vnode.attrs != null) initLifecycle(vnode.attrs, vnode, hooks);
-    		vnode.instance = Vnode$1.normalize(callHook.call(vnode.state.view, vnode));
-    		if (vnode.instance === vnode) throw Error("A view cannot return the vnode it received as argument")
-    		sentinel.$$reentrantLock$$ = null;
-    	}
-    	function createComponent(parent, vnode, hooks, ns, nextSibling) {
-    		initComponent(vnode, hooks);
-    		if (vnode.instance != null) {
-    			createNode(parent, vnode.instance, hooks, ns, nextSibling);
-    			vnode.dom = vnode.instance.dom;
-    			vnode.domSize = vnode.dom != null ? vnode.instance.domSize : 0;
-    		}
-    		else {
-    			vnode.domSize = 0;
-    		}
-    	}
-
-    	//update
-    	/**
-    	 * @param {Element|Fragment} parent - the parent element
-    	 * @param {Vnode[] | null} old - the list of vnodes of the last `render()` call for
-    	 *                               this part of the tree
-    	 * @param {Vnode[] | null} vnodes - as above, but for the current `render()` call.
-    	 * @param {Function[]} hooks - an accumulator of post-render hooks (oncreate/onupdate)
-    	 * @param {Element | null} nextSibling - the next DOM node if we're dealing with a
-    	 *                                       fragment that is not the last item in its
-    	 *                                       parent
-    	 * @param {'svg' | 'math' | String | null} ns) - the current XML namespace, if any
-    	 * @returns void
-    	 */
-    	// This function diffs and patches lists of vnodes, both keyed and unkeyed.
-    	//
-    	// We will:
-    	//
-    	// 1. describe its general structure
-    	// 2. focus on the diff algorithm optimizations
-    	// 3. discuss DOM node operations.
-
-    	// ## Overview:
-    	//
-    	// The updateNodes() function:
-    	// - deals with trivial cases
-    	// - determines whether the lists are keyed or unkeyed based on the first non-null node
-    	//   of each list.
-    	// - diffs them and patches the DOM if needed (that's the brunt of the code)
-    	// - manages the leftovers: after diffing, are there:
-    	//   - old nodes left to remove?
-    	// 	 - new nodes to insert?
-    	// 	 deal with them!
-    	//
-    	// The lists are only iterated over once, with an exception for the nodes in `old` that
-    	// are visited in the fourth part of the diff and in the `removeNodes` loop.
-
-    	// ## Diffing
-    	//
-    	// Reading https://github.com/localvoid/ivi/blob/ddc09d06abaef45248e6133f7040d00d3c6be853/packages/ivi/src/vdom/implementation.ts#L617-L837
-    	// may be good for context on longest increasing subsequence-based logic for moving nodes.
-    	//
-    	// In order to diff keyed lists, one has to
-    	//
-    	// 1) match nodes in both lists, per key, and update them accordingly
-    	// 2) create the nodes present in the new list, but absent in the old one
-    	// 3) remove the nodes present in the old list, but absent in the new one
-    	// 4) figure out what nodes in 1) to move in order to minimize the DOM operations.
-    	//
-    	// To achieve 1) one can create a dictionary of keys => index (for the old list), then iterate
-    	// over the new list and for each new vnode, find the corresponding vnode in the old list using
-    	// the map.
-    	// 2) is achieved in the same step: if a new node has no corresponding entry in the map, it is new
-    	// and must be created.
-    	// For the removals, we actually remove the nodes that have been updated from the old list.
-    	// The nodes that remain in that list after 1) and 2) have been performed can be safely removed.
-    	// The fourth step is a bit more complex and relies on the longest increasing subsequence (LIS)
-    	// algorithm.
-    	//
-    	// the longest increasing subsequence is the list of nodes that can remain in place. Imagine going
-    	// from `1,2,3,4,5` to `4,5,1,2,3` where the numbers are not necessarily the keys, but the indices
-    	// corresponding to the keyed nodes in the old list (keyed nodes `e,d,c,b,a` => `b,a,e,d,c` would
-    	//  match the above lists, for example).
-    	//
-    	// In there are two increasing subsequences: `4,5` and `1,2,3`, the latter being the longest. We
-    	// can update those nodes without moving them, and only call `insertNode` on `4` and `5`.
-    	//
-    	// @localvoid adapted the algo to also support node deletions and insertions (the `lis` is actually
-    	// the longest increasing subsequence *of old nodes still present in the new list*).
-    	//
-    	// It is a general algorithm that is fireproof in all circumstances, but it requires the allocation
-    	// and the construction of a `key => oldIndex` map, and three arrays (one with `newIndex => oldIndex`,
-    	// the `LIS` and a temporary one to create the LIS).
-    	//
-    	// So we cheat where we can: if the tails of the lists are identical, they are guaranteed to be part of
-    	// the LIS and can be updated without moving them.
-    	//
-    	// If two nodes are swapped, they are guaranteed not to be part of the LIS, and must be moved (with
-    	// the exception of the last node if the list is fully reversed).
-    	//
-    	// ## Finding the next sibling.
-    	//
-    	// `updateNode()` and `createNode()` expect a nextSibling parameter to perform DOM operations.
-    	// When the list is being traversed top-down, at any index, the DOM nodes up to the previous
-    	// vnode reflect the content of the new list, whereas the rest of the DOM nodes reflect the old
-    	// list. The next sibling must be looked for in the old list using `getNextSibling(... oldStart + 1 ...)`.
-    	//
-    	// In the other scenarios (swaps, upwards traversal, map-based diff),
-    	// the new vnodes list is traversed upwards. The DOM nodes at the bottom of the list reflect the
-    	// bottom part of the new vnodes list, and we can use the `v.dom`  value of the previous node
-    	// as the next sibling (cached in the `nextSibling` variable).
-
-
-    	// ## DOM node moves
-    	//
-    	// In most scenarios `updateNode()` and `createNode()` perform the DOM operations. However,
-    	// this is not the case if the node moved (second and fourth part of the diff algo). We move
-    	// the old DOM nodes before updateNode runs because it enables us to use the cached `nextSibling`
-    	// variable rather than fetching it using `getNextSibling()`.
-    	//
-    	// The fourth part of the diff currently inserts nodes unconditionally, leading to issues
-    	// like #1791 and #1999. We need to be smarter about those situations where adjascent old
-    	// nodes remain together in the new list in a way that isn't covered by parts one and
-    	// three of the diff algo.
-
-    	function updateNodes(parent, old, vnodes, hooks, nextSibling, ns) {
-    		if (old === vnodes || old == null && vnodes == null) return
-    		else if (old == null || old.length === 0) createNodes(parent, vnodes, 0, vnodes.length, hooks, nextSibling, ns);
-    		else if (vnodes == null || vnodes.length === 0) removeNodes(parent, old, 0, old.length);
-    		else {
-    			var isOldKeyed = old[0] != null && old[0].key != null;
-    			var isKeyed = vnodes[0] != null && vnodes[0].key != null;
-    			var start = 0, oldStart = 0;
-    			if (!isOldKeyed) while (oldStart < old.length && old[oldStart] == null) oldStart++;
-    			if (!isKeyed) while (start < vnodes.length && vnodes[start] == null) start++;
-    			if (isOldKeyed !== isKeyed) {
-    				removeNodes(parent, old, oldStart, old.length);
-    				createNodes(parent, vnodes, start, vnodes.length, hooks, nextSibling, ns);
-    			} else if (!isKeyed) {
-    				// Don't index past the end of either list (causes deopts).
-    				var commonLength = old.length < vnodes.length ? old.length : vnodes.length;
-    				// Rewind if necessary to the first non-null index on either side.
-    				// We could alternatively either explicitly create or remove nodes when `start !== oldStart`
-    				// but that would be optimizing for sparse lists which are more rare than dense ones.
-    				start = start < oldStart ? start : oldStart;
-    				for (; start < commonLength; start++) {
-    					o = old[start];
-    					v = vnodes[start];
-    					if (o === v || o == null && v == null) continue
-    					else if (o == null) createNode(parent, v, hooks, ns, getNextSibling(old, start + 1, nextSibling));
-    					else if (v == null) removeNode(parent, o);
-    					else updateNode(parent, o, v, hooks, getNextSibling(old, start + 1, nextSibling), ns);
-    				}
-    				if (old.length > commonLength) removeNodes(parent, old, start, old.length);
-    				if (vnodes.length > commonLength) createNodes(parent, vnodes, start, vnodes.length, hooks, nextSibling, ns);
-    			} else {
-    				// keyed diff
-    				var oldEnd = old.length - 1, end = vnodes.length - 1, map, o, v, oe, ve, topSibling;
-
-    				// bottom-up
-    				while (oldEnd >= oldStart && end >= start) {
-    					oe = old[oldEnd];
-    					ve = vnodes[end];
-    					if (oe.key !== ve.key) break
-    					if (oe !== ve) updateNode(parent, oe, ve, hooks, nextSibling, ns);
-    					if (ve.dom != null) nextSibling = ve.dom;
-    					oldEnd--, end--;
-    				}
-    				// top-down
-    				while (oldEnd >= oldStart && end >= start) {
-    					o = old[oldStart];
-    					v = vnodes[start];
-    					if (o.key !== v.key) break
-    					oldStart++, start++;
-    					if (o !== v) updateNode(parent, o, v, hooks, getNextSibling(old, oldStart, nextSibling), ns);
-    				}
-    				// swaps and list reversals
-    				while (oldEnd >= oldStart && end >= start) {
-    					if (start === end) break
-    					if (o.key !== ve.key || oe.key !== v.key) break
-    					topSibling = getNextSibling(old, oldStart, nextSibling);
-    					moveNodes(parent, oe, topSibling);
-    					if (oe !== v) updateNode(parent, oe, v, hooks, topSibling, ns);
-    					if (++start <= --end) moveNodes(parent, o, nextSibling);
-    					if (o !== ve) updateNode(parent, o, ve, hooks, nextSibling, ns);
-    					if (ve.dom != null) nextSibling = ve.dom;
-    					oldStart++; oldEnd--;
-    					oe = old[oldEnd];
-    					ve = vnodes[end];
-    					o = old[oldStart];
-    					v = vnodes[start];
-    				}
-    				// bottom up once again
-    				while (oldEnd >= oldStart && end >= start) {
-    					if (oe.key !== ve.key) break
-    					if (oe !== ve) updateNode(parent, oe, ve, hooks, nextSibling, ns);
-    					if (ve.dom != null) nextSibling = ve.dom;
-    					oldEnd--, end--;
-    					oe = old[oldEnd];
-    					ve = vnodes[end];
-    				}
-    				if (start > end) removeNodes(parent, old, oldStart, oldEnd + 1);
-    				else if (oldStart > oldEnd) createNodes(parent, vnodes, start, end + 1, hooks, nextSibling, ns);
-    				else {
-    					// inspired by ivi https://github.com/ivijs/ivi/ by Boris Kaul
-    					var originalNextSibling = nextSibling, vnodesLength = end - start + 1, oldIndices = new Array(vnodesLength), li=0, i=0, pos = 2147483647, matched = 0, map, lisIndices;
-    					for (i = 0; i < vnodesLength; i++) oldIndices[i] = -1;
-    					for (i = end; i >= start; i--) {
-    						if (map == null) map = getKeyMap(old, oldStart, oldEnd + 1);
-    						ve = vnodes[i];
-    						var oldIndex = map[ve.key];
-    						if (oldIndex != null) {
-    							pos = (oldIndex < pos) ? oldIndex : -1; // becomes -1 if nodes were re-ordered
-    							oldIndices[i-start] = oldIndex;
-    							oe = old[oldIndex];
-    							old[oldIndex] = null;
-    							if (oe !== ve) updateNode(parent, oe, ve, hooks, nextSibling, ns);
-    							if (ve.dom != null) nextSibling = ve.dom;
-    							matched++;
-    						}
+    		function updateFragment(parent, old, vnode, hooks, nextSibling, ns) {
+    			updateNodes(parent, old.children, vnode.children, hooks, nextSibling, ns);
+    			var domSize = 0, children = vnode.children;
+    			vnode.dom = null;
+    			if (children != null) {
+    				for (var i = 0; i < children.length; i++) {
+    					var child = children[i];
+    					if (child != null && child.dom != null) {
+    						if (vnode.dom == null) vnode.dom = child.dom;
+    						domSize += child.domSize || 1;
     					}
-    					nextSibling = originalNextSibling;
-    					if (matched !== oldEnd - oldStart + 1) removeNodes(parent, old, oldStart, oldEnd + 1);
-    					if (matched === 0) createNodes(parent, vnodes, start, end + 1, hooks, nextSibling, ns);
+    				}
+    				if (domSize !== 1) vnode.domSize = domSize;
+    			}
+    		}
+    		function updateElement(old, vnode, hooks, ns) {
+    			var element = vnode.dom = old.dom;
+    			ns = getNameSpace(vnode) || ns;
+
+    			if (vnode.tag === "textarea") {
+    				if (vnode.attrs == null) vnode.attrs = {};
+    			}
+    			updateAttrs(vnode, old.attrs, vnode.attrs, ns);
+    			if (!maybeSetContentEditable(vnode)) {
+    				updateNodes(element, old.children, vnode.children, hooks, null, ns);
+    			}
+    		}
+    		function updateComponent(parent, old, vnode, hooks, nextSibling, ns) {
+    			vnode.instance = Vnode.normalize(callHook.call(vnode.state.view, vnode));
+    			if (vnode.instance === vnode) throw Error("A view cannot return the vnode it received as argument")
+    			updateLifecycle(vnode.state, vnode, hooks);
+    			if (vnode.attrs != null) updateLifecycle(vnode.attrs, vnode, hooks);
+    			if (vnode.instance != null) {
+    				if (old.instance == null) createNode(parent, vnode.instance, hooks, ns, nextSibling);
+    				else updateNode(parent, old.instance, vnode.instance, hooks, nextSibling, ns);
+    				vnode.dom = vnode.instance.dom;
+    				vnode.domSize = vnode.instance.domSize;
+    			}
+    			else if (old.instance != null) {
+    				removeNode(parent, old.instance);
+    				vnode.dom = undefined;
+    				vnode.domSize = 0;
+    			}
+    			else {
+    				vnode.dom = old.dom;
+    				vnode.domSize = old.domSize;
+    			}
+    		}
+    		function getKeyMap(vnodes, start, end) {
+    			var map = Object.create(null);
+    			for (; start < end; start++) {
+    				var vnode = vnodes[start];
+    				if (vnode != null) {
+    					var key = vnode.key;
+    					if (key != null) map[key] = start;
+    				}
+    			}
+    			return map
+    		}
+    		// Lifted from ivi https://github.com/ivijs/ivi/
+    		// takes a list of unique numbers (-1 is special and can
+    		// occur multiple times) and returns an array with the indices
+    		// of the items that are part of the longest increasing
+    		// subsequence
+    		var lisTemp = [];
+    		function makeLisIndices(a) {
+    			var result = [0];
+    			var u = 0, v = 0, i = 0;
+    			var il = lisTemp.length = a.length;
+    			for (var i = 0; i < il; i++) lisTemp[i] = a[i];
+    			for (var i = 0; i < il; ++i) {
+    				if (a[i] === -1) continue
+    				var j = result[result.length - 1];
+    				if (a[j] < a[i]) {
+    					lisTemp[i] = j;
+    					result.push(i);
+    					continue
+    				}
+    				u = 0;
+    				v = result.length - 1;
+    				while (u < v) {
+    					// Fast integer average without overflow.
+    					// eslint-disable-next-line no-bitwise
+    					var c = (u >>> 1) + (v >>> 1) + (u & v & 1);
+    					if (a[result[c]] < a[i]) {
+    						u = c + 1;
+    					}
     					else {
-    						if (pos === -1) {
-    							// the indices of the indices of the items that are part of the
-    							// longest increasing subsequence in the oldIndices list
-    							lisIndices = makeLisIndices(oldIndices);
-    							li = lisIndices.length - 1;
-    							for (i = end; i >= start; i--) {
-    								v = vnodes[i];
-    								if (oldIndices[i-start] === -1) createNode(parent, v, hooks, ns, nextSibling);
-    								else {
-    									if (lisIndices[li] === i - start) li--;
-    									else moveNodes(parent, v, nextSibling);
-    								}
-    								if (v.dom != null) nextSibling = vnodes[i].dom;
-    							}
-    						} else {
-    							for (i = end; i >= start; i--) {
-    								v = vnodes[i];
-    								if (oldIndices[i-start] === -1) createNode(parent, v, hooks, ns, nextSibling);
-    								if (v.dom != null) nextSibling = vnodes[i].dom;
-    							}
-    						}
+    						v = c;
     					}
     				}
-    			}
-    		}
-    	}
-    	function updateNode(parent, old, vnode, hooks, nextSibling, ns) {
-    		var oldTag = old.tag, tag = vnode.tag;
-    		if (oldTag === tag) {
-    			vnode.state = old.state;
-    			vnode.events = old.events;
-    			if (shouldNotUpdate(vnode, old)) return
-    			if (typeof oldTag === "string") {
-    				if (vnode.attrs != null) {
-    					updateLifecycle(vnode.attrs, vnode, hooks);
-    				}
-    				switch (oldTag) {
-    					case "#": updateText(old, vnode); break
-    					case "<": updateHTML(parent, old, vnode, ns, nextSibling); break
-    					case "[": updateFragment(parent, old, vnode, hooks, nextSibling, ns); break
-    					default: updateElement(old, vnode, hooks, ns);
+    				if (a[i] < a[result[u]]) {
+    					if (u > 0) lisTemp[i] = result[u - 1];
+    					result[u] = i;
     				}
     			}
-    			else updateComponent(parent, old, vnode, hooks, nextSibling, ns);
-    		}
-    		else {
-    			removeNode(parent, old);
-    			createNode(parent, vnode, hooks, ns, nextSibling);
-    		}
-    	}
-    	function updateText(old, vnode) {
-    		if (old.children.toString() !== vnode.children.toString()) {
-    			old.dom.nodeValue = vnode.children;
-    		}
-    		vnode.dom = old.dom;
-    	}
-    	function updateHTML(parent, old, vnode, ns, nextSibling) {
-    		if (old.children !== vnode.children) {
-    			removeHTML(parent, old);
-    			createHTML(parent, vnode, ns, nextSibling);
-    		}
-    		else {
-    			vnode.dom = old.dom;
-    			vnode.domSize = old.domSize;
-    			vnode.instance = old.instance;
-    		}
-    	}
-    	function updateFragment(parent, old, vnode, hooks, nextSibling, ns) {
-    		updateNodes(parent, old.children, vnode.children, hooks, nextSibling, ns);
-    		var domSize = 0, children = vnode.children;
-    		vnode.dom = null;
-    		if (children != null) {
-    			for (var i = 0; i < children.length; i++) {
-    				var child = children[i];
-    				if (child != null && child.dom != null) {
-    					if (vnode.dom == null) vnode.dom = child.dom;
-    					domSize += child.domSize || 1;
-    				}
+    			u = result.length;
+    			v = result[u - 1];
+    			while (u-- > 0) {
+    				result[u] = v;
+    				v = lisTemp[v];
     			}
-    			if (domSize !== 1) vnode.domSize = domSize;
-    		}
-    	}
-    	function updateElement(old, vnode, hooks, ns) {
-    		var element = vnode.dom = old.dom;
-    		ns = getNameSpace(vnode) || ns;
-
-    		if (vnode.tag === "textarea") {
-    			if (vnode.attrs == null) vnode.attrs = {};
-    		}
-    		updateAttrs(vnode, old.attrs, vnode.attrs, ns);
-    		if (!maybeSetContentEditable(vnode)) {
-    			updateNodes(element, old.children, vnode.children, hooks, null, ns);
-    		}
-    	}
-    	function updateComponent(parent, old, vnode, hooks, nextSibling, ns) {
-    		vnode.instance = Vnode$1.normalize(callHook.call(vnode.state.view, vnode));
-    		if (vnode.instance === vnode) throw Error("A view cannot return the vnode it received as argument")
-    		updateLifecycle(vnode.state, vnode, hooks);
-    		if (vnode.attrs != null) updateLifecycle(vnode.attrs, vnode, hooks);
-    		if (vnode.instance != null) {
-    			if (old.instance == null) createNode(parent, vnode.instance, hooks, ns, nextSibling);
-    			else updateNode(parent, old.instance, vnode.instance, hooks, nextSibling, ns);
-    			vnode.dom = vnode.instance.dom;
-    			vnode.domSize = vnode.instance.domSize;
-    		}
-    		else if (old.instance != null) {
-    			removeNode(parent, old.instance);
-    			vnode.dom = undefined;
-    			vnode.domSize = 0;
-    		}
-    		else {
-    			vnode.dom = old.dom;
-    			vnode.domSize = old.domSize;
-    		}
-    	}
-    	function getKeyMap(vnodes, start, end) {
-    		var map = Object.create(null);
-    		for (; start < end; start++) {
-    			var vnode = vnodes[start];
-    			if (vnode != null) {
-    				var key = vnode.key;
-    				if (key != null) map[key] = start;
-    			}
-    		}
-    		return map
-    	}
-    	// Lifted from ivi https://github.com/ivijs/ivi/
-    	// takes a list of unique numbers (-1 is special and can
-    	// occur multiple times) and returns an array with the indices
-    	// of the items that are part of the longest increasing
-    	// subsequence
-    	var lisTemp = [];
-    	function makeLisIndices(a) {
-    		var result = [0];
-    		var u = 0, v = 0, i = 0;
-    		var il = lisTemp.length = a.length;
-    		for (var i = 0; i < il; i++) lisTemp[i] = a[i];
-    		for (var i = 0; i < il; ++i) {
-    			if (a[i] === -1) continue
-    			var j = result[result.length - 1];
-    			if (a[j] < a[i]) {
-    				lisTemp[i] = j;
-    				result.push(i);
-    				continue
-    			}
-    			u = 0;
-    			v = result.length - 1;
-    			while (u < v) {
-    				// Fast integer average without overflow.
-    				// eslint-disable-next-line no-bitwise
-    				var c = (u >>> 1) + (v >>> 1) + (u & v & 1);
-    				if (a[result[c]] < a[i]) {
-    					u = c + 1;
-    				}
-    				else {
-    					v = c;
-    				}
-    			}
-    			if (a[i] < a[result[u]]) {
-    				if (u > 0) lisTemp[i] = result[u - 1];
-    				result[u] = i;
-    			}
-    		}
-    		u = result.length;
-    		v = result[u - 1];
-    		while (u-- > 0) {
-    			result[u] = v;
-    			v = lisTemp[v];
-    		}
-    		lisTemp.length = 0;
-    		return result
-    	}
-
-    	function getNextSibling(vnodes, i, nextSibling) {
-    		for (; i < vnodes.length; i++) {
-    			if (vnodes[i] != null && vnodes[i].dom != null) return vnodes[i].dom
-    		}
-    		return nextSibling
-    	}
-
-    	// This covers a really specific edge case:
-    	// - Parent node is keyed and contains child
-    	// - Child is removed, returns unresolved promise in `onbeforeremove`
-    	// - Parent node is moved in keyed diff
-    	// - Remaining children still need moved appropriately
-    	//
-    	// Ideally, I'd track removed nodes as well, but that introduces a lot more
-    	// complexity and I'm not exactly interested in doing that.
-    	function moveNodes(parent, vnode, nextSibling) {
-    		var frag = $doc.createDocumentFragment();
-    		moveChildToFrag(parent, frag, vnode);
-    		insertNode(parent, frag, nextSibling);
-    	}
-    	function moveChildToFrag(parent, frag, vnode) {
-    		// Dodge the recursion overhead in a few of the most common cases.
-    		while (vnode.dom != null && vnode.dom.parentNode === parent) {
-    			if (typeof vnode.tag !== "string") {
-    				vnode = vnode.instance;
-    				if (vnode != null) continue
-    			} else if (vnode.tag === "<") {
-    				for (var i = 0; i < vnode.instance.length; i++) {
-    					frag.appendChild(vnode.instance[i]);
-    				}
-    			} else if (vnode.tag !== "[") {
-    				// Don't recurse for text nodes *or* elements, just fragments
-    				frag.appendChild(vnode.dom);
-    			} else if (vnode.children.length === 1) {
-    				vnode = vnode.children[0];
-    				if (vnode != null) continue
-    			} else {
-    				for (var i = 0; i < vnode.children.length; i++) {
-    					var child = vnode.children[i];
-    					if (child != null) moveChildToFrag(parent, frag, child);
-    				}
-    			}
-    			break
-    		}
-    	}
-
-    	function insertNode(parent, dom, nextSibling) {
-    		if (nextSibling != null) parent.insertBefore(dom, nextSibling);
-    		else parent.appendChild(dom);
-    	}
-
-    	function maybeSetContentEditable(vnode) {
-    		if (vnode.attrs == null || (
-    			vnode.attrs.contenteditable == null && // attribute
-    			vnode.attrs.contentEditable == null // property
-    		)) return false
-    		var children = vnode.children;
-    		if (children != null && children.length === 1 && children[0].tag === "<") {
-    			var content = children[0].children;
-    			if (vnode.dom.innerHTML !== content) vnode.dom.innerHTML = content;
-    		}
-    		else if (children != null && children.length !== 0) throw new Error("Child node of a contenteditable must be trusted.")
-    		return true
-    	}
-
-    	//remove
-    	function removeNodes(parent, vnodes, start, end) {
-    		for (var i = start; i < end; i++) {
-    			var vnode = vnodes[i];
-    			if (vnode != null) removeNode(parent, vnode);
-    		}
-    	}
-    	function removeNode(parent, vnode) {
-    		var mask = 0;
-    		var original = vnode.state;
-    		var stateResult, attrsResult;
-    		if (typeof vnode.tag !== "string" && typeof vnode.state.onbeforeremove === "function") {
-    			var result = callHook.call(vnode.state.onbeforeremove, vnode);
-    			if (result != null && typeof result.then === "function") {
-    				mask = 1;
-    				stateResult = result;
-    			}
-    		}
-    		if (vnode.attrs && typeof vnode.attrs.onbeforeremove === "function") {
-    			var result = callHook.call(vnode.attrs.onbeforeremove, vnode);
-    			if (result != null && typeof result.then === "function") {
-    				// eslint-disable-next-line no-bitwise
-    				mask |= 2;
-    				attrsResult = result;
-    			}
-    		}
-    		checkState(vnode, original);
-
-    		// If we can, try to fast-path it and avoid all the overhead of awaiting
-    		if (!mask) {
-    			onremove(vnode);
-    			removeChild(parent, vnode);
-    		} else {
-    			if (stateResult != null) {
-    				var next = function () {
-    					// eslint-disable-next-line no-bitwise
-    					if (mask & 1) { mask &= 2; if (!mask) reallyRemove(); }
-    				};
-    				stateResult.then(next, next);
-    			}
-    			if (attrsResult != null) {
-    				var next = function () {
-    					// eslint-disable-next-line no-bitwise
-    					if (mask & 2) { mask &= 1; if (!mask) reallyRemove(); }
-    				};
-    				attrsResult.then(next, next);
-    			}
+    			lisTemp.length = 0;
+    			return result
     		}
 
-    		function reallyRemove() {
-    			checkState(vnode, original);
-    			onremove(vnode);
-    			removeChild(parent, vnode);
+    		function getNextSibling(vnodes, i, nextSibling) {
+    			for (; i < vnodes.length; i++) {
+    				if (vnodes[i] != null && vnodes[i].dom != null) return vnodes[i].dom
+    			}
+    			return nextSibling
     		}
-    	}
-    	function removeHTML(parent, vnode) {
-    		for (var i = 0; i < vnode.instance.length; i++) {
-    			parent.removeChild(vnode.instance[i]);
+
+    		// This covers a really specific edge case:
+    		// - Parent node is keyed and contains child
+    		// - Child is removed, returns unresolved promise in `onbeforeremove`
+    		// - Parent node is moved in keyed diff
+    		// - Remaining children still need moved appropriately
+    		//
+    		// Ideally, I'd track removed nodes as well, but that introduces a lot more
+    		// complexity and I'm not exactly interested in doing that.
+    		function moveNodes(parent, vnode, nextSibling) {
+    			var frag = $doc.createDocumentFragment();
+    			moveChildToFrag(parent, frag, vnode);
+    			insertNode(parent, frag, nextSibling);
     		}
-    	}
-    	function removeChild(parent, vnode) {
-    		// Dodge the recursion overhead in a few of the most common cases.
-    		while (vnode.dom != null && vnode.dom.parentNode === parent) {
-    			if (typeof vnode.tag !== "string") {
-    				vnode = vnode.instance;
-    				if (vnode != null) continue
-    			} else if (vnode.tag === "<") {
-    				removeHTML(parent, vnode);
-    			} else {
-    				if (vnode.tag !== "[") {
-    					parent.removeChild(vnode.dom);
-    					if (!Array.isArray(vnode.children)) break
-    				}
-    				if (vnode.children.length === 1) {
+    		function moveChildToFrag(parent, frag, vnode) {
+    			// Dodge the recursion overhead in a few of the most common cases.
+    			while (vnode.dom != null && vnode.dom.parentNode === parent) {
+    				if (typeof vnode.tag !== "string") {
+    					vnode = vnode.instance;
+    					if (vnode != null) continue
+    				} else if (vnode.tag === "<") {
+    					for (var i = 0; i < vnode.instance.length; i++) {
+    						frag.appendChild(vnode.instance[i]);
+    					}
+    				} else if (vnode.tag !== "[") {
+    					// Don't recurse for text nodes *or* elements, just fragments
+    					frag.appendChild(vnode.dom);
+    				} else if (vnode.children.length === 1) {
     					vnode = vnode.children[0];
     					if (vnode != null) continue
     				} else {
     					for (var i = 0; i < vnode.children.length; i++) {
     						var child = vnode.children[i];
-    						if (child != null) removeChild(parent, child);
+    						if (child != null) moveChildToFrag(parent, frag, child);
+    					}
+    				}
+    				break
+    			}
+    		}
+
+    		function insertNode(parent, dom, nextSibling) {
+    			if (nextSibling != null) parent.insertBefore(dom, nextSibling);
+    			else parent.appendChild(dom);
+    		}
+
+    		function maybeSetContentEditable(vnode) {
+    			if (vnode.attrs == null || (
+    				vnode.attrs.contenteditable == null && // attribute
+    				vnode.attrs.contentEditable == null // property
+    			)) return false
+    			var children = vnode.children;
+    			if (children != null && children.length === 1 && children[0].tag === "<") {
+    				var content = children[0].children;
+    				if (vnode.dom.innerHTML !== content) vnode.dom.innerHTML = content;
+    			}
+    			else if (children != null && children.length !== 0) throw new Error("Child node of a contenteditable must be trusted.")
+    			return true
+    		}
+
+    		//remove
+    		function removeNodes(parent, vnodes, start, end) {
+    			for (var i = start; i < end; i++) {
+    				var vnode = vnodes[i];
+    				if (vnode != null) removeNode(parent, vnode);
+    			}
+    		}
+    		function removeNode(parent, vnode) {
+    			var mask = 0;
+    			var original = vnode.state;
+    			var stateResult, attrsResult;
+    			if (typeof vnode.tag !== "string" && typeof vnode.state.onbeforeremove === "function") {
+    				var result = callHook.call(vnode.state.onbeforeremove, vnode);
+    				if (result != null && typeof result.then === "function") {
+    					mask = 1;
+    					stateResult = result;
+    				}
+    			}
+    			if (vnode.attrs && typeof vnode.attrs.onbeforeremove === "function") {
+    				var result = callHook.call(vnode.attrs.onbeforeremove, vnode);
+    				if (result != null && typeof result.then === "function") {
+    					// eslint-disable-next-line no-bitwise
+    					mask |= 2;
+    					attrsResult = result;
+    				}
+    			}
+    			checkState(vnode, original);
+
+    			// If we can, try to fast-path it and avoid all the overhead of awaiting
+    			if (!mask) {
+    				onremove(vnode);
+    				removeChild(parent, vnode);
+    			} else {
+    				if (stateResult != null) {
+    					var next = function () {
+    						// eslint-disable-next-line no-bitwise
+    						if (mask & 1) { mask &= 2; if (!mask) reallyRemove(); }
+    					};
+    					stateResult.then(next, next);
+    				}
+    				if (attrsResult != null) {
+    					var next = function () {
+    						// eslint-disable-next-line no-bitwise
+    						if (mask & 2) { mask &= 1; if (!mask) reallyRemove(); }
+    					};
+    					attrsResult.then(next, next);
+    				}
+    			}
+
+    			function reallyRemove() {
+    				checkState(vnode, original);
+    				onremove(vnode);
+    				removeChild(parent, vnode);
+    			}
+    		}
+    		function removeHTML(parent, vnode) {
+    			for (var i = 0; i < vnode.instance.length; i++) {
+    				parent.removeChild(vnode.instance[i]);
+    			}
+    		}
+    		function removeChild(parent, vnode) {
+    			// Dodge the recursion overhead in a few of the most common cases.
+    			while (vnode.dom != null && vnode.dom.parentNode === parent) {
+    				if (typeof vnode.tag !== "string") {
+    					vnode = vnode.instance;
+    					if (vnode != null) continue
+    				} else if (vnode.tag === "<") {
+    					removeHTML(parent, vnode);
+    				} else {
+    					if (vnode.tag !== "[") {
+    						parent.removeChild(vnode.dom);
+    						if (!Array.isArray(vnode.children)) break
+    					}
+    					if (vnode.children.length === 1) {
+    						vnode = vnode.children[0];
+    						if (vnode != null) continue
+    					} else {
+    						for (var i = 0; i < vnode.children.length; i++) {
+    							var child = vnode.children[i];
+    							if (child != null) removeChild(parent, child);
+    						}
+    					}
+    				}
+    				break
+    			}
+    		}
+    		function onremove(vnode) {
+    			if (typeof vnode.tag !== "string" && typeof vnode.state.onremove === "function") callHook.call(vnode.state.onremove, vnode);
+    			if (vnode.attrs && typeof vnode.attrs.onremove === "function") callHook.call(vnode.attrs.onremove, vnode);
+    			if (typeof vnode.tag !== "string") {
+    				if (vnode.instance != null) onremove(vnode.instance);
+    			} else {
+    				var children = vnode.children;
+    				if (Array.isArray(children)) {
+    					for (var i = 0; i < children.length; i++) {
+    						var child = children[i];
+    						if (child != null) onremove(child);
     					}
     				}
     			}
-    			break
     		}
-    	}
-    	function onremove(vnode) {
-    		if (typeof vnode.tag !== "string" && typeof vnode.state.onremove === "function") callHook.call(vnode.state.onremove, vnode);
-    		if (vnode.attrs && typeof vnode.attrs.onremove === "function") callHook.call(vnode.attrs.onremove, vnode);
-    		if (typeof vnode.tag !== "string") {
-    			if (vnode.instance != null) onremove(vnode.instance);
-    		} else {
-    			var children = vnode.children;
-    			if (Array.isArray(children)) {
-    				for (var i = 0; i < children.length; i++) {
-    					var child = children[i];
-    					if (child != null) onremove(child);
-    				}
-    			}
-    		}
-    	}
 
-    	//attrs
-    	function setAttrs(vnode, attrs, ns) {
-    		// If you assign an input type that is not supported by IE 11 with an assignment expression, an error will occur.
-    		//
-    		// Also, the DOM does things to inputs based on the value, so it needs set first.
-    		// See: https://github.com/MithrilJS/mithril.js/issues/2622
-    		if (vnode.tag === "input" && attrs.type != null) vnode.dom.setAttribute("type", attrs.type);
-    		var isFileInput = attrs != null && vnode.tag === "input" && attrs.type === "file";
-    		for (var key in attrs) {
-    			setAttr(vnode, key, null, attrs[key], ns, isFileInput);
-    		}
-    	}
-    	function setAttr(vnode, key, old, value, ns, isFileInput) {
-    		if (key === "key" || key === "is" || value == null || isLifecycleMethod(key) || (old === value && !isFormAttribute(vnode, key)) && typeof value !== "object" || key === "type" && vnode.tag === "input") return
-    		if (key[0] === "o" && key[1] === "n") return updateEvent(vnode, key, value)
-    		if (key.slice(0, 6) === "xlink:") vnode.dom.setAttributeNS("http://www.w3.org/1999/xlink", key.slice(6), value);
-    		else if (key === "style") updateStyle(vnode.dom, old, value);
-    		else if (hasPropertyKey(vnode, key, ns)) {
-    			if (key === "value") {
-    				// Only do the coercion if we're actually going to check the value.
-    				/* eslint-disable no-implicit-coercion */
-    				//setting input[value] to same value by typing on focused element moves cursor to end in Chrome
-    				//setting input[type=file][value] to same value causes an error to be generated if it's non-empty
-    				if ((vnode.tag === "input" || vnode.tag === "textarea") && vnode.dom.value === "" + value && (isFileInput || vnode.dom === activeElement())) return
-    				//setting select[value] to same value while having select open blinks select dropdown in Chrome
-    				if (vnode.tag === "select" && old !== null && vnode.dom.value === "" + value) return
-    				//setting option[value] to same value while having select open blinks select dropdown in Chrome
-    				if (vnode.tag === "option" && old !== null && vnode.dom.value === "" + value) return
-    				//setting input[type=file][value] to different value is an error if it's non-empty
-    				// Not ideal, but it at least works around the most common source of uncaught exceptions for now.
-    				if (isFileInput && "" + value !== "") { console.error("`value` is read-only on file inputs!"); return }
-    				/* eslint-enable no-implicit-coercion */
-    			}
-    			vnode.dom[key] = value;
-    		} else {
-    			if (typeof value === "boolean") {
-    				if (value) vnode.dom.setAttribute(key, "");
-    				else vnode.dom.removeAttribute(key);
-    			}
-    			else vnode.dom.setAttribute(key === "className" ? "class" : key, value);
-    		}
-    	}
-    	function removeAttr(vnode, key, old, ns) {
-    		if (key === "key" || key === "is" || old == null || isLifecycleMethod(key)) return
-    		if (key[0] === "o" && key[1] === "n") updateEvent(vnode, key, undefined);
-    		else if (key === "style") updateStyle(vnode.dom, old, null);
-    		else if (
-    			hasPropertyKey(vnode, key, ns)
-    			&& key !== "className"
-    			&& key !== "title" // creates "null" as title
-    			&& !(key === "value" && (
-    				vnode.tag === "option"
-    				|| vnode.tag === "select" && vnode.dom.selectedIndex === -1 && vnode.dom === activeElement()
-    			))
-    			&& !(vnode.tag === "input" && key === "type")
-    		) {
-    			vnode.dom[key] = null;
-    		} else {
-    			var nsLastIndex = key.indexOf(":");
-    			if (nsLastIndex !== -1) key = key.slice(nsLastIndex + 1);
-    			if (old !== false) vnode.dom.removeAttribute(key === "className" ? "class" : key);
-    		}
-    	}
-    	function setLateSelectAttrs(vnode, attrs) {
-    		if ("value" in attrs) {
-    			if(attrs.value === null) {
-    				if (vnode.dom.selectedIndex !== -1) vnode.dom.value = null;
-    			} else {
-    				var normalized = "" + attrs.value; // eslint-disable-line no-implicit-coercion
-    				if (vnode.dom.value !== normalized || vnode.dom.selectedIndex === -1) {
-    					vnode.dom.value = normalized;
-    				}
-    			}
-    		}
-    		if ("selectedIndex" in attrs) setAttr(vnode, "selectedIndex", null, attrs.selectedIndex, undefined);
-    	}
-    	function updateAttrs(vnode, old, attrs, ns) {
-    		if (old && old === attrs) {
-    			console.warn("Don't reuse attrs object, use new object for every redraw, this will throw in next major");
-    		}
-    		if (attrs != null) {
+    		//attrs
+    		function setAttrs(vnode, attrs, ns) {
     			// If you assign an input type that is not supported by IE 11 with an assignment expression, an error will occur.
     			//
     			// Also, the DOM does things to inputs based on the value, so it needs set first.
     			// See: https://github.com/MithrilJS/mithril.js/issues/2622
     			if (vnode.tag === "input" && attrs.type != null) vnode.dom.setAttribute("type", attrs.type);
-    			var isFileInput = vnode.tag === "input" && attrs.type === "file";
+    			var isFileInput = attrs != null && vnode.tag === "input" && attrs.type === "file";
     			for (var key in attrs) {
-    				setAttr(vnode, key, old && old[key], attrs[key], ns, isFileInput);
+    				setAttr(vnode, key, null, attrs[key], ns, isFileInput);
     			}
     		}
-    		var val;
-    		if (old != null) {
-    			for (var key in old) {
-    				if (((val = old[key]) != null) && (attrs == null || attrs[key] == null)) {
-    					removeAttr(vnode, key, val, ns);
+    		function setAttr(vnode, key, old, value, ns, isFileInput) {
+    			if (key === "key" || key === "is" || value == null || isLifecycleMethod(key) || (old === value && !isFormAttribute(vnode, key)) && typeof value !== "object" || key === "type" && vnode.tag === "input") return
+    			if (key[0] === "o" && key[1] === "n") return updateEvent(vnode, key, value)
+    			if (key.slice(0, 6) === "xlink:") vnode.dom.setAttributeNS("http://www.w3.org/1999/xlink", key.slice(6), value);
+    			else if (key === "style") updateStyle(vnode.dom, old, value);
+    			else if (hasPropertyKey(vnode, key, ns)) {
+    				if (key === "value") {
+    					// Only do the coercion if we're actually going to check the value.
+    					/* eslint-disable no-implicit-coercion */
+    					//setting input[value] to same value by typing on focused element moves cursor to end in Chrome
+    					//setting input[type=file][value] to same value causes an error to be generated if it's non-empty
+    					if ((vnode.tag === "input" || vnode.tag === "textarea") && vnode.dom.value === "" + value && (isFileInput || vnode.dom === activeElement())) return
+    					//setting select[value] to same value while having select open blinks select dropdown in Chrome
+    					if (vnode.tag === "select" && old !== null && vnode.dom.value === "" + value) return
+    					//setting option[value] to same value while having select open blinks select dropdown in Chrome
+    					if (vnode.tag === "option" && old !== null && vnode.dom.value === "" + value) return
+    					//setting input[type=file][value] to different value is an error if it's non-empty
+    					// Not ideal, but it at least works around the most common source of uncaught exceptions for now.
+    					if (isFileInput && "" + value !== "") { console.error("`value` is read-only on file inputs!"); return }
+    					/* eslint-enable no-implicit-coercion */
+    				}
+    				vnode.dom[key] = value;
+    			} else {
+    				if (typeof value === "boolean") {
+    					if (value) vnode.dom.setAttribute(key, "");
+    					else vnode.dom.removeAttribute(key);
+    				}
+    				else vnode.dom.setAttribute(key === "className" ? "class" : key, value);
+    			}
+    		}
+    		function removeAttr(vnode, key, old, ns) {
+    			if (key === "key" || key === "is" || old == null || isLifecycleMethod(key)) return
+    			if (key[0] === "o" && key[1] === "n") updateEvent(vnode, key, undefined);
+    			else if (key === "style") updateStyle(vnode.dom, old, null);
+    			else if (
+    				hasPropertyKey(vnode, key, ns)
+    				&& key !== "className"
+    				&& key !== "title" // creates "null" as title
+    				&& !(key === "value" && (
+    					vnode.tag === "option"
+    					|| vnode.tag === "select" && vnode.dom.selectedIndex === -1 && vnode.dom === activeElement()
+    				))
+    				&& !(vnode.tag === "input" && key === "type")
+    			) {
+    				vnode.dom[key] = null;
+    			} else {
+    				var nsLastIndex = key.indexOf(":");
+    				if (nsLastIndex !== -1) key = key.slice(nsLastIndex + 1);
+    				if (old !== false) vnode.dom.removeAttribute(key === "className" ? "class" : key);
+    			}
+    		}
+    		function setLateSelectAttrs(vnode, attrs) {
+    			if ("value" in attrs) {
+    				if(attrs.value === null) {
+    					if (vnode.dom.selectedIndex !== -1) vnode.dom.value = null;
+    				} else {
+    					var normalized = "" + attrs.value; // eslint-disable-line no-implicit-coercion
+    					if (vnode.dom.value !== normalized || vnode.dom.selectedIndex === -1) {
+    						vnode.dom.value = normalized;
+    					}
+    				}
+    			}
+    			if ("selectedIndex" in attrs) setAttr(vnode, "selectedIndex", null, attrs.selectedIndex, undefined);
+    		}
+    		function updateAttrs(vnode, old, attrs, ns) {
+    			if (old && old === attrs) {
+    				console.warn("Don't reuse attrs object, use new object for every redraw, this will throw in next major");
+    			}
+    			if (attrs != null) {
+    				// If you assign an input type that is not supported by IE 11 with an assignment expression, an error will occur.
+    				//
+    				// Also, the DOM does things to inputs based on the value, so it needs set first.
+    				// See: https://github.com/MithrilJS/mithril.js/issues/2622
+    				if (vnode.tag === "input" && attrs.type != null) vnode.dom.setAttribute("type", attrs.type);
+    				var isFileInput = vnode.tag === "input" && attrs.type === "file";
+    				for (var key in attrs) {
+    					setAttr(vnode, key, old && old[key], attrs[key], ns, isFileInput);
+    				}
+    			}
+    			var val;
+    			if (old != null) {
+    				for (var key in old) {
+    					if (((val = old[key]) != null) && (attrs == null || attrs[key] == null)) {
+    						removeAttr(vnode, key, val, ns);
+    					}
     				}
     			}
     		}
-    	}
-    	function isFormAttribute(vnode, attr) {
-    		return attr === "value" || attr === "checked" || attr === "selectedIndex" || attr === "selected" && vnode.dom === activeElement() || vnode.tag === "option" && vnode.dom.parentNode === $doc.activeElement
-    	}
-    	function isLifecycleMethod(attr) {
-    		return attr === "oninit" || attr === "oncreate" || attr === "onupdate" || attr === "onremove" || attr === "onbeforeremove" || attr === "onbeforeupdate"
-    	}
-    	function hasPropertyKey(vnode, key, ns) {
-    		// Filter out namespaced keys
-    		return ns === undefined && (
-    			// If it's a custom element, just keep it.
-    			vnode.tag.indexOf("-") > -1 || vnode.attrs != null && vnode.attrs.is ||
-    			// If it's a normal element, let's try to avoid a few browser bugs.
-    			key !== "href" && key !== "list" && key !== "form" && key !== "width" && key !== "height"// && key !== "type"
-    			// Defer the property check until *after* we check everything.
-    		) && key in vnode.dom
-    	}
+    		function isFormAttribute(vnode, attr) {
+    			return attr === "value" || attr === "checked" || attr === "selectedIndex" || attr === "selected" && vnode.dom === activeElement() || vnode.tag === "option" && vnode.dom.parentNode === $doc.activeElement
+    		}
+    		function isLifecycleMethod(attr) {
+    			return attr === "oninit" || attr === "oncreate" || attr === "onupdate" || attr === "onremove" || attr === "onbeforeremove" || attr === "onbeforeupdate"
+    		}
+    		function hasPropertyKey(vnode, key, ns) {
+    			// Filter out namespaced keys
+    			return ns === undefined && (
+    				// If it's a custom element, just keep it.
+    				vnode.tag.indexOf("-") > -1 || vnode.attrs != null && vnode.attrs.is ||
+    				// If it's a normal element, let's try to avoid a few browser bugs.
+    				key !== "href" && key !== "list" && key !== "form" && key !== "width" && key !== "height"// && key !== "type"
+    				// Defer the property check until *after* we check everything.
+    			) && key in vnode.dom
+    		}
 
-    	//style
-    	var uppercaseRegex = /[A-Z]/g;
-    	function toLowerCase(capital) { return "-" + capital.toLowerCase() }
-    	function normalizeKey(key) {
-    		return key[0] === "-" && key[1] === "-" ? key :
-    			key === "cssFloat" ? "float" :
-    				key.replace(uppercaseRegex, toLowerCase)
-    	}
-    	function updateStyle(element, old, style) {
-    		if (old === style) ; else if (style == null) {
-    			// New style is missing, just clear it.
-    			element.style.cssText = "";
-    		} else if (typeof style !== "object") {
-    			// New style is a string, let engine deal with patching.
-    			element.style.cssText = style;
-    		} else if (old == null || typeof old !== "object") {
-    			// `old` is missing or a string, `style` is an object.
-    			element.style.cssText = "";
-    			// Add new style properties
-    			for (var key in style) {
-    				var value = style[key];
-    				if (value != null) element.style.setProperty(normalizeKey(key), String(value));
-    			}
-    		} else {
-    			// Both old & new are (different) objects.
-    			// Update style properties that have changed
-    			for (var key in style) {
-    				var value = style[key];
-    				if (value != null && (value = String(value)) !== String(old[key])) {
-    					element.style.setProperty(normalizeKey(key), value);
+    		//style
+    		var uppercaseRegex = /[A-Z]/g;
+    		function toLowerCase(capital) { return "-" + capital.toLowerCase() }
+    		function normalizeKey(key) {
+    			return key[0] === "-" && key[1] === "-" ? key :
+    				key === "cssFloat" ? "float" :
+    					key.replace(uppercaseRegex, toLowerCase)
+    		}
+    		function updateStyle(element, old, style) {
+    			if (old === style) ; else if (style == null) {
+    				// New style is missing, just clear it.
+    				element.style.cssText = "";
+    			} else if (typeof style !== "object") {
+    				// New style is a string, let engine deal with patching.
+    				element.style.cssText = style;
+    			} else if (old == null || typeof old !== "object") {
+    				// `old` is missing or a string, `style` is an object.
+    				element.style.cssText = "";
+    				// Add new style properties
+    				for (var key in style) {
+    					var value = style[key];
+    					if (value != null) element.style.setProperty(normalizeKey(key), String(value));
     				}
-    			}
-    			// Remove style properties that no longer exist
-    			for (var key in old) {
-    				if (old[key] != null && style[key] == null) {
-    					element.style.removeProperty(normalizeKey(key));
+    			} else {
+    				// Both old & new are (different) objects.
+    				// Update style properties that have changed
+    				for (var key in style) {
+    					var value = style[key];
+    					if (value != null && (value = String(value)) !== String(old[key])) {
+    						element.style.setProperty(normalizeKey(key), value);
+    					}
+    				}
+    				// Remove style properties that no longer exist
+    				for (var key in old) {
+    					if (old[key] != null && style[key] == null) {
+    						element.style.removeProperty(normalizeKey(key));
+    					}
     				}
     			}
     		}
-    	}
 
-    	// Here's an explanation of how this works:
-    	// 1. The event names are always (by design) prefixed by `on`.
-    	// 2. The EventListener interface accepts either a function or an object
-    	//    with a `handleEvent` method.
-    	// 3. The object does not inherit from `Object.prototype`, to avoid
-    	//    any potential interference with that (e.g. setters).
-    	// 4. The event name is remapped to the handler before calling it.
-    	// 5. In function-based event handlers, `ev.target === this`. We replicate
-    	//    that below.
-    	// 6. In function-based event handlers, `return false` prevents the default
-    	//    action and stops event propagation. We replicate that below.
-    	function EventDict() {
-    		// Save this, so the current redraw is correctly tracked.
-    		this._ = currentRedraw;
-    	}
-    	EventDict.prototype = Object.create(null);
-    	EventDict.prototype.handleEvent = function (ev) {
-    		var handler = this["on" + ev.type];
-    		var result;
-    		if (typeof handler === "function") result = handler.call(ev.currentTarget, ev);
-    		else if (typeof handler.handleEvent === "function") handler.handleEvent(ev);
-    		if (this._ && ev.redraw !== false) (0, this._)();
-    		if (result === false) {
-    			ev.preventDefault();
-    			ev.stopPropagation();
+    		// Here's an explanation of how this works:
+    		// 1. The event names are always (by design) prefixed by `on`.
+    		// 2. The EventListener interface accepts either a function or an object
+    		//    with a `handleEvent` method.
+    		// 3. The object does not inherit from `Object.prototype`, to avoid
+    		//    any potential interference with that (e.g. setters).
+    		// 4. The event name is remapped to the handler before calling it.
+    		// 5. In function-based event handlers, `ev.target === this`. We replicate
+    		//    that below.
+    		// 6. In function-based event handlers, `return false` prevents the default
+    		//    action and stops event propagation. We replicate that below.
+    		function EventDict() {
+    			// Save this, so the current redraw is correctly tracked.
+    			this._ = currentRedraw;
+    		}
+    		EventDict.prototype = Object.create(null);
+    		EventDict.prototype.handleEvent = function (ev) {
+    			var handler = this["on" + ev.type];
+    			var result;
+    			if (typeof handler === "function") result = handler.call(ev.currentTarget, ev);
+    			else if (typeof handler.handleEvent === "function") handler.handleEvent(ev);
+    			if (this._ && ev.redraw !== false) (0, this._)();
+    			if (result === false) {
+    				ev.preventDefault();
+    				ev.stopPropagation();
+    			}
+    		};
+
+    		//event
+    		function updateEvent(vnode, key, value) {
+    			if (vnode.events != null) {
+    				vnode.events._ = currentRedraw;
+    				if (vnode.events[key] === value) return
+    				if (value != null && (typeof value === "function" || typeof value === "object")) {
+    					if (vnode.events[key] == null) vnode.dom.addEventListener(key.slice(2), vnode.events, false);
+    					vnode.events[key] = value;
+    				} else {
+    					if (vnode.events[key] != null) vnode.dom.removeEventListener(key.slice(2), vnode.events, false);
+    					vnode.events[key] = undefined;
+    				}
+    			} else if (value != null && (typeof value === "function" || typeof value === "object")) {
+    				vnode.events = new EventDict();
+    				vnode.dom.addEventListener(key.slice(2), vnode.events, false);
+    				vnode.events[key] = value;
+    			}
+    		}
+
+    		//lifecycle
+    		function initLifecycle(source, vnode, hooks) {
+    			if (typeof source.oninit === "function") callHook.call(source.oninit, vnode);
+    			if (typeof source.oncreate === "function") hooks.push(callHook.bind(source.oncreate, vnode));
+    		}
+    		function updateLifecycle(source, vnode, hooks) {
+    			if (typeof source.onupdate === "function") hooks.push(callHook.bind(source.onupdate, vnode));
+    		}
+    		function shouldNotUpdate(vnode, old) {
+    			do {
+    				if (vnode.attrs != null && typeof vnode.attrs.onbeforeupdate === "function") {
+    					var force = callHook.call(vnode.attrs.onbeforeupdate, vnode, old);
+    					if (force !== undefined && !force) break
+    				}
+    				if (typeof vnode.tag !== "string" && typeof vnode.state.onbeforeupdate === "function") {
+    					var force = callHook.call(vnode.state.onbeforeupdate, vnode, old);
+    					if (force !== undefined && !force) break
+    				}
+    				return false
+    			} while (false); // eslint-disable-line no-constant-condition
+    			vnode.dom = old.dom;
+    			vnode.domSize = old.domSize;
+    			vnode.instance = old.instance;
+    			// One would think having the actual latest attributes would be ideal,
+    			// but it doesn't let us properly diff based on our current internal
+    			// representation. We have to save not only the old DOM info, but also
+    			// the attributes used to create it, as we diff *that*, not against the
+    			// DOM directly (with a few exceptions in `setAttr`). And, of course, we
+    			// need to save the children and text as they are conceptually not
+    			// unlike special "attributes" internally.
+    			vnode.attrs = old.attrs;
+    			vnode.children = old.children;
+    			vnode.text = old.text;
+    			return true
+    		}
+
+    		var currentDOM;
+
+    		return function(dom, vnodes, redraw) {
+    			if (!dom) throw new TypeError("DOM element being rendered to does not exist.")
+    			if (currentDOM != null && dom.contains(currentDOM)) {
+    				throw new TypeError("Node is currently being rendered to and thus is locked.")
+    			}
+    			var prevRedraw = currentRedraw;
+    			var prevDOM = currentDOM;
+    			var hooks = [];
+    			var active = activeElement();
+    			var namespace = dom.namespaceURI;
+
+    			currentDOM = dom;
+    			currentRedraw = typeof redraw === "function" ? redraw : undefined;
+    			try {
+    				// First time rendering into a node clears it out
+    				if (dom.vnodes == null) dom.textContent = "";
+    				vnodes = Vnode.normalizeChildren(Array.isArray(vnodes) ? vnodes : [vnodes]);
+    				updateNodes(dom, dom.vnodes, vnodes, hooks, null, namespace === "http://www.w3.org/1999/xhtml" ? undefined : namespace);
+    				dom.vnodes = vnodes;
+    				// `document.activeElement` can return null: https://html.spec.whatwg.org/multipage/interaction.html#dom-document-activeelement
+    				if (active != null && activeElement() !== active && typeof active.focus === "function") active.focus();
+    				for (var i = 0; i < hooks.length; i++) hooks[i]();
+    			} finally {
+    				currentRedraw = prevRedraw;
+    				currentDOM = prevDOM;
+    			}
     		}
     	};
+    	return render$2;
+    }
 
-    	//event
-    	function updateEvent(vnode, key, value) {
-    		if (vnode.events != null) {
-    			vnode.events._ = currentRedraw;
-    			if (vnode.events[key] === value) return
-    			if (value != null && (typeof value === "function" || typeof value === "object")) {
-    				if (vnode.events[key] == null) vnode.dom.addEventListener(key.slice(2), vnode.events, false);
-    				vnode.events[key] = value;
-    			} else {
-    				if (vnode.events[key] != null) vnode.dom.removeEventListener(key.slice(2), vnode.events, false);
-    				vnode.events[key] = undefined;
-    			}
-    		} else if (value != null && (typeof value === "function" || typeof value === "object")) {
-    			vnode.events = new EventDict();
-    			vnode.dom.addEventListener(key.slice(2), vnode.events, false);
-    			vnode.events[key] = value;
-    		}
-    	}
+    var render$1;
+    var hasRequiredRender;
 
-    	//lifecycle
-    	function initLifecycle(source, vnode, hooks) {
-    		if (typeof source.oninit === "function") callHook.call(source.oninit, vnode);
-    		if (typeof source.oncreate === "function") hooks.push(callHook.bind(source.oncreate, vnode));
-    	}
-    	function updateLifecycle(source, vnode, hooks) {
-    		if (typeof source.onupdate === "function") hooks.push(callHook.bind(source.onupdate, vnode));
-    	}
-    	function shouldNotUpdate(vnode, old) {
-    		do {
-    			if (vnode.attrs != null && typeof vnode.attrs.onbeforeupdate === "function") {
-    				var force = callHook.call(vnode.attrs.onbeforeupdate, vnode, old);
-    				if (force !== undefined && !force) break
-    			}
-    			if (typeof vnode.tag !== "string" && typeof vnode.state.onbeforeupdate === "function") {
-    				var force = callHook.call(vnode.state.onbeforeupdate, vnode, old);
-    				if (force !== undefined && !force) break
-    			}
-    			return false
-    		} while (false); // eslint-disable-line no-constant-condition
-    		vnode.dom = old.dom;
-    		vnode.domSize = old.domSize;
-    		vnode.instance = old.instance;
-    		// One would think having the actual latest attributes would be ideal,
-    		// but it doesn't let us properly diff based on our current internal
-    		// representation. We have to save not only the old DOM info, but also
-    		// the attributes used to create it, as we diff *that*, not against the
-    		// DOM directly (with a few exceptions in `setAttr`). And, of course, we
-    		// need to save the children and text as they are conceptually not
-    		// unlike special "attributes" internally.
-    		vnode.attrs = old.attrs;
-    		vnode.children = old.children;
-    		vnode.text = old.text;
-    		return true
-    	}
+    function requireRender () {
+    	if (hasRequiredRender) return render$1;
+    	hasRequiredRender = 1;
 
-    	var currentDOM;
-
-    	return function(dom, vnodes, redraw) {
-    		if (!dom) throw new TypeError("DOM element being rendered to does not exist.")
-    		if (currentDOM != null && dom.contains(currentDOM)) {
-    			throw new TypeError("Node is currently being rendered to and thus is locked.")
-    		}
-    		var prevRedraw = currentRedraw;
-    		var prevDOM = currentDOM;
-    		var hooks = [];
-    		var active = activeElement();
-    		var namespace = dom.namespaceURI;
-
-    		currentDOM = dom;
-    		currentRedraw = typeof redraw === "function" ? redraw : undefined;
-    		try {
-    			// First time rendering into a node clears it out
-    			if (dom.vnodes == null) dom.textContent = "";
-    			vnodes = Vnode$1.normalizeChildren(Array.isArray(vnodes) ? vnodes : [vnodes]);
-    			updateNodes(dom, dom.vnodes, vnodes, hooks, null, namespace === "http://www.w3.org/1999/xhtml" ? undefined : namespace);
-    			dom.vnodes = vnodes;
-    			// `document.activeElement` can return null: https://html.spec.whatwg.org/multipage/interaction.html#dom-document-activeelement
-    			if (active != null && activeElement() !== active && typeof active.focus === "function") active.focus();
-    			for (var i = 0; i < hooks.length; i++) hooks[i]();
-    		} finally {
-    			currentRedraw = prevRedraw;
-    			currentDOM = prevDOM;
-    		}
-    	}
-    };
-
-    var render$1 = render$2(typeof window !== "undefined" ? window : null);
+    	render$1 = requireRender$1()(typeof window !== "undefined" ? window : null);
+    	return render$1;
+    }
 
     var Vnode = requireVnode();
 
@@ -4295,7 +4360,7 @@ var ef1941 = (function (exports, node_crypto) {
     	return {mount: mount, redraw: redraw}
     };
 
-    var render = render$1;
+    var render = requireRender();
 
     var mountRedraw$2 = mountRedraw$3(render, typeof requestAnimationFrame !== "undefined" ? requestAnimationFrame : null, typeof console !== "undefined" ? console : null);
 
@@ -5131,7 +5196,7 @@ var ef1941 = (function (exports, node_crypto) {
     m.Fragment = "[";
     m.mount = mountRedraw.mount;
     m.route = requireRoute();
-    m.render = render$1;
+    m.render = requireRender();
     m.redraw = mountRedraw.redraw;
     m.request = request.request;
     m.jsonp = request.jsonp;
@@ -6805,7 +6870,6 @@ var ef1941 = (function (exports, node_crypto) {
       key: 'css'
     }),
         cx = _createEmotion.cx,
-        keyframes = _createEmotion.keyframes,
         css = _createEmotion.css;
 
     const 
@@ -6843,8 +6907,9 @@ var ef1941 = (function (exports, node_crypto) {
             return display.dirty;
         },
         view: ({ attrs: { class: kls = [], display, glyphComponent } }) => {
-            const gc = glyphComponent !== null && glyphComponent !== void 0 ? glyphComponent : GlyphComponent, f = display.fontmap, sz = f.glyphSize, mx = f.glyphsPerRow * sz, my = Math.ceil(f.numGlyphs / f.glyphsPerRow) * sz;
-            //TODO clean up the styles here and (maybe?) do pointer-events none for transparent
+            var _a;
+            const gc = glyphComponent !== null && glyphComponent !== void 0 ? glyphComponent : GlyphComponent, f = display.fontmap, sz = f.glyphSize, mx = f.glyphsPerRow * sz, my = Math.ceil(f.numGlyphs / f.glyphsPerRow) * sz, visible = ((_a = display.opacity) !== null && _a !== void 0 ? _a : 1) > 0;
+            //TODO clean up the styles here
             return mithril('.display-layer', {
                 class: cx(css `
                         position: relative;
@@ -6858,7 +6923,7 @@ var ef1941 = (function (exports, node_crypto) {
                             width: ${sz}px;
                             height: ${sz}px;
                             background-color: ${antic2rgb(display.backgroundColor)};
-                            pointer-events: ${display.backgroundColor != null ? 'auto' : 'none'}
+                            pointer-events: ${visible && display.backgroundColor != null ? 'auto' : 'none'}
                         }
                         .glyph-foreground {
                             width: 100%;
@@ -6868,29 +6933,56 @@ var ef1941 = (function (exports, node_crypto) {
                             -webkit-mask-image: url(${f.maskImage});
                             -webkit-mask-size: ${mx}px ${my}px;
                             background-color: ${antic2rgb(display.foregroundColor)};
-                            pointer-events: ${display.foregroundColor != null ? 'auto' : 'none'}
+                            pointer-events: ${visible && display.foregroundColor != null ? 'auto' : 'none'}
                         }
                     `, ...(typeof (kls) === 'string' ? [kls] : kls)),
             }, display.spritelist().map(g => mithril(SpriteComponent, { key: g.key, g, f, gc, defaults: display.opts })));
         }
     };
+    function maybeAnimate(elt, animate, f) {
+        if (animate == null) {
+            elt.getAnimations().forEach(a => a.cancel());
+            return;
+        }
+        switch (animate) {
+            case 0 /* GlyphAnimation.blink */:
+                elt.animate([
+                    { opacity: 0.0 },
+                    { opacity: 0.0 },
+                    { opacity: 1.0 },
+                    { opacity: 1.0 },
+                ], { duration: 1000, easing: 'ease-in', iterations: Infinity });
+                break;
+            case 1 /* GlyphAnimation.flash */:
+            case 2 /* GlyphAnimation.flash_reverse */:
+                {
+                    const dir = animate == 1 /* GlyphAnimation.flash */ ? 'normal' : 'reverse';
+                    elt.animate([
+                        { '-webkit-mask-image': 'none' },
+                        { '-webkit-mask-image': `url(${f.maskImage})` },
+                    ], { duration: 250, iterations: Infinity, direction: dir });
+                }
+                break;
+            default: {
+                const fail = animate;
+                throw new Error(`Unhandled animation type: ${fail}`);
+            }
+        }
+    }
     const SpriteComponent = {
+        oncreate: ({ dom, attrs: { g: { animate }, f } }) => maybeAnimate(dom, animate, f),
+        onupdate: ({ dom, attrs: { g: { animate }, f } }) => maybeAnimate(dom, animate, f),
         view: ({ attrs: { g, f, gc, defaults } }) => {
-            const sz = f.glyphSize, kf = keyframes `
-                0% {opacity: 1.0;}
-                50% {opacity: 1.0;}
-                75% {opacity:  0.0;}
-                100% {opacity: 0.0;}
-            `;
+            var _a;
+            const sz = f.glyphSize, visible = ((_a = g.opacity) !== null && _a !== void 0 ? _a : 1) > 0;
             return mithril('.glyph', {
                 onclick: g.onclick,
                 onmouseover: g.onmouseover,
                 style: {
                     opacity: g.opacity,
                     'background-color': antic2rgb(g.backgroundColor),
-                    'pointer-events': g.backgroundColor != null ? 'auto' : null,
+                    'pointer-events': visible && g.backgroundColor != null ? 'auto' : null,
                     transform: `translate(${g.x * sz}px, ${g.y * sz}px)`,
-                    animation: g.animate == 0 /* GlyphAnimation.blink */ ? `${kf} 1.0s ease-in infinite` : undefined,
                 },
             }, mithril(gc, { g, f, defaults }));
         }
@@ -6900,17 +6992,16 @@ var ef1941 = (function (exports, node_crypto) {
         view: () => null,
     };
     const GlyphComponent = {
+        oncreate: ({ dom, attrs: { g: { animate }, f } }) => maybeAnimate(dom, animate, f),
+        onupdate: ({ dom, attrs: { g: { animate }, f } }) => maybeAnimate(dom, animate, f),
         view: ({ attrs: { g, f } }) => {
-            const { glyphSize: sz, glyphsPerRow: nc } = f, kf = keyframes `
-                0% {-webkit-mask-image: none; }
-                100% {-webkit-mask-image: url(${f.maskImage});
-            `;
+            var _a;
+            const { glyphSize: sz, glyphsPerRow: nc } = f, visible = ((_a = g.opacity) !== null && _a !== void 0 ? _a : 1) > 0;
             return mithril('.glyph-foreground', {
                 style: {
                     'background-color': antic2rgb(g.foregroundColor),
-                    'pointer-events': g.foregroundColor != null ? 'auto' : null,
+                    'pointer-events': visible && g.foregroundColor != null ? 'auto' : null,
                     '-webkit-mask-position': `${-(g.c % nc) * sz}px ${-Math.floor(g.c / nc) * sz}px`,
-                    animation: g.animate == 1 /* GlyphAnimation.flash */ ? `${kf} 0.25s infinite` : undefined,
                 }
             });
         }
@@ -6952,8 +7043,9 @@ var ef1941 = (function (exports, node_crypto) {
         onupdate: ({ attrs: { scr } }) => {
             Object.values(scr).forEach(layer => layer.dirty = false);
         },
-        view: ({ attrs: { flags, scr: { dateWindow, infoWindow, errorWindow, mapLayer, labelLayer, unitLayer, maskLayer } } }) => {
+        view: ({ attrs: { flags, scr: { dateWindow, infoWindow, errorWindow, mapLayer, labelLayer, unitLayer, kreuzeLayer, maskLayer } } }) => {
             return [
+                // double-width date-window at the top
                 mithril(DisplayComponent, {
                     display: dateWindow,
                     class: ['game', css `
@@ -6962,12 +7054,15 @@ var ef1941 = (function (exports, node_crypto) {
                 `],
                 }),
                 mithril(DividerComponent, { color: 0x1A }),
+                // central fixed-size window containing the scrollable map
                 mithril('.map-scroller', {
                     class: css `
                         height: 144px;
                         overflow: scroll;
                     `,
-                }, mithril('.map-panel', {
+                }, 
+                // the full-sized map
+                mithril('.map-panel', {
                     class: css `
                             /* 48 x 41  8px sq cells */
                             width: 384px;
@@ -6984,50 +7079,77 @@ var ef1941 = (function (exports, node_crypto) {
                         `,
                     style: { transform: flags.zoom ? 'scale(2)' : null },
                 }, [
+                    // bottom layer showing terrain
                     mithril(DisplayComponent, {
                         display: mapLayer,
-                        class: ['terrain', css `
-                                .display-layer, .glyph-foreground {
-                                    transition: background-color 1s linear;
-                                }
-                            `],
+                        class: [
+                            'terrain',
+                            css `
+                                    .display-layer, .glyph-foreground {
+                                        transition: background-color 1s linear;
+                                    }
+                                `
+                        ],
                     }),
+                    // conditionally show text labels near cities
                     flags.extras ? mithril(DisplayComponent, {
                         display: labelLayer,
                         glyphComponent: LabelComponent,
-                        class: ['labels', css `
-                                pointer-events: none;
-                            `],
+                        class: [
+                            'labels',
+                            css `
+                                    pointer-events: none;
+                                `
+                        ],
                     }) : null,
+                    // layer with unit icons as sprites
+                    //TODO does flags conditional work with dirty indicator
                     mithril(DisplayComponent, {
                         display: unitLayer,
-                        glyphComponent: flags.extras ? HealthBarGlyphComponent : undefined,
-                        class: ['units', css `
-                                .glyph {
-                                    transition: transform 250ms linear;
-                                    transition: opacity 500ms linear;
-                                }
-                                .glyph-background, .glyph-foreground {
-                                    transition: background-color 1s linear;
-                                }
-                            `],
+                        glyphComponent: flags.extras ? HealthBarGlyphComponent : GlyphComponent,
+                        class: [
+                            'units',
+                            css `
+                                    .glyph {
+                                        transition: transform 250ms linear;
+                                        transition: opacity 500ms linear;
+                                    }
+                                    .glyph-background, .glyph-foreground {
+                                        transition: background-color 1s linear;
+                                    }
+                                `
+                        ],
                     }),
+                    // conditionally show current order paths for all units
                     flags.extras ? mithril(SVGDisplayComponent, {
                         display: unitLayer,
-                        class: ['orders', css `
-                                opacity: 0.5;
-                            `],
+                        class: [
+                            'orders',
+                            css `
+                                    opacity: 0.5;
+                                `
+                        ],
                     }) : null,
+                    // conditionally show a semit-transparent mask to highlight unit reach
                     flags.extras ? mithril(DisplayComponent, {
                         display: maskLayer,
                         glyphComponent: BlockComponent,
-                        class: ['mask', css `
-                                opacity: 0.5;
-                                .glyph {
-                                    pointer-events: none;
-                                }
-                            `]
-                    }) : null
+                        class: [
+                            'mask',
+                            css `
+                                    opacity: 0.5;
+                                    .glyph {
+                                        pointer-events: none;
+                                    }
+                                `
+                        ]
+                    }) : null,
+                    // show animated orders for focussed unit
+                    mithril(DisplayComponent, {
+                        display: kreuzeLayer,
+                        glyphComponent: KreuzeComponent,
+                        class: ['kreuze'],
+                    }),
                 ])),
                 mithril(DividerComponent, { color: 0x02 }),
                 mithril(DisplayComponent, { display: infoWindow }),
@@ -7047,7 +7169,7 @@ var ef1941 = (function (exports, node_crypto) {
     };
     const LabelComponent = {
         view: ({ attrs: { g: { props }, defaults: { foregroundColor } } }) => {
-            let label = props === null || props === void 0 ? void 0 : props.label;
+            const label = props === null || props === void 0 ? void 0 : props.label;
             return mithril('.' + css `
                 transform: translate(4px, -4px);
                 font-family: verdana;
@@ -7064,12 +7186,11 @@ var ef1941 = (function (exports, node_crypto) {
         view: ({ attrs: { g, f, defaults } }) => {
             var _a;
             // add an optional health bar
-            let { cstrng, mstrng } = ((_a = g.props) !== null && _a !== void 0 ? _a : {});
-            if (cstrng == null || mstrng == null)
-                return;
+            const { cstrng, mstrng } = ((_a = g.props) !== null && _a !== void 0 ? _a : {});
             return [
                 mithril(GlyphComponent, { g, f, defaults }),
-                mithril('.' + css `
+                (cstrng != null && mstrng != null)
+                    ? mithril('.' + css `
                     position:  absolute;
                     bottom: 0;
                     right: 0;
@@ -7089,7 +7210,7 @@ var ef1941 = (function (exports, node_crypto) {
                     `, { style: { width: `${90 * mstrng / 255}%` } }, mithril('.' + css `
                             background-color: rgb(50,205,50, 0.8);
                             height: 100%;
-                        `, { style: { width: `${100 * cstrng / mstrng}%` } })))
+                        `, { style: { width: `${100 * cstrng / mstrng}%` } }))) : null,
             ];
         }
     };
@@ -7110,9 +7231,9 @@ var ef1941 = (function (exports, node_crypto) {
                 `, ...(typeof (kls) === 'string' ? [kls] : kls))
             }, mithril('g', {
                 transform: "scale(8)"
-            }, display.spritelist().map(g => {
-                var _a, _b;
-                const orders = (_b = ((_a = g.props) !== null && _a !== void 0 ? _a : {}).orders) !== null && _b !== void 0 ? _b : [];
+            }, display.spritelist().filter(g => { var _a; return (_a = g.props) === null || _a === void 0 ? void 0 : _a.orders; }).map(g => {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const orders = g.props.orders;
                 return mithril('g', {
                     key: g.key,
                     // unit icon centers are 1 pixel offset, so adjust by 1/16
@@ -7125,13 +7246,45 @@ var ef1941 = (function (exports, node_crypto) {
             })));
         }
     };
+    function kreuzeAnimation(elt, g) {
+        var _a, _b;
+        const orders = ((_b = (_a = g.props) === null || _a === void 0 ? void 0 : _a.orders) !== null && _b !== void 0 ? _b : []), arrow = Object.values(directions).findIndex(d => d.icon == g.c), steps = [{
+                transform: 'translate(0px, 0px)',
+                opacity: orders.length && orders[0] == arrow ? 1 : 0
+            }];
+        let dx = 0, dy = 0;
+        orders.forEach(d => {
+            const { dlon, dlat } = directions[d];
+            for (let i = 0; i < 2; i++) {
+                // take two half steps so opacity transition is quicker
+                dx -= dlon / 2;
+                dy -= dlat / 2;
+                steps.push({ transform: `translate(${dx * 8}px, ${dy * 8}px)`, opacity: d == arrow ? 1 : 0 });
+            }
+        });
+        if (arrow == -1) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            elt.style.transform = steps.pop().transform;
+        }
+        else {
+            elt.getAnimations().forEach(a => a.cancel());
+            if (orders.length) {
+                elt.animate(steps, { duration: 500 * orders.length, iterations: Infinity });
+            }
+        }
+    }
+    const KreuzeComponent = {
+        oncreate: ({ dom, attrs: { g } }) => kreuzeAnimation(dom, g),
+        onupdate: ({ dom, attrs: { g } }) => kreuzeAnimation(dom, g),
+        view: GlyphComponent.view,
+    };
     const UnitPathComponent = {
         view: ({ attrs: { orders } }) => {
             // form the path element from the list of orders
             const r = 0.25;
             let x = 0, y = 0, lastd = null, s = "M0,0";
             orders.forEach(d => {
-                let dir = directions[d], dx = dir.dlon, dy = dir.dlat;
+                const { dlon: dx, dlat: dy } = directions[d];
                 // add prev corner
                 if (lastd == null) {
                     s = `M${dx * r},${dy * r}`;
@@ -7142,7 +7295,7 @@ var ef1941 = (function (exports, node_crypto) {
                         s += ` l${dx * 2 * r},${dy * 2 * r}`;
                     }
                     else if (turn % 2) {
-                        let cx = (dx + directions[lastd].dlon) * r, cy = (dy + directions[lastd].dlat) * r;
+                        const cx = (dx + directions[lastd].dlon) * r, cy = (dy + directions[lastd].dlat) * r;
                         s += ` a${r},${r} 0 0 ${turn == 1 ? 0 : 1} ${cx},${cy}`;
                     }
                 }
@@ -7170,7 +7323,7 @@ var ef1941 = (function (exports, node_crypto) {
     };
 
     const resume = window.location.hash.slice(1) || undefined;
-    var game = new Game(resume), uimode = resume ? 1 /* UIModeKey.orders */ : 0 /* UIModeKey.setup */, flags = {
+    const game = new Game(resume), flags = {
         help: resume ? false : true,
         extras: true,
         debug: false,
@@ -7178,6 +7331,7 @@ var ef1941 = (function (exports, node_crypto) {
     }, ai = Object.keys(players)
         .filter(player => +player != game.human)
         .map(player => new Thinker(game, +player));
+    let uimode = resume ? 1 /* UIModeKey.orders */ : 0 /* UIModeKey.setup */;
     const helpUrl = 'https://github.com/patricksurry/eastern-front-1941', helpText = `
 \x11${'\x12'.repeat(38)}\x05
 |                                      |
@@ -7215,6 +7369,7 @@ var ef1941 = (function (exports, node_crypto) {
         mapLayer: new MappedDisplayLayer(0, 0, atasciiFont),
         labelLayer: new SpriteDisplayLayer(0, 0, atasciiFont),
         unitLayer: new SpriteDisplayLayer(0, 0, atasciiFont),
+        kreuzeLayer: new SpriteDisplayLayer(0, 0, atasciiFont),
         maskLayer: new MappedDisplayLayer(0, 0, atasciiFont),
     };
     function paintHelp(h) {
@@ -7240,14 +7395,32 @@ var ef1941 = (function (exports, node_crypto) {
             }
         }));
     }
-    function setMap() {
-        const m = game.mapboard, font = fontMap(`static/fontmap-custom-${m.font}.png`, 128 + 6), { width, height } = m.extent, { lon: left, lat: top } = game.mapboard.locations[0][0].point;
+    function initScreen() {
+        const m = game.mapboard, font = fontMap(`static/fontmap-custom-${m.font}.png`, 128 + 6), { width, height } = m.extent;
         scr.mapLayer = new MappedDisplayLayer(width, height, font);
         scr.labelLayer = new SpriteDisplayLayer(width, height, font, { foregroundColor: undefined });
         scr.unitLayer = new SpriteDisplayLayer(width, height, font);
+        scr.kreuzeLayer = new SpriteDisplayLayer(width, height, font);
         scr.maskLayer = new MappedDisplayLayer(width, height, font, { backgroundColor: 0x00 });
-        //TOOD repaint city if change ownership, with color animation
-        m.locations.forEach(row => row.forEach(loc => {
+        paintMap();
+        paintCityLabels();
+        paintUnits();
+    }
+    function paintCityLabels() {
+        // these are static so never need redrawn, color changes via paintMap
+        const { lon: left, lat: top } = game.mapboard.locations[0][0].point;
+        game.mapboard.cities.forEach((c, i) => {
+            scr.labelLayer.put(i.toString(), 32, left - c.lon, top - c.lat, {
+                props: { label: c.label }
+            });
+        });
+    }
+    function paintMap() {
+        const { earth, contrast } = weatherdata[game.weather];
+        scr.labelLayer.setcolors({ foregroundColor: contrast });
+        scr.mapLayer.setcolors({ layerColor: earth });
+        //TODO tree colors are updated in place in terrain defs :-(
+        game.mapboard.locations.forEach(row => row.forEach(loc => {
             const t = terraintypes[loc.terrain], city = loc.cityid != null ? game.mapboard.cities[loc.cityid] : null, color = city ? players[city === null || city === void 0 ? void 0 : city.owner].color : (loc.alt ? t.altcolor : t.color);
             scr.mapLayer.putc(loc.icon, {
                 foregroundColor: color,
@@ -7261,48 +7434,52 @@ var ef1941 = (function (exports, node_crypto) {
                 },
             });
         }));
-        m.cities.forEach((c, i) => {
-            scr.labelLayer.put(i.toString(), 32, left - c.lon, top - c.lat, {
-                props: { label: c.label }
-            });
-        });
     }
-    function paintMap() {
-        const { earth, contrast } = weatherdata[game.weather];
-        scr.labelLayer.setcolors({ foregroundColor: contrast });
-        scr.mapLayer.setcolors({ layerColor: earth });
-        game.oob.forEach(u => paintUnit(u));
+    function paintUnits() {
+        game.oob.forEach(paintUnit);
     }
-    function paintUnit(u, focussed = false) {
-        const { earth } = weatherdata[game.weather], { lon: left, lat: top } = game.mapboard.locations[0][0].point;
-        let p = u.point, opts = {
+    function paintUnit(u) {
+        const focussed = u === focus.u(), { earth } = weatherdata[game.weather], { lon: left, lat: top } = game.mapboard.locations[0][0].point, ux = left - u.lon, uy = top - u.lat;
+        let animation = undefined;
+        if (focussed && u.player == game.human) {
+            animation = 0 /* GlyphAnimation.blink */;
+            const props = { orders: u.orders };
+            scr.kreuzeLayer.put('#', 0x80, ux, uy, { foregroundColor: 0x1A, props }),
+                Object.values(directions).forEach(d => scr.kreuzeLayer.put(d.label, d.icon, ux, uy, { foregroundColor: 0xDC, props }));
+        }
+        else if (u.status == 'attack') {
+            animation = 1 /* GlyphAnimation.flash */;
+        }
+        else if (u.status == 'defend') {
+            animation = 2 /* GlyphAnimation.flash_reverse */;
+        }
+        const opts = {
             backgroundColor: earth,
             foregroundColor: players[u.player].color,
             opacity: u.active ? 1 : 0,
-            animate: focussed ? 0 /* GlyphAnimation.blink */ : undefined,
-            onclick: () => {
-                var _a;
-                if (((_a = focus.u()) === null || _a === void 0 ? void 0 : _a.id) != u.id)
-                    focus.on(u);
-                else
-                    focus.off();
-            },
+            animate: animation,
             onmouseover: (e) => {
                 e.currentTarget.title = u.location.describe();
-            },
-            props: {
+            }
+        };
+        if (u.player == game.human || flags.debug) {
+            opts.props = {
                 cstrng: u.cstrng,
                 mstrng: u.mstrng,
                 orders: u.orders,
-            },
-        };
-        scr.unitLayer.put(u.id.toString(), unitkinds[u.kind].icon, left - p.lon, top - p.lat, opts);
+            };
+        }
+        if (uimode == 1 /* UIModeKey.orders */) {
+            opts.onclick = () => {
+                if (focus.u() !== u)
+                    focus.on(u);
+                else
+                    focus.off();
+            };
+        }
+        scr.unitLayer.put(u.id.toString(), unitkinds[u.kind].icon, ux, uy, opts);
     }
     function paintReach(u) {
-        if (!u) {
-            scr.maskLayer.cls(); // remove all mask glyphs
-            return;
-        }
         const { lon: left, lat: top } = game.mapboard.locations[0][0].point, reachmap = u.reach();
         scr.maskLayer.cls(0); // mask everything, then clear reach squares
         Object.keys(reachmap).forEach(v => {
@@ -7317,16 +7494,16 @@ var ef1941 = (function (exports, node_crypto) {
             so < > increments scenario, # picks directly
         */
         inc !== null && inc !== void 0 ? inc : (inc = 0);
-        let n = Object.keys(scenarios).length;
+        const n = Object.keys(scenarios).length;
         if (scenario == null) {
             scenario = (game.scenario + inc + n) % n;
         }
         // TODO setter
         game.scenario = scenario;
-        let label = scenarios[scenario].label.padEnd(8, ' ');
+        const label = scenarios[scenario].label.padEnd(8, ' ');
         scr.errorWindow.puts(`[<] ${label} [>]  [ENTER] TO START`, { justify: 'center' });
     }
-    var focus = {
+    const focus = {
         id: -1,
         active: false,
         u: () => focus.active ? game.oob.at(focus.id) : undefined,
@@ -7338,27 +7515,27 @@ var ef1941 = (function (exports, node_crypto) {
                 u.label,
                 `MUSTER: ${u.mstrng}  COMBAT: ${u.cstrng}`
             ], { x: 6 });
-            paintUnit(u, true);
+            paintUnit(u);
             paintReach(u);
         },
         off: () => {
             const u = focus.u();
-            if (u) {
-                // clear blink and reach
-                paintUnit(u, false);
-                paintReach(undefined);
-            }
-            scr.infoWindow.cls();
             focus.active = false;
+            scr.infoWindow.cls();
+            if (u) {
+                paintUnit(u); // repaint to clear blink etc
+                scr.maskLayer.cls(); // remove all mask glyphs
+                scr.kreuzeLayer.cls(); // remove any order animation
+            }
         },
         shift: (offset) => {
             const locid = (u) => game.mapboard.locationOf(u).id, humanUnits = game.oob.activeUnits(game.human).sort((a, b) => locid(b) - locid(a)), n = humanUnits.length;
-            var i;
+            let i;
             if (focus.id >= 0) {
                 i = humanUnits.findIndex(u => u.id == focus.id);
                 if (i < 0) {
                     // if last unit no longer active, find the nearest active unit
-                    let id = locid(game.oob.at(focus.id));
+                    const id = locid(game.oob.at(focus.id));
                     while (++i < n && locid(humanUnits[i]) > id) { /**/ }
                 }
             }
@@ -7371,7 +7548,7 @@ var ef1941 = (function (exports, node_crypto) {
     };
     function editOrders(dir) {
         // dir => add step, -1 => remove step, null => clear or unfocus
-        let u = focus.u();
+        const u = focus.u();
         if (!u)
             return;
         if (!u.human) {
@@ -7391,7 +7568,6 @@ var ef1941 = (function (exports, node_crypto) {
         else {
             u.addOrder(dir);
         }
-        paintUnit(u, true);
     }
     const keymap = {
         help: '?/',
@@ -7530,28 +7706,47 @@ var ef1941 = (function (exports, node_crypto) {
             mithril.redraw();
             if (+new Date() > t0 + helpScrambleMillis)
                 clearInterval(scramble);
-        }, 150);
-        setMap();
-        paintMap();
+        }, 250);
+        initScreen();
         document.addEventListener('keydown', keyHandler);
         scr.dateWindow.puts('EASTERN FRONT 1941', { justify: 'center', y: 1 });
         scr.infoWindow.puts('PLEASE ENTER YOUR ORDERS NOW', { x: 6 });
-        let ai = Object.keys(players)
-            .filter(player => +player != game.human)
-            .map(player => new Thinker(game, +player));
-        console.log(`set up ${ai.length} AIs`);
         mithril.mount(document.body, { view: () => mithril(Layout, { scr, hscr, flags }) });
-        /*
-            game.on('game', (action) => {
-        //        console.log('game event', action);
-                if (action == 'turn') play();
-                else repaint();
-            });
-        
-            game.start();       // TODO
-        
-            renderScreen(gameModel);
-        */
+        game.start();
+        game.on('game', (action) => {
+            console.log('game', action);
+            switch (action) {
+                case 'turn':
+                    paintMap();
+                    paintUnits();
+                    if (uimode == 2 /* UIModeKey.resolve */)
+                        setMode(1 /* UIModeKey.orders */);
+                    break;
+                case 'tick':
+                    paintUnits();
+                    break;
+                default: {
+                    const fail = action;
+                    throw new Error(`Unhandled game action: ${fail}`);
+                }
+            }
+            mithril.redraw();
+        }).on('map', (action) => {
+            console.log('map', action);
+            switch (action) {
+                case 'citycontrol':
+                    paintMap();
+                    break;
+                default: {
+                    const fail = action;
+                    throw new Error(`Unhandled map action: ${fail}`);
+                }
+            }
+        }).on('unit', (action, u) => {
+            if (action == 'orders')
+                paintUnit(u);
+            // the rest of the actions happen during turn processing, which we pick up via game.tick
+        });
     }
 
     exports.start = start;

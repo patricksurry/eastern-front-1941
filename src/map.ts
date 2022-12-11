@@ -1,10 +1,10 @@
+/* eslint-disable  @typescript-eslint/no-non-null-assertion */
 import {
     type Flag, type Point,
     directions, DirectionKey,
     terraintypes, TerrainKey,
     waterstate, WaterStateKey,
     monthdata,
-    weatherdata, WeatherKey,
     PlayerKey,
 } from './defs';
 import {ravel, unravel, zigzag, zagzig} from './codec';
@@ -14,6 +14,8 @@ import {scenarios} from './scenarios';
 import type {Game} from './game';
 
 type Path = {cost: number, orders: DirectionKey[]};
+
+type MapEvent = 'citycontrol';
 
 // the map is made up of locations, each with a lon and lat
 // grid points have integer coordinates and a unique identifier
@@ -49,12 +51,12 @@ class GridPoint implements Point {
     }
     static directionFrom = function(p: Point, q: Point): (DirectionKey|null) {
         // return the index of the winning direction
-        let projections = GridPoint.directionsFrom(p, q);
+        const projections = GridPoint.directionsFrom(p, q);
         return projections.length ? projections[0][1]: null;
     }
     static directionsFrom(p: Point, q: Point): [number, DirectionKey][] {
         // project all directions from p to q and rank them, ensuring tie breaking has no bias
-        let dlat = (q.lat - p.lat),
+        const dlat = (q.lat - p.lat),
             dlon = (q.lon - p.lon);
         if (dlat == 0 && dlon == 0) return [];
         return Object.entries(directions)
@@ -69,13 +71,13 @@ class GridPoint implements Point {
 
         if (diameter % 2 != 1) throw(`squareSpiral: diameter should be odd, got ${diameter}`);
         let loc = new GridPoint(center.lon, center.lat),
-            locs = [loc],
             dir = 0,
             i = 0,
             side = 1;
+        const locs = [loc];
 
         while (++i < diameter) {
-            loc = loc.next(dir)!;
+            loc = loc.next(dir);
             locs.push(loc);
             if (i == side) {
                 side += dir % 2;
@@ -123,10 +125,11 @@ class Mapboard {
             mapencoding = variant.encoding.map((enc, i) => {
                 // convert the encoding table into a lookup of char => [icon, terraintype, alt-flag]
                 type LocT = {icon: number, terrain: TerrainKey, alt: number};
-                let lookup: {[key: string]: LocT} = {}, ch=0;
+                const lookup: {[key: string]: LocT} = {};
+                let ch = 0;
                 enc.split('|').forEach((s, t) =>
                     s.split('').forEach(c => {
-                        let alt: Flag = ((t == 1 && i == 0) || ch == 0x40) ? 1 : 0;
+                        const alt: Flag = ((t == 1 && i == 0) || ch == 0x40) ? 1 : 0;
                         if (ch==0x40) ch--;
                         lookup[c] = {
                             icon: i * 0x40 + ch++,
@@ -155,7 +158,7 @@ class Mapboard {
         this.locations = mapdata.map(
             (row, i) => row.map(
                 (data, j) => {
-                    const lon = this.#maxlon - j,
+                    const lon: number = this.#maxlon - j,
                         lat = this.#maxlat - i;
                     return new MapPoint(lon, lat, data.terrain, data.alt as Flag, data.icon);
                 }
@@ -165,7 +168,7 @@ class Mapboard {
         this.cities = variant.cities.map(c => {return {...c}});
         this.cities.forEach((city, i) => {
             city.points ||= 0;
-            let loc = this.locationOf(city);
+            const loc = this.locationOf(city);
             if (loc.terrain != TerrainKey.city)
                 throw new Error(`Mapboard: city at (${loc.lon}, ${loc.lat}) missing city terrain`);
             loc.cityid = i;
@@ -186,25 +189,18 @@ class Mapboard {
         }
     }
     newTurn(initialize = false) {
-        let mdata = monthdata[this.#game.month],
-            earth = weatherdata[mdata.weather].earth;
+        const mdata = monthdata[this.#game.month];
 
-        // update the tree color in place in the terrain data :grimace:
+        //TODO update the tree color in place in the terrain data :grimace:
         terraintypes[TerrainKey.mountain_forest].altcolor = mdata.trees;
 
         if (!initialize && mdata.water != null) this.#freezeThaw(mdata.water);
-
-        this.#game.emit('map', 'recolor', {
-            fgcolorfn: (loc: MapPoint) => this.#fgcolor(loc),
-            bgcolor: earth,
-            labelcolor: mdata.weather == WeatherKey.snow ? '04': '08'
-        });
     }
     get extent() {
         return {width: this.locations[0].length, height: this.locations.length}
     }
     get memento(): number[] {
-        let vs = ([] as number[])
+        const vs = ([] as number[])
             .concat(
                 [this.#icelat],
                 this.cities.map(c => c.owner)
@@ -228,9 +224,9 @@ class Mapboard {
         }
     }
     neighborOf(pt: GridPoint, dir: DirectionKey): (MapPoint|null) {
-        let q = pt.next(dir);
+        const q = pt.next(dir);
         if (!this.valid(q)) return null;
-        let nbr = this.locationOf(q);
+        const nbr = this.locationOf(q);
 
         const legal = (
             nbr.terrain != TerrainKey.impassable
@@ -243,17 +239,11 @@ class Mapboard {
 
         return legal ? nbr: null;
     }
-    #fgcolor(loc: MapPoint) {
-        // return the antic fg color for a given location
-        let tinfo = terraintypes[loc.terrain],
-            alt = typeof loc.cityid === 'undefined' ? loc.alt : this.cities[loc.cityid].owner;
-        return alt ? tinfo.altcolor : tinfo.color;
-    }
     #freezeThaw(w: WaterStateKey, newlat?: number) {
         // move ice by freeze/thaw rivers and swamps, where w is Water.freeze or Water.thaw
         // ICELAT -= [7,14] incl]; clamp 1-39 incl
         // small bug in APX code? freeze chrs $0B - $29 (exclusive, seems like it could freeze Kerch straight?)
-        let state = waterstate[w],
+        const state = waterstate[w],
             other = waterstate[1-w as WaterStateKey],
             oldlat = this.#icelat,
             dlat = directions[state.dir].dlat;
@@ -262,22 +252,27 @@ class Mapboard {
             // initial setup where we freeze to saved value
             this.#icelat = newlat;
         } else {
-            let change = this.#game.rand.bits(3) + 7;
+            const change = this.#game.rand.bits(3) + 7;
             this.#icelat = Math.min(this.#maxlat, Math.max(1, oldlat + dlat * change));
         }
 
-        let skip = (w == WaterStateKey.freeze) ? oldlat: this.#icelat;  // for freeze skip old line, for thaw skip new new
+        const skip = (w == WaterStateKey.freeze) ? oldlat: this.#icelat;  // for freeze skip old line, for thaw skip new new
         for (let i = oldlat; i != this.#icelat + dlat; i += dlat) {
             if (i == skip) continue;
             this.locations[this.#maxlat - i].forEach(d => {
-                let k = other.terrain.indexOf(d.terrain);
+                const k = other.terrain.indexOf(d.terrain);
                 if (k != -1) d.terrain = state.terrain[k];
             });
         }
     }
     occupy(loc: MapPoint, player: PlayerKey) {
-        if (loc.cityid != null) this.cities[loc.cityid].owner = player;
-        //TODO repaint this square
+        if (loc.cityid != null) {
+            const c = this.cities[loc.cityid];
+            if (c.owner != player) {
+                c.owner = player;
+                this.#game.emit('map', 'citycontrol');
+            }
+        }
     }
     directPath(p: Point, q: Point, costs?: {[key: number]: number}): Path {
         /*
@@ -293,8 +288,8 @@ class Mapboard {
         so we just keep choosing the step that moves E back towards zero.
         */
 
-        let loc = this.locationOf(p),
-            goal = this.locationOf(q);
+        let loc = this.locationOf(p);
+        const goal = this.locationOf(q);
         if (loc.id == goal.id) return {cost: 0, orders: []};
 
         const
@@ -308,11 +303,11 @@ class Mapboard {
             dt = A * t.dlon + B * t.dlat;
 
         let err = 0,
-            cost = 0,
-            orders: number[] = [];
+            cost = 0;
+        const orders: number[] = [];
 
         while (loc.id != goal.id) {
-            let [k, de] = Math.abs(err + ds) < Math.abs(err + dt) ? [i, ds]: [j, dt];
+            const [k, de] = Math.abs(err + ds) < Math.abs(err + dt) ? [i, ds]: [j, dt];
             err += de;
             orders.push(k);
             //NB. not validating that we can actually take this path
@@ -330,8 +325,8 @@ class Mapboard {
             _head = -1;
         type FrontierPoint = {id: number, est: number};
         type Step = {dir: DirectionKey | null, cost: number};
-        let src = this.locationOf(p),
-            goal = this.locationOf(q),
+        let src = this.locationOf(p);
+        const goal = this.locationOf(q),
             // linked list of points to search next, ordered by estimated total cost via this point
             frontier = new Map<number, FrontierPoint>([[_head, {id: src.id, est: 0}]]),
             // dir arrived from and cost from start to here
@@ -373,8 +368,8 @@ class Mapboard {
         if (src.id != goal.id)
             throw new Error(`MapBoard.bestPath: no path from ${p} to ${q}`)
 
-        let orders: number[] = [],
-            pt: GridPoint = goal;
+        const orders: number[] = [];
+        let pt: GridPoint = goal;
         for(;;) {
             const dir = found.get(pt.id)!.dir;
             if (dir == null) break;
@@ -385,20 +380,20 @@ class Mapboard {
     }
     reach(src: Point, range: number, costs: number[]) {
         // find all squares accessible to unit within range, ignoring other units, zoc
-        let cost = 0,
-            start = this.locationOf(src),
+        let cost = 0;
+        const start = this.locationOf(src),
             locs: {[key: number]: number} = {[start.id]: 0};
 
         while (cost < range) {
             // eslint-disable-next-line no-unused-vars
-            Object.entries(locs).filter(([_,v]) => v == cost).forEach(([k,_]) => {
-                let src = GridPoint.fromid(+k);
+            Object.entries(locs).filter(([ ,v]) => v == cost).forEach(([k, ]) => {
+                const src = GridPoint.fromid(+k);
                 Object.keys(directions).forEach(i => {
-                    let dst = this.neighborOf(src, +i);
+                    const dst = this.neighborOf(src, +i);
                     if (!dst) return;
-                    let curr = dst.id in locs ? locs[dst.id] : 255;
+                    const curr = dst.id in locs ? locs[dst.id] : 255;
                     if (curr <= cost) return;
-                    let c = cost + costs[dst.terrain];
+                    const c = cost + costs[dst.terrain];
                     if (c <= range && c < curr) locs[dst.id] = c;
                 });
             });
@@ -408,4 +403,4 @@ class Mapboard {
     }
 }
 
-export {MapPoint, GridPoint, Mapboard, Path};
+export {MapPoint, GridPoint, Mapboard, Path, type MapEvent};

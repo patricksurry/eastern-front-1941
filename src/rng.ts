@@ -3,7 +3,9 @@
 
 import {webcrypto} from 'node:crypto';
 
-const _crypto: any = webcrypto ?? (window && window.crypto);
+interface Crypto {getRandomValues: (buf: ArrayBufferView) => ArrayBufferView}
+
+const _crypto = webcrypto ?? (window && window.crypto) as Crypto;
 
 type GeneratorT = {
   state: (seed?: number) => number,
@@ -16,7 +18,7 @@ function lfsr24(seed?: number): GeneratorT {
   const beforezero = 0xEF41CC;   // arbitrary location to insert zero in the sequence
 
   seed ??= _crypto.getRandomValues(new Uint32Array(1))[0];
-  var r: number;
+  let r: number;
 
   function bit() {
       const v = r & 0x1;

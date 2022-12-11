@@ -17,6 +17,8 @@
     "@types/d3": "^7.4.0",
     "@types/jest": "^29.2.3",
     "@types/mithril": "^2.0.11",
+    "@typescript-eslint/eslint-plugin": "^5.45.1",
+    "@typescript-eslint/parser": "^5.45.1",
     "eslint": "^8.28.0",
     "jest": "^29.3.1",
     "jest-environment-jsdom": "^29.3.1",
@@ -31,7 +33,6 @@
   "dependencies": {
     "18": "^0.0.0",
     "@emotion/css": "^11.10.5",
-    "d3": "^7.6.1",
     "mithril": "^2.2.2",
     "npm": "^9.1.2",
     "tslib": "^2.4.1"

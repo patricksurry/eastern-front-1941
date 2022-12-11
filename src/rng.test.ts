@@ -1,9 +1,10 @@
 import {lfsr24} from './rng';
 
 test("Full period", () => {
-    let rng = lfsr24(1234),
-        n = 0,
+    const rng = lfsr24(1234),
         start = rng.state();
+    let n = 0;
+
     do {
         rng.bit();
         n++;
@@ -12,7 +13,7 @@ test("Full period", () => {
 })
 
 test("Reproducible", () => {
-    let rng = lfsr24(5678);
+    const rng = lfsr24(5678);
 
     rng.bits(24);
     const state = rng.state(),
