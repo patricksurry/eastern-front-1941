@@ -311,64 +311,6 @@ _COMBAT_7:  ldx HMORDS,x     ; ad29 bed232  how many orders queued for each unit
 ```
 
 
-### Things TODO
-
-- 'resolving' doesn't capture prior defenders
-
-- key for toggling level / variant / start / apx
-
-- toggle x twice reveals debug (because doubly classed, and visibility is local not children vs display)
-
-- debug console group for specific unit
-
-- fogofwar option for enemy unit strength a la cartridge
-
-- russians don't all retreat in playthru video [no orders on first turn, how does ARRIVE/TURN/THINK relate?]
-
-- can air fly over impassable?
-
-- have think() track a current unit and bail out once it uses a certain amount of time
-
-- display * for reinforcements
-
-- zocAffecting needs different option for whether to ignore central unit (eg. supply check vs move)
-
-- scrollmsg() to report more death & destruction during combat
-
-- variants: moreRandom, sevastopol, astar, ...
-
-- dealdmg varies by level via M/CSTRDMG not 1/5 like APX, some weirdness with assault nmode #$01 and cpx ARMY ?
-
-- confirm attack/defend adjust are applied based on correct square - always defender?
-
-- confirm russian mstrng replacements in supply check?
-
-- game end check after scoring turn 40 M.ASM:4780 with 'GAME OVER' message
-
-- toggle key for handicap - increase muster strength of all your units by 50% but halve score,
-  self-modifies VBI to change color of text window.  replaced by cartridge difficulty level
-
-- update title/hover on click (for supply and zoc)
-
-- some indicator for zoc (both sides?) on click square
-
-- no sound, e.g. maybe https://archive.org/details/MachineGunSoundEffects/Machine%2BGun%2B4.mp3 ?
-
-### Ideas for AI improvements
-
-- evalLocation could try isOccupied = p => ghosts[p.id] || !p.valid || p.terrain == Terrain.impassable
-    could also measure nbval with path-finder vs manhattan (general point)
-
-- try linePoints with only adj column penalties, distinguish impassable vs unit?
-
-- path finding gets blocked by static militia eg. Kiev, consider impassable for planning?  prob also poor near ZoC
-  allow an optional costadj: loc => adj so we could penalize map locations like units +255 or +2/4 for zoc/enemy
-
-- randomize order processing order
-
-- shuffle thinking order each pass; keep track as part of thoughtprocess obj
-
-https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle / modulo bias sort full list of 256?
 
 ## Useful resources
 

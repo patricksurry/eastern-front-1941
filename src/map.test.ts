@@ -2,8 +2,6 @@ import {DirectionKey, WeatherKey, UnitKindKey, moveCosts} from './defs';
 import {GridPoint, Mapboard} from './map';
 import {Game} from './game';
 
-//TODO test cities <=> city terrain       console.assert(loc.terrain == Terrain.city, `Expected city terrain for ${city}`);
-
 const
     mapboard = new Mapboard(new Game()),
     loc34 = mapboard.locationOf(new GridPoint(3, 4));

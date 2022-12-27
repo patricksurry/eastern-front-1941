@@ -37,15 +37,6 @@ class Game extends EventEmitter {
     constructor(token?: string) {
         super();
 
-/* TODO
-        this.on('message', (typ, obj) => {
-            if (this.listenerCount('message') == 1) {
-                let s = typeof obj === 'string' ? obj: obj.join('\n'),
-                    logger = (typ == 'error' ? console.warn: console.info);
-                logger(s);
-            }
-        });
-*/
         let memento: number[] | undefined = undefined,
             seed: number | undefined = undefined;
         if (token != null) {

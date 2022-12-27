@@ -38,7 +38,7 @@ interface SpriteAttr extends GlyphAttr {g: Sprite, gc: m.Component<GlyphAttr>}
 interface DisplayAttr {
     display: DisplayLayer,
     glyphComponent?: m.Component<GlyphAttr>,
-    class?: string | string[],  //TODO dagngerous if class is non-constant with display.dirty
+    class?: string | string[],  //TODO dangerous if class is non-constant with display.dirty
 }
 
 const DisplayComponent: m.Component<DisplayAttr> = {
@@ -53,6 +53,7 @@ const DisplayComponent: m.Component<DisplayAttr> = {
             sz = f.glyphSize,
             mx = f.glyphsPerRow * sz,
             my = Math.ceil(f.numGlyphs / f.glyphsPerRow) * sz,
+            // emulate pointer-events: visible https://developer.mozilla.org/en-US/docs/Web/CSS/pointer-events
             visible = (display.opacity ?? 1) > 0;
 
 //TODO clean up the styles here
@@ -65,6 +66,7 @@ const DisplayComponent: m.Component<DisplayAttr> = {
                         opacity: ${display.opacity};
                         background-color: ${antic2rgb(display.layerColor)};
                         pointer-events: ${display.layerColor != null ? 'auto':'none'};
+                        /* set default glyph fg/bg colors to be overridden as needed */
                         .glyph {
                             position: absolute;
                             width: ${sz}px;
@@ -117,9 +119,10 @@ function maybeAnimate(elt: Element, animate: GlyphAnimation|undefined, f: FontMa
                 elt.animate(
                     [
                         {'-webkit-mask-image': 'none'},
+                        {'-webkit-mask-image': 'none'},
                         {'-webkit-mask-image': `url(${f.maskImage})`},
                     ],
-                    {duration: 250, iterations: Infinity, direction: dir}
+                    {duration: 125, iterations: Infinity, direction: dir}
                 );
             }
             break;
@@ -131,6 +134,7 @@ function maybeAnimate(elt: Element, animate: GlyphAnimation|undefined, f: FontMa
 
 }
 
+// background block that positions the glyph
 const SpriteComponent: m.Component<SpriteAttr> = {
     oncreate: ({dom, attrs: {g: {animate}, f}}) => maybeAnimate(dom, animate, f),
     onupdate: ({dom, attrs: {g: {animate}, f}}) => maybeAnimate(dom, animate, f),
@@ -144,7 +148,11 @@ const SpriteComponent: m.Component<SpriteAttr> = {
                 onmouseover: g.onmouseover,
                 style: {
                     opacity: g.opacity,
-                    'background-color': antic2rgb(g.backgroundColor),
+                    'background-color': antic2rgb(
+                        g.invert
+                        ? (g.foregroundColor ?? defaults.foregroundColor)
+                        : g.backgroundColor
+                    ),
                     'pointer-events': visible && g.backgroundColor != null ? 'auto': null,
                     transform: `translate(${g.x * sz}px, ${g.y * sz}px)`,
                 },
@@ -159,16 +167,21 @@ const BlockComponent: m.Component<GlyphAttr> = {
     view: () => null,
 }
 
+// foreground masked block that draws the character within a block
 const GlyphComponent: m.Component<GlyphAttr> = {
     oncreate: ({dom, attrs: {g: {animate}, f}}) => maybeAnimate(dom, animate, f),
     onupdate: ({dom, attrs: {g: {animate}, f}}) => maybeAnimate(dom, animate, f),
-    view: ({attrs: {g, f}}): m.Children => {
+    view: ({attrs: {g, f, defaults}}): m.Children => {
         const {glyphSize: sz, glyphsPerRow: nc} = f,
             visible = (g.opacity ?? 1) > 0;
 
         return m('.glyph-foreground', {
             style: {
-                'background-color': antic2rgb(g.foregroundColor),
+                'background-color': antic2rgb(
+                    g.invert
+                    ? (g.backgroundColor ?? defaults.backgroundColor ?? defaults.layerColor)
+                    : g.foregroundColor
+                ),
                 'pointer-events': visible && g.foregroundColor != null ? 'auto': null,
                 '-webkit-mask-position': `${-(g.c % nc) * sz}px ${-Math.floor(g.c / nc) * sz}px`,
             }

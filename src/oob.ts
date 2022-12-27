@@ -115,10 +115,10 @@ class Oob {
             this.activeUnits().forEach(u => u.moveTo(u.location));
         } else {
             this.regroup();
-            // TODO trace supply, with CSTR >> 1 if not, russian MSTR+2 (for apx)
+            //TODO trace supply, with CSTR >> 1 if not, russian MSTR+2 (for apx)
             this.reinforce();
         }
-        this.activeUnits().forEach(u => u.status = undefined);
+        this.activeUnits().forEach(u => u.flags = 0);
     }
     activeUnits(player?: number): Unit[] {
         return this.filter((u: Unit) => u.active && (player == null || u.player == player));

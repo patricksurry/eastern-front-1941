@@ -135,7 +135,7 @@ const GameComponent: m.Component<{scr: ScreenModel, flags: FlagModel}> = {
                             ],
                         }) : null,
                         // layer with unit icons as sprites
-                        //TODO does flags conditional work with dirty indicator
+                        //TODO does flags conditional work with dirty indicator?
                         m(DisplayComponent, {
                             display: unitLayer,
                             glyphComponent: flags.extras ? HealthBarGlyphComponent: GlyphComponent,

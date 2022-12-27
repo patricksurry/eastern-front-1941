@@ -58,7 +58,6 @@ class Thinker {
         let ofr = 0;  // only used in first pass
         if (firstpass) {
             ofr = calcForceRatios(this.#game.oob, this.#player).ofr;
-            console.log('Overall force ratio (OFR) is', ofr);
             friends.forEach(u => {u.objective = u.point});
         }
 

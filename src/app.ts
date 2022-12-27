@@ -1,7 +1,7 @@
 import {players, unitkinds, terraintypes, weatherdata, directions, DirectionKey} from './defs';
 import {ScenarioKey, scenarios} from './scenarios';
 import {Game} from './game';
-import {Unit} from './unit';
+import {Unit, unitFlag} from './unit';
 import {Thinker} from './think';
 import type {SpriteOpts} from './anticmodel';
 import {MappedDisplayLayer, SpriteDisplayLayer, GlyphAnimation, fontMap} from './anticmodel';
@@ -9,29 +9,6 @@ import type {FlagModel, HelpScreenModel, ScreenModel} from './appview';
 import {Layout} from './appview';
 import {GridPoint} from './map';
 import m from 'mithril';
-
-/*
-TODO
-
-- using flags inside display component won't play nice with dirty flag
-- debug flag
-
- - kill all logging inside game, just events
-
-     setZoom(zoomed: boolean, u: Unit | null) {
-        var elt;
-        if (u != null) {
-            elt = d3.select('#kreuze').node();
-        } else {
-            let x = 320/2,
-                y = 144/2 + (d3.select('#map-window').node() as HTMLElement).offsetTop - window.scrollY;
-            elt = document.elementFromPoint(x*4, y*4);
-        }
-        // toggle zoom level, apply it, and re-center target eleemnt
-        d3.select('#map-window .container').classed('doubled', zoomed);
-        (elt as HTMLElement)!.scrollIntoView({block: "center", inline: "center"})
-    }
-*/
 
 const enum UIModeKey {setup, orders, resolve}
 
@@ -51,34 +28,34 @@ const game = new Game(resume),
 let uimode = resume ? UIModeKey.orders: UIModeKey.setup;
 
 const helpUrl = 'https://github.com/patricksurry/eastern-front-1941',
-    helpText = `
-\x11${'\x12'.repeat(38)}\x05
-|                                      |
-|                                      |
-|                                      |
-|                                      |
-|     Welcome to Chris Crawford's      |
-|         Eastern Front  1941          |
-|                                      |
-|      Ported by Patrick Surry }       |
-|                                      |
-| Select: Click, [n]ext, [p]rev        |
-| Orders: \x1f, \x1c, \x1d, \x1e, [Bksp]           |
-| Cancel: [Space], [Esc]               |
-| Submit: [End], [Fn \x1f]                |
-| Toggle: [z]oom, e[x]tras, debu[g]    |
-|                                      |
-|         [?] shows this help          |
-|                                      |
-|        Press any key to play!        |
-|                                      |
-|                                      |
-|                                      |
-|                                      |
-\x1a${'\x12'.repeat(38)}\x03
-`.trim().split('\n'),
+    helpText = (
+        '\fh\x11' + '\x12'.repeat(38) + '\x05'
+        + '|\fl|'.repeat(22)
+        + '\x1a' + '\x12'.repeat(38) + '\x03'
+        + `\fh\f^
+
+
+Welcome to Chris Crawford's
+Eastern Front  1941
+Ported by Patrick Surry \fc\x94}\fC
+
+\f@\x04<
+Select: \f#Click\f-, \f#n\f-ext, \f#p\f-rev
+
+Orders: \f#\x1f\f- \f#\x1c\f- \f#\x1d\f- \f#\x1e\f-, \f#Bksp\f-
+
+Cancel: \f#Space\f-, \f#Esc\f-
+
+Submit: \f#End\f-, \f#Fn \x1f\f-
+
+Toggle: \f#z\f-oom, e\f#x\f-tras, debu\f#g\f-
+
+\f^
+\f#?\f- shows this help
+Press any key to play!`
+    ),
     helpScrambleMillis = 2000,
-    helpScramble = helpText.map(line => line.split('').map(() => Math.random())),
+    helpScramble = [...Array(24).keys()].map(() => [...Array(40).keys()].map(() => Math.random())),
     t0 = +new Date();
 
 const atasciiFont = fontMap('static/fontmap-atascii.png', 128);
@@ -101,21 +78,19 @@ const scr: ScreenModel = {
 
 function paintHelp(h: HelpScreenModel) {
     const t = +new Date();
-    h.window.setpos(0, 0);
-    helpText.forEach((line, y) => line.split('').forEach((c, x) => {
-        if ((t - t0)/helpScrambleMillis < helpScramble[y][x]) {
+
+    h.window.cls();
+    h.window.puts(helpText, {onclick: () => flags.help = !flags.help});
+    h.window.glyphs.forEach(line => line.forEach(g => {
+        if (g?.foregroundColor) g.onclick = () => window.open(helpUrl);
+    }))
+
+    helpScramble.forEach((line, y) => line.forEach((v, x) => {
+        if ((t - t0)/helpScrambleMillis < v) {
             h.window.putc(Math.floor(Math.random()*128), {
+                x, y,
                 foregroundColor: Math.floor(Math.random()*128),
                 backgroundColor: Math.floor(Math.random()*128),
-            })
-        } else if (c == '}') {
-            h.window.puts(c, {
-                foregroundColor: 0x94,
-                onclick: () => window.open(helpUrl)
-            });
-        } else {
-            h.window.puts(c, {
-                onclick: () => flags.help = !flags.help
             })
         }
     }));
@@ -168,7 +143,7 @@ function paintMap() {
                 foregroundColor: color,
                 onclick: () => {
                     focus.off();
-                    if (city) scr.infoWindow.puts(city.label.toUpperCase(), {justify: 'center'})
+                    if (city) scr.infoWindow.puts(`\f^${city.label.toUpperCase()}`)
                 },
                 onmouseover: (e) => {
                     (e.currentTarget as HTMLElement).title = loc.describe();
@@ -198,9 +173,9 @@ function paintUnit(u: Unit) {
         Object.values(directions).forEach(
             d => scr.kreuzeLayer.put(d.label, d.icon, ux, uy, {foregroundColor: 0xDC, props})
         )
-    } else if (u.status == 'attack') {
+    } else if (u.flags & unitFlag.attack) {
         animation = GlyphAnimation.flash;
-    } else if (u.status == 'defend') {
+    } else if (u.flags & unitFlag.defend) {
         animation = GlyphAnimation.flash_reverse;
     }
 
@@ -211,6 +186,9 @@ function paintUnit(u: Unit) {
             animate: animation,
             onmouseover: (e) => {
                 (e.currentTarget as HTMLElement).title = u.location.describe();
+            },
+            onclick: () => {
+                (uimode == UIModeKey.orders && focus.u() !== u) ? focus.on(u) : focus.off()
             }
         };
     if (u.player == game.human || flags.debug) {
@@ -220,14 +198,8 @@ function paintUnit(u: Unit) {
             orders: u.orders,
         }
     }
-    if (uimode == UIModeKey.orders) {
-        opts.onclick =  () => {
-            if (focus.u() !== u) focus.on(u)
-            else focus.off();
-        }
-    }
 
-    scr.unitLayer.put( u.id.toString(), unitkinds[u.kind].icon, ux, uy, opts)
+    scr.unitLayer.put(u.id.toString(), unitkinds[u.kind].icon, ux, uy, opts)
 }
 
 function paintReach(u: Unit) {
@@ -254,11 +226,13 @@ function setScenario(scenario: ScenarioKey | null, inc?: number) {
         scenario = (game.scenario + inc + n) % n;
     }
 
-    // TODO setter
+    //TODO setter
     game.scenario = scenario;
 
     const label = scenarios[scenario].label.padEnd(8, ' ');
-    scr.errorWindow.puts(`[<] ${label} [>]  [ENTER] TO START`, {justify: 'center'})
+
+    scr.errorWindow.cls()
+    scr.errorWindow.puts(`\f^\f#<\f- ${label} \f#>\f-    \f#ENTER\f- TO START`);
 }
 
 const focus = {
@@ -271,18 +245,14 @@ const focus = {
 
         focus.id = u.id;
         focus.active = true;
-        scr.infoWindow.putlines([
-            u.label,
-            `MUSTER: ${u.mstrng}  COMBAT: ${u.cstrng}`
-        ], {x: 6});
-
+        scr.infoWindow.puts(`\fz\x06\x00\fe\f@\x06<${u.label}\nMUSTER: ${u.mstrng}  COMBAT: ${u.cstrng}`);
         paintUnit(u);
         paintReach(u);
     },
     off: () => {
         const u = focus.u();
         focus.active = false;
-        scr.infoWindow.cls();
+        scr.infoWindow.puts('\fz\x06\x00\fe');
         if (u) {
             paintUnit(u);           // repaint to clear blink etc
             scr.maskLayer.cls();    // remove all mask glyphs
@@ -315,10 +285,7 @@ function editOrders(dir: DirectionKey | null | -1) {
     const u = focus.u();
     if (!u) return;
     if (!u.human) {
-        scr.errorWindow.puts(
-            `THAT IS A ${players[u.player].label.toUpperCase()} UNIT!`,
-            {justify: 'center'}
-        )
+        scr.errorWindow.puts(`\fh\f^THAT IS A ${players[u.player].label.toUpperCase()} UNIT!`)
         return;
     }
     if (dir == null) {
@@ -354,8 +321,6 @@ arrowmap: Record<string, DirectionKey> = {
 
 function keyHandler(e: KeyboardEvent) {
     let handled = true;
-    console.log('keyhandler', e.key)
-    scr.errorWindow.cls();   // clear error
 
     if (flags.help || keymap.help.includes(e.key)) {
         flags.help = !flags.help;
@@ -377,27 +342,21 @@ function keyHandler(e: KeyboardEvent) {
 
 interface UIMode {
     enter?: () => void,
-    exit?: () => void,
     keyHandler: (key: string) => boolean,
 }
 
 function setMode(m: UIModeKey) {
-    const exit = modes[uimode].exit,
-        enter = modes[m].enter;
-    if (exit) exit();
     uimode = m;
-    if (enter) enter();
+    modes[m].enter?.();
 }
 
 const modes: Record<UIModeKey, UIMode> = {
     [UIModeKey.setup]: {
         enter: () => {
-            scr.infoWindow.putlines([
-                'COPYRIGHT 1982 ATARI',
-                'ALL RIGHTS RESERVED',
-            ], {justify: 'center'})
+            scr.dateWindow.puts('\fh\fe\n\f^EASTERN FRONT 1941');
+            scr.infoWindow.puts('\fh\fe\f^COPYRIGHT 1982 ATARI\nALL RIGHTS RESERVED')
 
-            //TODO setScenario(ScenarioKey.beginner);
+            setScenario(ScenarioKey.learner);
         },
         keyHandler: (key) =>  {
             if (keymap.prev.includes(key) || key == 'ArrowLeft') {
@@ -420,6 +379,11 @@ const modes: Record<UIModeKey, UIMode> = {
             window.location.hash = game.token;
             // start thinking...
             ai.forEach(t => t.thinkRecurring(250));
+
+            const s = game.date.toLocaleDateString("en-US", {year: 'numeric', month: 'long', day: 'numeric'});
+            scr.dateWindow.puts(`\fh\fe\n\f^${s}`);
+            scr.infoWindow.puts(`\fh\fe\f@\x04>${game.score(game.human).toString()}`);
+            scr.errorWindow.puts('\fh\fe\f^PLEASE ENTER YOUR ORDERS NOW');
         },
         keyHandler: (key) => {
             if (keymap.prev.includes(key)) {
@@ -446,7 +410,8 @@ const modes: Record<UIModeKey, UIMode> = {
             ai.forEach(t => t.finalize());
 
             focus.off();
-            scr.errorWindow.puts('EXECUTING MOVE', {justify: 'center'});
+            scr.infoWindow.cls()
+            scr.errorWindow.puts('\f^EXECUTING MOVE');
             game.nextTurn(250);
         },
         keyHandler: (key) => {
@@ -471,11 +436,9 @@ function start() {
     }, 250);
 
     initScreen();
+    setMode(uimode);
 
     document.addEventListener('keydown', keyHandler);
-
-    scr.dateWindow.puts('EASTERN FRONT 1941', {justify: 'center', y: 1});
-    scr.infoWindow.puts('PLEASE ENTER YOUR ORDERS NOW', {x: 6});
 
     m.mount(document.body, {view: () => m(Layout, {scr, hscr, flags})});
 
@@ -509,7 +472,12 @@ function start() {
             }
         }
     }).on('unit', (action, u) => {
+        console.log(`${action}: ${u.label}`);
         if (action == 'orders') paintUnit(u);
+        else if (action == 'exit' && flags.extras) {
+            scr.infoWindow.puts(`\fh\f^u.label\nELIMINATED!`)
+        }
+
         // the rest of the actions happen during turn processing, which we pick up via game.tick
     })
 }

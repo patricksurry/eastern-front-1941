@@ -47,7 +47,16 @@ const apxXref: Record<number, UnitTypeKey> = {
         {key: 'guards'},
     ];
 
-type UnitEvent = 'orders' | 'attack' | 'defend' | 'damage' | 'move' | 'enter' | 'exit';
+const unitFlag = {
+    orders: 1 << 0,
+    attack: 1 << 1,
+    defend: 1 << 2,
+    damage: 1 << 3,
+    move: 1 << 4,
+    enter: 1 << 5,
+    exit: 1 << 6,
+} as const
+type UnitEvent = keyof typeof unitFlag;
 
 class Unit implements Point {
     id: number;
@@ -72,7 +81,8 @@ class Unit implements Point {
     ifrdir: [number, number, number, number] = [0, 0, 0, 0];
     objective?: Point;
 
-    #status?: UnitEvent;
+    flags = 0;
+
     #game: Game;
 
     constructor(game: Game, id: number, ...args: number[]) {
@@ -117,13 +127,6 @@ class Unit implements Point {
     get active() {
         return this.arrive <= this.#game.turn && this.cstrng > 0;
     }
-    get status() {
-        return this.#status;
-    }
-    set status(event: UnitEvent|undefined) {
-        this.#status = event;
-        if (event) this.#game.emit('unit', event, this);
-    }
     get human() {
         return this.player == this.#game.human;
     }
@@ -142,6 +145,10 @@ class Unit implements Point {
             path.push(loc = dst)
         });
         return path;
+    }
+    emit(event: UnitEvent) {
+        this.#game.emit('unit', event, this);
+        this.flags |= unitFlag[event];
     }
     addOrder(dir: number) {
         let dst: MapPoint | null = null,
@@ -162,24 +169,24 @@ class Unit implements Point {
         if (err) {
             this.#game.emit('message', 'error', err)
         } else {
-            this.status = 'orders';
+            this.emit('orders');
         }
         return dst;
     }
     delOrder() {
         if (this.orders.length) {
             this.orders.pop();
-            this.status = 'orders';
+            this.emit('orders');
         }
     }
     setOrders(dirs: DirectionKey[]) {
         this.orders = dirs;
-        this.status = 'orders';
+        this.emit('orders');
     }
     resetOrders() {
         this.orders = [];
         this.tick = 255;
-        this.status = 'orders';
+        this.emit('orders');
     }
     moveCost(dir: DirectionKey): number {
         if (!this.canMove) return 255;
@@ -215,7 +222,7 @@ class Unit implements Point {
         } else {
             action = 'exit';
         }
-        this.status = action;
+        this.emit(action);
     }
     tryOrder() {
         if (this.tick == null) throw new Error('Unit:tryOrder tick not set');
@@ -252,8 +259,8 @@ class Unit implements Point {
         // return 1 if target square is vacant
         if (!this.canAttack) return 0;
 
-        this.status = 'attack';
-        opp.status = 'defend';
+        this.emit('attack');
+        opp.emit('defend');
 
         let modifier = terraintypes[this.#game.mapboard.locationOf(opp).terrain].defence;
         if (opp.orders.length) modifier--;  // movement penalty
@@ -283,8 +290,6 @@ class Unit implements Point {
 
         // dead?
         if (this.cstrng <= 0) {
-            // TODO show as scrolling status window
-            console.log(`${this.label} eliminated`)
             this.mstrng = 0;
             this.cstrng = 0;
             this.arrive = 255;
@@ -292,7 +297,7 @@ class Unit implements Point {
             this.moveTo(null);
             return 1;
         }
-        this.status = 'damage';
+        this.emit('damage');
 
         if (!checkBreak) return 0;
 
@@ -403,4 +408,4 @@ function modifyStrength(strength: number, modifier: number): number {
     return strength;
 }
 
-export {Unit, type UnitEvent};
+export {Unit, type UnitEvent, unitFlag};
