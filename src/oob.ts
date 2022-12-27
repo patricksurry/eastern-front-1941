@@ -1,5 +1,5 @@
 import {zigzag, zagzig} from './codec';
-import {scenarios} from './scenarios';
+import {scenarios, levels} from './scenarios';
 import {Unit} from './unit';
 import {oobVariants} from './oob-data';
 import {sum, PlayerKey} from './defs';
@@ -16,8 +16,12 @@ class Oob {
     #units;
 
     constructor(game: Game, memento?: number[]) {
-        this.#units = oobVariants[scenarios[game.scenario].oob].map((vs, i) => new Unit(game, i, ...vs));
-
+        const scenario = scenarios[game.scenario],
+            level = levels[scenario.level],
+            maxunit = level.nunit;
+        this.#units = oobVariants[scenario.oob]
+            .map((vs, i) => new Unit(game, i, ...vs))
+            .filter(u => u.id < maxunit[u.player]);
         this.#game = game;
 
         if (memento) {

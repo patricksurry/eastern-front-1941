@@ -1,6 +1,7 @@
-// order-of-battle table with 159 units (55 german) comes from D.ASM:0x5400
+// apx order-of-battle table with 159 units (55 german + 104 russian) comes from D.ASM:0x5400
 // in the original game each column is stored separately,
 // we've transposed into a list of rows which we map to unit objects
+// note cartridge has different unit counts
 const enum OobVariantKey {apx, cart41, cart42}
 type OobData = readonly (readonly number[])[];
 const oobVariants: Record<OobVariantKey, OobData> = {

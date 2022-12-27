@@ -1,4 +1,5 @@
 import {PlayerKey, players} from './defs';
+import {ScenarioKey} from './scenarios';
 import {Game} from './game';
 
 let game: Game;
@@ -51,4 +52,13 @@ test("Game roundtrip", () => {
     expect(game2.token).toEqual(token);
 })
 
+test("Switch scenario", () => {
+    //TODO fails with game.start(ScenarioKey.expert42);
+    game.start(ScenarioKey.advanced);
+    addSimpleOrders();
+    game.nextTurn();
+    const token = game.token;
+    const game2 = new Game(token);
+    expect(game2.token).toEqual(token);
+})
 

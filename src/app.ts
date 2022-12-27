@@ -12,22 +12,9 @@ import m from 'mithril';
 
 const enum UIModeKey {setup, orders, resolve}
 
-const resume = window.location.hash.slice(1) || undefined;
-
-const game = new Game(resume),
-    flags: FlagModel = {
-        help: resume ? false: true,
-        extras: true,                      // whether to show extras
-        debug: false,                      // whether to show debug info
-        zoom: false,                       // zoom 2x or not?
-    },
-    ai = Object.keys(players)
-        .filter(player => +player != game.human)
-        .map(player => new Thinker(game, +player));
-
-let uimode = resume ? UIModeKey.orders: UIModeKey.setup;
-
-const helpUrl = 'https://github.com/patricksurry/eastern-front-1941',
+const atasciiFont = fontMap('static/fontmap-atascii.png', 128),
+    helpUrl = 'https://github.com/patricksurry/eastern-front-1941',
+    helpScrambleMillis = 2000,
     helpText = (
         '\fh\x11' + '\x12'.repeat(38) + '\x05'
         + '|\fl|'.repeat(22)
@@ -54,30 +41,51 @@ Toggle: \f#z\f-oom, e\f#x\f-tras, debu\f#g\f-
 \f#?\f- shows this help
 Press any key to play!`
     ),
-    helpScrambleMillis = 2000,
-    helpScramble = [...Array(24).keys()].map(() => [...Array(40).keys()].map(() => Math.random())),
-    t0 = +new Date();
+    resume = window.location.hash.slice(1) || undefined,
+    game = resume ? new Game(resume) : new Game().start(ScenarioKey.learner),
+    flags: FlagModel = {
+        help: resume ? false: true,
+        extras: true,                      // whether to show extras
+        debug: false,                      // whether to show debug info
+        zoom: false,                       // zoom 2x or not?
+    },
+    // placeholder to allow AI v AI, human Russian or both human play
+    ai = Object.keys(players)
+        .filter(player => +player != game.human)
+        .map(player => new Thinker(game, +player)),
+    hscr: HelpScreenModel = {
+        window: new MappedDisplayLayer(40, 24, atasciiFont, {foregroundColor: 0x04, layerColor: 0x0E}),
+    },
+    scr: ScreenModel = {
+        dateWindow: new MappedDisplayLayer(20, 2, atasciiFont, {foregroundColor: 0x6A, layerColor: 0xB0}),
+        infoWindow: new MappedDisplayLayer(40, 2, atasciiFont, {foregroundColor: 0x28, layerColor: 0x22}),
+        errorWindow: new MappedDisplayLayer(40, 1, atasciiFont, {foregroundColor: 0x22, layerColor: 0x3A}),
 
-const atasciiFont = fontMap('static/fontmap-atascii.png', 128);
+        // placecholders until we load the map
+        mapLayer: new MappedDisplayLayer(0, 0, atasciiFont),
+        labelLayer: new SpriteDisplayLayer(0, 0, atasciiFont),
+        unitLayer: new SpriteDisplayLayer(0, 0, atasciiFont),
+        kreuzeLayer: new SpriteDisplayLayer(0, 0, atasciiFont),
+        maskLayer: new MappedDisplayLayer(0, 0, atasciiFont),
+    };
 
-const hscr: HelpScreenModel = {
-    window: new MappedDisplayLayer(40, 24, atasciiFont, {foregroundColor: 0x04, layerColor: 0x0E}),
-}
+let uimode = resume ? UIModeKey.orders: UIModeKey.setup,
+    helpInit = false;
 
-const scr: ScreenModel = {
-    dateWindow: new MappedDisplayLayer(20, 2, atasciiFont, {foregroundColor: 0x6A, layerColor: 0xB0}),
-    infoWindow: new MappedDisplayLayer(40, 2, atasciiFont, {foregroundColor: 0x28, layerColor: 0x22}),
-    errorWindow: new MappedDisplayLayer(40, 1, atasciiFont, {foregroundColor: 0x22, layerColor: 0x3A}),
 
-    mapLayer: new MappedDisplayLayer(0, 0, atasciiFont),
-    labelLayer: new SpriteDisplayLayer(0, 0, atasciiFont),
-    unitLayer: new SpriteDisplayLayer(0, 0, atasciiFont),
-    kreuzeLayer: new SpriteDisplayLayer(0, 0, atasciiFont),
-    maskLayer: new MappedDisplayLayer(0, 0, atasciiFont),
-}
+function paintHelp(h: HelpScreenModel, p?:  number, scramble?: number[][]) {
+    if (!helpInit) {
+        helpInit = true;
+        const t0 = +new Date(),
+            scramble = h.window.glyphs.map(row => row.map(() => Math.random()));
 
-function paintHelp(h: HelpScreenModel) {
-    const t = +new Date();
+        const paintScrambled = setInterval(() => {
+            const p = (+new Date() - t0)/helpScrambleMillis;
+            paintHelp(h, p, scramble);
+            m.redraw();
+            if (p >= 1) clearInterval(paintScrambled);
+        }, 250);
+    }
 
     h.window.cls();
     h.window.puts(helpText, {onclick: () => flags.help = !flags.help});
@@ -85,32 +93,16 @@ function paintHelp(h: HelpScreenModel) {
         if (g?.foregroundColor) g.onclick = () => window.open(helpUrl);
     }))
 
-    helpScramble.forEach((line, y) => line.forEach((v, x) => {
-        if ((t - t0)/helpScrambleMillis < v) {
-            h.window.putc(Math.floor(Math.random()*128), {
-                x, y,
-                foregroundColor: Math.floor(Math.random()*128),
-                backgroundColor: Math.floor(Math.random()*128),
-            })
-        }
-    }));
-}
-
-function initScreen() {
-    const
-        m = game.mapboard,
-        font = fontMap(`static/fontmap-custom-${m.font}.png`, 128 + 6),
-        {width, height} = m.extent;
-
-    scr.mapLayer = new MappedDisplayLayer(width, height, font);
-    scr.labelLayer = new SpriteDisplayLayer(width, height, font, {foregroundColor: undefined});
-    scr.unitLayer = new SpriteDisplayLayer(width, height, font);
-    scr.kreuzeLayer = new SpriteDisplayLayer(width, height, font);
-    scr.maskLayer = new MappedDisplayLayer(width, height, font, {backgroundColor: 0x00});
-
-    paintMap();
-    paintCityLabels();
-    paintUnits();
+    if (p != null && scramble != null)
+        scramble.forEach((line, y) => line.forEach((v, x) => {
+            if (p < v) {
+                h.window.putc(Math.floor(Math.random()*128), {
+                    x, y,
+                    foregroundColor: Math.floor(Math.random()*256),
+                    backgroundColor: Math.floor(Math.random()*256),
+                })
+            }
+        }));
 }
 
 function paintCityLabels() {
@@ -198,8 +190,7 @@ function paintUnit(u: Unit) {
             orders: u.orders,
         }
     }
-
-    scr.unitLayer.put(u.id.toString(), unitkinds[u.kind].icon, ux, uy, opts)
+    scr.unitLayer.put(`${game.scenario}:${u.id}`, unitkinds[u.kind].icon, ux, uy, opts)
 }
 
 function paintReach(u: Unit) {
@@ -226,13 +217,7 @@ function setScenario(scenario: ScenarioKey | null, inc?: number) {
         scenario = (game.scenario + inc + n) % n;
     }
 
-    //TODO setter
-    game.scenario = scenario;
-
-    const label = scenarios[scenario].label.padEnd(8, ' ');
-
-    scr.errorWindow.cls()
-    scr.errorWindow.puts(`\f^\f#<\f- ${label} \f#>\f-    \f#ENTER\f- TO START`);
+    start(scenario);
 }
 
 const focus = {
@@ -355,8 +340,6 @@ const modes: Record<UIModeKey, UIMode> = {
         enter: () => {
             scr.dateWindow.puts('\fh\fe\n\f^EASTERN FRONT 1941');
             scr.infoWindow.puts('\fh\fe\f^COPYRIGHT 1982 ATARI\nALL RIGHTS RESERVED')
-
-            setScenario(ScenarioKey.learner);
         },
         keyHandler: (key) =>  {
             if (keymap.prev.includes(key) || key == 'ArrowLeft') {
@@ -428,58 +411,77 @@ const modes: Record<UIModeKey, UIMode> = {
 } as const;
 
 
-function start() {
-    const scramble = setInterval(() => {
+function start(scenario?: ScenarioKey) {
+
+    if (scenario == null) {  // initial setup
         paintHelp(hscr);
-        m.redraw();
-        if (+new Date() > t0 + helpScrambleMillis) clearInterval(scramble);
-    }, 250);
+        setMode(uimode);
 
-    initScreen();
-    setMode(uimode);
+        document.addEventListener('keydown', keyHandler);
 
-    document.addEventListener('keydown', keyHandler);
+        m.mount(document.body, {view: () => m(Layout, {scr, hscr, flags})});
 
-    m.mount(document.body, {view: () => m(Layout, {scr, hscr, flags})});
-
-    game.start();
-    game.on('game', (action) => {
-        console.log('game', action);
-        switch (action) {
-            case 'turn':
-                paintMap();
-                paintUnits();
-                if (uimode == UIModeKey.resolve) setMode(UIModeKey.orders);
-                break;
-            case 'tick':
-                paintUnits();
-                break;
-            default: {
-                const fail: never = action;
-                throw new Error(`Unhandled game action: ${fail}`)
+        game.on('game', (action) => {
+            console.log('game', action);
+            switch (action) {
+                case 'turn':
+                    paintMap();
+                    paintUnits();
+                    if (uimode == UIModeKey.resolve) setMode(UIModeKey.orders);
+                    break;
+                case 'tick':
+                    paintUnits();
+                    break;
+                default: {
+                    const fail: never = action;
+                    throw new Error(`Unhandled game action: ${fail}`)
+                }
             }
-        }
-        m.redraw();
-    }).on('map', (action) => {
-        console.log('map', action);
-        switch (action) {
-            case 'citycontrol':
-                paintMap();
-                break;
-            default: {
-                const fail: never = action;
-                throw new Error(`Unhandled map action: ${fail}`)
+            m.redraw();
+        }).on('map', (action) => {
+            console.log('map', action);
+            switch (action) {
+                case 'citycontrol':
+                    paintMap();
+                    break;
+                default: {
+                    const fail: never = action;
+                    throw new Error(`Unhandled map action: ${fail}`)
+                }
             }
-        }
-    }).on('unit', (action, u) => {
-        console.log(`${action}: ${u.label}`);
-        if (action == 'orders') paintUnit(u);
-        else if (action == 'exit' && flags.extras) {
-            scr.infoWindow.puts(`\fh\f^u.label\nELIMINATED!`)
-        }
+        }).on('unit', (action, u) => {
+            console.log(`${action}: ${u.label}`);
+            if (action == 'orders') paintUnit(u);
+            else if (action == 'exit' && flags.extras) {
+                scr.infoWindow.puts(`\fh\f^u.label\nELIMINATED!`)
+            }
 
-        // the rest of the actions happen during turn processing, which we pick up via game.tick
-    })
+            // the rest of the actions happen during turn processing, which we pick up via game.tick
+        })
+    } else {
+        game.start(scenario);
+    }
+
+    const font = fontMap(`static/fontmap-custom-${game.mapboard.font}.png`, 128 + 6),
+        {width, height} = game.mapboard.extent;
+
+    scr.mapLayer = new MappedDisplayLayer(width, height, font);
+    scr.labelLayer = new SpriteDisplayLayer(width, height, font, {foregroundColor: undefined});
+    scr.unitLayer = new SpriteDisplayLayer(width, height, font);
+    scr.kreuzeLayer = new SpriteDisplayLayer(width, height, font);
+    scr.maskLayer = new MappedDisplayLayer(width, height, font, {backgroundColor: 0x00});
+
+    paintMap();
+    paintCityLabels();
+    paintUnits();
+
+    if (uimode == UIModeKey.setup) {
+        const label = scenarios[game.scenario].label.padEnd(8, ' ');
+        scr.errorWindow.cls()
+        scr.errorWindow.puts(`\f^\f#<\f- ${label} \f#>\f-    \f#ENTER\f- TO START`);
+    }
+
+    m.redraw();
 }
 
 export {start};

@@ -18,14 +18,14 @@ type GameEvent = 'turn' | 'tick';
 type MessageLevel = 'error'; // currently only error is defined
 
 class Game extends EventEmitter {
-    scenario = ScenarioKey.apx;
+    #scenario = ScenarioKey.apx;
     human = PlayerKey.German;
 
     turn = 0;       // 0-based turn index
-    // helpers derived from turn
-    date = new Date('1941/6/22');
-    month = MonthKey.Jun;
-    weather = WeatherKey.dry;
+    // helpers derived from turn via #setDates
+    date!: Date;
+    month!: MonthKey;
+    weather!: WeatherKey;
 
     // flags
     handicap = 0;    // whether the game is handicapped
@@ -35,8 +35,7 @@ class Game extends EventEmitter {
     rand: GeneratorT;
 
     constructor(token?: string) {
-        super();
-
+        super();    // init EventEmitter
         let memento: number[] | undefined = undefined,
             seed: number | undefined = undefined;
         if (token != null) {
@@ -49,33 +48,18 @@ class Game extends EventEmitter {
             const version = memento.shift()!;
             if (version != tokenVersion) throw new Error(`Game: unrecognized save version ${version}`);
 
-            this.scenario = memento.shift()!;
+            this.#scenario = memento.shift()!;
             this.human = memento.shift()!;
             this.turn = memento.shift()!;
 
             this.handicap = memento.shift()!;
         }
+        // create the oob and maboard, using memento if there was one
         this.mapboard = new Mapboard(this, memento);
         this.oob = new Oob(this, memento);
         this.rand = lfsr24(seed);
 
         if (memento && memento.length != 0) throw new Error("Game: unexpected save data overflow");
-    }
-    emit(event: 'game', action: GameEvent): boolean;
-    emit(event: 'map', action: MapEvent): boolean;
-    emit(event: 'unit', action: UnitEvent, u: Unit): boolean;
-    emit(event: 'message', level: MessageLevel, message: string): boolean;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    emit(event: string, ...args: any[]): boolean {
-        return super.emit(event, ...args)
-    }
-    on(event: 'game', listener: (action: GameEvent) => void): this;
-    on(event: 'map', listener: (action: MapEvent) => void): this;
-    on(event: 'unit', listener: (action: UnitEvent, u: Unit) => void): this;
-    on(event: 'message', listener: (level: MessageLevel, message: string) => void): this;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    on(event: string, listener: (...args: any[]) => void): this {
-        return super.on(event, listener)
     }
     get memento() {
         // return a list of uint representing the state of the game
@@ -99,12 +83,18 @@ class Game extends EventEmitter {
         );
         return wrap64(payload, tokenPrefix);
     }
-    start() {
+    get scenario() { return this.#scenario; }
+    start(scenario?: ScenarioKey) {
+        if (scenario != null) {
+            this.#scenario = scenario;
+            this.mapboard = new Mapboard(this);
+            this.oob = new Oob(this);
+        }
         this.#newTurn(true);
         return this;
     }
-    #setDates(start: Date) {
-        const dt = new Date(start);
+    #setDates() {
+        const dt = new Date(scenarios[this.scenario].start)
         this.date = new Date(dt.setDate(dt.getDate() + 7 * this.turn));
         this.month = this.date.getMonth() as MonthKey;     // note JS getMonth is 0-indexed
         this.weather = monthdata[this.month].weather;
@@ -112,7 +102,7 @@ class Game extends EventEmitter {
     #newTurn(initialize = false) {
         if (!initialize) this.turn++;
 
-        this.#setDates(new Date(scenarios[this.scenario].start));
+        this.#setDates();
 
         this.mapboard.newTurn(initialize);
         this.oob.newTurn(initialize);
@@ -144,6 +134,23 @@ class Game extends EventEmitter {
         let score = Math.max(0, eastwest) + bonus;
         if (this.handicap) score >>= 1;
         return score;
+    }
+    // declare legal event signatures
+    emit(event: 'game', action: GameEvent): boolean;
+    emit(event: 'map', action: MapEvent): boolean;
+    emit(event: 'unit', action: UnitEvent, u: Unit): boolean;
+    emit(event: 'message', level: MessageLevel, message: string): boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    emit(event: string, ...args: any[]): boolean {
+        return super.emit(event, ...args)
+    }
+    on(event: 'game', listener: (action: GameEvent) => void): this;
+    on(event: 'map', listener: (action: MapEvent) => void): this;
+    on(event: 'unit', listener: (action: UnitEvent, u: Unit) => void): this;
+    on(event: 'message', listener: (level: MessageLevel, message: string) => void): this;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    on(event: string, listener: (...args: any[]) => void): this {
+        return super.on(event, listener)
     }
 }
 
