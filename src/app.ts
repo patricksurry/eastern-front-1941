@@ -1,7 +1,7 @@
 import {players, unitkinds, terraintypes, weatherdata, directions, DirectionKey} from './defs';
 import {ScenarioKey, scenarios} from './scenarios';
 import {Game} from './game';
-import {Unit, unitFlag} from './unit';
+import {Unit, unitFlag, UnitMode, unitModes} from './unit';
 import {Thinker} from './think';
 import type {SpriteOpts} from './anticmodel';
 import {MappedDisplayLayer, SpriteDisplayLayer, GlyphAnimation, fontMap} from './anticmodel';
@@ -9,6 +9,8 @@ import type {FlagModel, HelpScreenModel, ScreenModel} from './appview';
 import {Layout} from './appview';
 import {GridPoint} from './map';
 import m from 'mithril';
+
+interface MithrilEvent extends Event {redraw: boolean}
 
 const enum UIModeKey {setup, orders, resolve}
 
@@ -19,12 +21,12 @@ const atasciiFont = fontMap('static/fontmap-atascii.png', 128),
         '\fh\x11' + '\x12'.repeat(38) + '\x05'
         + '|\fl|'.repeat(22)
         + '\x1a' + '\x12'.repeat(38) + '\x03'
-        + `\fh\f^
+        + `\fH\f^
 
 
 Welcome to Chris Crawford's
 Eastern Front  1941
-Ported by Patrick Surry \fc\x94}\fC
+Reversed by Patrick Surry \fc\x94}\fC
 
 \f@\x04<
 Select: \f#Click\f-, \f#n\f-ext, \f#p\f-rev
@@ -72,18 +74,19 @@ Press any key to play!`
 let uimode = resume ? UIModeKey.orders: UIModeKey.setup,
     helpInit = false;
 
-
-function paintHelp(h: HelpScreenModel, p?:  number, scramble?: number[][]) {
+function paintHelp(h: HelpScreenModel, p?: number, scramble?: number[][]) {
     if (!helpInit) {
         helpInit = true;
-        const t0 = +new Date(),
-            scramble = h.window.glyphs.map(row => row.map(() => Math.random()));
+        const t0 = +new Date();
+
+        p = 0;
+        scramble = h.window.glyphs.map(row => row.map(() => Math.random()));
 
         const paintScrambled = setInterval(() => {
-            const p = (+new Date() - t0)/helpScrambleMillis;
-            paintHelp(h, p, scramble);
+            const pp = (+new Date() - t0)/helpScrambleMillis;
+            paintHelp(h, pp, scramble);
             m.redraw();
-            if (p >= 1) clearInterval(paintScrambled);
+            if (pp >= 1) clearInterval(paintScrambled);
         }, 250);
     }
 
@@ -93,9 +96,9 @@ function paintHelp(h: HelpScreenModel, p?:  number, scramble?: number[][]) {
         if (g?.foregroundColor) g.onclick = () => window.open(helpUrl);
     }))
 
-    if (p != null && scramble != null)
+    if (p != null && scramble != null) {
         scramble.forEach((line, y) => line.forEach((v, x) => {
-            if (p < v) {
+            if (p as number < v) {
                 h.window.putc(Math.floor(Math.random()*128), {
                     x, y,
                     foregroundColor: Math.floor(Math.random()*256),
@@ -103,6 +106,7 @@ function paintHelp(h: HelpScreenModel, p?:  number, scramble?: number[][]) {
                 })
             }
         }));
+    }
 }
 
 function paintCityLabels() {
@@ -112,7 +116,7 @@ function paintCityLabels() {
     game.mapboard.cities.forEach((c, i) => {
         scr.labelLayer.put(
             i.toString(), 32, left - c.lon, top - c.lat, {
-                props: {label: c.label}
+                props: {label: c.label, points: c.points}
             }
         )
     });
@@ -135,10 +139,11 @@ function paintMap() {
                 foregroundColor: color,
                 onclick: () => {
                     focus.off();
-                    if (city) scr.infoWindow.puts(`\f^${city.label.toUpperCase()}`)
+                    if (city) scr.infoWindow.puts(`\fz\x06\x00\fe\f^${city.label.toUpperCase()}`)
                 },
                 onmouseover: (e) => {
-                    (e.currentTarget as HTMLElement).title = loc.describe();
+                    (e.currentTarget as HTMLElement).title = game.mapboard.describe(loc);
+                    (e as MithrilEvent).redraw = false;  // prevent mithril redraw
                 },
             });
         })
@@ -160,15 +165,21 @@ function paintUnit(u: Unit) {
     if (focussed && u.player == game.human) {
         animation = GlyphAnimation.blink;
 
+        scr.infoWindow.puts(`\fz\x06\x00\fe\f@\x06<${u.label}\nMUSTER: ${u.mstrng}  COMBAT: ${u.cstrng}`);
+        if (scenarios[game.scenario].mvmode)
+            scr.infoWindow.puts(`\fH\f>${unitModes[u.mode].label} \nMODE `)
+
         const props = {orders: u.orders};
         scr.kreuzeLayer.put('#', 0x80, ux, uy, {foregroundColor: 0x1A, props}),
         Object.values(directions).forEach(
             d => scr.kreuzeLayer.put(d.label, d.icon, ux, uy, {foregroundColor: 0xDC, props})
         )
-    } else if (u.flags & unitFlag.attack) {
-        animation = GlyphAnimation.flash;
-    } else if (u.flags & unitFlag.defend) {
-        animation = GlyphAnimation.flash_reverse;
+    } else if (u.active) {
+        if (u.flags & unitFlag.attack) {
+            animation = GlyphAnimation.flash;
+        } else if (u.flags & unitFlag.defend) {
+            animation = GlyphAnimation.flash_reverse;
+        }
     }
 
     const opts: SpriteOpts = {
@@ -177,7 +188,8 @@ function paintUnit(u: Unit) {
             opacity: u.active ? 1: 0,
             animate: animation,
             onmouseover: (e) => {
-                (e.currentTarget as HTMLElement).title = u.location.describe();
+                (e.currentTarget as HTMLElement).title = game.mapboard.describe(u.location);
+                (e as MithrilEvent).redraw = false;  // prevent mithril redraw
             },
             onclick: () => {
                 (uimode == UIModeKey.orders && focus.u() !== u) ? focus.on(u) : focus.off()
@@ -188,6 +200,7 @@ function paintUnit(u: Unit) {
             cstrng: u.cstrng,
             mstrng: u.mstrng,
             orders: u.orders,
+            mode: u.mode,
         }
     }
     scr.unitLayer.put(`${game.scenario}:${u.id}`, unitkinds[u.kind].icon, ux, uy, opts)
@@ -197,7 +210,7 @@ function paintReach(u: Unit) {
     const {lon: left, lat: top} = game.mapboard.locations[0][0].point,
         reachmap = u.reach();
 
-    scr.maskLayer.cls(0);  // mask everything, then clear reach squares
+    scr.maskLayer.cls(0);  // mask everything with block char, then clear reach squares
     Object.keys(reachmap).forEach(v => {
         const {lon, lat} = GridPoint.fromid(+v);
         scr.maskLayer.putc(undefined, {x: left - lon, y: top - lat});
@@ -230,7 +243,6 @@ const focus = {
 
         focus.id = u.id;
         focus.active = true;
-        scr.infoWindow.puts(`\fz\x06\x00\fe\f@\x06<${u.label}\nMUSTER: ${u.mstrng}  COMBAT: ${u.cstrng}`);
         paintUnit(u);
         paintReach(u);
     },
@@ -265,6 +277,13 @@ const focus = {
     },
 };
 
+function editUnitMode(mode: UnitMode | null) {
+    const u = focus.u();
+    if (!u) return;
+    if (mode == null) u.nextmode();
+    else u.mode = mode;
+}
+
 function editOrders(dir: DirectionKey | null | -1) {
     // dir => add step, -1 => remove step, null => clear or unfocus
     const u = focus.u();
@@ -291,10 +310,12 @@ const keymap = {
     prev:   '<,p',
     next:   '>.n',
     cancel: ['Escape', ' '],
-    scenario:  '0123456789'.slice(0, Object.keys(scenarios).length),
+    scenario:  Object.keys(scenarios).map((k, i) => i).join(''),
     extras: 'xX',
     zoom:   'zZ',
     debug:  'gG',
+    mode:   'mM',
+    modes:  '0123',
 },
 arrowmap: Record<string, DirectionKey> = {
     ArrowUp: DirectionKey.north,
@@ -338,8 +359,8 @@ function setMode(m: UIModeKey) {
 const modes: Record<UIModeKey, UIMode> = {
     [UIModeKey.setup]: {
         enter: () => {
-            scr.dateWindow.puts('\fh\fe\n\f^EASTERN FRONT 1941');
-            scr.infoWindow.puts('\fh\fe\f^COPYRIGHT 1982 ATARI\nALL RIGHTS RESERVED')
+            const label = scenarios[game.scenario].label.padEnd(8, ' ');
+            scr.errorWindow.puts(`\fh\f^\f#<\f- ${label} \f#>\f-    \f#ENTER\f- TO START`);
         },
         keyHandler: (key) =>  {
             if (keymap.prev.includes(key) || key == 'ArrowLeft') {
@@ -363,16 +384,20 @@ const modes: Record<UIModeKey, UIMode> = {
             // start thinking...
             ai.forEach(t => t.thinkRecurring(250));
 
-            const s = game.date.toLocaleDateString("en-US", {year: 'numeric', month: 'long', day: 'numeric'});
-            scr.dateWindow.puts(`\fh\fe\n\f^${s}`);
-            scr.infoWindow.puts(`\fh\fe\f@\x04>${game.score(game.human).toString()}`);
-            scr.errorWindow.puts('\fh\fe\f^PLEASE ENTER YOUR ORDERS NOW');
+            const date = game.date.toLocaleDateString("en-US", {year: 'numeric', month: 'long', day: 'numeric'});
+            scr.dateWindow.puts(`\fh\n\f^${date}`);
+            scr.infoWindow.puts(`\fh\f@\x04>${game.score(game.human)}`);
+            scr.errorWindow.puts('\fh\f^PLEASE ENTER YOUR ORDERS NOW');
         },
         keyHandler: (key) => {
             if (keymap.prev.includes(key)) {
                 focus.shift(-1);
             } else if (keymap.next.includes(key) || key == 'Enter') {
                 focus.shift(+1);
+            } else if (scenarios[game.scenario].mvmode && keymap.mode.includes(key)) {
+                editUnitMode(null);
+            } else if (scenarios[game.scenario].mvmode && keymap.modes.includes(key)) {
+                editUnitMode(keymap.modes.indexOf(key));
             } else if (key in arrowmap) {
                 editOrders(arrowmap[key]);
             } else if (keymap.cancel.includes(key)) {
@@ -394,7 +419,7 @@ const modes: Record<UIModeKey, UIMode> = {
 
             focus.off();
             scr.infoWindow.cls()
-            scr.errorWindow.puts('\f^EXECUTING MOVE');
+            scr.errorWindow.puts('\fh\f^EXECUTING MOVE');
             game.nextTurn(250);
         },
         keyHandler: (key) => {
@@ -414,16 +439,27 @@ const modes: Record<UIModeKey, UIMode> = {
 function start(scenario?: ScenarioKey) {
 
     if (scenario == null) {  // initial setup
+        scr.dateWindow.puts('\fh\n\f^EASTERN FRONT 1941');
+        scr.infoWindow.puts('\fh\f^COPYRIGHT 1982 ATARI\nALL RIGHTS RESERVED')
+
         paintHelp(hscr);
-        setMode(uimode);
 
         document.addEventListener('keydown', keyHandler);
 
         m.mount(document.body, {view: () => m(Layout, {scr, hscr, flags})});
 
         game.on('game', (action) => {
-            console.log('game', action);
+            console.debug('game', action);
             switch (action) {
+                case 'end': {
+                    const advice =
+                        game.score(game.human) >= scenarios[game.scenario].win
+                        ? 'ADVANCE TO NEXT LEVEL'
+                        : 'TRY AGAIN';
+                    scr.infoWindow.puts(`\fz\x06\x00\fe\f^GAME OVER\n${advice}`)
+                    setMode(UIModeKey.setup);
+                    break;
+                }
                 case 'turn':
                     paintMap();
                     paintUnits();
@@ -439,7 +475,7 @@ function start(scenario?: ScenarioKey) {
             }
             m.redraw();
         }).on('map', (action) => {
-            console.log('map', action);
+            console.debug('map', action);
             switch (action) {
                 case 'citycontrol':
                     paintMap();
@@ -450,18 +486,19 @@ function start(scenario?: ScenarioKey) {
                 }
             }
         }).on('unit', (action, u) => {
-            console.log(`${action}: ${u.label}`);
-            if (action == 'orders') paintUnit(u);
-            else if (action == 'exit' && flags.extras) {
-                scr.infoWindow.puts(`\fh\f^u.label\nELIMINATED!`)
+            console.debug(`${action}: ${u.label}`);
+            if (action == 'orders') {
+                paintUnit(u);
+                // save game state
+                if (u.human) window.location.hash = game.token;
+            } else if (action == 'exit' && flags.extras) {
+                scr.infoWindow.puts(`\fz\x06\x00\fe\f^${u.label}\nELIMINATED!`)
             }
-
             // the rest of the actions happen during turn processing, which we pick up via game.tick
         })
     } else {
         game.start(scenario);
     }
-
     const font = fontMap(`static/fontmap-custom-${game.mapboard.font}.png`, 128 + 6),
         {width, height} = game.mapboard.extent;
 
@@ -475,11 +512,7 @@ function start(scenario?: ScenarioKey) {
     paintCityLabels();
     paintUnits();
 
-    if (uimode == UIModeKey.setup) {
-        const label = scenarios[game.scenario].label.padEnd(8, ' ');
-        scr.errorWindow.cls()
-        scr.errorWindow.puts(`\f^\f#<\f- ${label} \f#>\f-    \f#ENTER\f- TO START`);
-    }
+    setMode(uimode);
 
     m.redraw();
 }

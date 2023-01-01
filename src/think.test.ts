@@ -2,10 +2,10 @@ import {directions, PlayerKey} from './defs';
 import {GridPoint} from './map';
 import {Game} from './game';
 import {Thinker, privateExports} from './think';
+import { ScenarioKey } from './scenarios';
 
 
 const game = new Game();
-
 
 test("Unexpected linePoints() values", () => {
     // set up the linepts position from the PDF diagram, and test from all directions
@@ -19,6 +19,24 @@ test("Unexpected linePoints() values", () => {
     const linepts = Object.keys(directions).map((d) =>
         privateExports.linePoints(privateExports.sortSquareFacing(p, 5, +d, sq), 5, occfn));
     expect(linepts).toEqual([104, 162, 16, 146]);
+});
+
+test("flee home", () => {
+    const g = new Game().start(ScenarioKey.learner),
+        ai = new Thinker(g, PlayerKey.Russian),
+        ug = g.oob.at(1),
+        ur = g.oob.at(48);
+    g.nextTurn();
+    ur.immobile = 0
+    expect(ug.active).toBeTruthy();
+    expect(ur.active).toBeTruthy();
+    expect(ur.movable).toBeTruthy();
+    Object.assign(ur, {lat: 1, lon: 33});
+    Object.assign(ug, {lat: 1, lon: 32});
+    expect(() => {
+        ai.think()
+        //console.log(`flee from ${ur.lon},${ur.lat} => ${ur.objective?.lon}, ${ur.objective?.lat}`)
+    }).not.toThrow();
 });
 
 function hexvals(s: string): number[] {

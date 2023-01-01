@@ -222,7 +222,10 @@ class MappedDisplayLayer extends DisplayLayer {
         }
 
         while (cs.length) {
-            const c = nextch();
+            const c = nextch(),
+                x0 = this.x,
+                y0 = this.y;
+
             switch (c) {
                 case '\n':  // hex 0a
                     this.setpos(justify != null ? stops[justify]: 0, this.y);
@@ -252,16 +255,19 @@ class MappedDisplayLayer extends DisplayLayer {
                         case 'c': opts.foregroundColor = nextval(); break;
                         case 'b': opts.backgroundColor = nextval(); break;
 
+                        // home, clear+home
+                        case 'H': this.x = this.y = 0; break;
+                        case 'h': this.cls(); break;
+
                         // move cursor up/down/left/right
-                        case 'h': this.x = this.y = 0; break;
-                        case 'i': this.y = 0; break;
-                        case 'j': this.x = 0; break;
-                        case 'k': this.y = this.height-1; break;
-                        case 'l': this.x = this.width-1; break;
                         case 'I': if (this.y > 0) this.y--; break;
                         case 'J': if (this.x > 0) this.x--; break;
                         case 'K': if (this.y < this.height-1) this.y++; break;
                         case 'L': if (this.x < this.width-1) this.x++; break;
+                        case 'i': this.y = 0; break;
+                        case 'j': this.x = 0; break;
+                        case 'k': this.y = this.height-1; break;
+                        case 'l': this.x = this.width-1; break;
 
                         // set cursor, e.g. \fx\06
                         case 'x': this.setpos(nextval(), 0); break;
@@ -270,22 +276,26 @@ class MappedDisplayLayer extends DisplayLayer {
 
                         // clear to start/end of line/screen
                         case 'S':
-                            for (let x=0; x<this.x; x++)
+                            for (let x=0; x<x0; x++)
                                 this.putc(undefined, {x});
+                            this.setpos(x0, y0);
                             break;
                         case 'E':
-                            for (let x=this.x; x<this.width; x++)
+                            for (let x=x0; x<this.width; x++)
                                 this.putc(undefined, {x});
+                            this.setpos(x0, y0);
                             break;
                         case 's':
-                            for (let y=0; y<=this.y; y++)
-                                for (let x=0; x<((y==this.y)?this.x:this.width); x++)
+                            for (let y=0; y<=y0; y++)
+                                for (let x=0; x<((y==y0)?x0:this.width); x++)
                                     this.putc(undefined, {x, y});
+                            this.setpos(x0, y0);
                             break;
                         case 'e':
-                            for (let y=this.y; y<this.height; y++)
-                                for (let x=((y==this.y)?this.x:0); x<this.width; x++)
+                            for (let y=y0; y<this.height; y++)
+                                for (let x=((y==y0)?x0:0); x<this.width; x++)
                                     this.putc(undefined, {x, y});
+                            this.setpos(x0, y0);
                             break;
 
                         // justify left/center/right, with default or explicit stop

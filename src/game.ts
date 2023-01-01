@@ -14,7 +14,7 @@ const
     tokenVersion = 1,
     rlSigil = 6;  // highest 5-bit coded value, so values 0..3 (& 4,5) are unchanged by rlencode
 
-type GameEvent = 'turn' | 'tick';
+type GameEvent = 'turn' | 'tick' | 'end';
 type MessageLevel = 'error'; // currently only error is defined
 
 class Game extends EventEmitter {
@@ -53,6 +53,8 @@ class Game extends EventEmitter {
             this.turn = memento.shift()!;
 
             this.handicap = memento.shift()!;
+
+            this.#setDates();
         }
         // create the oob and maboard, using memento if there was one
         this.mapboard = new Mapboard(this, memento);
@@ -100,7 +102,15 @@ class Game extends EventEmitter {
         this.weather = monthdata[this.month].weather;
     }
     #newTurn(initialize = false) {
-        if (!initialize) this.turn++;
+        if (!initialize) {
+            this.turn++;
+            if (this.turn > scenarios[this.scenario].endturn
+                // special case for learner mode
+                || (this.scenario == ScenarioKey.learner && this.mapboard.cities[0].owner == PlayerKey.German)) {
+                this.emit('game', 'end');
+                return;
+            }
+        }
 
         this.#setDates();
 
@@ -121,7 +131,7 @@ class Game extends EventEmitter {
         const tickTock = () => {
             this.oob.executeOrders(tick);
             this.emit('game', 'tick');
-            const next = ++tick < 32 ? tickTock : () => this.#newTurn();
+            const next = tick++ < 32 ? tickTock : () => this.#newTurn();
             if (delay) setTimeout(next, delay);
             else next();
         }

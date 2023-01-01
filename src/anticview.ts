@@ -1,7 +1,7 @@
 import m from 'mithril';
 import type {AnticColor, Glyph, Sprite, DisplayLayer, FontMap, LayerOpts} from './anticmodel';
 import {GlyphAnimation} from './anticmodel';
-import {css, cx} from '@emotion/css';
+import {css, cx, keyframes} from '@emotion/css';
 
 const
     // Antic NTSC palette via https://en.wikipedia.org/wiki/List_of_video_game_console_palettes#NTSC
@@ -80,7 +80,9 @@ const DisplayComponent: m.Component<DisplayAttr> = {
                             position: absolute;
                             image-rendering: pixelated;
                             -webkit-mask-image: url(${f.maskImage});
+                            mask-image: url(${f.maskImage});
                             -webkit-mask-size: ${mx}px ${my}px;
+                            mask-size: ${mx}px ${my}px;
                             background-color: ${antic2rgb(display.foregroundColor)};
                             pointer-events: ${visible && display.foregroundColor != null ? 'auto':'none'}
                         }
@@ -115,15 +117,38 @@ function maybeAnimate(elt: Element, animate: GlyphAnimation|undefined, f: FontMa
         case GlyphAnimation.flash:
         case GlyphAnimation.flash_reverse:
             {
-                const dir = animate == GlyphAnimation.flash ? 'normal': 'reverse';
-                elt.animate(
+                const kids = elt.getElementsByClassName('glyph-foreground');
+                if (!kids.length) break;
+                const dir = animate == GlyphAnimation.flash ? 'normal': 'reverse',
+                    flashFrames = keyframes`
+                        0% {
+                            -webkit-mask-image: none;
+                            mask-image: none
+                        }
+                        100% {
+                            -webkit-mask-image: url(${f.maskImage});
+                            mask-image: url(${f.maskImage});
+                        }
+                    `,
+                    anim = css`animation: ${flashFrames} 250ms infinite ${dir};`;
+
+                kids[0].classList.add(anim);
+                // Chrome bug: doesn't work in WAAPI, see https://stackoverflow.com/questions/74966631/how-do-i-use-chromes-webkit-mask-image-in-the-web-animations-api
+                /*
+                kids[0].animate(
                     [
-                        {'-webkit-mask-image': 'none'},
-                        {'-webkit-mask-image': 'none'},
-                        {'-webkit-mask-image': `url(${f.maskImage})`},
+                        {
+                            webkitMaskImage: 'none',
+                            maskImage: 'none',
+                        },
+                        {
+                            webkitMaskImage: `url(${f.maskImage})`,
+                            maskImage: `url(${f.maskImage})`,
+                        },
                     ],
                     {duration: 125, iterations: Infinity, direction: dir}
                 );
+                */
             }
             break;
         default: {
@@ -184,6 +209,7 @@ const GlyphComponent: m.Component<GlyphAttr> = {
                 ),
                 'pointer-events': visible && g.foregroundColor != null ? 'auto': null,
                 '-webkit-mask-position': `${-(g.c % nc) * sz}px ${-Math.floor(g.c / nc) * sz}px`,
+                'mask-position': `${-(g.c % nc) * sz}px ${-Math.floor(g.c / nc) * sz}px`,
             }
         })
     }

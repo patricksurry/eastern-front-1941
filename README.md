@@ -75,19 +75,18 @@ full disassembly of the APX disk image(ref) including transcribed comments/label
 [6502]: https://en.wikibooks.org/wiki/6502_Assembly
 [apple2e]: https://en.wikipedia.org/wiki/Apple_IIe
 
-
 ## What's what?
 
 - `README.md` - you are here
 - `index.html` - basic structure for the game display showing how the map layers stack within the scrolling container
 - `src/` - the javascript, style sheet and fontmap image sprite that implement the game
-    - `data.js` - prettified chunks of raw data that drive the game, e.g map, order-of-battle, colors, etc
-    - `display.js` - D3-based html/css display interface simulating an Atari-esque character-based display
-    - `map.js` - helpers for interacting with the map and its squares, wrapped as simple Location objects
-    - `unit.js` - helpers for managing the units in the order-of-battle (oob) as simple Unit objects
-    - `think.js` - re-implements the computer player algorithm
-    - `main.js` - manages user interaction, computer thinking, turn processing and so on
-    - `test.js` - simple unit-tests that run on startup to protect me from myself (see browser console)
+  - `data.js` - prettified chunks of raw data that drive the game, e.g map, order-of-battle, colors, etc
+  - `display.js` - D3-based html/css display interface simulating an Atari-esque character-based display
+  - `map.js` - helpers for interacting with the map and its squares, wrapped as simple Location objects
+  - `unit.js` - helpers for managing the units in the order-of-battle (oob) as simple Unit objects
+  - `think.js` - re-implements the computer player algorithm
+  - `main.js` - manages user interaction, computer thinking, turn processing and so on
+  - `test.js` - simple unit-tests that run on startup to protect me from myself (see browser console)
 - `doc` - content referenced in the README
 - `scripts/` - various scripts to extract data from the original binary images
 - `refdata/` - binary images for the APX and cartridge versions of the game, disassembled source and extracted data blobs
@@ -221,6 +220,19 @@ high nibble low 3 bits gives first word, high bit gives player (0=german, 1=russ
 
 - overlapping data structures, phantom offsets
 
+- on new turn, cartridge verifies 256 byte checksum of NEWTRN routine = #$8e, otherwise
+  resurrects last defender?
+
+    _NXTTRN_1:  clc                              ; be28 18
+                adc NEWTRN,x                     ; be29 7da7bb
+                inx                              ; be2c e8
+                bne _NXTTRN_1                    ; be2d d0f9
+                cmp #$8e                         ; be2f c98e    Checksum of 256 bytes from NEWTRN is 8e, but why check ROM?
+                beq _NXTTRN_2                    ; be31 f005
+                ldx DEFNDR                       ; be33 a6ad
+                jsr SETSWTCH                     ; be35 2081bf  . SETCHYX and SWITCH
+    _NXTTRN_2:  ldx #$a6                         ; be38 a2a6
+
 
 - cartridge changes
     - refactoring w subroutines
@@ -228,6 +240,8 @@ high nibble low 3 bits gives first word, high bit gives player (0=german, 1=russ
     - flieger units, difficulty levels (vs handicap)
     - fogofwar using code as seed
     - attack even if defender wins first?
+
+
 
 
 anatomy of a bug
@@ -334,6 +348,9 @@ _COMBAT_7:  ldx HMORDS,x     ; ad29 bed232  how many orders queued for each unit
 convert -density 300 APX_Eastern_Front_1941.pdf -quality 90 apxdoc%02d.jpg
 
 for i in 07 08 09 10 11 12 13 14 15 16 17 18; do echo $i; tesseract apxdoc$i.jpg - >> apxdoc.txt; done
+
+variants/easter eggs
+https://www.digitpress.com/eastereggs/a48easternfront.htm
 
 
 [apxvideo]: https://www.youtube.com/watch?v=MOV5C_wvP4o

@@ -171,7 +171,7 @@ const mapVariants: Record<MapVariantKey, MapVariant> = {
             {owner: PlayerKey.Russian, lon: 12, lat:  8, points: 2,  label: 'Rostov'},
             {owner: PlayerKey.Russian, lon: 20, lat:  8, points: 2,  label: 'Dnepropetrovsk'},
             {owner: PlayerKey.Russian, lon: 26, lat:  5, points: 2,  label: 'Odessa'},
-            {owner: PlayerKey.German,  lon: 44, lat: 19, points: 0,  label: 'Warsaw'},
+            {owner: PlayerKey.German,  lon: 44, lat: 19, points: 5,  label: 'Warsaw'},
     //        {owner: PlayerKey.Russian, lon: 20, lat:  0, points: 5,  label: 'Sevastopol'},
         ]
     },

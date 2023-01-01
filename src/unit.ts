@@ -1,3 +1,4 @@
+import {options} from './config';
 import {
     type Point, type Flag,
     players, PlayerKey,
@@ -8,16 +9,17 @@ import {
     moveCost, moveCosts,
 } from './defs';
 
+import {scenarios} from './scenarios';
 import {Path, GridPoint, MapPoint} from './map';
 import {Game} from './game';
 
-type UnitType = {label: string, kind: UnitKindKey, canMove?: number};
+type UnitType = {label: string, kind: UnitKindKey, immobile?: number};
 const enum UnitTypeKey {
     infantry, militia, unused, flieger, panzer, tank, cavalry, pzgrndr
 }
 const unittypes: Record<UnitTypeKey, UnitType | null> = {
     [UnitTypeKey.infantry]: {label: "infantry", kind: UnitKindKey.infantry},
-    [UnitTypeKey.militia]:  {label: "militia", kind: UnitKindKey.infantry, canMove: 0},
+    [UnitTypeKey.militia]:  {label: "militia", kind: UnitKindKey.infantry, immobile: 1},
     [UnitTypeKey.unused]:   null, // apx had unused labels for shock and paratrp
     [UnitTypeKey.flieger]:  {label: "flieger", kind: UnitKindKey.air},   // cart only
     [UnitTypeKey.panzer]:   {label: "panzer", kind: UnitKindKey.armor},
@@ -58,14 +60,22 @@ const unitFlag = {
 } as const
 type UnitEvent = keyof typeof unitFlag;
 
-class Unit implements Point {
+const enum UnitMode {standard, assault, march, entrench} // cartridge.asm's MVMODE
+const unitModes = {
+    [UnitMode.standard]: {label: 'STANDARD'},
+    [UnitMode.assault]:  {label: 'ASSAULT'},
+    [UnitMode.march]:    {label: 'MARCH'},
+    [UnitMode.entrench]: {label: 'ENTRENCH'},
+} as const;
+
+class Unit {
     id: number;
     player: PlayerKey;
     unitno: number;
     kind: UnitKindKey;
     type: UnitTypeKey;
     modifier: number;
-    canMove = 1;
+    immobile = 0;
     canAttack = 1;
     resolute = 0;
     label: string;
@@ -75,6 +85,7 @@ class Unit implements Point {
     lat: number;
     mstrng: number;
     cstrng: number;
+    #mode: UnitMode;
     orders: DirectionKey[] = [];        // WHORDRS, HMORDS
     tick?: number;
     ifr = 0;
@@ -101,6 +112,7 @@ class Unit implements Point {
         this.player = (corpt & 0x80) ? PlayerKey.Russian : PlayerKey.German;  // german=0, russian=1; equiv i >= 55
         this.unitno = corpno;
         this.type = corpt & 0x7 as UnitTypeKey;
+        this.#mode = (this.type == UnitTypeKey.flieger) ? UnitMode.assault: UnitMode.standard;
         const ut = unittypes[this.type];
         if (ut == null) throw new Error(`Unused unit type for unit id ${id}`)
         this.kind = ut.kind;
@@ -112,7 +124,7 @@ class Unit implements Point {
         this.mstrng = mstrng;
         this.cstrng = mstrng;
 
-        this.canMove = ut.canMove ?? 1;
+        this.immobile = ut.immobile ?? 0;
         this.canAttack = modifiers[this.modifier].canAttack ?? 1;
         this.resolute = this.player == PlayerKey.German && !this.modifier ? 1: 0;
         this.label = [
@@ -126,6 +138,15 @@ class Unit implements Point {
     }
     get active() {
         return this.arrive <= this.#game.turn && this.cstrng > 0;
+    }
+    get movable() {
+        if (this.immobile) return 0;
+        // game logic seems to be that Germans can move on arrival turn but Russians can't,
+        // including initially placed units because of surprise attack.
+        // allow initially placed Russians to move for post 6/22 scenarios
+        if (this.arrive == this.#game.turn && this.player == PlayerKey.Russian &&
+            (this.arrive > 0 || scenarios[this.#game.scenario].start == '1941/6/22')) return 0;
+        return 1;
     }
     get human() {
         return this.player == this.#game.human;
@@ -150,11 +171,21 @@ class Unit implements Point {
         this.#game.emit('unit', event, this);
         this.flags |= unitFlag[event];
     }
+    get mode() { return this.#mode; }
+    set mode(mode: UnitMode) {
+        this.#mode = mode;
+        this.emit('orders');
+    }
+    nextmode() {
+        this.mode = this.type == UnitTypeKey.flieger
+            ? (this.mode == UnitMode.assault ? UnitMode.march : UnitMode.assault)
+            : (this.mode + 1) % 4;
+    }
     addOrder(dir: number) {
         let dst: MapPoint | null = null,
             err: string | null = null;
-        if (!this.canMove) {
-            err = "MILITIA UNITS CAN'T MOVE!";
+        if (!this.movable) {
+            err = this.immobile ? "MILITIA UNITS CAN'T MOVE!": "NEW ARRIVALS CAN'T MOVE!";
         } else if (this.orders.length == 8) {
             err ="ONLY 8 ORDERS ARE ALLOWED!";
         } else {
@@ -189,7 +220,7 @@ class Unit implements Point {
         this.emit('orders');
     }
     moveCost(dir: DirectionKey): number {
-        if (!this.canMove) return 255;
+        if (!this.movable) return 255;
         const dst = this.#game.mapboard.neighborOf(GridPoint.get(this), dir);
         if (!dst) return 255;
         return moveCost(dst.terrain, this.kind, this.#game.weather);
@@ -199,9 +230,12 @@ class Unit implements Point {
         if (this.orders.length) this.tick += this.moveCost(this.orders[0]);
         else this.tick = 255;
     }
-    bestPath(goal: Point): Path {
-        //TODO config directPath for comparison
-        return this.#game.mapboard.bestPath(this, goal, moveCosts(this.kind, this.#game.weather));
+    pathTo(goal: Point): Path {
+        const m = this.#game.mapboard,
+            costs = moveCosts(this.kind, this.#game.weather);
+        return options.astarPathFinding
+            ? m.bestPath(this.point, goal, costs)
+            : m.directPath(this.point, goal, costs)
     }
     reach(range = 32) {
         return this.#game.mapboard.reach(this, range, moveCosts(this.kind, this.#game.weather));
@@ -290,10 +324,7 @@ class Unit implements Point {
 
         // dead?
         if (this.cstrng <= 0) {
-            this.mstrng = 0;
-            this.cstrng = 0;
-            this.arrive = 255;
-            this.resetOrders();
+            this.eliminate();
             this.moveTo(null);
             return 1;
         }
@@ -326,6 +357,13 @@ class Unit implements Point {
         }
         // otherwise square still occupied (no break or all retreats blocked but defender remains)
         return 0;
+    }
+    eliminate() {
+        this.mstrng = 0;
+        this.cstrng = 0;
+        this.arrive = 255;
+        this.flags = 0;
+        this.resetOrders();
     }
     recover() {
         // M.ASM:5070  recover combat strength
@@ -408,4 +446,4 @@ function modifyStrength(strength: number, modifier: number): number {
     return strength;
 }
 
-export {Unit, type UnitEvent, unitFlag};
+export {Unit, type UnitEvent, unitFlag, UnitMode, unitModes};

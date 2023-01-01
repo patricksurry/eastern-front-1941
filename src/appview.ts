@@ -1,9 +1,10 @@
 import m from 'mithril';
 import {DirectionKey, directions} from './defs';
+import {UnitMode} from './unit';
 import {AnticColor, DisplayLayer, MappedDisplayLayer, SpriteDisplayLayer} from './anticmodel';
 import {BlockComponent, DisplayAttr, GlyphAttr, type Glyph} from './anticview';
 import {antic2rgb, DisplayComponent, GlyphComponent} from './anticview';
-import {css, cx} from '@emotion/css';
+import {css} from '@emotion/css';
 
 interface HelpScreenModel {
     window: MappedDisplayLayer
@@ -36,8 +37,8 @@ const Layout: m.Component<LayerAttrs> = {
                 class: css`
                     background-color: ${antic2rgb(0xD4)};
                     padding: 12px;
-                    height: 100%;
-                    width: 100%;
+                    height: 100vh;
+                    width: 100vw;
                 `
             },
             m('.screen', {
@@ -135,10 +136,9 @@ const GameComponent: m.Component<{scr: ScreenModel, flags: FlagModel}> = {
                             ],
                         }) : null,
                         // layer with unit icons as sprites
-                        //TODO does flags conditional work with dirty indicator?
                         m(DisplayComponent, {
                             display: unitLayer,
-                            glyphComponent: flags.extras ? HealthBarGlyphComponent: GlyphComponent,
+                            glyphComponent: GlyphComponent,
                             class: [
                                 'units',
                                 css`
@@ -152,15 +152,10 @@ const GameComponent: m.Component<{scr: ScreenModel, flags: FlagModel}> = {
                                 `
                             ],
                         }),
+                        //TODO does flags conditional work with dirty indicator?
                         // conditionally show current order paths for all units
-                        flags.extras ? m(SVGDisplayComponent, {
+                        flags.extras ? m(UnitOverlayComponent, {
                             display: unitLayer,
-                            class: [
-                                'orders',
-                                css`
-                                    opacity: 0.5;
-                                `
-                            ],
                         }) : null,
                         // conditionally show a semit-transparent mask to highlight unit reach
                         flags.extras ? m(DisplayComponent, {
@@ -209,104 +204,118 @@ const DividerComponent: m.Component<DividerAttr> = {
 
 const LabelComponent: m.Component<GlyphAttr> = {
     view: ({attrs: {g: {props}, defaults: {foregroundColor}}}) => {
-        const label = props?.label as string;
+        const label = props?.label as string,
+            points = props?.points as number;
         return m('.' + css`
-                transform: translate(4px, -4px);
+                transform: translate(4px, 0);
                 font-family: verdana;
-                font-size: 2pt;
-                white-space: nowrap;
-                display: flex;
-                justify-content: center;
                 width: 0;
-                color: ${antic2rgb(foregroundColor)}}};
+                white-space: nowrap;
+                div {
+                    justify-content: center;
+                    display: flex;
+                }
             `,
-            label
-        )
-    }
-}
-
-interface HealthBarAttr {cstrng?: number, mstrng?: number}
-
-const HealthBarGlyphComponent: m.Component<GlyphAttr> = {
-    view: ({attrs: {g, f, defaults}}) => {
-        // add an optional health bar
-        const {cstrng, mstrng} = (g.props ?? {}) as HealthBarAttr;
-        return [
-            m(GlyphComponent, {g, f, defaults}),
-            (cstrng != null && mstrng != null)
-            ? m('.' + css`
-                    position:  absolute;
-                    bottom: 0;
-                    right: 0;
-                    width: 6px;
-                    height: 6px;
-                    padding: 0.5px;
-                `,
+            [
                 m('.' + css`
-                        position: absolute;
-                        bottom: 0;
-                        left: 0;
-                        margin: 5%;
-                        width: 90%;
-                        height: 1px;
-                        background-color: rgb(50,205,50, 0.4);
-                        border-radius: 1px;
-                        overflow: hidden;
+                        transform: translate(0, -4px);
+                        font-size: 2pt;
+                        color: ${antic2rgb(foregroundColor)};
                     `,
-                    {style: {width: `${90 * mstrng/255}%`}},
-                    m('.' + css`
-                            background-color: rgb(50,205,50, 0.8);
-                            height: 100%;
-                        `,
-                        {style: {width: `${100 * cstrng/mstrng}%`}},
-                    )
-                )
-            ) : null,
-        ]
+                        label
+                    ),
+                points ? m('.' + css`
+                        transform: translate(0, -1.5px);
+                        text-shadow: 0 0 1px black;
+                        font-weight: bold;
+                        font-size: 3pt;
+                        color: ${antic2rgb(0x8A)}
+                    `,
+                        points
+                    ) : null,
+            ]
+        );
     }
 }
 
-const SVGDisplayComponent: m.Component<DisplayAttr> = {
+const UnitOverlayComponent: m.Component<DisplayAttr> = {
     onbeforeupdate({attrs: {display}}) {
         // false prevents diff for current element
         return display.dirty;
     },
-    view: ({attrs: {display, class: kls = []}}) => {
+    view: ({attrs: {display}}) => {
         const
             f = display.fontmap,
-            sz = f.glyphSize;
+            sz = f.glyphSize,
+            sprites = display.spritelist().filter(g => g.opacity),
+            modeIcons = {
+                // no icon for normal
+                [UnitMode.assault]: '#mdi-step-forward',
+                [UnitMode.march]: '#mdi-fast-forward',
+                [UnitMode.entrench]: '#mdi-stop',
+            };
 
-        return m('svg[version="1.1"][xmlns="http://www.w3.org/2000/svg"].display-layer',
+        return m('svg[version="1.1"][xmlns="http://www.w3.org/2000/svg"].unit-overlay',
             {
                 width: sz * display.width,
                 height: sz * display.height,
-                class: cx(css`
+                class: css`
                     position: relative;
                     background-color: ${antic2rgb(display.layerColor)};
                     pointer-events: ${display.layerColor != null ? 'auto': 'none'};
-                `, ...(typeof(kls) === 'string' ? [kls]: kls))
+                    filter: drop-shadow(0.5px 0.5px 0.5px black);
+                `
             },
-            m('g',
-                {
-                    transform: "scale(8)"
-                },
-                display.spritelist().filter(g => g.props?.orders).map(g => {
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    const orders = g.props!.orders as DirectionKey[];
-                    return m('g',
-                        {
-                            key: g.key,
-                            // unit icon centers are 1 pixel offset, so adjust by 1/16
-                            transform: `translate(${g.x + 0.5625},${g.y + 0.5625}) scale(-1)`,
-                            class: css`
-                                fill: ${antic2rgb(g.foregroundColor)};
-                                stroke: ${antic2rgb(g.foregroundColor)};
-                            `
-                        },
-                        m(UnitPathComponent, {orders})
-                    );
-                })
-            )
+            [
+                m('defs', [
+                    // mdi icons, all with viewBox="0 0 24 24" and icon in [6,18] square
+                    m('path#mdi-stop', {d: "M18,18H6V6H18V18Z"}),
+                    m('path#mdi-step-forward', {d: "M5,5V19H8V5M10,5V19L21,12"}),
+                    m('path#mdi-fast-forward', {d: "M13,6V18L21.5,12M4,18L12.5,12L4,6V18Z"}),
+                ]),
+                m('g',
+                    {
+                        transform: "scale(8)"
+                    },
+                    m('g.status',
+                        sprites.filter(g => g.props).map(g => {
+                            const cstrng = g.props?.cstrng as number|undefined,
+                                 mstrng = g.props?.cstrng as number|undefined,
+                                 mode = g.props?.mode as UnitMode|undefined;
+
+                            return m('g', {transform: `translate(${g.x},${g.y})`}, [
+                                mode != null && mode != UnitMode.standard ? m('use', {
+                                    transform: `translate(1, 0) scale(.02) translate(-15, -3)`,
+                                    href: modeIcons[mode],
+                                    fill: antic2rgb(0x8a),
+                                }) : null,
+                                cstrng != null && mstrng != null ? m('g', {fill: 'rgb(50,205,50)'}, [
+                                    m('rect', {x: 1.5/8, y: 6.5/8, height: 1/8, width: 6/8 * cstrng/255, rx: 1/16, opacity: 0.4}),
+                                    m('rect', {x: 1.5/8, y: 6.5/8, height: 1/8, width: 6/8 * mstrng/255, rx: 1/16, opacity: 0.8}),
+                                ]) : null,
+                            ])
+                        })
+                    ),
+                    m('g.orders', {opacity: 0.5},
+                        sprites.filter(g => g.props?.orders).map(g => {
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                            const orders = g.props!.orders as DirectionKey[];
+                            return m('g',
+                                {
+                                    key: g.key,
+                                    // unit icon centers are 1 pixel offset, so adjust by 1/16
+                                    transform: `translate(${g.x + 0.5625},${g.y + 0.5625}) scale(-1)`,
+                                    class: css`
+                                        fill: ${antic2rgb(g.foregroundColor)};
+                                        stroke: ${antic2rgb(g.foregroundColor)};
+                                    `
+                                },
+                                m(UnitPathComponent, {orders})
+                            );
+                        })
+                    ),
+                ),
+            ]
         );
     }
 }

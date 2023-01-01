@@ -103,10 +103,6 @@ class MapPoint extends GridPoint {
         this.alt = alt;
         this.icon = icon;
     }
-    describe() {
-        return `[${this.id}] ${terraintypes[this.terrain].label}${this.alt ? "-alt": ""}\n`
-            + `lon ${this.lon}, lat ${this.lat}`;
-    }
 }
 
 
@@ -121,7 +117,10 @@ class Mapboard {
     #icelat = 39;       // via M.ASM:8600 PSXVAL initial value is 0x27
 
     constructor(game: Game, memento?: number[]) {
-        const variant = mapVariants[scenarios[game.scenario].map],
+        const
+            scenario = scenarios[game.scenario],
+            variant = mapVariants[scenario.map],
+            ncity = scenario.ncity,
             mapencoding = variant.encoding.map((enc, i) => {
                 // convert the encoding table into a lookup of char => [icon, terraintype, alt-flag]
                 type LocT = {icon: number, terrain: TerrainKey, alt: number};
@@ -167,7 +166,7 @@ class Mapboard {
 
         this.cities = variant.cities.map(c => {return {...c}});
         this.cities.forEach((city, i) => {
-            city.points ||= 0;
+            city.points = i < ncity ? (city.points ?? 0): 0;
             const loc = this.locationOf(city);
             if (loc.terrain != TerrainKey.city)
                 throw new Error(`Mapboard: city at (${loc.lon}, ${loc.lat}) missing city terrain`);
@@ -197,7 +196,17 @@ class Mapboard {
         if (!initialize && mdata.water != null) this.#freezeThaw(mdata.water);
     }
     get extent() {
+        // map dimension including impassable boundary
         return {width: this.locations[0].length, height: this.locations.length}
+    }
+    get bbox() {
+        // bounding box for valid map area
+        return {
+            [DirectionKey.north]: this.#maxlat-1,
+            [DirectionKey.south]: 0,
+            [DirectionKey.west]: this.#maxlon-1,
+            [DirectionKey.east]: 0,
+        }
     }
     get memento(): number[] {
         const vs = ([] as number[])
@@ -206,6 +215,13 @@ class Mapboard {
                 this.cities.map(c => c.owner)
             );
         return vs;
+    }
+    describe(loc: MapPoint) {
+        const city = loc.cityid != null ? this.cities[loc.cityid] : undefined,
+            label = city
+                ? ` ${city.label} (${city.points ?? 0})`
+                : (terraintypes[loc.terrain].label + (loc.alt ? "-alt": ""));
+        return `[${loc.id}] ${label}\nlon ${loc.lon}, lat ${loc.lat}`;
     }
     valid(pt: Point) {
         return pt.lat >= 0 && pt.lat < this.#maxlat && pt.lon >= 0 && pt.lon < this.#maxlon;
@@ -274,7 +290,7 @@ class Mapboard {
             }
         }
     }
-    directPath(p: Point, q: Point, costs?: {[key: number]: number}): Path {
+    directPath(p: Point, q: Point, costs?: number[]): Path {
         /*
         implements a variation of Bresenham's algorith to get direct path from p to q
         returns the list of directions to step from p to q, along with the terrain cost

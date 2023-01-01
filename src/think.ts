@@ -1,4 +1,4 @@
-import {sum, players, type Point, PlayerKey, directions, DirectionKey, terraintypes} from './defs';
+import {sum, players, type Point, PlayerKey, directions, DirectionKey, terraintypes, TerrainKey} from './defs';
 import {MapPoint, GridPoint} from './map';
 import {type Oob} from './oob';
 import {Unit} from './unit';
@@ -61,7 +61,7 @@ class Thinker {
             friends.forEach(u => {u.objective = u.point});
         }
 
-        friends.filter(u => u.canMove).forEach(u => {
+        friends.filter(u => u.movable).forEach(u => {
             //TODO these first two checks don't seem to depend on ghost army so are fixed on first pass?
             if (firstpass && u.ifr == (ofr >> 1)) {
                 // head to reinforce if no local threat since (Local + OFR) / 2 = OFR / 2
@@ -70,10 +70,17 @@ class Thinker {
                 if (v) u.objective = v.point;
             } else if (firstpass && (u.cstrng <= (u.mstrng >> 1) || u.ifrdir[pinfo.homedir] >= 16)) {
                 // run home if hurting or outnumbered in the rear
-                //TODO could look for farthest legal square (valid & not impassable) 5, 4, ...
-                //!this fails if the target point is impassable, better to aim for nearest valid point on home border
-                const {dlon, dlat} = directions[pinfo.homedir];
-                u.objective = {lon: u.lon + 5 * dlon, lat: u.lat + 5 * dlat};
+                // for Russian the whole eastern edge is valid, but generalize to support German AI
+                const bbox = this.#game.mapboard.bbox,
+                    lon = bbox[pinfo.homedir],
+                    south = bbox[DirectionKey.south],
+                    north = bbox[DirectionKey.north],
+                    lat = [...Array(north-south+1).keys()]
+                        .map(k => k+south)
+                        .sort((a, b) => (Math.abs(a-u.lat) - Math.abs(b-u.lat)) || a-b)
+                        .find(lat => this.#game.mapboard.locationOf({lat, lon}).terrain != TerrainKey.impassable)
+                        ?? u.lat;
+                u.objective = {lon, lat};
             } else {
                 // find nearest best square
                 const start = this.#game.mapboard.locationOf(u.objective!);
@@ -89,7 +96,7 @@ class Thinker {
                 });
             }
             if (!u.objective) return;
-            const result = u.bestPath(u.objective);
+            const result = u.pathTo(u.objective);
             if (!result) return;
             u.setOrders(result.orders);  // We'll prune to 8 later
         });

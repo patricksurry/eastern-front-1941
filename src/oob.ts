@@ -1,5 +1,5 @@
 import {zigzag, zagzig} from './codec';
-import {scenarios, levels} from './scenarios';
+import {scenarios} from './scenarios';
 import {Unit} from './unit';
 import {oobVariants} from './oob-data';
 import {sum, PlayerKey} from './defs';
@@ -17,11 +17,14 @@ class Oob {
 
     constructor(game: Game, memento?: number[]) {
         const scenario = scenarios[game.scenario],
-            level = levels[scenario.level],
-            maxunit = level.nunit;
+            maxunit = scenario.nunit;
         this.#units = oobVariants[scenario.oob]
-            .map((vs, i) => new Unit(game, i, ...vs))
-            .filter(u => u.id < maxunit[u.player]);
+            .map((vs, i) => {
+                const u = new Unit(game, i, ...vs);
+                // exclude units not in the scenario, but leave them in array
+                if (u.id >= maxunit[u.player]) u.eliminate();
+                return u;
+            });
         this.#game = game;
 
         if (memento) {
@@ -32,24 +35,23 @@ class Oob {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     const status: number = memento.shift()!;
                     if (status == 1) { // eliminated
-                        //TODO via unit function to match with unit elimination code
-                        u.mstrng = 0;
-                        u.cstrng = 0;
-                        u.arrive = 255;
+                        u.eliminate()
                     } else if (status == 2) { // delayed
                         u.arrive = game.turn + 1;
                     }
                 });
             const active = this.activeUnits(),
-                human = active.filter(u => u.human);
+                human = active.filter(u => u.human),
+                mvmode = scenarios[this.#game.scenario].mvmode;
 
-            if (memento.length < 4*active.length + human.length)
+            if (memento.length < 4*active.length + human.length +(mvmode ? human.length : 0))
                 throw new Error('oob: malformed save data for active unit properties');
 
             const lats = zagzig(memento.splice(0, active.length)),
                 lons = zagzig(memento.splice(0, active.length)),
                 mstrs = zagzig(memento.splice(0, active.length)),
                 cdmgs = memento.splice(0, active.length),
+                modes = mvmode ? memento.splice(0, human.length): [],
                 nords = memento.splice(0, human.length);
             let lat = 0, lon = 0, mstr = 255;
             active.forEach(u => {
@@ -66,6 +68,8 @@ class Oob {
             if (memento.length < sum(nords))
                 throw new Error('oob: malformed save data for unit orders');
             human.forEach(u => {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                if (mvmode) u.mode = modes.shift()!;
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 u.orders = memento.splice(0, nords.shift()!);
             });
@@ -90,6 +94,7 @@ class Oob {
             lons: number[] = [],
             mstrs: number[] = [],
             cdmgs: number[] = [],
+            modes: number[] = [],
             nords: number[] = [],
             ords: number[] = [];
         let lat = 0, lon = 0, mstr = 255;
@@ -109,10 +114,11 @@ class Oob {
             if (u.human) {
                 nords.push(u.orders.length);
                 ords.push(...u.orders);
+                if (scenarios[this.#game.scenario].mvmode) modes.push(u.mode);
             }
         });
 
-        return (status as number[]).concat(zigzag(lats), zigzag(lons), zigzag(mstrs), cdmgs, nords, ords);
+        return (status as number[]).concat(zigzag(lats), zigzag(lons), zigzag(mstrs), cdmgs, modes, nords, ords);
     }
     newTurn(initialize: boolean) {
         if (initialize) {
@@ -133,7 +139,7 @@ class Oob {
     }
     executeOrders(tick: number) {
         // original code processes movement in reverse-oob order
-        // could be interesting to randomize, or support a 'pause' order to handle traffic
+        // could be interesting to randomize, or allow a delay/no-op order to handle traffic
         this.filter(u => u.tick == tick).reverse().forEach(u => u.tryOrder());
     }
     regroup() {
