@@ -1,3 +1,5 @@
+# Run as:  python ../scripts/extractdata.py
+
 import json
 from typing import List, Dict, Any
 from fonts import writefontpng, showascii, asciimapposter
@@ -160,7 +162,7 @@ def buildoob(chunks, outbase, scenario='', includeSwap=False):
     # ARRIVE is arrival turn
     # CORPT is unit type (lo and hi nibble index into word lists)
     # CORPNO is unit designation information only
-    keys = ['CORPSX' + scenario, 'CORPSY' + scenario, 'MSTRNG' + scenario, 'SWAP', 'ARRIVE', 'CORPT', 'CORPNO']
+    keys = ['CORPSX' + scenario, 'CORPSY' + scenario, 'MSTRNG' + scenario, 'SWAP', 'ARRIVE' + scenario, 'CORPT', 'CORPNO']
 
     if not includeSwap:
         keys.remove('SWAP')
@@ -178,9 +180,16 @@ def buildoob(chunks, outbase, scenario='', includeSwap=False):
     else FLIEGER
     """
 
-    assert len({len(chunks[k]) for k in keys}) == 1  # all equal
-
     num_units = len(chunks[keys[0]])
+
+    if scenario == '42':
+        # implement 1942 turn arrival calc from cartridge:3704
+        chunks['ARRIVE42'] = [
+            255 if i == 0 else (0 if i < 0x72 else (i - 0x71 + 4) // 2)
+            for i in range(0, num_units)
+        ]
+
+    assert len({len(chunks[k]) for k in keys}) == 1  # all equal
 
     oob = [tuple(int(chunks[k][i]) for k in keys) for i in range(num_units)]
     with open(outbase + '.json', 'w') as f:

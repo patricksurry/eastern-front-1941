@@ -141,8 +141,9 @@ function paintMap() {
             scr.mapLayer.putc(loc.icon, {
                 foregroundColor: color,
                 onclick: () => {
+                    scr.errorWindow.cls();
                     focus.off();
-                    if (city) scr.infoWindow.puts(`\fz\x06\x00\fe\f^${city.label.toUpperCase()}`)
+                    if (city) scr.infoWindow.puts(`\fz\x05\x00\fe\f^${city.label.toUpperCase()}`)
                 },
                 onmouseover: (e) => {
                     (e.currentTarget as HTMLElement).title = game.mapboard.describe(loc);
@@ -168,7 +169,7 @@ function paintUnit(u: Unit) {
     if (focussed && u.player == game.human) {
         animation = GlyphAnimation.blink;
 
-        scr.infoWindow.puts(`\fz\x06\x00\fe\f@\x06<${u.label}\nMUSTER: ${u.mstrng}  COMBAT: ${u.cstrng}`);
+        scr.infoWindow.puts(`\fz\x05\x00\fe\f@\x05<${u.label}\nMUSTER: ${u.mstrng}  COMBAT: ${u.cstrng}`);
         if (scenarios[game.scenario].mvmode)
             scr.infoWindow.puts(`\fH\f>${unitModes[u.mode].label} \nMODE `)
 
@@ -195,6 +196,7 @@ function paintUnit(u: Unit) {
                 (e as MithrilEvent).redraw = false;  // prevent mithril redraw
             },
             onclick: () => {
+                scr.errorWindow.cls();
                 (uimode == UIModeKey.orders && focus.u() !== u) ? focus.on(u) : focus.off()
             }
         };
@@ -249,7 +251,7 @@ const focus = {
     off: () => {
         const u = focus.u();
         focus.active = false;
-        scr.infoWindow.puts('\fz\x06\x00\fe');
+        scr.infoWindow.puts('\fz\x05\x00\fe');
         if (u) {
             paintUnit(u);           // repaint to clear blink etc
             scr.maskLayer.cls();    // remove all mask glyphs
@@ -351,6 +353,7 @@ function keyHandler(e: KeyboardEvent) {
         if (f) handled = f(e.key);
     }
     if (handled) {
+        if (!scr.errorWindow.dirty) scr.errorWindow.cls(); // clear error if nothing wrote earlier
         m.redraw();
         e.preventDefault();     // eat event if handled
     }
@@ -466,7 +469,7 @@ function start(scenario?: ScenarioKey) {
                         game.score(game.human) >= scenarios[game.scenario].win
                         ? 'ADVANCE TO NEXT LEVEL'
                         : 'TRY AGAIN';
-                    scr.infoWindow.puts(`\fz\x06\x00\fe\f^GAME OVER\n${advice}`)
+                    scr.infoWindow.puts(`\fz\x05\x00\fe\f^GAME OVER\n${advice}`)
                     setMode(UIModeKey.setup);
                     break;
                 }
@@ -502,7 +505,7 @@ function start(scenario?: ScenarioKey) {
                 // save game state
                 if (u.human) window.location.hash = game.token;
             } else if (action == 'exit' && flags.extras) {
-                scr.infoWindow.puts(`\fz\x06\x00\fe\f^${u.label}\nELIMINATED!`)
+                scr.infoWindow.puts(`\fz\x05\x00\fe\f^${u.label}\nELIMINATED!`)
             }
             // the rest of the actions happen during turn processing, which we pick up via game.tick
         }).on('message', (_, message) => {

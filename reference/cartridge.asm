@@ -483,7 +483,7 @@ YRSTR_3022:  ; , 1941
     !byte $0c,$00,$11,$19,$14,$11                                           ; 9bab ......
 SAVNAM_3028:
     !byte $44,$3a,$45,$41,$53,$54,$46,$52,$4e,$54,$2e,$53,$41,$56,$43,$3a   ; 9bb1 D:EASTFRNT.SAVC:
-CITYOWN_reloc:
+CITYOWN_reloc:  ; indexed up to +11, includes first two bytes of STKTAB...
     !byte $00,$00,$00,$00,$00,$00,$ff,$ff,$ff,$00,$ff,$00,$ff,$ff,$ff,$00   ; 9bc1 ................
 STKTAB:  ; joystick decoding table
     !byte $ff,$ff,$ff,$ff,$ff,$ff,$ff,$01,$ff,$ff,$ff,$03,$ff,$02,$00       ; 9bd1 ...............
@@ -1811,9 +1811,9 @@ CALCNXT:    jsr SETLL                        ; ab8c 2074ab  . CORPSX/Y for X -> 
             lda UNTCD1                       ; aba4 a5ec
             and #$3f                         ; aba6 293f
             ldx #$00                         ; aba8 a200
-            cmp #$3d                         ; abaa c93d
+            cmp #$3d                         ; abaa c93d    unit icon & 3f == 3d ?  (infantry)
             beq _CALCNXT_1                   ; abac f002
-            ldx #$0a                         ; abae a20a
+            ldx #$0a                         ; abae a20a    offset by 10 for armor + air
 _CALCNXT_1: txa                              ; abb0 8a
             ldx MONTH                        ; abb1 a690
             clc                              ; abb3 18
@@ -2635,7 +2635,7 @@ _THNKLP_2:  lda CORPT,x                      ; b1ed bd4d2e  . codes for unit typ
             lsr                              ; b1fd 4a
             sta BSTVAL                       ; b1fe 85f0    . best value, was BVAL
             lda LEVEL                        ; b200 a592    . Level learner/beginner/intermediate/advanced/expert
-            cmp #$04                         ; b202 c904
+            cmp #$04                         ; b202 c904    Expert - choose move mode
             bne _THNKLP_3                    ; b204 d005
             lda #$02                         ; b206 a902    choose forced march
             sta MVMODE,x                     ; b208 9dc734  . (expert level only) standard/assault/forced march/entrench
@@ -3936,7 +3936,7 @@ _ENDSSN_3:  lda TURN                         ; bc99 a591
 __Y__:      dex                              ; bca1 ca
             bne _ENDSSN_1                    ; bca2 d0cd
             lda LEVEL                        ; bca4 a592    . Level learner/beginner/intermediate/advanced/expert
-            cmp #$02                         ; bca6 c902
+            cmp #$02                         ; bca6 c902    Level 0/1 no supply
             bcc _Y_2                         ; bca8 900c
             ldx #$a6                         ; bcaa a2a6
 _Y_1:       stx ARMY                         ; bcac 86ab

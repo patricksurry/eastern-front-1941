@@ -1,9 +1,10 @@
-import {DirectionKey, WeatherKey, UnitKindKey, moveCosts} from './defs';
+import {DirectionKey, WeatherKey} from './defs';
 import {GridPoint, Mapboard} from './map';
 import {Game} from './game';
 
 const
-    mapboard = new Mapboard(new Game()),
+    game = new Game(),
+    mapboard = new Mapboard(game),
     loc34 = mapboard.locationOf(new GridPoint(3, 4));
 
 test("Locations should match", () => {
@@ -94,7 +95,7 @@ test("diamondSpiral direction", () => {
 })
 
 const finn2 = mapboard.locationOf(new GridPoint(35, 38)),
-    costs = moveCosts(UnitKindKey.infantry, WeatherKey.dry); // oob.at(42)
+    costs = game.oob.at(finn2.unitid ?? 42).moveCosts(WeatherKey.dry); // oob.at(42)
 
 test("Unexpected bestPath() for 2 Finn Inf", () => {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

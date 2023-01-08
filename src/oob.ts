@@ -124,8 +124,8 @@ class Oob {
         if (initialize) {
             this.activeUnits().forEach(u => u.moveTo(u.location));
         } else {
+            this.supply();
             this.regroup();
-            //TODO trace supply, with CSTR >> 1 if not, russian MSTR+2 (for apx)
             this.reinforce();
         }
         this.activeUnits().forEach(u => u.flags = 0);
@@ -145,6 +145,14 @@ class Oob {
     regroup() {
         // regroup, recover...
         this.activeUnits().forEach(u => u.recover());
+    }
+    supply() {
+        const scenario = scenarios[this.#game.scenario];
+        if (scenario.skipsupply) return;
+        this.activeUnits().forEach(u => {
+            const inSupply = u.traceSupply();
+            if (scenario.repl && inSupply) u.replace(scenario.repl[u.player])
+        })
     }
     reinforce() {
         // M.ASM:3720  delay reinforcements scheduled for an occuplied square

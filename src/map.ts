@@ -192,6 +192,9 @@ class Mapboard {
             if (loc.terrain != TerrainKey.city)
                 throw new Error(`Mapboard: city at (${loc.lon}, ${loc.lat}) missing city terrain`);
             loc.cityid = i;
+            if (scenario.control && scenario.control.includes(city.label)) {
+                city.owner = 1 - city.owner;
+            }
         });
         // verify each city terrain has a cityid
         const missing = this.locations.map(
@@ -200,7 +203,13 @@ class Mapboard {
             )).flat();
         if (missing.length > 0)
             throw new Error(`Mapboard: city terrain missing city details at ${missing}`);
-
+        // verify that any control cities exist
+        if (scenario.control) {
+            const labels = this.cities.map(c => c.label),
+                diff = scenario.control.filter(label => !labels.includes(label));
+            if (diff.length > 0)
+                throw new Error(`Mapboard: scenario.control has unknown cities ${diff}`);
+        }
         if (memento) {
             if (memento.length < this.cities.length + 1)
                 throw new Error("Mapboard: malformed save data");

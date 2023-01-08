@@ -225,11 +225,11 @@ const LabelComponent: m.Component<GlyphAttr> = {
                         label
                     ),
                 points ? m('.' + css`
-                        transform: translate(0, -1.5px);
-                        text-shadow: 0 0 1px black;
+                        transform: translate(0, -2.5px);
+                        text-shadow: 0 0 0.5px ${antic2rgb(0x02)};
                         font-weight: bold;
-                        font-size: 3pt;
-                        color: ${antic2rgb(0x8A)}
+                        font-size: 5px;
+                        color: ${antic2rgb(0x96)}
                     `,
                         points
                     ) : null,
@@ -263,7 +263,7 @@ const UnitOverlayComponent: m.Component<DisplayAttr> = {
                     position: relative;
                     background-color: ${antic2rgb(display.layerColor)};
                     pointer-events: ${display.layerColor != null ? 'auto': 'none'};
-                    filter: drop-shadow(0.5px 0.5px 0.5px black);
+                    filter: drop-shadow(0 0 0.5px ${antic2rgb(0x02)});
                 `
             },
             [
@@ -285,9 +285,9 @@ const UnitOverlayComponent: m.Component<DisplayAttr> = {
 
                             return m('g', {transform: `translate(${g.x},${g.y})`}, [
                                 mode != null && mode != UnitMode.standard ? m('use', {
-                                    transform: `translate(1, 0) scale(.02) translate(-15, -3)`,
+                                    transform: `translate(1, 0) scale(.04) translate(-15, -6)`,
                                     href: modeIcons[mode],
-                                    fill: antic2rgb(0x8a),
+                                    fill: antic2rgb(0x96),
                                 }) : null,
                                 cstrng != null && mstrng != null ? m('g', {fill: 'rgb(50,205,50)'}, [
                                     m('rect', {x: 1.5/8, y: 6.5/8, height: 1/8, width: 6/8 * cstrng/255, rx: 1/16, opacity: 0.4}),

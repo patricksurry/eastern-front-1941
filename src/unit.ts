@@ -6,7 +6,6 @@ import {
     directions, DirectionKey,
     WeatherKey,
     UnitKindKey,
-    moveCost, moveCosts,
 } from './defs';
 
 import {scenarios} from './scenarios';
@@ -188,15 +187,17 @@ class Unit {
     addOrder(dir: number) {
         let dst: MapPoint | null = null,
             err: string | null = null;
-        if (!this.movable) {
-            err = this.immobile ? "MILITIA UNITS CAN'T MOVE!": "NEW ARRIVALS CAN'T MOVE!";
+        if (this.mode == UnitMode.entrench) {
+            err = "THAT UNIT IS ENTRENCHED"
+        } else if (!this.movable) {
+            err = this.immobile ? "MILITIA UNITS CAN'T MOVE": "NEW ARRIVALS CAN'T MOVE";
         } else if (this.orders.length == 8) {
-            err ="ONLY 8 ORDERS ARE ALLOWED!";
+            err ="ONLY 8 ORDERS ARE ALLOWED";
         } else {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             dst = this.#game.mapboard.neighborOf(this.path.pop()!, dir);
             if (!dst) {
-                err = "IMPASSABLE!";
+                err = "IMPASSABLE";
             } else {
                 this.orders.push(dir);
             }
@@ -245,25 +246,38 @@ class Unit {
                 });
 
         if (target == null) {
-            this.#game.emit('message', 'error', 'NO FRIENDLY IN RANGE')
+            this.#game.emit('message', 'error', 'NO FRIENDLY UNIT IN RANGE THAT WAY')
         } else {
             this.setOrders(this.#game.mapboard.directPath(this.point, target).orders);
         }
     }
-    moveCost(dir: DirectionKey): number {
+    moveCost(terrain: TerrainKey, weather: WeatherKey): number {
+        // cost to enter given terrain in weather
+        const notInfantry = this.kind == UnitKindKey.infantry ? 0 : 1;
+        let cost = terraintypes[terrain].movecost[notInfantry][weather] || 255;
+        if (cost == 255) return cost;
+        if (this.mode == UnitMode.march) cost = (cost >> 1) + 2;
+        else if (this.mode == UnitMode.assault) cost += cost >> 1;
+        return cost;
+    }
+    moveCosts(weather: WeatherKey): number[] {
+        // return a table of movement costs based on armor/inf and weather
+        return Object.keys(terraintypes).map(t => this.moveCost(+t, weather));
+    }
+    orderCost(dir: DirectionKey): number {
         if (!this.movable) return 255;
         const dst = this.#game.mapboard.neighborOf(GridPoint.get(this), dir);
         if (!dst) return 255;
-        return moveCost(dst.terrain, this.kind, this.#game.weather);
+        return this.moveCost(dst.terrain, this.#game.weather);
     }
     scheduleOrder(reset = false) {
         if (reset || !this.tick) this.tick = 0;
-        if (this.orders.length) this.tick += this.moveCost(this.orders[0]);
+        if (this.orders.length) this.tick += this.orderCost(this.orders[0]);
         else this.tick = 255;
     }
     pathTo(goal: Point): Path {
         const m = this.#game.mapboard,
-            costs = moveCosts(this.kind, this.#game.weather);
+            costs = this.moveCosts(this.#game.weather);
         return options.astarPathFinding
             ? m.bestPath(this.point, goal, costs)
             : m.directPath(this.point, goal, costs)
@@ -276,7 +290,7 @@ class Unit {
             return GridPoint.diamondSpiral(this.point, range / 4)
                 .filter(p => this.#game.mapboard.valid(p));
         } else {
-            const costs = moveCosts(this.kind, this.#game.weather);
+            const costs = this.moveCosts(this.#game.weather);
             return Object.keys(this.#game.mapboard.reach(this, range, costs))
                 .map(id => GridPoint.fromid(+id));
         }
@@ -406,31 +420,39 @@ class Unit {
         this.flags = 0;
         this.resetOrders();
     }
+    replace(mstr: number) {
+        this.mstrng = Math.max(255, this.mstrng+mstr);
+    }
     recover() {
         // M.ASM:5070  recover combat strength
         if (this.mstrng - this.cstrng >= 2) this.cstrng += 1 + this.#game.rand.bit();
     }
     traceSupply(): Flag {
-        // implement the supply check from C.ASM:3430, returns 1 if supplied, 0 if not
+        // implement the supply check from C.ASM:3430
+        // loses half cstr (rounding up) if OoS, returning 1 if supplied, 0 if not
         const player = players[this.player],
-            supply = player.supply;
+            supply = player.supply,
+            mb = this.#game.mapboard;
         let fail = 0,
             loc = this.location,
             dir = player.homedir;
 
         if (supply.freeze && this.#game.weather == WeatherKey.snow) {
             // C.ASM:3620
-            if (this.#game.rand.byte() >= 74 + 4*(this.#game.mapboard.boundaryDistance(loc, dir) + (dir == DirectionKey.east ? 1 : 0))) {
-                return 0;
+            if (this.#game.rand.byte() >= 74 + 4*(mb.boundaryDistance(loc, dir) + (dir == DirectionKey.east ? 1 : 0))) {
+                fail = 255;
             }
         }
         while(fail < supply.maxfail[this.#game.weather]) {
-            const dst = this.#game.mapboard.locationOf(loc.next(dir));
+            if (dir == player.homedir && mb.boundaryDistance(loc, player.homedir) == 0) {
+                // hit an impassable boundary on our home boundary?
+                return 1;
+            }
+
+            const dst = mb.neighborOf(loc, dir);
             let cost = 0;
 
-            if (this.#game.mapboard.boundaryDistance(this, player.homedir) < 0) {
-                return 1;
-            } else if (dst == null || (
+            if (dst == null || (
                     dst.terrain == TerrainKey.impassable && (supply.sea == 0 || dst.alt == 1))) {
                 cost = 1;
             } else if (this.#game.oob.zocAffecting(this.player, dst) >= 2) {
@@ -438,6 +460,7 @@ class Unit {
             } else {
                 loc = dst;
             }
+
             if (cost) {
                 fail += cost;
                 // either flip a coin or try the opposite direction (potentially repeatedly until failure)
@@ -447,6 +470,7 @@ class Unit {
                 dir = player.homedir;
             }
         }
+        this.#takeDamage(0, Math.ceil(this.cstrng/2));
         return 0;
     }
     score() {

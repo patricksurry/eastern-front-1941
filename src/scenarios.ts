@@ -1,21 +1,25 @@
 import {OobVariantKey} from './oob-data';
 import {MapVariantKey} from './map-data';
 
-/*
-cartridge offers selection of scenarios which modify various parameters:
-- ncity:  is the number of cities that are scored
-    nb. excludes Warsaw which always scores 0 pts anyway
-- mdmg/cdmg: is the amount of damage caused by a successful attack tick
-- cadj: is the base adjustment to german combat strength
-- fog: controls which bits are randomized for enemy units out of sight
-- nunit: gives index of first ineligbile unit, e.g. 0x2 means we use the first 2 ids
-- endturn: when the scneario ends
-- score required to win
-*/
+// cartridge offers selection of scenarios which modify various parameters:
 type Scenario = {
-    label: string, map: MapVariantKey, oob: OobVariantKey, start: string,
-    ncity: number, mdmg: number, cdmg: number, cadj: number,
-    fog: number, nunit: readonly [number, number], endturn: number, win: number, mvmode?: boolean
+    label: string,          // name for this scenario
+    map: MapVariantKey,     // which map variant is used
+    oob: OobVariantKey,     // which OoB is used
+    start: string,          // date of start turn as 'yyyy/mm/dd'
+    ncity: number,          // number of scored cities (excl Warsaw which never scores)
+    mdmg: number,           // mstrng damage from successful attack
+    cdmg: number,           // cstrng damage from successful attack
+    cadj: number,           // base adjustment to german combat strength
+    fog: number,            // randomized bits for far-off enemy strength
+    // index of first ineligbile unit, e.g. 0x2 means we use the first 2 ids
+    nunit: readonly [number, number],
+    endturn: number,        // turn (week) number after which scenario ends
+    win: number,            // score required to win
+    mvmode?: boolean,       // true if scenario allows choice of move mode
+    skipsupply?: boolean,    // whether to skip supply check
+    repl?: readonly [number, number], // mstrng replacements if in supply by PlayerKey
+    control?: readonly string[],     // list of cities whose control is flipped from default
 };
 const enum ScenarioKey {apx, learner, beginner, intermediate, advanced, expert41, expert42}
 const scenarios: Record<ScenarioKey, Scenario> = {
@@ -23,14 +27,17 @@ const scenarios: Record<ScenarioKey, Scenario> = {
         label: 'APX MODE', map: MapVariantKey.apx, oob: OobVariantKey.apx, start: '1941/6/22',
         //TODO fix me
         ncity: 18, mdmg: 1, cdmg: 4,  cadj: 0, fog: 0xff, nunit: [0x37, 0x9f], endturn: 44, win: 255,
+        repl: [0, 2]
     },
     [ScenarioKey.learner]: {
         label: 'LEARNER', map: MapVariantKey.cart, oob: OobVariantKey.cart41, start: '1941/6/22',
         ncity: 1, mdmg: 4, cdmg: 12, cadj: 255, fog: 0xff, nunit: [0x2,  0x31], endturn: 14, win: 5,
+        skipsupply: true
     },
     [ScenarioKey.beginner]: {
         label: 'BEGINNER', map: MapVariantKey.cart, oob: OobVariantKey.cart41, start: '1941/6/22',
         ncity: 1, mdmg: 4, cdmg: 12, cadj: 150, fog: 0xff, nunit: [0x12, 0x50], endturn: 14, win: 25,
+        skipsupply: true
     },
     [ScenarioKey.intermediate]: {
         label: 'INTERMED', map: MapVariantKey.cart, oob: OobVariantKey.cart41, start: '1941/6/22',
@@ -47,7 +54,8 @@ const scenarios: Record<ScenarioKey, Scenario> = {
     [ScenarioKey.expert42]: {
         //TODO arrival turns for '42 scenario seem to be calculated in cartridge.asm:3709
         label: 'EXPERT42', map: MapVariantKey.cart, oob: OobVariantKey.cart42, start: '1942/5/24', // +48 weeks
-        ncity: 18, mdmg: 1, cdmg: 4, cadj: 0, fog: 0x80, nunit: [0x30, 0xa8], endturn: 44, win: 255, mvmode: true
+        ncity: 18, mdmg: 1, cdmg: 4, cadj: 0, fog: 0x80, nunit: [0x30, 0xa8], endturn: 44, win: 255, mvmode: true,
+        control: ['Riga', 'Rzhev', 'Smolensk', 'Minsk', 'Orel', 'Kharkov', 'Kiev', 'Dnepropetrovsk', 'Odessa'] as const
     },
 } as const;
 

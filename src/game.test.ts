@@ -17,7 +17,7 @@ function addSimpleOrders(g: Game) {
             d = (players[p].homedir + 2) % 4;
         g.oob.activeUnits(p).forEach(u => {
             for (let i=0; i<2; i++) {
-                if (u.moveCost(d)) u.addOrder(d);
+                if (u.orderCost(d) < 255) u.addOrder(d);
             }
         });
     }

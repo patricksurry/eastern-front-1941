@@ -28,22 +28,37 @@ const directions: Record<DirectionKey, Direction> = {
     [DirectionKey.west]:  {label: 'W', dlon: 1,  dlat: 0,  icon: 0x84},   // left  1011 => 3
 } as const;
 
-interface Supply {
-    sea: number, replacements: number, freeze: number, maxfail: readonly [number, number, number]
-}
+// adds contrast color for optional labels
+interface Weather {label: string, earth: AnticColor, contrast: AnticColor}
+const enum WeatherKey {dry, mud, snow}
+const weatherdata: Record<WeatherKey, Weather> = {
+    [WeatherKey.dry]:  {label: 'dry',  earth: 0x10, contrast: 0x06},
+    [WeatherKey.mud]:  {label: 'mud',  earth: 0x02, contrast: 0x06},
+    [WeatherKey.snow]: {label: 'snow', earth: 0x0A, contrast: 0x04},
+} as const;
+
 interface Player {
-    label: string, unit: string, color: AnticColor, homedir: DirectionKey, supply: Supply
+    label: string,
+    unit: string,
+    color: AnticColor,
+    homedir: DirectionKey,
+    supply: {
+        sea: number,        // allowed to trace by sea?
+        freeze: number,     // freeze test in snow?
+        // failed trace attempts before OoS by weatherKey, e.g. German auto-fail in mud
+        maxfail: readonly [number, number, number]
+    }
 }
 // note we rely on Player.german = 1 - Player.russian and vice versa
 const enum PlayerKey {German, Russian}
 const players: Record<PlayerKey, Player> = {
     [PlayerKey.German]: {
         label: 'German',  unit: 'CORPS', color: 0x0C, homedir: DirectionKey.west,
-        supply: {sea: 1, replacements: 0, maxfail: [24, 0, 16], freeze: 1}
+        supply: {sea: 1, maxfail: [24, 0, 16], freeze: 1}
     },
     [PlayerKey.Russian]: {
         label: 'Russian', unit: 'ARMY',  color: 0x46, homedir: DirectionKey.east,
-        supply: {sea: 0, replacements: 2, maxfail: [24, 24, 24], freeze: 0}
+        supply: {sea: 0, maxfail: [24, 24, 24], freeze: 0}
     },
  } as const;
 
@@ -52,7 +67,7 @@ const players: Record<PlayerKey, Player> = {
 // OFFNC I.ASM:9080 1,1,1,1,1,1,2,2,1,0
 // DEFNC I.ASM:9080 2,3,3,2,2,2,1,1,2,0
 // movement costs (of 32/turn) come from D.ASM:5430 SSNCOD / 5440 TRNTAB
-// index by terrain, then armor(0/1) and finally Weather enum
+// index by terrain, then inf=0, air/armor=1 and finally Weather enum
 // value of 128 means impassable, 0 means error (frozen terrain outside winter)
 const enum TerrainKey {
     clear, mountain_forest, city, frozen_swamp, frozen_river,
@@ -108,15 +123,6 @@ const terraintypes: Record<TerrainKey, Terrain> = {
     }
 } as const;
 
-// adds contrast color for optional labels
-interface Weather {label: string, earth: AnticColor, contrast: AnticColor}
-const enum WeatherKey {dry, mud, snow}
-const weatherdata: Record<WeatherKey, Weather> = {
-    [WeatherKey.dry]:  {label: 'dry',  earth: 0x10, contrast: 0x06},
-    [WeatherKey.mud]:  {label: 'mud',  earth: 0x02, contrast: 0x06},
-    [WeatherKey.snow]: {label: 'snow', earth: 0x0A, contrast: 0x04},
-} as const;
-
 interface WaterState {
     dir: DirectionKey, terrain: readonly[TerrainKey, TerrainKey]
 }
@@ -158,15 +164,6 @@ const unitkinds: Record<UnitKindKey, UnitKind> = {
     [UnitKindKey.air]:      {key: 'air',        icon: 0x7c},
 } as const;
 
-function moveCost(terrain: TerrainKey, kind: UnitKindKey, weather: WeatherKey): number {
-    return kind == UnitKindKey.air ? 4: (terraintypes[terrain].movecost[kind][weather] || 255);
-}
-
-function moveCosts(kind: UnitKindKey, weather: WeatherKey): number[] {
-    // return a table of movement costs based on armor/inf and weather
-    return Object.keys(terraintypes).map(t => moveCost(+t, kind, weather));
-}
-
 export type {Flag, Point};
 
 export {
@@ -178,5 +175,4 @@ export {
     waterstate, WaterStateKey,
     monthdata, MonthKey,
     unitkinds, UnitKindKey,
-    moveCost, moveCosts,
 }
