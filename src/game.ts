@@ -5,7 +5,7 @@ import {scenarios, ScenarioKey} from './scenarios';
 import {Mapboard, type MapEvent} from './map';
 import {Oob} from './oob';
 import type {Unit, UnitEvent} from './unit';
-import {lfsr24, GeneratorT} from './rng';
+import {lfsr24, type Generator} from './rng';
 
 import {EventEmitter} from 'events';
 
@@ -32,7 +32,7 @@ class Game extends EventEmitter {
 
     mapboard: Mapboard;
     oob: Oob;
-    rand: GeneratorT;
+    rand: Generator;
 
     constructor(token?: string) {
         super();    // init EventEmitter

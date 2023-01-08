@@ -141,6 +141,7 @@ function paintMap() {
             scr.mapLayer.putc(loc.icon, {
                 foregroundColor: color,
                 onclick: () => {
+                    if (uimode != UIModeKey.orders) return;
                     scr.errorWindow.cls();
                     focus.off();
                     if (city) scr.infoWindow.puts(`\fz\x05\x00\fe\f^${city.label.toUpperCase()}`)
@@ -166,18 +167,22 @@ function paintUnit(u: Unit) {
         ux = left - u.lon, uy = top - u.lat;
 
     let animation = undefined;
-    if (focussed && u.player == game.human) {
-        animation = GlyphAnimation.blink;
+    if (focussed) {
+        const f = u.foggyStrength(game.human);
+        // game uses offset \x06 but then '4 RUMANIAN INFANTRY CORPS' touches STANDARD
+        scr.infoWindow.puts(`\fz\x05\x00\fe\f@\x05<${u.label}\n\feMUSTER: ${f.mstrng}  COMBAT: ${f.cstrng}`);
+        if (u.player == game.human) {
+            if (scenarios[game.scenario].mvmode)
+                scr.infoWindow.puts(`\fH\f>${unitModes[u.mode].label} \nMODE   `)
 
-        scr.infoWindow.puts(`\fz\x05\x00\fe\f@\x05<${u.label}\nMUSTER: ${u.mstrng}  COMBAT: ${u.cstrng}`);
-        if (scenarios[game.scenario].mvmode)
-            scr.infoWindow.puts(`\fH\f>${unitModes[u.mode].label} \nMODE `)
+            animation = GlyphAnimation.blink;
 
-        const props = {orders: u.orders};
-        scr.kreuzeLayer.put('#', 0x80, ux, uy, {foregroundColor: 0x1A, props}),
-        Object.values(directions).forEach(
-            d => scr.kreuzeLayer.put(d.label, d.icon, ux, uy, {foregroundColor: 0xDC, props})
-        )
+            const props = {orders: u.orders};
+            scr.kreuzeLayer.put('#', 0x80, ux, uy, {foregroundColor: 0x1A, props}),
+            Object.values(directions).forEach(
+                d => scr.kreuzeLayer.put(d.label, d.icon, ux, uy, {foregroundColor: 0xDC, props})
+            )
+        }
     } else if (u.active) {
         if (u.flags & unitFlag.attack) {
             animation = GlyphAnimation.flash;
@@ -196,17 +201,17 @@ function paintUnit(u: Unit) {
                 (e as MithrilEvent).redraw = false;  // prevent mithril redraw
             },
             onclick: () => {
+                if (uimode != UIModeKey.orders) return;
                 scr.errorWindow.cls();
                 (uimode == UIModeKey.orders && focus.u() !== u) ? focus.on(u) : focus.off()
             }
         };
+    opts.props = u.foggyStrength(game.human);
     if (u.player == game.human || flags.debug) {
-        opts.props = {
-            cstrng: u.cstrng,
-            mstrng: u.mstrng,
+        Object.assign(opts.props, {
             orders: u.orders,
             mode: u.mode,
-        }
+        })
     }
     scr.unitLayer.put(`${game.scenario}:${u.id}`, unitkinds[u.kind].icon, ux, uy, opts)
 }

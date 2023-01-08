@@ -67,6 +67,25 @@ const unitModes = {
     [UnitMode.entrench]: {label: 'ENTRENCH'},
 } as const;
 
+const fogTable = `
+e6 63 03 60 39 b0 1a 5f 1b 2f 95 2c 37 0d 1c 09
+08 a5 35 22 4f c5 fe fe c5 49 75 95 34 22 f8 37
+c5 39 0c 51 48 53 d6 c2 c6 d8 1f 48 ac 2f f2 fb
+91 06 34 86 a7 93 af f1 0a 3a 42 22 8b b4 e1 af
+b4 21 93 60 85 f1 62 5c 11 f8 2f 7a 79 79 f0 9d
+cd 05 40 ae 2b d1 e2 94 bc d0 d1 88 dc 22 7d 93
+61 bd cb 7f 64 79 a9 86 47 ee 6f a5 08 70 05 2f
+01 2e b0 a5 8a 1e a5 00 c5 fa 0e 18 83 34 af 49
+6b 2a 25 aa 30 64 d6 4c 79 03 7b d7 25 fe 88 04
+f5 0f a1 af b3 18 dd f0 10 ca 69 08 07 0e a2 73
+4b 27 4e ba 15 8a 5b d1 65 c1 3e 04 b2 13 2b f7
+97 7e e7 e9 6f b8 5c 18 28 e5 65 d9 d7 65 26 4c
+c6 5e 1f 3a 88 0a f4 54 ac 9f 04 d6 ab 83 c5 bf
+38 0a 93 e4 76 46 15 0b 24 fb b4 ba e6 55 4f 45
+aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
+72 26 f9 ae 6d af af cf 57 4c cc 62 6f e5 e3 b1
+`.trim().split(/s+/).map(s => parseInt(s, 16));
+
 class Unit {
     id: number;
     player: PlayerKey;
@@ -86,11 +105,11 @@ class Unit {
     cstrng: number;
     #mode: UnitMode;
     orders: DirectionKey[] = [];        // WHORDRS, HMORDS
+    fog = 0;
     tick?: number;
     ifr = 0;
     ifrdir: [number, number, number, number] = [0, 0, 0, 0];
     objective?: Point;
-
     flags = 0;
 
     #game: Game;
@@ -183,6 +202,18 @@ class Unit {
         this.mode = this.kind == UnitKindKey.air
             ? (this.mode == UnitMode.assault ? UnitMode.march : UnitMode.assault)
             : (this.mode + 1) % 4;
+    }
+    foggyStrength(observer: PlayerKey) {
+        let {mstrng, cstrng} = this;
+
+        if (this.player != observer) {
+            const mask = ~((1 << this.fog) - 1),
+                fill = fogTable[this.id & 0xff] ^ this.#game.turn;
+
+            mstrng = fogValue(mstrng, mask, fill);
+            cstrng = fogValue(cstrng, mask, fill);
+        }
+        return {mstrng, cstrng};
     }
     addOrder(dir: number) {
         let dst: MapPoint | null = null,
@@ -500,6 +531,11 @@ class Unit {
         }
         return s;
     }
+}
+
+function fogValue(v: number, mask: number, fill: number): number {
+    // combine v with fill based on mask bits
+    return (v & mask) | (fill & (~mask));
 }
 
 function modifyStrength(strength: number, modifier: number): number {

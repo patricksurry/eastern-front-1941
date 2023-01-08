@@ -20,6 +20,51 @@ test("Unit counts", () => {
     expect(counts).toEqual([55, 104])
 });
 
+test("No fog is a no-op", () => {
+    game.oob.activeUnits().forEach(u => {
+        const {mstrng, cstrng} = u;
+        expect(u.foggyStrength(1-u.player)).toEqual({mstrng, cstrng})
+    })
+})
+
+test("Fog is bounded", () => {
+    let diff = 0;
+    game.oob.activeUnits().forEach(u => {
+        u.fog = 3;
+        const {mstrng, cstrng} = u,
+            {mstrng: mfog, cstrng: cfog} = u.foggyStrength(1-u.player);
+        const dm = Math.abs(mfog-mstrng),
+            dc = Math.abs(cfog-cstrng);
+        expect(mfog).toBeGreaterThanOrEqual(cfog);
+        expect(dm).toBeLessThan(8);
+        expect(dc).toBeLessThan(8);
+        diff += dm + dc;
+        u.fog = 0;
+    })
+    expect(diff).toBeGreaterThan(0);
+})
+
+test("Fog is asymmetrical", () => {
+    game.oob.activeUnits().forEach(u => {
+        u.fog = 3;
+        const {mstrng, cstrng} = u,
+            {mstrng: mfog, cstrng: cfog} = u.foggyStrength(u.player);
+        const dm = Math.abs(mfog-mstrng),
+            dc = Math.abs(cfog-cstrng);
+        expect(dm).toBe(0);
+        expect(dc).toBe(0);
+        u.fog = 0;
+    })
+})
+
+test("Fog is repeatable", () => {
+    game.oob.activeUnits().forEach(u => {u.fog = 3});
+    const ms  = game.oob.activeUnits().map(u => u.foggyStrength(1-u.player).mstrng),
+        m2s = game.oob.activeUnits().map(u => u.foggyStrength(1-u.player).mstrng);
+    expect(ms).toEqual(m2s);
+    game.oob.activeUnits().forEach(u => {u.fog = 0});
+})
+
 test("ZoC is calculated correctly", () => {
     /*
     set up a config like

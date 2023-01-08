@@ -6,8 +6,13 @@
   - [ ] mdmg (mstrng dmg at higher levels),
   - [ ] cdmg,
   - [ ] cadj,
-  - [ ] fog of war
   - [ ] dealdmg varies by level via M/CSTRDMG not 1/5 like APX, some weirdness with assault nmode #$01 and cpx ARMY ?
+
+- fog of war
+  - [ ] at end of each turn, unit loses a bit of uncertainty if enemy zoc >= 2, gains otherwise, up to max bits by level
+  - [ ] state stores current bits for active units relative to max
+  - [x] for display, bits are randomized predictably by turn and unit index
+  - [x] unit tests
 
 - logic for u.mode:
   - [x] any mode change clears orders

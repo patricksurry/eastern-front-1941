@@ -7,14 +7,14 @@ interface Crypto {getRandomValues: (buf: ArrayBufferView) => ArrayBufferView}
 
 const _crypto = webcrypto ?? (window && window.crypto) as Crypto;
 
-type GeneratorT = {
+interface Generator {
   state: (seed?: number) => number,
   bit: () => number,
   byte: () => number,
   bits: (n: number) => number,
 }
 
-function lfsr24(seed?: number): GeneratorT {
+function lfsr24(seed?: number): Generator {
   const beforezero = 0xEF41CC;   // arbitrary location to insert zero in the sequence
 
   seed ??= _crypto.getRandomValues(new Uint32Array(1))[0];
@@ -50,4 +50,4 @@ function lfsr24(seed?: number): GeneratorT {
   }
 }
 
-export {lfsr24, GeneratorT};
+export {lfsr24, type Generator};

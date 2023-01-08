@@ -177,6 +177,8 @@ slight differences between the APX map (pictured) and the cartridge version
 
 notes, fun discoveries
 
+- random walk for supply check is a nice solution
+
 - why is Sevastpol listed as a scoring city in APX version but not represented on the map in either version?
 
 - unused unit types: ASM vs Cart, injects other words in gaps, reorders second group
