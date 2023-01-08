@@ -705,21 +705,42 @@ var ef1941 = (function (exports, node_crypto) {
                 // in case tied dirs (which will be neighbors) pick the  the clockwise leader
                 .sort(([a, i], [b, j]) => (b - a) || ((j - i + 4 + 2) % 4) - 2);
         }
-        static squareSpiral(center, diameter) {
-            // return list of the diameter^2 locations spiraling out from loc
-            // which form a square of 'radius' (diameter-1)/2, based on a spiralpattern
+        static squareSpiral(center, radius) {
+            // return list of the (2*radius+1)^2 locations spiraling out from loc
+            // which form a square of given radius, based on a spiralpattern
             // that looks like N, E, S,S, W,W, N,N,N, E,E,E, S,S,S,S, W,W,W,W, ...
-            if (diameter % 2 != 1)
-                throw (`squareSpiral: diameter should be odd, got ${diameter}`);
             let loc = new GridPoint(center.lon, center.lat), dir = 0, i = 0, side = 1;
             const locs = [loc];
-            while (++i < diameter) {
+            while (++i < 2 * radius + 1) {
                 loc = loc.next(dir);
                 locs.push(loc);
                 if (i == side) {
                     side += dir % 2;
                     dir = (dir + 1) % 4;
                     i = 0;
+                }
+            }
+            return locs;
+        }
+        static diamondSpiral(center, radius, facing = 0 /* DirectionKey.north */) {
+            // return list of GridPoints within radius manhattan distance of center,
+            // spiraling out from the origin starting in direction facting
+            // the 0th shell has a single point, with the i-th shell having 4*i points for i>1
+            // so the result has 2*r*(r+1) + 1 points
+            let loc = new GridPoint(center.lon, center.lat);
+            // the zeroth shell
+            const locs = [loc];
+            for (let r = 1; r <= radius; r++) {
+                // bump out one shell in the required direction
+                loc = loc.next(facing);
+                // loop over the four sides of the shell
+                for (let d = 0; d < 4; d++) {
+                    const d1 = (facing + d + 1) % 4, d2 = (facing + d + 2) % 4;
+                    for (let i = 0; i < r; i++) {
+                        // push the point and make a diagonal step
+                        locs.push(loc);
+                        loc = loc.next(d1).next(d2);
+                    }
                 }
             }
             return locs;
@@ -958,10 +979,10 @@ var ef1941 = (function (exports, node_crypto) {
         }
         reach(src, range, costs) {
             // find all squares accessible to unit within range, ignoring other units, zoc
+            // returns a map of point ids => range
             let cost = 0;
             const start = this.locationOf(src), locs = { [start.id]: 0 };
             while (cost < range) {
-                // eslint-disable-next-line no-unused-vars
                 Object.entries(locs).filter(([, v]) => v == cost).forEach(([k,]) => {
                     const src = GridPoint.fromid(+k);
                     Object.keys(directions).forEach(i => {
@@ -1079,11 +1100,11 @@ var ef1941 = (function (exports, node_crypto) {
             this.player = (corpt & 0x80) ? 1 /* PlayerKey.Russian */ : 0 /* PlayerKey.German */; // german=0, russian=1; equiv i >= 55
             this.unitno = corpno;
             this.type = corpt & 0x7;
-            __classPrivateFieldSet(this, _Unit_mode, (this.type == 3 /* UnitTypeKey.flieger */) ? 1 /* UnitMode.assault */ : 0 /* UnitMode.standard */, "f");
             const ut = unittypes[this.type];
             if (ut == null)
                 throw new Error(`Unused unit type for unit id ${id}`);
             this.kind = ut.kind;
+            __classPrivateFieldSet(this, _Unit_mode, (this.kind == 2 /* UnitKindKey.air */) ? 1 /* UnitMode.assault */ : 0 /* UnitMode.standard */, "f");
             this.modifier = (corpt >> 4) & 0x7;
             this.arrive = arrive;
             this.scheduled = arrive;
@@ -1142,11 +1163,16 @@ var ef1941 = (function (exports, node_crypto) {
         }
         get mode() { return __classPrivateFieldGet(this, _Unit_mode, "f"); }
         set mode(mode) {
-            __classPrivateFieldSet(this, _Unit_mode, mode, "f");
-            this.emit('orders');
+            if (this.kind == 2 /* UnitKindKey.air */ && ![1 /* UnitMode.assault */, 2 /* UnitMode.march */].includes(mode)) {
+                __classPrivateFieldGet(this, _Unit_game, "f").emit('message', 'error', 'AIRPLANES CANNOT DO THAT');
+            }
+            else {
+                __classPrivateFieldSet(this, _Unit_mode, mode, "f");
+                this.resetOrders();
+            }
         }
         nextmode() {
-            this.mode = this.type == 3 /* UnitTypeKey.flieger */
+            this.mode = this.kind == 2 /* UnitKindKey.air */
                 ? (this.mode == 1 /* UnitMode.assault */ ? 2 /* UnitMode.march */ : 1 /* UnitMode.assault */)
                 : (this.mode + 1) % 4;
         }
@@ -1191,6 +1217,30 @@ var ef1941 = (function (exports, node_crypto) {
             this.tick = 255;
             this.emit('orders');
         }
+        setOrdersSupportingFriendlyFurther(dir) {
+            const mb = __classPrivateFieldGet(this, _Unit_game, "f").mapboard;
+            let loc = GridPoint.get(this.point);
+            this.orders.forEach(d => loc = loc.next(d));
+            const { dlon, dlat } = directions[dir], target = GridPoint.diamondSpiral(loc, 8, dir)
+                .find(p => {
+                if ((p.lon - loc.lon) * dlon + (p.lat - loc.lat) * dlat <= 0
+                    || GridPoint.manhattanDistance(p, this.point) > 8
+                    || !mb.valid(p)) {
+                    return false;
+                }
+                else {
+                    const mp = mb.locationOf(p);
+                    return (mp.unitid != null && mp.unitid != this.id
+                        && __classPrivateFieldGet(this, _Unit_game, "f").oob.at(mp.unitid).player == this.player);
+                }
+            });
+            if (target == null) {
+                __classPrivateFieldGet(this, _Unit_game, "f").emit('message', 'error', 'NO FRIENDLY IN RANGE');
+            }
+            else {
+                this.setOrders(__classPrivateFieldGet(this, _Unit_game, "f").mapboard.directPath(this.point, target).orders);
+            }
+        }
         moveCost(dir) {
             if (!this.movable)
                 return 255;
@@ -1213,7 +1263,19 @@ var ef1941 = (function (exports, node_crypto) {
                 ;
         }
         reach(range = 32) {
-            return __classPrivateFieldGet(this, _Unit_game, "f").mapboard.reach(this, range, moveCosts(this.kind, __classPrivateFieldGet(this, _Unit_game, "f").weather));
+            // return a list of grid points within range of this unit
+            if (this.mode == 3 /* UnitMode.entrench */) {
+                return [GridPoint.get(this)];
+            }
+            else if (this.kind == 2 /* UnitKindKey.air */ && this.mode == 1 /* UnitMode.assault */) {
+                return GridPoint.diamondSpiral(this.point, range / 4)
+                    .filter(p => __classPrivateFieldGet(this, _Unit_game, "f").mapboard.valid(p));
+            }
+            else {
+                const costs = moveCosts(this.kind, __classPrivateFieldGet(this, _Unit_game, "f").weather);
+                return Object.keys(__classPrivateFieldGet(this, _Unit_game, "f").mapboard.reach(this, range, costs))
+                    .map(id => GridPoint.fromid(+id));
+            }
         }
         moveTo(dst) {
             let action = 'move';
@@ -2057,21 +2119,23 @@ var ef1941 = (function (exports, node_crypto) {
             });
         }
         zocAffecting(player, loc) {
-            // evaluate zoc experienced by player (eg. exerted by !player) in square at loc
+            // evaluate zoc experienced by player (eg. exerted by !player) in the square at loc
             let zoc = 0;
-            // same player in target square negates zoc, enemy exerts 4
+            // same player in target square negates any zoc, enemy exerts 4
             if (loc.unitid != null) {
                 if (this.at(loc.unitid).player == player)
                     return zoc;
                 zoc += 4;
             }
-            GridPoint.squareSpiral(loc, 3).slice(1).forEach((p, i) => {
+            // look at square spiral excluding center, so even squares are adj, odd are corners
+            GridPoint.squareSpiral(loc, 1).slice(1).forEach((p, i) => {
                 if (!__classPrivateFieldGet(this, _Oob_game, "f").mapboard.valid(p))
                     return;
                 const pt = __classPrivateFieldGet(this, _Oob_game, "f").mapboard.locationOf(p);
-                // even steps in the spiral exert 2, odd steps exert 1
-                if (pt.unitid != null && this.at(pt.unitid).player != player)
+                // center-adjacent (even) exert 2, corners (odd) exert 1
+                if (pt.unitid != null && this.at(pt.unitid).player != player) {
                     zoc += (i % 2) ? 1 : 2;
+                }
             });
             return zoc;
         }
@@ -2618,14 +2682,16 @@ var ef1941 = (function (exports, node_crypto) {
                 this.human = memento.shift();
                 this.turn = memento.shift();
                 this.handicap = memento.shift();
-                __classPrivateFieldGet(this, _Game_instances, "m", _Game_setDates).call(this);
             }
             // create the oob and maboard, using memento if there was one
             this.mapboard = new Mapboard(this, memento);
             this.oob = new Oob(this, memento);
             this.rand = lfsr24(seed);
-            if (memento && memento.length != 0)
-                throw new Error("Game: unexpected save data overflow");
+            if (memento) {
+                if (memento.length != 0)
+                    throw new Error("Game: unexpected save data overflow");
+                __classPrivateFieldGet(this, _Game_instances, "m", _Game_newTurn).call(this, true);
+            }
         }
         get memento() {
             // return a list of uint representing the state of the game
@@ -2829,7 +2895,7 @@ var ef1941 = (function (exports, node_crypto) {
             dibs = true; // someone else have dibs already?
         else
             ghosts[loc.id] = u.id;
-        const square = GridPoint.squareSpiral(loc, 5), linepts = Object.keys(directions).map(d => linePoints(sortSquareFacing(loc, 5, +d, square), 5, isOccupied)), tadj = terraintypes[loc.terrain].defence + 2; // our 0 adj is equiv to his 2
+        const square = GridPoint.squareSpiral(loc, 2), linepts = Object.keys(directions).map(d => linePoints(sortSquareFacing(loc, 5, +d, square), 5, isOccupied)), tadj = terraintypes[loc.terrain].defence + 2; // our 0 adj is equiv to his 2
         let sqval = sum(linepts.map((scr, i) => scr * u.ifrdir[i])) >> 8;
         sqval += u.ifr >= 16 ? u.ifr * (nbval + tadj) : 2 * (15 - u.ifr) * (9 - nbval + tadj);
         if (dibs)
@@ -7781,12 +7847,9 @@ Press any key to play!`), resume = window.location.hash.slice(1) || undefined, g
         scr.unitLayer.put(`${game.scenario}:${u.id}`, unitkinds[u.kind].icon, ux, uy, opts);
     }
     function paintReach(u) {
-        const { lon: left, lat: top } = game.mapboard.locations[0][0].point, reachmap = u.reach();
+        const { lon: left, lat: top } = game.mapboard.locations[0][0].point, pts = u.reach();
         scr.maskLayer.cls(0); // mask everything with block char, then clear reach squares
-        Object.keys(reachmap).forEach(v => {
-            const { lon, lat } = GridPoint.fromid(+v);
-            scr.maskLayer.putc(undefined, { x: left - lon, y: top - lat });
-        });
+        pts.forEach(({ lon, lat }) => scr.maskLayer.putc(undefined, { x: left - lon, y: top - lat }));
     }
     function setScenario(scenario, inc) {
         /*
@@ -7848,6 +7911,7 @@ Press any key to play!`), resume = window.location.hash.slice(1) || undefined, g
             u.nextmode();
         else
             u.mode = mode;
+        focus.on(u); // redraw reach
     }
     function editOrders(dir) {
         // dir => add step, -1 => remove step, null => clear or unfocus
@@ -7864,6 +7928,15 @@ Press any key to play!`), resume = window.location.hash.slice(1) || undefined, g
                 return;
             }
             u.resetOrders();
+        }
+        else if (u.kind == 2 /* UnitKindKey.air */ && u.mode == 1 /* UnitMode.assault */) {
+            if (!(dir in directions)) {
+                u.resetOrders();
+            }
+            else {
+                // air support towards next unit in given direction
+                u.setOrdersSupportingFriendlyFurther(dir);
+            }
         }
         else if (dir == -1) {
             u.delOrder();
@@ -7882,7 +7955,7 @@ Press any key to play!`), resume = window.location.hash.slice(1) || undefined, g
         zoom: 'zZ',
         debug: 'gG',
         mode: 'mM',
-        modes: '0123',
+        modes: '1234',
     }, arrowmap = {
         ArrowUp: 0 /* DirectionKey.north */,
         ArrowDown: 2 /* DirectionKey.south */,
@@ -8064,6 +8137,8 @@ Press any key to play!`), resume = window.location.hash.slice(1) || undefined, g
                     scr.infoWindow.puts(`\fz\x06\x00\fe\f^${u.label}\nELIMINATED!`);
                 }
                 // the rest of the actions happen during turn processing, which we pick up via game.tick
+            }).on('message', (_, message) => {
+                scr.errorWindow.puts(`\fh\f^${message}`);
             });
         }
         else {

@@ -4,16 +4,18 @@ import {Game} from './game';
 
 let game: Game;
 
+// TODO - test reloaded game has units and cities on map
+
 beforeEach(() => {
     game = new Game().start();
     game.rand.state(9792904);
 })
 
-function addSimpleOrders() {
+function addSimpleOrders(g: Game) {
     for (const k in players) {
         const p = +k as PlayerKey,
             d = (players[p].homedir + 2) % 4;
-        game.oob.activeUnits(p).forEach(u => {
+        g.oob.activeUnits(p).forEach(u => {
             for (let i=0; i<2; i++) {
                 if (u.moveCost(d)) u.addOrder(d);
             }
@@ -30,12 +32,12 @@ test("Initial score should be 12", () => {
 });
 
 test("Game turn", () => {
-    addSimpleOrders();
+    addSimpleOrders(game);
     expect(() => game.nextTurn()).not.toThrow();
 })
 
 test("Game roundtrip", () => {
-    addSimpleOrders();
+    addSimpleOrders(game);
     game.nextTurn();
 
     const arr = game.memento,
@@ -52,10 +54,19 @@ test("Game roundtrip", () => {
     expect(game2.token).toEqual(token);
 })
 
+test("Game turn roundtrip", () => {
+    const game2 = new Game(game.token);
+    addSimpleOrders(game);
+    game.nextTurn();
+    addSimpleOrders(game2);
+    game2.nextTurn();
+    expect(game2.token).toEqual(game.token);
+})
+
 test("Switch scenario", () => {
     //TODO fails with game.start(ScenarioKey.expert42);
     game.start(ScenarioKey.advanced);
-    addSimpleOrders();
+    addSimpleOrders(game);
     game.nextTurn();
     const token = game.token;
     const game2 = new Game(token);

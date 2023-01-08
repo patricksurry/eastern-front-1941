@@ -2,42 +2,57 @@
 
 ## Game play issues
 
-- 1942 oob turn arrival calculation
-
 - finish implementing scenario parameters from defs.ts
-  - mdmg, cdmg, cadj, fog
-
-- defender bonus x2 for expert mode
-
-- dealdmg varies by level via M/CSTRDMG not 1/5 like APX, some weirdness with assault nmode #$01 and cpx ARMY ?
+  - [ ] mdmg (mstrng dmg at higher levels),
+  - [ ] cdmg,
+  - [ ] cadj,
+  - [ ] fog of war
+  - [ ] dealdmg varies by level via M/CSTRDMG not 1/5 like APX, some weirdness with assault nmode #$01 and cpx ARMY ?
 
 - logic for u.mode:
-  - forcedMarch - terrain cost => cost//2 + 2, cstrng halved (min 1), //2 brk chk, quickly(??) returns afterwards
-    intended more for inf than pz (because of terrain cost modifier)
-  - assault - cost => cost + cost//2, 2x brk chk, deals level 1 damage, receives level 0 damage (normal is level dmg)
-  - entrench - 2x defense, 2x brk chk, clears orders.
-  - auto-entrench if no orders?
+  - [ ] forcedMarch - terrain cost => cost//2 + 2, cstrng halved (min 1), //2 brk chk, quickly(??) returns afterwards, intended more for inf than pz (because of terrain cost modifier)
+  - [ ] assault - cost => cost + cost//2, 2x brk chk, deals level 1 damage, receives level 0 damage (normal is level dmg)
+  - [ ] entrench - 2x defense, 2x brk chk, clears orders (any mode change clears)
+  - [ ] entrench - can't add new orders
+  - [ ] option for auto-entrench if no orders?
+  - [ ] retreat resets mode to standard
+
+- supply check
+  - [ ] traceSupply is unused.
+  - [ ] germans automatically OoS in mud
+  - [ ] supply.replacements unused
+  - [ ] in APX version, russians in supply get MSTRNG+2 in supply check (should be max 255)
+  - [ ] unit test
+
+- zocAffecting
+  - [ ] different central unit treatment for supply check vs move (ignore or not)
+  - [ ] unit test
+
+- combat
+  - [ ] defender bonus x2 for expert mode
+  - [ ] confirm attack/defend adjust are applied based on correct square - always defender?
+
+- air units (flieger)
+  - [ ] forcedMarch (normal movement rules - what terrain cost?)
+  - [x] assault mode (include impassable)
+  - [ ] assault mode adds flieger strength / half flight distance to friendly unit cadj
+
+- [ ] dead unit disperse nearby in cartridge
+
+- [ ] break check is simplified for level = 0,1
+
+- [ ] 1942 oob turn arrival calculation
+
+- [ ] optionally allow >8 orders
 
 - AI changes for mvmode
-
-- confirm russian mstrng replacements in supply check?
-
-- traceSupply is unused.  confirm supply/zoc check is happening - add unit test
-
-- confirm attack/defend adjust are applied based on correct square - always defender?
-
-- zocAffecting needs different option for whether to ignore central unit (eg. supply check vs move)
-
-- flieger behavior
-  - forcedMarch (normal movement rules)
-  - assault mode (include impassable)
-  - assault mode adds flieger strength / half flight distance to friendly unit cadj
+  - [ ] code browsing
 
 ## Display issues
 
-- blink should apply to overlay exc order path
+- [ ] scr.errorWindow.cls() on key/click, if 'error showing' flag set
 
-- scr.errorWindow.cls() on key/click, if 'error showing' flag set
+- [ ] blink should apply to overlay exc order path, svg overlay within unit div??
 
 TXTWDW => screen mapping:
 

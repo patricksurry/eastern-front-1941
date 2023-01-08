@@ -5,12 +5,17 @@ import {Thinker, privateExports} from './think';
 import { ScenarioKey } from './scenarios';
 
 
-const game = new Game();
+let game: Game;
 
-test("Unexpected linePoints() values", () => {
+beforeEach(() => {
+    game = new Game().start();
+    game.rand.state(9792904);
+})
+
+test("Expected linePoints() values", () => {
     // set up the linepts position from the PDF diagram, and test from all directions
     const p = new GridPoint(102, 102),
-        sq = GridPoint.squareSpiral(p, 5),
+        sq = GridPoint.squareSpiral(p, 2),
         occ: number[] = [[103, 103], [103, 101], [103, 100], [102, 102], [101, 101]].map(
             ([lon, lat]) => new GridPoint(lon, lat).id
         ),
@@ -21,7 +26,7 @@ test("Unexpected linePoints() values", () => {
     expect(linepts).toEqual([104, 162, 16, 146]);
 });
 
-test("flee home", () => {
+test("Flee home", () => {
     const g = new Game().start(ScenarioKey.learner),
         ai = new Thinker(g, PlayerKey.Russian),
         ug = g.oob.at(1),
@@ -43,10 +48,7 @@ function hexvals(s: string): number[] {
     return s.split(' ').map(v => parseInt(v, 16));
 }
 
-test("AI metrics", () => {
-    game.turn = 0;
-    game.oob.filter(u => u.arrive == 0).forEach(u => game.mapboard.locationOf(u).unitid = u.id);
-
+test("AI metrics equal APX results", () => {
     const {ofr, friend, foe} = privateExports.calcForceRatios(game.oob, PlayerKey.Russian);
     expect(friend).toBe(3533);          // $0d04 => 3332  actual 3533
     expect(foe).toBe(4705 - 205);       // $1261 => 4705  actual is 4500  but 205 gets double-counted
@@ -102,3 +104,12 @@ test("AI metrics", () => {
 */
 });
 
+
+test("AI metrics on resume", () => {
+    game.nextTurn();
+    const ratios = privateExports.calcForceRatios(game.oob, PlayerKey.Russian),
+        game2 = new Game(game.token),
+        ratios2 = privateExports.calcForceRatios(game2.oob, PlayerKey.Russian);
+
+    expect(ratios).toEqual(ratios2);
+})

@@ -159,18 +159,21 @@ class Oob {
             });
     }
     zocAffecting(player: PlayerKey, loc: MapPoint) {
-        // evaluate zoc experienced by player (eg. exerted by !player) in square at loc
+        // evaluate zoc experienced by player (eg. exerted by !player) in the square at loc
         let zoc = 0;
-        // same player in target square negates zoc, enemy exerts 4
+        // same player in target square negates any zoc, enemy exerts 4
         if (loc.unitid != null) {
             if (this.at(loc.unitid).player == player) return zoc;
             zoc += 4;
         }
-        GridPoint.squareSpiral(loc, 3).slice(1).forEach((p, i) => {
+        // look at square spiral excluding center, so even squares are adj, odd are corners
+        GridPoint.squareSpiral(loc, 1).slice(1).forEach((p, i) => {
             if (!this.#game.mapboard.valid(p)) return;
             const pt = this.#game.mapboard.locationOf(p);
-            // even steps in the spiral exert 2, odd steps exert 1
-            if (pt.unitid != null && this.at(pt.unitid).player != player) zoc += (i % 2) ? 1: 2;
+            // center-adjacent (even) exert 2, corners (odd) exert 1
+            if (pt.unitid != null && this.at(pt.unitid).player != player) {
+                zoc += (i % 2) ? 1: 2;
+            }
         });
         return zoc;
     }

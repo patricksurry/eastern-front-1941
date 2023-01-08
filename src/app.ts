@@ -1,4 +1,8 @@
-import {players, unitkinds, terraintypes, weatherdata, directions, DirectionKey} from './defs';
+import {
+    players, unitkinds, UnitKindKey,
+    terraintypes, weatherdata,
+    directions, DirectionKey,
+} from './defs';
 import {ScenarioKey, scenarios} from './scenarios';
 import {Game} from './game';
 import {Unit, unitFlag, UnitMode, unitModes} from './unit';
@@ -7,7 +11,6 @@ import type {SpriteOpts} from './anticmodel';
 import {MappedDisplayLayer, SpriteDisplayLayer, GlyphAnimation, fontMap} from './anticmodel';
 import type {FlagModel, HelpScreenModel, ScreenModel} from './appview';
 import {Layout} from './appview';
-import {GridPoint} from './map';
 import m from 'mithril';
 
 interface MithrilEvent extends Event {redraw: boolean}
@@ -208,13 +211,10 @@ function paintUnit(u: Unit) {
 
 function paintReach(u: Unit) {
     const {lon: left, lat: top} = game.mapboard.locations[0][0].point,
-        reachmap = u.reach();
+        pts = u.reach();
 
     scr.maskLayer.cls(0);  // mask everything with block char, then clear reach squares
-    Object.keys(reachmap).forEach(v => {
-        const {lon, lat} = GridPoint.fromid(+v);
-        scr.maskLayer.putc(undefined, {x: left - lon, y: top - lat});
-    })
+    pts.forEach(({lon, lat}) => scr.maskLayer.putc(undefined, {x: left - lon, y: top - lat}));
 }
 
 function setScenario(scenario: ScenarioKey | null, inc?: number) {
@@ -282,6 +282,7 @@ function editUnitMode(mode: UnitMode | null) {
     if (!u) return;
     if (mode == null) u.nextmode();
     else u.mode = mode;
+    focus.on(u);    // redraw reach
 }
 
 function editOrders(dir: DirectionKey | null | -1) {
@@ -292,14 +293,23 @@ function editOrders(dir: DirectionKey | null | -1) {
         scr.errorWindow.puts(`\fh\f^THAT IS A ${players[u.player].label.toUpperCase()} UNIT!`)
         return;
     }
+
     if (dir == null) {
         if (u.orders.length == 0) {
             focus.off();
             return;
         }
         u.resetOrders();
+    } else if (u.kind == UnitKindKey.air && u.mode == UnitMode.assault) {
+        if (!(dir in directions)) {
+            u.resetOrders();
+        }
+        else {
+            // air support towards next unit in given direction
+            u.setOrdersSupportingFriendlyFurther(dir);
+        }
     } else if (dir == -1) {
-        u.delOrder();
+         u.delOrder();
     } else {
         u.addOrder(dir);
     }
@@ -315,7 +325,7 @@ const keymap = {
     zoom:   'zZ',
     debug:  'gG',
     mode:   'mM',
-    modes:  '0123',
+    modes:  '1234',
 },
 arrowmap: Record<string, DirectionKey> = {
     ArrowUp: DirectionKey.north,
@@ -495,6 +505,8 @@ function start(scenario?: ScenarioKey) {
                 scr.infoWindow.puts(`\fz\x06\x00\fe\f^${u.label}\nELIMINATED!`)
             }
             // the rest of the actions happen during turn processing, which we pick up via game.tick
+        }).on('message', (_, message) => {
+            scr.errorWindow.puts(`\fh\f^${message}`)
         })
     } else {
         game.start(scenario);

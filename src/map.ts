@@ -64,19 +64,18 @@ class GridPoint implements Point {
             // in case tied dirs (which will be neighbors) pick the  the clockwise leader
             .sort(([a, i], [b, j]) => (b - a) || ((j - i + 4 + 2)%4) - 2);
     }
-    static squareSpiral(center: Point, diameter: number): GridPoint[] {
-        // return list of the diameter^2 locations spiraling out from loc
-        // which form a square of 'radius' (diameter-1)/2, based on a spiralpattern
+    static squareSpiral(center: Point, radius: number): GridPoint[] {
+        // return list of the (2*radius+1)^2 locations spiraling out from loc
+        // which form a square of given radius, based on a spiralpattern
         // that looks like N, E, S,S, W,W, N,N,N, E,E,E, S,S,S,S, W,W,W,W, ...
 
-        if (diameter % 2 != 1) throw(`squareSpiral: diameter should be odd, got ${diameter}`);
         let loc = new GridPoint(center.lon, center.lat),
             dir = 0,
             i = 0,
             side = 1;
         const locs = [loc];
 
-        while (++i < diameter) {
+        while (++i < 2*radius+1) {
             loc = loc.next(dir);
             locs.push(loc);
             if (i == side) {
@@ -87,7 +86,30 @@ class GridPoint implements Point {
         }
         return locs;
     }
-
+    static diamondSpiral(center: Point, radius: number, facing = DirectionKey.north): GridPoint[] {
+        // return list of GridPoints within radius manhattan distance of center,
+        // spiraling out from the origin starting in direction facting
+        // the 0th shell has a single point, with the i-th shell having 4*i points for i>1
+        // so the result has 2*r*(r+1) + 1 points
+        let loc = new GridPoint(center.lon, center.lat);
+        // the zeroth shell
+        const locs = [loc];
+        for (let r=1; r<=radius; r++) {
+            // bump out one shell in the required direction
+            loc = loc.next(facing);
+            // loop over the four sides of the shell
+            for (let d=0; d<4; d++) {
+                const d1 = (facing+d+1) % 4,
+                    d2 = (facing+d+2) % 4;
+                for (let i=0; i<r; i++) {
+                    // push the point and make a diagonal step
+                    locs.push(loc)
+                    loc = loc.next(d1).next(d2)
+                }
+            }
+        }
+        return locs;
+    }
 }
 
 class MapPoint extends GridPoint {
@@ -104,7 +126,6 @@ class MapPoint extends GridPoint {
         this.icon = icon;
     }
 }
-
 
 // mapboard constructor, used as a container of MapPoints
 class Mapboard {
@@ -396,12 +417,12 @@ class Mapboard {
     }
     reach(src: Point, range: number, costs: number[]) {
         // find all squares accessible to unit within range, ignoring other units, zoc
+        // returns a map of point ids => range
         let cost = 0;
         const start = this.locationOf(src),
             locs: {[key: number]: number} = {[start.id]: 0};
 
         while (cost < range) {
-            // eslint-disable-next-line no-unused-vars
             Object.entries(locs).filter(([ ,v]) => v == cost).forEach(([k, ]) => {
                 const src = GridPoint.fromid(+k);
                 Object.keys(directions).forEach(i => {

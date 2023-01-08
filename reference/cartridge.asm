@@ -1025,12 +1025,12 @@ ORDERS:     lda ORDDLY                       ; a5e6 a5ff    . Delay to disambigu
             sta $fd                          ; a5fb 85fd
 _ORDERS_1:  ldx CORPS                        ; a5fd a6a1    . Number of unit under window
             bne _ORDERS_2                    ; a5ff d005
-            ldx #$05                         ; a601 a205
+            ldx #$05                         ; a601 a205    err: THERE IS NOBODY THERE
             jmp SQUAWK                       ; a603 4cffa6
 
 _ORDERS_2:  cpx #$30                         ; a606 e030
             bcc _ORDERS_3                    ; a608 9005
-            ldx #$00                         ; a60a a200
+            ldx #$00                         ; a60a a200    err: THAT IS A RUSSIAN UNIT
             jmp SQUAWK                       ; a60c 4cffa6
 
 _ORDERS_3:  lda NOBTCNT                      ; a60f a5f6    . Count VBI cycles since button press for expert level dbl-click move mode
@@ -1041,11 +1041,11 @@ _ORDERS_3:  lda NOBTCNT                      ; a60f a5f6    . Count VBI cycles s
             bmi _ORDERS_11                   ; a61b 3079
             cpx #$2b                         ; a61d e02b    Fliegerkorps?
             bcc _ORDERS_4                    ; a61f 900d
-            cmp #$01                         ; a621 c901
+            cmp #$01                         ; a621 c901    only allow assault or forced march
             beq _ORDERS_4                    ; a623 f009
             cmp #$02                         ; a625 c902
             beq _ORDERS_4                    ; a627 f005
-            ldx #$07                         ; a629 a207
+            ldx #$07                         ; a629 a207    err: AIRPLANES CANNOT DO THAT
             jmp SQUAWK                       ; a62b 4cffa6
 
 _ORDERS_4:  tay                              ; a62e a8
@@ -1072,20 +1072,20 @@ _ORDERS_5:  tya                              ; a644 98
             jmp __A__                        ; a65b 4cb0a5
 
 _ORDERS_6:  lda MVMODE,x                     ; a65e bdc734  . (expert level only) standard/assault/forced march/entrench
-            cmp #$03                         ; a661 c903
+            cmp #$03                         ; a661 c903    entrenched? - can't add orders
             bne _ORDERS_7                    ; a663 d005
-            ldx #$06                         ; a665 a206
+            ldx #$06                         ; a665 a206    err: THAT UNIT IS ENTRENCHED
             jmp SQUAWK                       ; a667 4cffa6
 
 _ORDERS_7:  lda HMORDS,x                     ; a66a bdd232  . how many orders queued for each unit
-            cmp #$08                         ; a66d c908
+            cmp #$08                         ; a66d c908    max 8 orders
             bcc _ORDERS_8                    ; a66f 9005
-            ldx #$01                         ; a671 a201
+            ldx #$01                         ; a671 a201    err: ONLY 8 ORDERS ARE ALLOWED
             jmp SQUAWK                       ; a673 4cffa6
 
 _ORDERS_8:  lda KRZFLG                       ; a676 a5cb
             bne _ORDERS_9                    ; a678 d005
-            ldx #$02                         ; a67a a202
+            ldx #$02                         ; a67a a202    err: PLEASE WAIT FOR MALTAKREUZE
             jmp SQUAWK                       ; a67c 4cffa6
 
 _ORDERS_9:  inc DBTIMR                       ; a67f e6c8    . joystick debounce timer
@@ -1099,7 +1099,7 @@ _ORDERS_10: lda #$00                         ; a68a a900
             ldy STICK0                       ; a68e ac7802  . The value of joystick 0
             lda STKTAB,y                     ; a691 b9d19b  . joystick decoding table
             bpl _ORDERS_12                   ; a694 1005
-_ORDERS_11: ldx #$03                         ; a696 a203
+_ORDERS_11: ldx #$03                         ; a696 a203    err: NO DIAGONAL MOVES ALLOWED
             jmp SQUAWK                       ; a698 4cffa6
 
 _ORDERS_12: tay                              ; a69b a8
@@ -2015,7 +2015,7 @@ _COMBAT_7:  ldx HMORDS,x                     ; ad29 bed232  . how many orders qu
 _COMBAT_8:  ldx MVMODE,x                     ; ad2f bec734  Bug?  X now set to HMORDS not unit ??
             cpx #$03                         ; ad32 e003    Entrenched?
             bne _COMBAT_9                    ; ad34 d003
-            asl                              ; ad36 0a
+            asl                              ; ad36 0a      defender strength doubled
             bcs _DOBATL_1                    ; ad37 b00e
 _COMBAT_9:  cpy #$30                         ; ad39 c030
             bcs DOBATL                       ; ad3b b005
@@ -2388,22 +2388,22 @@ SUPPLY:     lda ARRIVE,x                     ; b013 bda62d  . arrival turns
             rts                              ; b01c 60
 
 _SUPPLY_1:  cpx #$30                         ; b01d e030
-            bcs _SUPPLY_2                    ; b01f b018
+            bcs _SUPPLY_2                    ; b01f b018    Russian?
             ldy EARTH                        ; b021 a48a
-            cpy #$02                         ; b023 c002
+            cpy #$02                         ; b023 c002    german automatically OoS in mud
             beq _SUPPLY_8                    ; b025 f05b
-            cpy #$0a                         ; b027 c00a
+            cpy #$0a                         ; b027 c00a    snow?
             bne _SUPPLY_2                    ; b029 d00e
             lda CORPSX,x                     ; b02b bdb12b  . longitude of all units
             asl                              ; b02e 0a
             asl                              ; b02f 0a
-            adc #$4a                         ; b030 694a
+            adc #$4a                         ; b030 694a    lng * 4 + 74
             cmp SKREST / RANDOM              ; b032 cd0ad2  . W: Reset serial port status register / R: Random byte
             bcc _SUPPLY_8                    ; b035 904b
             lda #$10                         ; b037 a910
-_SUPPLY_2:  ldy #$01                         ; b039 a001
+_SUPPLY_2:  ldy #$01                         ; b039 a001    clear or Russian
             cpx #$30                         ; b03b e030
-            bcs _SUPPLY_3                    ; b03d b002
+            bcs _SUPPLY_3                    ; b03d b002    Russian?
             ldy #$03                         ; b03f a003
 _SUPPLY_3:  sty HOMEDR                       ; b041 84ef
             jsr SETLL                        ; b043 2074ab  . CORPSX/Y for X -> LAT, LON
@@ -2550,10 +2550,10 @@ _DEAD_6:    lda #$00                         ; b141 a900
 
 BRKCHK:     ldy LEVEL                        ; b15a a492    Maybe break unit X, reset orders, suffer damange
             cpy #$02                         ; b15c c002
-            bcs _BRKCHK_1                    ; b15e b008
+            bcs _BRKCHK_1                    ; b15e b008    level >= 2 ?
             lda MSTRNG,x                     ; b160 bdff2c  . muster strengths
             lsr                              ; b163 4a
-            lsr                              ; b164 4a
+            lsr                              ; b164 4a      else A //= 4
             jmp __H__                        ; b165 4c98b1
 
 _BRKCHK_1:  cpx #$30                         ; b168 e030
@@ -2575,15 +2575,15 @@ _BRKCHK_2:  lda MSTRNG,x                     ; b179 bdff2c  . muster strengths
 _BRKCHK_3:  ldy MVMODE,x                     ; b187 bcc734  . (expert level only) standard/assault/forced march/entrench
             beq __H__                        ; b18a f00c    standard mode
             cpy #$02                         ; b18c c002    forced march?
-            bne _BRKCHK_4                    ; b18e d007    assault or entrench
-            asl                              ; b190 0a      A *= 2 max 255
+            bne _BRKCHK_4                    ; b18e d007
+            asl                              ; b190 0a      A *= 2 max 255 for forced march
             bcc __H__                        ; b191 9005
             lda #$ff                         ; b193 a9ff
             bcs __H__                        ; b195 b001
-_BRKCHK_4:  lsr                              ; b197 4a      A /= 2
+_BRKCHK_4:  lsr                              ; b197 4a      A /= 2 for assault or entrench
 __H__:      cmp CSTRNG,x                     ; b198 dd2b32  . combat strengths
-            bcc _H_1                         ; b19b 900a    break unless cstrng exceeds A
-            lda #$ff                         ; b19d a9ff
+            bcc _H_1                         ; b19b 900a
+            lda #$ff                         ; b19d a9ff    break if A >= cstrng
             sta EXEC,x                       ; b19f 9ddc30  . unit execution times
             lda #$00                         ; b1a2 a900
             sta HMORDS,x                     ; b1a4 9dd232  . how many orders queued for each unit
@@ -4162,7 +4162,7 @@ _NXTTRN_6:  dex                              ; be6c ca
 AIRASLT:    stx ARMY                         ; be71 86ab
             lda MVMODE,x                     ; be73 bdc734  . (expert level only) standard/assault/forced march/entrench
             cmp #$01                         ; be76 c901    Handle fliegerkorps assault mode
-            bne _AIRADJ_1                    ; be78 d039
+            bne _AIRADJ_1                    ; be78 d039    otherwise moving
             jsr SETLL                        ; be7a 2074ab  . CORPSX/Y for X -> LAT, LON
             lda HMORDS,x                     ; be7d bdd232  . how many orders queued for each unit
 AIRORD:     beq AIRADJ                       ; be80 f009

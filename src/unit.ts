@@ -112,10 +112,10 @@ class Unit {
         this.player = (corpt & 0x80) ? PlayerKey.Russian : PlayerKey.German;  // german=0, russian=1; equiv i >= 55
         this.unitno = corpno;
         this.type = corpt & 0x7 as UnitTypeKey;
-        this.#mode = (this.type == UnitTypeKey.flieger) ? UnitMode.assault: UnitMode.standard;
         const ut = unittypes[this.type];
         if (ut == null) throw new Error(`Unused unit type for unit id ${id}`)
         this.kind = ut.kind;
+        this.#mode = (this.kind == UnitKindKey.air) ? UnitMode.assault: UnitMode.standard;
         this.modifier = (corpt >> 4) & 0x7;
         this.arrive = arrive;
         this.scheduled = arrive;
@@ -173,11 +173,15 @@ class Unit {
     }
     get mode() { return this.#mode; }
     set mode(mode: UnitMode) {
-        this.#mode = mode;
-        this.emit('orders');
+        if (this.kind == UnitKindKey.air && ![UnitMode.assault, UnitMode.march].includes(mode)) {
+            this.#game.emit('message', 'error', 'AIRPLANES CANNOT DO THAT');
+        } else {
+            this.#mode = mode;
+            this.resetOrders();
+        }
     }
     nextmode() {
-        this.mode = this.type == UnitTypeKey.flieger
+        this.mode = this.kind == UnitKindKey.air
             ? (this.mode == UnitMode.assault ? UnitMode.march : UnitMode.assault)
             : (this.mode + 1) % 4;
     }
@@ -219,6 +223,33 @@ class Unit {
         this.tick = 255;
         this.emit('orders');
     }
+    setOrdersSupportingFriendlyFurther(dir: DirectionKey) {
+        const mb = this.#game.mapboard;
+        let loc = GridPoint.get(this.point);
+        this.orders.forEach(d => loc = loc.next(d));
+        const
+            {dlon, dlat} = directions[dir],
+            target = GridPoint.diamondSpiral(loc, 8, dir)
+                .find(p => {
+                    if ((p.lon - loc.lon)*dlon + (p.lat - loc.lat)*dlat <= 0
+                            || GridPoint.manhattanDistance(p, this.point) > 8
+                            || !mb.valid(p)) {
+                        return false;
+                    } else {
+                        const mp = mb.locationOf(p);
+                        return (
+                            mp.unitid != null && mp.unitid != this.id
+                            && this.#game.oob.at(mp.unitid).player == this.player
+                        )
+                    }
+                });
+
+        if (target == null) {
+            this.#game.emit('message', 'error', 'NO FRIENDLY IN RANGE')
+        } else {
+            this.setOrders(this.#game.mapboard.directPath(this.point, target).orders);
+        }
+    }
     moveCost(dir: DirectionKey): number {
         if (!this.movable) return 255;
         const dst = this.#game.mapboard.neighborOf(GridPoint.get(this), dir);
@@ -237,8 +268,18 @@ class Unit {
             ? m.bestPath(this.point, goal, costs)
             : m.directPath(this.point, goal, costs)
     }
-    reach(range = 32) {
-        return this.#game.mapboard.reach(this, range, moveCosts(this.kind, this.#game.weather));
+    reach(range = 32): GridPoint[] {
+        // return a list of grid points within range of this unit
+        if (this.mode == UnitMode.entrench) {
+            return [GridPoint.get(this)];
+        } else if (this.kind == UnitKindKey.air && this.mode == UnitMode.assault) {
+            return GridPoint.diamondSpiral(this.point, range / 4)
+                .filter(p => this.#game.mapboard.valid(p));
+        } else {
+            const costs = moveCosts(this.kind, this.#game.weather);
+            return Object.keys(this.#game.mapboard.reach(this, range, costs))
+                .map(id => GridPoint.fromid(+id));
+        }
     }
     moveTo(dst: MapPoint|null) {
         let action: UnitEvent = 'move';

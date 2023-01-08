@@ -53,15 +53,17 @@ class Game extends EventEmitter {
             this.turn = memento.shift()!;
 
             this.handicap = memento.shift()!;
-
-            this.#setDates();
         }
         // create the oob and maboard, using memento if there was one
         this.mapboard = new Mapboard(this, memento);
         this.oob = new Oob(this, memento);
         this.rand = lfsr24(seed);
 
-        if (memento && memento.length != 0) throw new Error("Game: unexpected save data overflow");
+        if (memento) {
+            if (memento.length != 0)
+                throw new Error("Game: unexpected save data overflow");
+            this.#newTurn(true);
+        }
     }
     get memento() {
         // return a list of uint representing the state of the game

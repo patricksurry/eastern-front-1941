@@ -54,23 +54,19 @@ test("Direct path length != manhattan distance", () => {
 })
 
 test("squareSpiral sizes", () => {
-    expect(GridPoint.squareSpiral(loc34, 1).length).toBe(1);
-    expect(GridPoint.squareSpiral(loc34, 7).length).toBe(49);
+    expect(GridPoint.squareSpiral(loc34, 0).length).toBe(1);
+    expect(GridPoint.squareSpiral(loc34, 3).length).toBe(49);
 })
 
 test("squareSpiral ids", () => {
-    const ids = new Set(GridPoint.squareSpiral(loc34, 3).map(loc => loc.id));
+    const ids = new Set(GridPoint.squareSpiral(loc34, 1).map(loc => loc.id));
     expect(ids.size).toBe(9);
-})
-
-test("even diameter squareSpiral should throw", () => {
-    expect(() => GridPoint.squareSpiral(loc34, 2)).toThrow();
 })
 
 test("directionFrom tie-breaking should be unbiased", () => {
     const bydir: Record<DirectionKey, number> = {0: 0, 1: 0, 2: 0, 3: 0};
     let nils = 0;
-    GridPoint.squareSpiral(loc34, 7)
+    GridPoint.squareSpiral(loc34, 3)
         .forEach(loc => {
             const dk = GridPoint.directionFrom(loc34, loc);
             if (dk != null) bydir[dk]++;
@@ -80,6 +76,21 @@ test("directionFrom tie-breaking should be unbiased", () => {
     // directionFrom(a, a) returns null, others are equally distributed
     Object.entries(bydir).forEach(([ , v]) => expect(v).toBe(12));
     expect(nils).toBe(1);
+})
+
+test("diamondSpiral size", () => {
+    const diamond = GridPoint.diamondSpiral(loc34, 3, DirectionKey.north);
+    expect(diamond.length).toBe(2*3*4+1);
+    expect(diamond.length).toBe(new Set(diamond.map(p => p.id)).size);
+})
+
+test("diamondSpiral direction", () => {
+    const spiralN = GridPoint.diamondSpiral(loc34, 2, DirectionKey.north).map(p => p.id),
+        spiralS = GridPoint.diamondSpiral(loc34, 2, DirectionKey.south).map(p => p.id);
+
+    expect(spiralN.length).toBe(spiralS.length);
+    expect(spiralN).not.toEqual(spiralS);
+    expect(new Set(spiralN)).toEqual(new Set(spiralS));
 })
 
 const finn2 = mapboard.locationOf(new GridPoint(35, 38)),

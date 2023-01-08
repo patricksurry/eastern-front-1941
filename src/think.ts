@@ -137,7 +137,7 @@ class Thinker {
         if (isOccupied(loc)) dibs = true;      // someone else have dibs already?
         else ghosts[loc.id] = u.id;
 
-        const square = GridPoint.squareSpiral(loc, 5),
+        const square = GridPoint.squareSpiral(loc, 2),
             linepts = Object.keys(directions).map(
                 d => linePoints(sortSquareFacing(loc, 5, +d, square), 5, isOccupied)
             ),
