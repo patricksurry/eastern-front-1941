@@ -1647,25 +1647,25 @@ SHOWSTR:    cpx #$30                         ; aa75 e030    Show unit X strength
             sta TEMPZ                        ; aa79 85f3    Save actual Russian strength
             lda FOGGY-48,x                   ; aa7b bd8638  . Fog of war masks Russian unit strength
             eor #$ff                         ; aa7e 49ff    Foggy 0 bits will get randomized
-            sta TEMP1                        ; aa80 85a4    . all purpose temp
-            lda VBISRV,x                     ; aa82 bd44a3  Read code bytes for randomness...
+            sta TEMP1                        ; aa80 85a4    Mask for lsb like 00001111
+            lda VBISRV,x                     ; aa82 bd44a3  Read code byte for randomness...
             eor TURN                         ; aa85 4591
-            and TEMP1                        ; aa87 25a4    Randomize the 0 bits
+            and TEMP1                        ; aa87 25a4    Acc has random bits for mask TEMP1
             ldx #$ff                         ; aa89 a2ff
             lsr TEMP1                        ; aa8b 46a4    . all purpose temp
             sec                              ; aa8d 38
-            sbc TEMP1                        ; aa8e e5a4    . all purpose temp
-            bcs _SHOWSTR_1                   ; aa90 b002
-            ldx #$01                         ; aa92 a201
+            sbc TEMP1                        ; aa8e e5a4    acc -= mask >> 1 (so it's a +/- value)
+            bcs _SHOWSTR_1                   ; aa90 b002    +ve offset? (x=ff)
+            ldx #$01                         ; aa92 a201    -ve offest (x=1)
 _SHOWSTR_1: clc                              ; aa94 18
-            adc TEMPZ                        ; aa95 65f3
+            adc TEMPZ                        ; aa95 65f3    add actual strength
             bcc _SHOWSTR_2                   ; aa97 9005
             cpx #$ff                         ; aa99 e0ff
             bne DNUMBER                      ; aa9b d006
-            txa                              ; aa9d 8a
+            txa                              ; aa9d 8a      a = 255
 _SHOWSTR_2: cpx #$01                         ; aa9e e001
             bne DNUMBER                      ; aaa0 d001
-            txa                              ; aaa2 8a
+            txa                              ; aaa2 8a      else display 1
 DNUMBER:    ldx #$ff                         ; aaa3 a2ff    Show A as base10 number in TXTWDW
             stx TEMPZ                        ; aaa5 86f3
             sec                              ; aaa7 38

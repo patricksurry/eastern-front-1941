@@ -1,38 +1,27 @@
 import m from 'mithril';
 import {DirectionKey, directions} from './defs';
 import {UnitMode} from './unit';
-import {AnticColor, DisplayLayer, MappedDisplayLayer, SpriteDisplayLayer} from './anticmodel';
+import {AnticColor, DisplayLayer} from './anticmodel';
 import {BlockComponent, DisplayAttr, GlyphAttr, type Glyph} from './anticview';
 import {antic2rgb, DisplayComponent, GlyphComponent} from './anticview';
 import {css} from '@emotion/css';
 
-interface HelpScreenModel {
-    window: MappedDisplayLayer
+import type {AppModel} from './appmodel';
+import type {HelpModel} from './help';
+
+interface LayerAttrs {app: AppModel, help: HelpModel}
+
+class AppView {
+    constructor(attrs: LayerAttrs) {
+        m.mount(document.body, {view: () => m(Layout, attrs)});
+    }
+    redraw() {
+        m.redraw()
+    }
 }
-
-interface ScreenModel {
-    dateWindow: MappedDisplayLayer,
-    infoWindow: MappedDisplayLayer,
-    errorWindow: MappedDisplayLayer,
-
-    mapLayer: MappedDisplayLayer,
-    labelLayer: SpriteDisplayLayer,
-    unitLayer: SpriteDisplayLayer,
-    kreuzeLayer: SpriteDisplayLayer,
-    maskLayer: MappedDisplayLayer,
-}
-
-interface FlagModel {
-    help: boolean,
-    extras: boolean,
-    debug: boolean,
-    zoom: boolean,
-}
-
-interface LayerAttrs {hscr: HelpScreenModel, scr: ScreenModel, flags: FlagModel}
 
 const Layout: m.Component<LayerAttrs> = {
-    view: ({attrs: {hscr, scr, flags}}) => {
+    view: ({attrs: {help, app}}) => {
         return m('.layout', {
                 class: css`
                     background-color: ${antic2rgb(0xD4)};
@@ -43,7 +32,7 @@ const Layout: m.Component<LayerAttrs> = {
             },
             m('.screen', {
                     class: css`
-                        width: 320px;        /* 40x24 8px characters */
+                        width: 336px;        /* 42x24 8px characters */
                         height: 192px;
                         transform: scale(4);
                         transform-origin: top center;
@@ -51,17 +40,17 @@ const Layout: m.Component<LayerAttrs> = {
                         position: relative;
                     `,
                 },
-                flags.help ? m(HelpComponent, {hscr}) : m(GameComponent, {scr, flags})
+                app.help ? m(HelpComponent, {help}) : m(GameComponent, {app})
             )
         )
     }
 }
 
-const HelpComponent: m.Component<{hscr: HelpScreenModel}> = {
-    onupdate: ({attrs: {hscr: {window}}}) => {
+const HelpComponent: m.Component<{help: HelpModel}> = {
+    onupdate: ({attrs: {help: {window}}}) => {
         window.dirty = false;
     },
-    view: ({attrs: {hscr: {window}}}) => {
+    view: ({attrs: {help: {window}}}) => {
         return m(DisplayComponent, {
             display: window,
             class: 'help',
@@ -69,17 +58,17 @@ const HelpComponent: m.Component<{hscr: HelpScreenModel}> = {
     },
 }
 
-const GameComponent: m.Component<{scr: ScreenModel, flags: FlagModel}> = {
-    onupdate: ({attrs: {scr}}) => {
-        Object.values(scr).forEach(layer => (layer as DisplayLayer).dirty = false);
+const GameComponent: m.Component<{app: AppModel}> = {
+    onupdate: ({attrs: {app}}) => {
+        Object.values(app)
+            .filter(v => v instanceof DisplayLayer)
+            .forEach(layer => layer.dirty = false);
     },
-    view: ({attrs: {flags, scr: {
-            dateWindow, infoWindow, errorWindow,
-            mapLayer, labelLayer, unitLayer, kreuzeLayer, maskLayer}}}) => {
+    view: ({attrs: {app}}) => {
         return [
             // double-width date-window at the top
             m(DisplayComponent, {
-                display: dateWindow,
+                display: app.dateWindow,
                 class: ['game', css`
                     transform-origin: top left;
                     transform: scale(2, 1);
@@ -109,12 +98,12 @@ const GameComponent: m.Component<{scr: ScreenModel, flags: FlagModel}> = {
                                 top: 0;
                             }
                         `,
-                        style: {transform: flags.zoom ? 'scale(2)': null},
+                        style: {transform: app.zoom ? 'scale(2)': null},
                     },
                     [
                         // bottom layer showing terrain
                         m(DisplayComponent, {
-                            display: mapLayer,
+                            display: app.mapLayer,
                             class: [
                                 'terrain',
                                 css`
@@ -125,8 +114,8 @@ const GameComponent: m.Component<{scr: ScreenModel, flags: FlagModel}> = {
                             ],
                         }),
                         // conditionally show text labels near cities
-                        flags.extras ? m(DisplayComponent, {
-                            display: labelLayer,
+                        app.extras ? m(DisplayComponent, {
+                            display: app.labelLayer,
                             glyphComponent: LabelComponent,
                             class: [
                                 'labels',
@@ -137,7 +126,7 @@ const GameComponent: m.Component<{scr: ScreenModel, flags: FlagModel}> = {
                         }) : null,
                         // layer with unit icons as sprites
                         m(DisplayComponent, {
-                            display: unitLayer,
+                            display: app.unitLayer,
                             glyphComponent: GlyphComponent,
                             class: [
                                 'units',
@@ -154,17 +143,17 @@ const GameComponent: m.Component<{scr: ScreenModel, flags: FlagModel}> = {
                         }),
                         //TODO does flags conditional work with dirty indicator?
                         // conditionally show current order paths for all units
-                        flags.extras ? m(UnitOverlayComponent, {
-                            display: unitLayer,
+                        app.extras ? m(UnitOverlayComponent, {
+                            display: app.unitLayer,
                         }) : null,
                         // conditionally show a semit-transparent mask to highlight unit reach
-                        flags.extras ? m(DisplayComponent, {
-                            display: maskLayer,
+                        app.extras ? m(DisplayComponent, {
+                            display: app.maskLayer,
                             glyphComponent: BlockComponent,
                             class: [
                                 'mask',
                                 css`
-                                    opacity: 0.5;
+                                    opacity: 0.33;
                                     .glyph {
                                         pointer-events: none;
                                     }
@@ -173,7 +162,7 @@ const GameComponent: m.Component<{scr: ScreenModel, flags: FlagModel}> = {
                         }) : null,
                         // show animated orders for focussed unit
                         m(DisplayComponent, {
-                            display: kreuzeLayer,
+                            display: app.kreuzeLayer,
                             glyphComponent: KreuzeComponent,
                             class: ['kreuze'],
                         }),
@@ -181,9 +170,9 @@ const GameComponent: m.Component<{scr: ScreenModel, flags: FlagModel}> = {
                 ),
             ),
             m(DividerComponent, {color: 0x02}), // same as map
-            m(DisplayComponent, {display: infoWindow}),
+            m(DisplayComponent, {display: app.infoWindow}),
             m(DividerComponent, {color: 0x8A}),
-            m(DisplayComponent, {display: errorWindow}),
+            m(DisplayComponent, {display: app.errorWindow}),
             m(DividerComponent, {color: 0x8A}),
         ]
     }
@@ -280,8 +269,18 @@ const UnitOverlayComponent: m.Component<DisplayAttr> = {
                     m('g.status',
                         sprites.filter(g => g.props).map(g => {
                             const cstrng = g.props?.cstrng as number|undefined,
-                                 mstrng = g.props?.cstrng as number|undefined,
-                                 mode = g.props?.mode as UnitMode|undefined;
+                                 mstrng = g.props?.mstrng as number|undefined,
+                                 mode = g.props?.mode as UnitMode|undefined,
+                                 ramp = [0x68, 0x38, 0x18, 0xc8].map(antic2rgb),
+                                 cutoff = [1/4, 1/2, 3/4];
+
+                            let cfill = '';
+                            if (cstrng != null && mstrng != null) {
+                                let i=0;
+                                while (i < cutoff.length && cstrng/mstrng > cutoff[i]) i++;
+                                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                                cfill = ramp[i]!;
+                            }
 
                             return m('g', {transform: `translate(${g.x},${g.y})`}, [
                                 mode != null && mode != UnitMode.standard ? m('use', {
@@ -289,9 +288,9 @@ const UnitOverlayComponent: m.Component<DisplayAttr> = {
                                     href: modeIcons[mode],
                                     fill: antic2rgb(0x96),
                                 }) : null,
-                                cstrng != null && mstrng != null ? m('g', {fill: 'rgb(50,205,50)'}, [
-                                    m('rect', {x: 1.5/8, y: 6.5/8, height: 1/8, width: 6/8 * cstrng/255, rx: 1/16, opacity: 0.4}),
-                                    m('rect', {x: 1.5/8, y: 6.5/8, height: 1/8, width: 6/8 * mstrng/255, rx: 1/16, opacity: 0.8}),
+                                cstrng != null && mstrng != null ? m('g', [
+                                    m('rect', {x: 1/8, y: 7/8, height: 1/8, width: 7/8 * mstrng/255, rx: 1/16, opacity: 0.5, fill: cfill}),
+                                    m('rect', {x: 1/8, y: 7/8, height: 1/8, width: 7/8 * cstrng/255, rx: 1/16, fill: cfill}),
                                 ]) : null,
                             ])
                         })
@@ -400,5 +399,4 @@ const UnitPathComponent: m.Component<{orders: DirectionKey[]}> = {
     }
 }
 
-export type {HelpScreenModel, ScreenModel, FlagModel};
-export {Layout};
+export {AppView};

@@ -6,6 +6,7 @@ import {
     directions, DirectionKey,
     WeatherKey,
     UnitKindKey,
+    clamp,
 } from './defs';
 
 import {scenarios} from './scenarios';
@@ -84,7 +85,7 @@ c6 5e 1f 3a 88 0a f4 54 ac 9f 04 d6 ab 83 c5 bf
 38 0a 93 e4 76 46 15 0b 24 fb b4 ba e6 55 4f 45
 aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
 72 26 f9 ae 6d af af cf 57 4c cc 62 6f e5 e3 b1
-`.trim().split(/s+/).map(s => parseInt(s, 16));
+`.trim().split(/\s+/).map(s => parseInt(s, 16));
 
 class Unit {
     id: number;
@@ -106,7 +107,7 @@ class Unit {
     #mode: UnitMode;
     orders: DirectionKey[] = [];        // WHORDRS, HMORDS
     fog = 0;
-    tick?: number;
+    tick = 255;
     ifr = 0;
     ifrdir: [number, number, number, number] = [0, 0, 0, 0];
     objective?: Point;
@@ -117,14 +118,20 @@ class Unit {
     constructor(game: Game, id: number, ...args: number[]) {
         let corpsx, corpsy, mstrng, arrive, corpt, corpno;
 
-        if (args.length == 7) {     // apx
-            let swap, corptapx;
-            [corpsx, corpsy, mstrng, swap, arrive, corptapx, corpno] = args;
-            // translate apx => cart format
-            corpt = (swap & 0x80) | (corptapx & 0x70) | apxXref[corptapx & 0x7];
-        } else {                    // cart
-            console.assert(args.length == 6, "Expected 6 or 7 args for cartridge or apx unit def respectively");
-            [corpsx, corpsy, mstrng, arrive, corpt, corpno] = args;
+        switch (args.length) {
+            case 7: { // apx
+                let swap, corptapx;
+                [corpsx, corpsy, mstrng, swap, arrive, corptapx, corpno] = args;
+                // translate apx => cart format
+                corpt = (swap & 0x80) | (corptapx & 0x70) | apxXref[corptapx & 0x7];
+                break;
+            }
+            case 6: {  // cart
+                [corpsx, corpsy, mstrng, arrive, corpt, corpno] = args;
+                break;
+            }
+            default:
+                throw new Error("Expected 6 or 7 args for cartridge or apx unit definition respectively");
         }
         this.id = id;
         this.player = (corpt & 0x80) ? PlayerKey.Russian : PlayerKey.German;  // german=0, russian=1; equiv i >= 55
@@ -206,12 +213,19 @@ class Unit {
     foggyStrength(observer: PlayerKey) {
         let {mstrng, cstrng} = this;
 
-        if (this.player != observer) {
-            const mask = ~((1 << this.fog) - 1),
-                fill = fogTable[this.id & 0xff] ^ this.#game.turn;
+        if (this.fog && this.player != observer) {
+            // with fog of k bits, we apply noise with total range 2^k - 1,
+            // between 2^(k-1), -2^(k-1)+1
+            // we use the same offset for both cstrng and mstrng,
+            // and predictable pseudo-random values that stay fixed given unit & turn
+            // (and don't affect the core sequence of random values from the game's rng)
+            const mask = (1 << this.fog) - 1,
+                randbyte = fogTable[this.id & 0xff] ^ fogTable[(~this.#game.turn) & 0xff],
+                delta = (randbyte & mask) - (mask >> 1);
 
-            mstrng = fogValue(mstrng, mask, fill);
-            cstrng = fogValue(cstrng, mask, fill);
+            //TODO use as offset not a simple random fill
+            mstrng = clamp(mstrng + delta, 1, 255);
+            cstrng = clamp(cstrng + delta, 1, 255);
         }
         return {mstrng, cstrng};
     }
@@ -284,9 +298,14 @@ class Unit {
     }
     moveCost(terrain: TerrainKey, weather: WeatherKey): number {
         // cost to enter given terrain in weather
+        if (this.mode == UnitMode.entrench) {
+            return 255;
+        }
         const notInfantry = this.kind == UnitKindKey.infantry ? 0 : 1;
         let cost = terraintypes[terrain].movecost[notInfantry][weather] || 255;
-        if (cost == 255) return cost;
+        if (cost == 255) {
+            return cost;
+        }
         if (this.mode == UnitMode.march) cost = (cost >> 1) + 2;
         else if (this.mode == UnitMode.assault) cost += cost >> 1;
         return cost;
@@ -302,9 +321,11 @@ class Unit {
         return this.moveCost(dst.terrain, this.#game.weather);
     }
     scheduleOrder(reset = false) {
-        if (reset || !this.tick) this.tick = 0;
-        if (this.orders.length) this.tick += this.orderCost(this.orders[0]);
-        else this.tick = 255;
+        if (reset) this.tick = 0;
+
+        this.tick = this.orders.length
+            ? this.tick + this.orderCost(this.orders[0])
+            : 255;
     }
     pathTo(goal: Point): Path {
         const m = this.#game.mapboard,
@@ -335,6 +356,8 @@ class Unit {
             action = 'enter';
         }
         if (dst != null) {
+            if (dst.unitid != null)
+                throw new Error(`moveTo into occupied square:\n${this.#game.mapboard.describe(dst)}\nby:\n${this.describe()}\nfrom lon: ${this.lon}, lat: ${this.lat}`);
             // occupy the new one and repaint
             Object.assign(this, dst.point);
             dst.unitid = this.id;
@@ -345,7 +368,8 @@ class Unit {
         this.emit(action);
     }
     tryOrder() {
-        if (this.tick == null) throw new Error('Unit:tryOrder tick not set');
+        // if we decided to try before this unit retreated (say), skip
+        if (this.tick == 255 || this.orders.length == 0) return;
 
         const src = this.location,
             dst = this.#game.mapboard.neighborOf(src, this.orders[0]);  // assumes already validated
@@ -386,7 +410,7 @@ class Unit {
         if (opp.orders.length) modifier--;  // movement penalty
 
         // opponent attacks
-        let str = modifyStrength(opp.cstrng, modifier);
+        let str = multiplier(opp.cstrng, modifier);
         // note APX doesn't skip attacker if break, but cart does
         if (str >= this.#game.rand.byte()) {
             this.#takeDamage(1, 5, true);
@@ -394,7 +418,7 @@ class Unit {
         }
         const t = this.#game.mapboard.locationOf(opp).terrain;
         modifier = terraintypes[t].offence;
-        str = modifyStrength(this.cstrng, modifier);
+        str = multiplier(this.cstrng, modifier);
         if (str >= this.#game.rand.byte()) {
             return opp.#takeDamage(1, 5, true, this.orders[0]);
         } else {
@@ -452,7 +476,7 @@ class Unit {
         this.resetOrders();
     }
     replace(mstr: number) {
-        this.mstrng = Math.max(255, this.mstrng+mstr);
+        this.mstrng = Math.max(255, this.mstrng + mstr);
     }
     recover() {
         // M.ASM:5070  recover combat strength
@@ -516,12 +540,12 @@ class Unit {
         }
         return v >> 8;
     }
-    describe(debug: boolean) {
-        let s = `[${this.id}] ${this.mstrng} / ${this.cstrng}\n`;
+    describe(debug = false) {
+        let s = `[${this.id}] ${this.cstrng} / ${this.mstrng}\n`;
         s += `${this.label}\n`;
-        if (this.orders) s += 'orders: ' + this.orders.map(d => directions[d].label).join('');
 
         if (debug && this.ifr !== undefined && this.ifrdir !== undefined) {
+            if (this.orders) s += 'orders: ' + this.orders.map(d => directions[d].label).join('');
             s += `ifr: ${this.ifr}; `;
             s += Object.entries(directions)
                 .map(([i, d]) => `${d.label}: ${this.ifrdir[+i as DirectionKey]}`).join(' ') + '\n';
@@ -533,18 +557,13 @@ class Unit {
     }
 }
 
-function fogValue(v: number, mask: number, fill: number): number {
-    // combine v with fill based on mask bits
-    return (v & mask) | (fill & (~mask));
-}
-
-function modifyStrength(strength: number, modifier: number): number {
+function multiplier(strength: number, modifier: number): number {
     if (modifier > 0) {
-        while (modifier-- > 0) strength = Math.min(strength << 1, 255);
+        strength <<= modifier;
     } else {
-        while (modifier++ < 0) strength = Math.max(strength >> 1, 1);
+        strength >>= (-modifier);
     }
-    return strength;
+    return clamp(strength, 1, 255);
 }
 
 export {Unit, type UnitEvent, unitFlag, UnitMode, unitModes};

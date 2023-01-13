@@ -1,8 +1,11 @@
+import {clamp} from './defs';
+
 type AnticColor = number;  // a hex value like 0x23, see anticview.ts
 
 type CharMapper = (c: string) => number;
 
-const atascii: CharMapper = (c: string) => c.charCodeAt(0) & 0x7f;
+const atascii: CharMapper = (c: string) => c.charCodeAt(0) & 0x7f,
+    atasciiFont = fontMap('static/fontmap-atascii.png', 128);
 
 interface SpriteColors {
     foregroundColor?: AnticColor,
@@ -58,7 +61,6 @@ function fontMap(
         glyphSize = 8, glyphsPerRow = 16): FontMap {
     return {maskImage, numGlyphs, glyphSize, glyphsPerRow};
 }
-
 abstract class DisplayLayer implements LayerOpts {
     width: number;
     height: number;
@@ -154,8 +156,8 @@ class MappedDisplayLayer extends DisplayLayer {
         this.setpos(this.x - dx, this.y - dy)
     }
     setpos(x: number, y: number): void {
-        this.x = Math.min(this.width-1, Math.max(0, x));
-        this.y = Math.min(this.height-1, Math.max(0, y));
+        this.x = clamp(x, 0, this.width-1);
+        this.y = clamp(y, 0, this.height-1);
     }
     putc(c?: number, opts: GlyphOpts = {}) {
         // put a character at current position, with options.  put undefined to clear current chr
@@ -186,7 +188,6 @@ class MappedDisplayLayer extends DisplayLayer {
         opts = {...rest};
 
         function nextch(): string {
-            console.assert(cs.length);
             return (cs.shift() as string)
         }
         function nextval(): number {
@@ -312,7 +313,8 @@ class MappedDisplayLayer extends DisplayLayer {
                             if (k == '@') {  // \f@\x3^...
                                 const stop = nextval(),
                                     ch = nextch();
-                                console.assert(Object.keys(stops).includes(ch));
+                                if (!Object.keys(stops).includes(ch))
+                                    throw new Error('Bad @ sequence, expected value followed by one of ^<>');
                                 justify = ch as keyof typeof stops;
                                 stops[justify] = stop;
                                 this.setpos(stop, this.y);
@@ -325,7 +327,7 @@ class MappedDisplayLayer extends DisplayLayer {
                         case '/': // stop justifying
                             justify = undefined; break;
                         default:
-                            console.assert(false, `Unknown format character '${k}'`)
+                            throw new Error(`Unknown formatting character '${k}'`)
                     }
                     break;
                 }
@@ -368,6 +370,6 @@ class SpriteDisplayLayer extends DisplayLayer {
     }
 }
 
-export type {AnticColor, FontMap, Glyph, GlyphOpts, Sprite, SpriteOpts, LayerOpts, DisplayLayer};
+export type {AnticColor, FontMap, Glyph, GlyphOpts, Sprite, SpriteOpts, LayerOpts};
 
-export {fontMap, GlyphAnimation, MappedDisplayLayer, SpriteDisplayLayer};
+export {fontMap, atasciiFont, GlyphAnimation, MappedDisplayLayer, SpriteDisplayLayer, DisplayLayer};

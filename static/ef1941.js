@@ -1,8 +1,51 @@
 var ef1941 = (function (exports, node_crypto) {
     'use strict';
 
+    /******************************************************************************
+    Copyright (c) Microsoft Corporation.
+
+    Permission to use, copy, modify, and/or distribute this software for any
+    purpose with or without fee is hereby granted.
+
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+    REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+    AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+    INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+    LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+    OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+    PERFORMANCE OF THIS SOFTWARE.
+    ***************************************************************************** */
+
+    function __rest(s, e) {
+        var t = {};
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+            t[p] = s[p];
+        if (s != null && typeof Object.getOwnPropertySymbols === "function")
+            for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+                if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                    t[p[i]] = s[p[i]];
+            }
+        return t;
+    }
+
+    function __classPrivateFieldGet(receiver, state, kind, f) {
+        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+        return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+    }
+
+    function __classPrivateFieldSet(receiver, state, value, kind, f) {
+        if (kind === "m") throw new TypeError("Private method is not writable");
+        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+        return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+    }
+
     function sum(xs) {
         return xs.reduce((s, x) => s + x, 0);
+    }
+    function clamp(v, min, max) {
+        return Math.max(min, Math.min(max, v));
     }
     function memoize$1(fn) {
         const cache = new Map();
@@ -110,78 +153,40 @@ var ef1941 = (function (exports, node_crypto) {
         [0 /* ScenarioKey.apx */]: {
             label: 'APX MODE', map: 0 /* MapVariantKey.apx */, oob: 0 /* OobVariantKey.apx */, start: '1941/6/22',
             //TODO fix me
-            ncity: 18, mdmg: 1, cdmg: 4, cadj: 0, fog: 0xff, nunit: [0x37, 0x9f], endturn: 44, win: 255,
+            ncity: 18, mdmg: 1, cdmg: 4, cadj: 0, nunit: [0x37, 0x9f], endturn: 44, win: 255,
             repl: [0, 2]
         },
         [1 /* ScenarioKey.learner */]: {
             label: 'LEARNER', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, start: '1941/6/22',
-            ncity: 1, mdmg: 4, cdmg: 12, cadj: 255, fog: 0xff, nunit: [0x2, 0x31], endturn: 14, win: 5,
+            ncity: 1, mdmg: 4, cdmg: 12, cadj: 255, nunit: [0x2, 0x31], endturn: 14, win: 5,
             skipsupply: true
         },
         [2 /* ScenarioKey.beginner */]: {
             label: 'BEGINNER', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, start: '1941/6/22',
-            ncity: 1, mdmg: 4, cdmg: 12, cadj: 150, fog: 0xff, nunit: [0x12, 0x50], endturn: 14, win: 25,
+            ncity: 1, mdmg: 4, cdmg: 12, cadj: 150, nunit: [0x12, 0x50], endturn: 14, win: 25,
             skipsupply: true
         },
         [3 /* ScenarioKey.intermediate */]: {
             label: 'INTERMED', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, start: '1941/6/22',
-            ncity: 3, mdmg: 2, cdmg: 8, cadj: 75, fog: 0xff, nunit: [0x1f, 0x72], endturn: 40, win: 40,
+            ncity: 3, mdmg: 2, cdmg: 8, cadj: 75, nunit: [0x1f, 0x72], endturn: 40, win: 40,
         },
         [4 /* ScenarioKey.advanced */]: {
             label: 'ADVANCED', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, start: '1941/6/22',
-            ncity: 18, mdmg: 1, cdmg: 5, cadj: 25, fog: 0xc0, nunit: [0x2b, 0x90], endturn: 40, win: 80,
+            ncity: 18, mdmg: 1, cdmg: 5, cadj: 25, nunit: [0x2b, 0x90], endturn: 40, win: 80,
+            fog: 6,
         },
         [5 /* ScenarioKey.expert41 */]: {
             label: 'EXPERT41', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, start: '1941/6/22',
-            ncity: 18, mdmg: 1, cdmg: 4, cadj: 0, fog: 0x80, nunit: [0x30, 0xa8], endturn: 44, win: 255, mvmode: true
+            ncity: 18, mdmg: 1, cdmg: 4, cadj: 0, nunit: [0x30, 0xa8], endturn: 44, win: 255,
+            mvmode: true, fog: 7,
         },
         [6 /* ScenarioKey.expert42 */]: {
             //TODO arrival turns for '42 scenario seem to be calculated in cartridge.asm:3709
             label: 'EXPERT42', map: 1 /* MapVariantKey.cart */, oob: 2 /* OobVariantKey.cart42 */, start: '1942/5/24',
-            ncity: 18, mdmg: 1, cdmg: 4, cadj: 0, fog: 0x80, nunit: [0x30, 0xa8], endturn: 44, win: 255, mvmode: true,
-            control: ['Riga', 'Rzhev', 'Smolensk', 'Minsk', 'Orel', 'Kharkov', 'Kiev', 'Dnepropetrovsk', 'Odessa']
+            ncity: 18, mdmg: 1, cdmg: 4, cadj: 0, nunit: [0x30, 0xa8], endturn: 44, win: 255,
+            fog: 7, mvmode: true, control: ['Riga', 'Rzhev', 'Smolensk', 'Minsk', 'Orel', 'Kharkov', 'Kiev', 'Dnepropetrovsk', 'Odessa']
         },
     };
-
-    /******************************************************************************
-    Copyright (c) Microsoft Corporation.
-
-    Permission to use, copy, modify, and/or distribute this software for any
-    purpose with or without fee is hereby granted.
-
-    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-    REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-    AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-    INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-    LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-    OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-    PERFORMANCE OF THIS SOFTWARE.
-    ***************************************************************************** */
-
-    function __rest(s, e) {
-        var t = {};
-        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-            t[p] = s[p];
-        if (s != null && typeof Object.getOwnPropertySymbols === "function")
-            for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-                if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                    t[p[i]] = s[p[i]];
-            }
-        return t;
-    }
-
-    function __classPrivateFieldGet(receiver, state, kind, f) {
-        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-        return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-    }
-
-    function __classPrivateFieldSet(receiver, state, value, kind, f) {
-        if (kind === "m") throw new TypeError("Private method is not writable");
-        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
-        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-        return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
-    }
 
     /**
      * Contains a bunch of routines to compact various integer data into
@@ -852,8 +857,8 @@ var ef1941 = (function (exports, node_crypto) {
             var _a;
             const city = loc.cityid != null ? this.cities[loc.cityid] : undefined, label = city
                 ? ` ${city.label} (${(_a = city.points) !== null && _a !== void 0 ? _a : 0})`
-                : (terraintypes[loc.terrain].label + (loc.alt ? "-alt" : ""));
-            return `[${loc.id}] ${label}\nlon ${loc.lon}, lat ${loc.lat}`;
+                : (terraintypes[loc.terrain].label + (loc.alt ? "-alt" : "")), unit = loc.unitid != null ? __classPrivateFieldGet(this, _Mapboard_game, "f").oob.at(loc.unitid).describe() : "";
+            return `[${loc.id}] ${label}\nlon ${loc.lon}, lat ${loc.lat}\n\n${unit}`.trim();
         }
         valid(pt) {
             return pt.lat >= 0 && pt.lat < __classPrivateFieldGet(this, _Mapboard_maxlat, "f") && pt.lon >= 0 && pt.lon < __classPrivateFieldGet(this, _Mapboard_maxlon, "f");
@@ -1019,7 +1024,7 @@ var ef1941 = (function (exports, node_crypto) {
         }
         else {
             const change = __classPrivateFieldGet(this, _Mapboard_game, "f").rand.bits(3) + 7;
-            __classPrivateFieldSet(this, _Mapboard_icelat, Math.min(__classPrivateFieldGet(this, _Mapboard_maxlat, "f"), Math.max(1, oldlat + dlat * change)), "f");
+            __classPrivateFieldSet(this, _Mapboard_icelat, clamp(oldlat + dlat * change, 1, __classPrivateFieldGet(this, _Mapboard_maxlat, "f")), "f");
         }
         const skip = (w == 0 /* WaterStateKey.freeze */) ? oldlat : __classPrivateFieldGet(this, _Mapboard_icelat, "f"); // for freeze skip old line, for thaw skip new new
         for (let i = oldlat; i != __classPrivateFieldGet(this, _Mapboard_icelat, "f") + dlat; i += dlat) {
@@ -1031,6 +1036,20 @@ var ef1941 = (function (exports, node_crypto) {
                     d.terrain = state.terrain[k];
             });
         }
+    };
+
+    //TODO these represent deviations from the original implementation
+    // in general false reflects the original APX/cartridge condition
+    // the values here show my current choices, but aren't actually configurable in code yet
+    const options = {
+        colorPalette: 'WikiNTSC',
+        mapIncludeSevastopol: false,
+        germanReinforcementsMoveOnArrival: true,
+        russianReinforcementsMoveOnArrival: false,
+        astarPathFinding: true,
+        moreRandomSupplyAndRetreat: true,
+        shuffleUnitInitiative: false,
+        shuffleThinkingOrder: false,
     };
 
     var _Unit_instances, _Unit_mode, _Unit_game, _Unit_resolveCombat, _Unit_takeDamage;
@@ -1095,7 +1114,7 @@ c6 5e 1f 3a 88 0a f4 54 ac 9f 04 d6 ab 83 c5 bf
 38 0a 93 e4 76 46 15 0b 24 fb b4 ba e6 55 4f 45
 aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
 72 26 f9 ae 6d af af cf 57 4c cc 62 6f e5 e3 b1
-`.trim().split(/s+/).map(s => parseInt(s, 16));
+`.trim().split(/\s+/).map(s => parseInt(s, 16));
     class Unit {
         constructor(game, id, ...args) {
             var _a, _b;
@@ -1106,20 +1125,26 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
             _Unit_mode.set(this, void 0);
             this.orders = []; // WHORDRS, HMORDS
             this.fog = 0;
+            this.tick = 255;
             this.ifr = 0;
             this.ifrdir = [0, 0, 0, 0];
             this.flags = 0;
             _Unit_game.set(this, void 0);
             let corpsx, corpsy, mstrng, arrive, corpt, corpno;
-            if (args.length == 7) { // apx
-                let swap, corptapx;
-                [corpsx, corpsy, mstrng, swap, arrive, corptapx, corpno] = args;
-                // translate apx => cart format
-                corpt = (swap & 0x80) | (corptapx & 0x70) | apxXref[corptapx & 0x7];
-            }
-            else { // cart
-                console.assert(args.length == 6, "Expected 6 or 7 args for cartridge or apx unit def respectively");
-                [corpsx, corpsy, mstrng, arrive, corpt, corpno] = args;
+            switch (args.length) {
+                case 7: { // apx
+                    let swap, corptapx;
+                    [corpsx, corpsy, mstrng, swap, arrive, corptapx, corpno] = args;
+                    // translate apx => cart format
+                    corpt = (swap & 0x80) | (corptapx & 0x70) | apxXref[corptapx & 0x7];
+                    break;
+                }
+                case 6: { // cart
+                    [corpsx, corpsy, mstrng, arrive, corpt, corpno] = args;
+                    break;
+                }
+                default:
+                    throw new Error("Expected 6 or 7 args for cartridge or apx unit definition respectively");
             }
             this.id = id;
             this.player = (corpt & 0x80) ? 1 /* PlayerKey.Russian */ : 0 /* PlayerKey.German */; // german=0, russian=1; equiv i >= 55
@@ -1203,10 +1228,16 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         }
         foggyStrength(observer) {
             let { mstrng, cstrng } = this;
-            if (this.player != observer) {
-                const mask = ~((1 << this.fog) - 1), fill = fogTable[this.id & 0xff] ^ __classPrivateFieldGet(this, _Unit_game, "f").turn;
-                mstrng = fogValue(mstrng, mask, fill);
-                cstrng = fogValue(cstrng, mask, fill);
+            if (this.fog && this.player != observer) {
+                // with fog of k bits, we apply noise with total range 2^k - 1,
+                // between 2^(k-1), -2^(k-1)+1
+                // we use the same offset for both cstrng and mstrng,
+                // and predictable pseudo-random values that stay fixed given unit & turn
+                // (and don't affect the core sequence of random values from the game's rng)
+                const mask = (1 << this.fog) - 1, randbyte = fogTable[this.id & 0xff] ^ fogTable[(~__classPrivateFieldGet(this, _Unit_game, "f").turn) & 0xff], delta = (randbyte & mask) - (mask >> 1);
+                //TODO use as offset not a simple random fill
+                mstrng = clamp(mstrng + delta, 1, 255);
+                cstrng = clamp(cstrng + delta, 1, 255);
             }
             return { mstrng, cstrng };
         }
@@ -1280,10 +1311,14 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         }
         moveCost(terrain, weather) {
             // cost to enter given terrain in weather
+            if (this.mode == 3 /* UnitMode.entrench */) {
+                return 255;
+            }
             const notInfantry = this.kind == 0 /* UnitKindKey.infantry */ ? 0 : 1;
             let cost = terraintypes[terrain].movecost[notInfantry][weather] || 255;
-            if (cost == 255)
+            if (cost == 255) {
                 return cost;
+            }
             if (this.mode == 2 /* UnitMode.march */)
                 cost = (cost >> 1) + 2;
             else if (this.mode == 1 /* UnitMode.assault */)
@@ -1303,12 +1338,11 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
             return this.moveCost(dst.terrain, __classPrivateFieldGet(this, _Unit_game, "f").weather);
         }
         scheduleOrder(reset = false) {
-            if (reset || !this.tick)
+            if (reset)
                 this.tick = 0;
-            if (this.orders.length)
-                this.tick += this.orderCost(this.orders[0]);
-            else
-                this.tick = 255;
+            this.tick = this.orders.length
+                ? this.tick + this.orderCost(this.orders[0])
+                : 255;
         }
         pathTo(goal) {
             const m = __classPrivateFieldGet(this, _Unit_game, "f").mapboard, costs = this.moveCosts(__classPrivateFieldGet(this, _Unit_game, "f").weather);
@@ -1339,6 +1373,8 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                 action = 'enter';
             }
             if (dst != null) {
+                if (dst.unitid != null)
+                    throw new Error(`moveTo into occupied square:\n${__classPrivateFieldGet(this, _Unit_game, "f").mapboard.describe(dst)}\nby:\n${this.describe()}\nfrom lon: ${this.lon}, lat: ${this.lat}`);
                 // occupy the new one and repaint
                 Object.assign(this, dst.point);
                 dst.unitid = this.id;
@@ -1350,8 +1386,9 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
             this.emit(action);
         }
         tryOrder() {
-            if (this.tick == null)
-                throw new Error('Unit:tryOrder tick not set');
+            // if we decided to try before this unit retreated (say), skip
+            if (this.tick == 255 || this.orders.length == 0)
+                return;
             const src = this.location, dst = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.neighborOf(src, this.orders[0]); // assumes already validated
             if (dst == null)
                 throw new Error("Unit.tryOrder: invalid order");
@@ -1449,12 +1486,12 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
             }
             return v >> 8;
         }
-        describe(debug) {
-            let s = `[${this.id}] ${this.mstrng} / ${this.cstrng}\n`;
+        describe(debug = false) {
+            let s = `[${this.id}] ${this.cstrng} / ${this.mstrng}\n`;
             s += `${this.label}\n`;
-            if (this.orders)
-                s += 'orders: ' + this.orders.map(d => directions[d].label).join('');
             if (debug && this.ifr !== undefined && this.ifrdir !== undefined) {
+                if (this.orders)
+                    s += 'orders: ' + this.orders.map(d => directions[d].label).join('');
                 s += `ifr: ${this.ifr}; `;
                 s += Object.entries(directions)
                     .map(([i, d]) => `${d.label}: ${this.ifrdir[+i]}`).join(' ') + '\n';
@@ -1475,7 +1512,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         if (opp.orders.length)
             modifier--; // movement penalty
         // opponent attacks
-        let str = modifyStrength(opp.cstrng, modifier);
+        let str = multiplier(opp.cstrng, modifier);
         // note APX doesn't skip attacker if break, but cart does
         if (str >= __classPrivateFieldGet(this, _Unit_game, "f").rand.byte()) {
             __classPrivateFieldGet(this, _Unit_instances, "m", _Unit_takeDamage).call(this, 1, 5, true);
@@ -1484,7 +1521,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         }
         const t = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.locationOf(opp).terrain;
         modifier = terraintypes[t].offence;
-        str = modifyStrength(this.cstrng, modifier);
+        str = multiplier(this.cstrng, modifier);
         if (str >= __classPrivateFieldGet(this, _Unit_game, "f").rand.byte()) {
             return __classPrivateFieldGet(opp, _Unit_instances, "m", _Unit_takeDamage).call(opp, 1, 5, true, this.orders[0]);
         }
@@ -1528,20 +1565,14 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         // otherwise square still occupied (no break or all retreats blocked but defender remains)
         return 0;
     };
-    function fogValue(v, mask, fill) {
-        // combine v with fill based on mask bits
-        return (v & mask) | (fill & (~mask));
-    }
-    function modifyStrength(strength, modifier) {
+    function multiplier(strength, modifier) {
         if (modifier > 0) {
-            while (modifier-- > 0)
-                strength = Math.min(strength << 1, 255);
+            strength <<= modifier;
         }
         else {
-            while (modifier++ < 0)
-                strength = Math.max(strength >> 1, 1);
+            strength >>= (-modifier);
         }
-        return strength;
+        return clamp(strength, 1, 255);
     }
 
     const oobVariants = {
@@ -2060,10 +2091,12 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
             const scenario = scenarios[game.scenario], maxunit = scenario.nunit;
             __classPrivateFieldSet(this, _Oob_units, oobVariants[scenario.oob]
                 .map((vs, i) => {
+                var _a;
                 const u = new Unit(game, i, ...vs);
                 // exclude units not in the scenario, but leave them in array
                 if (u.id >= maxunit[u.player])
                     u.eliminate();
+                u.fog = (_a = scenario.fog) !== null && _a !== void 0 ? _a : 0;
                 return u;
             }), "f");
             __classPrivateFieldSet(this, _Oob_game, game, "f");
@@ -2081,10 +2114,10 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                         u.arrive = game.turn + 1;
                     }
                 });
-                const active = this.activeUnits(), human = active.filter(u => u.human), mvmode = scenarios[__classPrivateFieldGet(this, _Oob_game, "f").scenario].mvmode;
-                if (memento.length < 4 * active.length + human.length + (mvmode ? human.length : 0))
+                const active = this.activeUnits(), human = active.filter(u => u.human), expected = 4 * active.length + human.length + (scenario.mvmode ? human.length : 0) + (scenario.fog ? human.length : 0);
+                if (memento.length < expected)
                     throw new Error('oob: malformed save data for active unit properties');
-                const lats = zagzig(memento.splice(0, active.length)), lons = zagzig(memento.splice(0, active.length)), mstrs = zagzig(memento.splice(0, active.length)), cdmgs = memento.splice(0, active.length), modes = mvmode ? memento.splice(0, human.length) : [], nords = memento.splice(0, human.length);
+                const lats = zagzig(memento.splice(0, active.length)), lons = zagzig(memento.splice(0, active.length)), mstrs = zagzig(memento.splice(0, active.length)), cdmgs = memento.splice(0, active.length), modes = scenario.mvmode ? memento.splice(0, human.length) : [], dfogs = scenario.fog ? memento.splice(0, human.length) : [], nords = memento.splice(0, human.length);
                 let lat = 0, lon = 0, mstr = 255;
                 active.forEach(u => {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -2101,8 +2134,11 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                     throw new Error('oob: malformed save data for unit orders');
                 human.forEach(u => {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    if (mvmode)
+                    if (scenario.mvmode)
                         u.mode = modes.shift();
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    if (scenario.fog)
+                        u.fog -= dfogs.shift();
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     u.orders = memento.splice(0, nords.shift());
                 });
@@ -2123,7 +2159,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         map(f) { return __classPrivateFieldGet(this, _Oob_units, "f").map(f); }
         slice(start, end) { return __classPrivateFieldGet(this, _Oob_units, "f").slice(start, end); }
         get memento() {
-            const lats = [], lons = [], mstrs = [], cdmgs = [], modes = [], nords = [], ords = [];
+            const scenario = scenarios[__classPrivateFieldGet(this, _Oob_game, "f").scenario], lats = [], lons = [], mstrs = [], cdmgs = [], modes = [], dfogs = [], nords = [], ords = [];
             let lat = 0, lon = 0, mstr = 255;
             // for scheduled units, status = 0 (active), 1 (dead), 2 (delayed)
             const scheduled = this.filter(u => u.scheduled <= __classPrivateFieldGet(this, _Oob_game, "f").turn), status = scheduled.map(u => u.active ? 0 : (u.cstrng == 0 ? 1 : 2)), active = scheduled.filter(u => u.active);
@@ -2136,11 +2172,13 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                 if (u.human) {
                     nords.push(u.orders.length);
                     ords.push(...u.orders);
-                    if (scenarios[__classPrivateFieldGet(this, _Oob_game, "f").scenario].mvmode)
+                    if (scenario.mvmode)
                         modes.push(u.mode);
+                    if (scenario.fog)
+                        dfogs.push(scenario.fog - u.fog);
                 }
             });
-            return status.concat(zigzag(lats), zigzag(lons), zigzag(mstrs), cdmgs, modes, nords, ords);
+            return status.concat(zigzag(lats), zigzag(lons), zigzag(mstrs), cdmgs, modes, dfogs, nords, ords);
         }
         newTurn(initialize) {
             if (initialize) {
@@ -2192,14 +2230,18 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                 }
             });
         }
-        zocAffecting(player, loc) {
+        zocAffecting(player, loc, omitSelf = false) {
             // evaluate zoc experienced by player (eg. exerted by !player) in the square at loc
             let zoc = 0;
             // same player in target square negates any zoc, enemy exerts 4
             if (loc.unitid != null) {
-                if (this.at(loc.unitid).player == player)
-                    return zoc;
-                zoc += 4;
+                if (this.at(loc.unitid).player == player) {
+                    if (!omitSelf)
+                        return 0;
+                }
+                else {
+                    zoc += 4;
+                }
             }
             // look at square spiral excluding center, so even squares are adj, odd are corners
             GridPoint.squareSpiral(loc, 1).slice(1).forEach((p, i) => {
@@ -2215,7 +2257,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         }
         zocBlocked(player, src, dst) {
             // does enemy ZoC block player move from src to dst?
-            return this.zocAffecting(player, src) >= 2 && this.zocAffecting(player, dst) >= 2;
+            return this.zocAffecting(player, src, true) >= 2 && this.zocAffecting(player, dst) >= 2;
         }
     }
     _Oob_game = new WeakMap(), _Oob_units = new WeakMap();
@@ -2743,7 +2785,10 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
             // flags
             this.handicap = 0; // whether the game is handicapped
             let memento = undefined, seed = undefined;
-            if (token != null) {
+            if (typeof token == 'number') {
+                __classPrivateFieldSet(this, _Game_scenario, token, "f");
+            }
+            else if (typeof token === 'string') {
                 const payload = unwrap64(token, tokenPrefix);
                 seed = bitsdecode(payload, 24);
                 memento = rldecode(fibdecode(payload), rlSigil);
@@ -2761,11 +2806,10 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
             this.mapboard = new Mapboard(this, memento);
             this.oob = new Oob(this, memento);
             this.rand = lfsr24(seed);
-            if (memento) {
-                if (memento.length != 0)
-                    throw new Error("Game: unexpected save data overflow");
-                __classPrivateFieldGet(this, _Game_instances, "m", _Game_newTurn).call(this, true);
+            if (memento && memento.length != 0) {
+                throw new Error("Game: unexpected save data overflow");
             }
+            __classPrivateFieldGet(this, _Game_instances, "m", _Game_newTurn).call(this, true);
         }
         get memento() {
             // return a list of uint representing the state of the game
@@ -2782,15 +2826,6 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
             return wrap64(payload, tokenPrefix);
         }
         get scenario() { return __classPrivateFieldGet(this, _Game_scenario, "f"); }
-        start(scenario) {
-            if (scenario != null) {
-                __classPrivateFieldSet(this, _Game_scenario, scenario, "f");
-                this.mapboard = new Mapboard(this);
-                this.oob = new Oob(this);
-            }
-            __classPrivateFieldGet(this, _Game_instances, "m", _Game_newTurn).call(this, true);
-            return this;
-        }
         nextTurn(delay) {
             // process the orders for this turn, if delay we tick asynchrnously,
             // otherwise we resolve synchronously
@@ -2844,8 +2879,611 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         __classPrivateFieldGet(this, _Game_instances, "m", _Game_setDates).call(this);
         this.mapboard.newTurn(initialize);
         this.oob.newTurn(initialize);
+        // integrity test
+        this.mapboard.locations.forEach(row => row.filter(p => p.unitid).forEach(p => {
+            if (!this.oob.at(p.unitid).active)
+                throw new Error(`${this.mapboard.describe(p)} occupied by inactive unit`);
+        }));
+        this.oob.activeUnits().forEach(u => {
+            const mp = this.mapboard.locationOf(u.point);
+            if (mp.unitid != u.id)
+                throw new Error(`${u.describe()} not found at ${this.mapboard.describe(mp)}`);
+        });
         this.emit('game', 'turn');
     };
+
+    const atascii = (c) => c.charCodeAt(0) & 0x7f, atasciiFont = fontMap('static/fontmap-atascii.png', 128);
+    function fontMap(maskImage, numGlyphs, glyphSize = 8, glyphsPerRow = 16) {
+        return { maskImage, numGlyphs, glyphSize, glyphsPerRow };
+    }
+    class DisplayLayer {
+        constructor(width, height, fontmap, opts = {}) {
+            this.dirty = true;
+            // explicitly set foregroundColor: undefined for transparent glyphs
+            if (!('foregroundColor' in opts))
+                opts.foregroundColor = 0x0f;
+            this.width = width;
+            this.height = height;
+            this.fontmap = fontmap;
+            this.setcolors(opts);
+        }
+        get opts() {
+            return {
+                foregroundColor: this.foregroundColor,
+                backgroundColor: this.backgroundColor,
+                layerColor: this.layerColor,
+                opacity: this.opacity,
+            };
+        }
+        setcolors(opts) {
+            this.dirty = true;
+            this.foregroundColor = opts.foregroundColor;
+            this.backgroundColor = opts.backgroundColor;
+            this.layerColor = opts.layerColor;
+            this.opacity = opts.opacity;
+        }
+        cls() {
+            this.dirty = true;
+        }
+    }
+    class MappedDisplayLayer extends DisplayLayer {
+        constructor(width, height, fontmap, opts = {}) {
+            super(width, height, fontmap, opts);
+            this.x = 0;
+            this.y = 0;
+            this.endLine = 'newline';
+            this.endScreen = 'wraparound';
+            this.glyphs = new Array(height).fill(undefined).map(() => new Array(width).fill(undefined));
+        }
+        spritelist() {
+            return this.glyphs.flatMap((row, y) => row.map((g, x) => g && Object.assign({ key: `${x},${y}`, x, y }, g)).filter(d => d));
+        }
+        cls(c) {
+            super.cls();
+            // with no argument, clear all glyphs (so we see the container layer)
+            // otherwise set all glyphs to a specific character
+            this.x = 0;
+            this.y = 0;
+            this.glyphs = this.glyphs.map(row => row.map(() => c != null ? { c } : undefined));
+        }
+        scroll(dx, dy, c) {
+            // scroll screen by dx, dy, filling with character c (blank for undefined)
+            this.dirty = true;
+            const xs = [...Array(this.width).keys()], ys = [...Array(this.height).keys()], g = c != null ? { c } : undefined;
+            this.glyphs = ys.map(y => {
+                const y_ = y + dy;
+                return (y_ < 0 || y_ >= this.height)
+                    ? new Array(this.width).fill(g)
+                    : xs.map(x => {
+                        const x_ = x + dx;
+                        return (x_ < 0 || x_ >= this.width) ? g : this.glyphs[y_][x_];
+                    });
+            });
+            this.setpos(this.x - dx, this.y - dy);
+        }
+        roll(dx, dy) {
+            this.dirty = true;
+            // roll screen by dx, dy
+            const xs = [...Array(this.width).keys()], ys = [...Array(this.height).keys()];
+            this.glyphs = ys.map(y => xs.map(x => this.glyphs[(y + dy) % this.height][(x + dx) % this.width]));
+            this.setpos(this.x - dx, this.y - dy);
+        }
+        setpos(x, y) {
+            this.x = clamp(x, 0, this.width - 1);
+            this.y = clamp(y, 0, this.height - 1);
+        }
+        putc(c, opts = {}) {
+            // put a character at current position, with options.  put undefined to clear current chr
+            this.dirty = true;
+            const { x, y } = opts, rest = __rest(opts, ["x", "y"]);
+            this.setpos(x !== null && x !== void 0 ? x : this.x, y !== null && y !== void 0 ? y : this.y);
+            this.glyphs[this.y][this.x] = c != null ? Object.assign({ c }, rest) : undefined;
+            this.x = (this.x + 1) % this.width;
+            if (this.x == 0 && this.endLine == 'newline') {
+                this.y++;
+                if (this.y == this.height) {
+                    if (this.endScreen == 'wraparound')
+                        this.y = 0;
+                    else
+                        this.scroll(0, 1);
+                }
+            }
+        }
+        puts(s, opts = {}) {
+            var _a;
+            const { x, y } = opts, rest = __rest(opts, ["x", "y"]), cs = s.split(''), charMap = (_a = opts.charMap) !== null && _a !== void 0 ? _a : atascii, stops = { '<': 0, '>': this.width, '^': Math.floor(this.width / 2) };
+            this.setpos(x !== null && x !== void 0 ? x : this.x, y !== null && y !== void 0 ? y : this.y);
+            let justify = undefined, jlen = 0;
+            opts = Object.assign({}, rest);
+            function nextch() {
+                return cs.shift();
+            }
+            function nextval() {
+                return nextch().charCodeAt(0);
+            }
+            const outch = (c) => {
+                const eol = this.endLine;
+                if ('>^'.includes(justify !== null && justify !== void 0 ? justify : 'X')) {
+                    this.endLine = 'wraparound'; // disable non-explicit newline while center/right justify
+                    let x0, xoff;
+                    const row = this.glyphs[this.y];
+                    if (justify == '>') {
+                        x0 = stops['>'] - 1;
+                        xoff = Math.max(0, x0 - jlen);
+                        row.splice(xoff, 1);
+                        row.splice(x0, 0, undefined);
+                    }
+                    else /* justify == '^' */ {
+                        x0 = stops['^'] + Math.floor((jlen + 1) / 2) - 1;
+                        xoff = Math.max(0, x0 - jlen);
+                        if (x0 > this.width)
+                            return;
+                        if (jlen % 2 == 0) {
+                            row.splice(xoff, 1); // remove one char @ xoff
+                            row.splice(x0, 0, undefined); // add placeholder at x0
+                        }
+                    }
+                    opts.x = x0;
+                }
+                else {
+                    opts.x = undefined;
+                }
+                jlen++;
+                this.putc(charMap(c), opts);
+                this.endLine = eol;
+            };
+            while (cs.length) {
+                const c = nextch(), x0 = this.x, y0 = this.y;
+                switch (c) {
+                    case '\n': // hex 0a
+                        this.setpos(justify != null ? stops[justify] : 0, this.y);
+                        jlen = 0;
+                        this.y++;
+                        if (this.y == this.height) {
+                            if (this.endScreen == 'wraparound')
+                                this.y = 0;
+                            else
+                                this.scroll(0, 1);
+                        }
+                        break;
+                    case '\f': { // hex 0c
+                        const k = nextch();
+                        switch (k) {
+                            // emit literal \f or \n character with \ff, \fn
+                            case 'f':
+                                outch('\f');
+                                break;
+                            case 'n':
+                                outch('\n');
+                                break;
+                            // set/unset glyph style
+                            case '-':
+                                opts.animate = undefined;
+                                opts.invert = undefined;
+                                break;
+                            case '.':
+                                opts.animate = 0 /* GlyphAnimation.blink */;
+                                break;
+                            case ':':
+                                opts.animate = 1 /* GlyphAnimation.flash */;
+                                break;
+                            case '#':
+                                opts.invert = true;
+                                break;
+                            // set/unset glyph color
+                            case 'C':
+                                opts.foregroundColor = undefined;
+                                break;
+                            case 'B':
+                                opts.backgroundColor = undefined;
+                                break;
+                            case 'c':
+                                opts.foregroundColor = nextval();
+                                break;
+                            case 'b':
+                                opts.backgroundColor = nextval();
+                                break;
+                            // home, clear+home
+                            case 'H':
+                                this.x = this.y = 0;
+                                break;
+                            case 'h':
+                                this.cls();
+                                break;
+                            // move cursor up/down/left/right
+                            case 'I':
+                                if (this.y > 0)
+                                    this.y--;
+                                break;
+                            case 'J':
+                                if (this.x > 0)
+                                    this.x--;
+                                break;
+                            case 'K':
+                                if (this.y < this.height - 1)
+                                    this.y++;
+                                break;
+                            case 'L':
+                                if (this.x < this.width - 1)
+                                    this.x++;
+                                break;
+                            case 'i':
+                                this.y = 0;
+                                break;
+                            case 'j':
+                                this.x = 0;
+                                break;
+                            case 'k':
+                                this.y = this.height - 1;
+                                break;
+                            case 'l':
+                                this.x = this.width - 1;
+                                break;
+                            // set cursor, e.g. \fx\06
+                            case 'x':
+                                this.setpos(nextval(), 0);
+                                break;
+                            case 'y':
+                                this.setpos(0, nextval());
+                                break;
+                            case 'z':
+                                this.setpos(nextval(), nextval());
+                                break;
+                            // clear to start/end of line/screen
+                            case 'S':
+                                for (let x = 0; x < x0; x++)
+                                    this.putc(undefined, { x });
+                                this.setpos(x0, y0);
+                                break;
+                            case 'E':
+                                for (let x = x0; x < this.width; x++)
+                                    this.putc(undefined, { x });
+                                this.setpos(x0, y0);
+                                break;
+                            case 's':
+                                for (let y = 0; y <= y0; y++)
+                                    for (let x = 0; x < ((y == y0) ? x0 : this.width); x++)
+                                        this.putc(undefined, { x, y });
+                                this.setpos(x0, y0);
+                                break;
+                            case 'e':
+                                for (let y = y0; y < this.height; y++)
+                                    for (let x = ((y == y0) ? x0 : 0); x < this.width; x++)
+                                        this.putc(undefined, { x, y });
+                                this.setpos(x0, y0);
+                                break;
+                            // justify left/center/right, with default or explicit stop
+                            // explicitly justified text is delimited with matching paren
+                            // or arbitrary matching character
+                            // use \f@ to specify explicit tab stop, eg:
+                            //   \f>/dexter\ndroit/ => justify 'dexter' and 'droit' to right-hand edge
+                            //   \f^(centrist) => center-align 'centrist'
+                            //   \f@\x04>[indent\n\some\n\lines] => left-justify text @ indent 4
+                            case '@': // follow with single byte tab stop value
+                            case '^': // follow ^,>,< with delimited text block
+                            case '>':
+                            case '<': {
+                                if (k == '@') { // \f@\x3^...
+                                    const stop = nextval(), ch = nextch();
+                                    if (!Object.keys(stops).includes(ch))
+                                        throw new Error('Bad @ sequence, expected value followed by one of ^<>');
+                                    justify = ch;
+                                    stops[justify] = stop;
+                                    this.setpos(stop, this.y);
+                                }
+                                else {
+                                    justify = k;
+                                }
+                                jlen = 0;
+                                break;
+                            }
+                            case '/': // stop justifying
+                                justify = undefined;
+                                break;
+                            default:
+                                throw new Error(`Unknown formatting character '${k}'`);
+                        }
+                        break;
+                    }
+                    default:
+                        outch(c);
+                }
+            }
+        }
+    }
+    class SpriteDisplayLayer extends DisplayLayer {
+        constructor() {
+            super(...arguments);
+            this.sprites = {};
+        }
+        cls() {
+            super.cls();
+            this.sprites = {};
+        }
+        put(key, c, x, y, opts = {}) {
+            this.dirty = true;
+            this.sprites[key] = Object.assign({ key, c, x, y }, opts);
+        }
+        moveto(key, x, y) {
+            if (!(key in this.sprites)) {
+                throw new Error(`SpriteDisplayLayer.moveto: key error for '${key}'`);
+            }
+            this.dirty = true;
+            Object.assign(this.sprites[key], { x: x, y: y });
+        }
+        delete(key) {
+            if (!(key in this.sprites)) {
+                throw new Error(`SpriteDisplayLayer.delete: key error for '${key}'`);
+            }
+            this.dirty = true;
+            delete this.sprites[key];
+        }
+        spritelist() {
+            return Object.values(this.sprites);
+        }
+    }
+
+    var _AppModel_game, _AppModel_id, _AppModel_active;
+    class AppModel {
+        constructor() {
+            this.uimode = 0 /* UIModeKey.setup */;
+            this.help = true; // whether help is displayed
+            this.extras = true; // whether to show extras
+            this.debug = false; // whether to show debug info
+            this.zoom = true; // zoom 2x or not?
+            _AppModel_game.set(this, new Game());
+            _AppModel_id.set(this, -1); // most-recently focused unit
+            _AppModel_active.set(this, false); // focus currently active?
+            this.dateWindow = new MappedDisplayLayer(21, 2, atasciiFont, { foregroundColor: 0x6A, layerColor: 0xB0 });
+            this.infoWindow = new MappedDisplayLayer(42, 2, atasciiFont, { foregroundColor: 0x28, layerColor: 0x22 });
+            this.errorWindow = new MappedDisplayLayer(42, 1, atasciiFont, { foregroundColor: 0x22, layerColor: 0x3A });
+        }
+        setGame(game) {
+            if (__classPrivateFieldGet(this, _AppModel_game, "f") == game)
+                return;
+            const font = fontMap(`static/fontmap-custom-${game.mapboard.font}.png`, 128 + 6), { width, height } = game.mapboard.extent;
+            this.mapLayer = new MappedDisplayLayer(width, height, font);
+            this.labelLayer = new SpriteDisplayLayer(width, height, font, { foregroundColor: undefined });
+            this.unitLayer = new SpriteDisplayLayer(width, height, font);
+            this.kreuzeLayer = new SpriteDisplayLayer(width, height, font);
+            this.maskLayer = new MappedDisplayLayer(width, height, font, { backgroundColor: 0x00 });
+            __classPrivateFieldSet(this, _AppModel_game, game, "f");
+            this.paintMap();
+            this.paintCityLabels();
+            this.paintUnits();
+        }
+        get mvmode() {
+            var _a;
+            return (_a = scenarios[__classPrivateFieldGet(this, _AppModel_game, "f").scenario].mvmode) !== null && _a !== void 0 ? _a : false;
+        }
+        focussed() {
+            return __classPrivateFieldGet(this, _AppModel_active, "f") ? __classPrivateFieldGet(this, _AppModel_game, "f").oob.at(__classPrivateFieldGet(this, _AppModel_id, "f")) : undefined;
+        }
+        focusOn(u) {
+            this.focusOff();
+            __classPrivateFieldSet(this, _AppModel_id, u.id, "f");
+            __classPrivateFieldSet(this, _AppModel_active, true, "f");
+            this.paintUnit(u);
+            this.paintReach(u);
+        }
+        focusOff() {
+            const u = this.focussed();
+            __classPrivateFieldSet(this, _AppModel_active, false, "f");
+            this.infoWindow.puts('\fz\x06\x00\fe');
+            if (u) {
+                this.paintUnit(u); // repaint to clear blink etc
+                this.maskLayer.cls(); // remove all mask glyphs
+                this.kreuzeLayer.cls(); // remove any order animation
+            }
+        }
+        focusShift(offset) {
+            const g = __classPrivateFieldGet(this, _AppModel_game, "f"), locid = (u) => g.mapboard.locationOf(u).id, humanUnits = g.oob.activeUnits(g.human).sort((a, b) => locid(b) - locid(a)), n = humanUnits.length;
+            let i;
+            if (__classPrivateFieldGet(this, _AppModel_id, "f") >= 0) {
+                i = humanUnits.findIndex(u => u.id == __classPrivateFieldGet(this, _AppModel_id, "f"));
+                if (i < 0) {
+                    // if last unit no longer active, find the nearest active unit
+                    const id = locid(g.oob.at(__classPrivateFieldGet(this, _AppModel_id, "f")));
+                    while (++i < n && locid(humanUnits[i]) > id) { /**/ }
+                }
+            }
+            else {
+                i = offset > 0 ? -1 : 0;
+            }
+            i = (i + n + offset) % n;
+            this.focusOn(humanUnits[i]);
+        }
+        paintCityLabels() {
+            // these are static so never need redrawn, color changes via paintMap
+            const { lon: left, lat: top } = __classPrivateFieldGet(this, _AppModel_game, "f").mapboard.locations[0][0].point;
+            __classPrivateFieldGet(this, _AppModel_game, "f").mapboard.cities.forEach((c, i) => {
+                this.labelLayer.put(i.toString(), 32, left - c.lon, top - c.lat, {
+                    props: { label: c.label, points: c.points }
+                });
+            });
+        }
+        paintMap() {
+            const g = __classPrivateFieldGet(this, _AppModel_game, "f"), { earth, contrast } = weatherdata[__classPrivateFieldGet(this, _AppModel_game, "f").weather];
+            this.labelLayer.setcolors({ foregroundColor: contrast });
+            this.mapLayer.setcolors({ layerColor: earth });
+            //TODO tree colors are updated in place in terrain defs :-(
+            g.mapboard.locations.forEach(row => row.forEach(loc => {
+                const t = terraintypes[loc.terrain], city = loc.cityid != null ? g.mapboard.cities[loc.cityid] : null, color = city ? players[city === null || city === void 0 ? void 0 : city.owner].color : (loc.alt ? t.altcolor : t.color);
+                this.mapLayer.putc(loc.icon, {
+                    foregroundColor: color,
+                    onclick: () => {
+                        if (this.uimode != 1 /* UIModeKey.orders */)
+                            return;
+                        this.errorWindow.cls();
+                        this.focusOff();
+                        if (city)
+                            this.infoWindow.puts(`\fz\x06\x00\fe\f^${city.label.toUpperCase()}`);
+                    },
+                    onmouseover: (e) => {
+                        e.currentTarget.title = g.mapboard.describe(loc);
+                        e.redraw = false; // prevent mithril redraw
+                    },
+                });
+            }));
+        }
+        paintUnits() {
+            __classPrivateFieldGet(this, _AppModel_game, "f").oob.forEach(u => this.paintUnit(u));
+        }
+        paintReach(u) {
+            const { lon: left, lat: top } = __classPrivateFieldGet(this, _AppModel_game, "f").mapboard.locations[0][0].point, pts = u.reach();
+            this.maskLayer.cls(0); // mask everything with block char, then clear reach squares
+            pts.forEach(({ lon, lat }) => this.maskLayer.putc(undefined, { x: left - lon, y: top - lat }));
+        }
+        paintUnit(u) {
+            const g = __classPrivateFieldGet(this, _AppModel_game, "f"), { earth } = weatherdata[g.weather], { lon: left, lat: top } = g.mapboard.locations[0][0].point, ux = left - u.lon, uy = top - u.lat;
+            let animation = undefined;
+            if (u === this.focussed()) {
+                const f = u.foggyStrength(g.human);
+                this.infoWindow.puts(`\fz\x06\x00\fe\f@\x06<${u.label}\n\feMUSTER: ${f.mstrng}  COMBAT: ${f.cstrng}`);
+                if (u.player == g.human) {
+                    if (scenarios[g.scenario].mvmode)
+                        this.infoWindow.puts(`\fH\f>${unitModes[u.mode].label} \nMODE   `);
+                    animation = 0 /* GlyphAnimation.blink */;
+                    const props = { orders: u.orders };
+                    this.kreuzeLayer.put('#', 0x80, ux, uy, { foregroundColor: 0x1A, props }),
+                        Object.values(directions).forEach(d => this.kreuzeLayer.put(d.label, d.icon, ux, uy, { foregroundColor: 0xDC, props }));
+                }
+            }
+            else if (u.active) {
+                if (u.flags & unitFlag.attack) {
+                    animation = 1 /* GlyphAnimation.flash */;
+                }
+                else if (u.flags & unitFlag.defend) {
+                    animation = 2 /* GlyphAnimation.flash_reverse */;
+                }
+            }
+            const opts = {
+                backgroundColor: earth,
+                foregroundColor: players[u.player].color,
+                opacity: u.active ? 1 : 0,
+                animate: animation,
+                onmouseover: (e) => {
+                    e.currentTarget.title = g.mapboard.describe(u.location);
+                    e.redraw = false; // prevent mithril redraw
+                },
+                onclick: () => {
+                    if (this.uimode != 1 /* UIModeKey.orders */ || !u.active)
+                        return;
+                    this.errorWindow.cls();
+                    (this.uimode == 1 /* UIModeKey.orders */ && this.focussed() !== u) ? this.focusOn(u) : this.focusOff();
+                }
+            };
+            opts.props = u.foggyStrength(g.human);
+            if (u.player == g.human || this.debug) {
+                Object.assign(opts.props, {
+                    orders: u.orders,
+                    mode: u.mode,
+                });
+            }
+            this.unitLayer.put(`${__classPrivateFieldGet(this, _AppModel_game, "f").scenario}:${u.id}`, unitkinds[u.kind].icon, ux, uy, opts);
+        }
+    }
+    _AppModel_game = new WeakMap(), _AppModel_id = new WeakMap(), _AppModel_active = new WeakMap();
+
+    const keymap = {
+        help: '?/',
+        prev: '<,p',
+        next: '>.n',
+        cancel: ['Escape', ' '],
+        scenario: Object.keys(scenarios).join(''),
+        extras: 'xX',
+        zoom: 'zZ',
+        debug: 'gG',
+        mode: 'mM',
+        modes: '1234',
+    }, arrowmap = {
+        ArrowUp: 0 /* DirectionKey.north */,
+        ArrowDown: 2 /* DirectionKey.south */,
+        ArrowRight: 1 /* DirectionKey.east */,
+        ArrowLeft: 3 /* DirectionKey.west */,
+    }, modeHandlers = {
+        [0 /* UIModeKey.setup */]: setupHandler,
+        [1 /* UIModeKey.orders */]: ordersHandler,
+        [2 /* UIModeKey.resolve */]: resolveHandler,
+    };
+    function globalHandler(key, ctrl) {
+        if (ctrl.app.help || keymap.help.includes(key)) {
+            ctrl.app.help = !ctrl.app.help;
+        }
+        else if (keymap.zoom.includes(key)) {
+            ctrl.app.zoom = !ctrl.app.zoom;
+        }
+        else if (keymap.extras.includes(key)) {
+            ctrl.app.extras = !ctrl.app.extras;
+        }
+        else if (keymap.debug.includes(key)) {
+            ctrl.app.debug = !ctrl.app.debug;
+        }
+        else {
+            return false;
+        }
+        return true;
+    }
+    function setupHandler(key, ctrl) {
+        if (keymap.prev.includes(key) || key == 'ArrowLeft') {
+            ctrl.setScenario(null, -1);
+        }
+        else if (keymap.next.includes(key) || key == 'ArrowRight') {
+            ctrl.setScenario(null, +1);
+        }
+        else if (keymap.scenario.includes(key)) {
+            ctrl.setScenario(parseInt(key));
+        }
+        else if (key == 'Enter') {
+            ctrl.setMode(1 /* UIModeKey.orders */);
+        }
+        else {
+            return false;
+        }
+        return true;
+    }
+    function ordersHandler(key, ctrl) {
+        if (keymap.prev.includes(key)) {
+            ctrl.app.focusShift(-1);
+        }
+        else if (keymap.next.includes(key) || key == 'Enter') {
+            ctrl.app.focusShift(+1);
+        }
+        else if (ctrl.app.mvmode && keymap.mode.includes(key)) {
+            ctrl.editUnitMode(null);
+        }
+        else if (ctrl.app.mvmode && keymap.modes.includes(key)) {
+            ctrl.editUnitMode(keymap.modes.indexOf(key));
+        }
+        else if (key in arrowmap) {
+            ctrl.editOrders(arrowmap[key]);
+        }
+        else if (keymap.cancel.includes(key)) {
+            ctrl.editOrders(null);
+        }
+        else if (key == 'Backspace') {
+            ctrl.editOrders(-1);
+        }
+        else if (key == 'End') {
+            ctrl.setMode(2 /* UIModeKey.resolve */);
+        }
+        else {
+            return false;
+        }
+        return true;
+    }
+    function resolveHandler(key, ctrl) {
+        if (keymap.prev.includes(key)) {
+            ctrl.app.focusShift(-1);
+        }
+        else if (keymap.next.includes(key) || key == 'Enter') {
+            ctrl.app.focusShift(+1);
+        }
+        else {
+            return false;
+        }
+        return true;
+    }
 
     var _Thinker_instances, _Thinker_game, _Thinker_player, _Thinker_trainOfThought, _Thinker_depth, _Thinker_delay, _Thinker_recur, _Thinker_findBeleaguered, _Thinker_evalLocation;
     class Thinker {
@@ -3042,337 +3680,6 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         return score;
     }
 
-    const atascii = (c) => c.charCodeAt(0) & 0x7f;
-    function fontMap(maskImage, numGlyphs, glyphSize = 8, glyphsPerRow = 16) {
-        return { maskImage, numGlyphs, glyphSize, glyphsPerRow };
-    }
-    class DisplayLayer {
-        constructor(width, height, fontmap, opts = {}) {
-            this.dirty = true;
-            // explicitly set foregroundColor: undefined for transparent glyphs
-            if (!('foregroundColor' in opts))
-                opts.foregroundColor = 0x0f;
-            this.width = width;
-            this.height = height;
-            this.fontmap = fontmap;
-            this.setcolors(opts);
-        }
-        get opts() {
-            return {
-                foregroundColor: this.foregroundColor,
-                backgroundColor: this.backgroundColor,
-                layerColor: this.layerColor,
-                opacity: this.opacity,
-            };
-        }
-        setcolors(opts) {
-            this.dirty = true;
-            this.foregroundColor = opts.foregroundColor;
-            this.backgroundColor = opts.backgroundColor;
-            this.layerColor = opts.layerColor;
-            this.opacity = opts.opacity;
-        }
-        cls() {
-            this.dirty = true;
-        }
-    }
-    class MappedDisplayLayer extends DisplayLayer {
-        constructor(width, height, fontmap, opts = {}) {
-            super(width, height, fontmap, opts);
-            this.x = 0;
-            this.y = 0;
-            this.endLine = 'newline';
-            this.endScreen = 'wraparound';
-            this.glyphs = new Array(height).fill(undefined).map(() => new Array(width).fill(undefined));
-        }
-        spritelist() {
-            return this.glyphs.flatMap((row, y) => row.map((g, x) => g && Object.assign({ key: `${x},${y}`, x, y }, g)).filter(d => d));
-        }
-        cls(c) {
-            super.cls();
-            // with no argument, clear all glyphs (so we see the container layer)
-            // otherwise set all glyphs to a specific character
-            this.x = 0;
-            this.y = 0;
-            this.glyphs = this.glyphs.map(row => row.map(() => c != null ? { c } : undefined));
-        }
-        scroll(dx, dy, c) {
-            // scroll screen by dx, dy, filling with character c (blank for undefined)
-            this.dirty = true;
-            const xs = [...Array(this.width).keys()], ys = [...Array(this.height).keys()], g = c != null ? { c } : undefined;
-            this.glyphs = ys.map(y => {
-                const y_ = y + dy;
-                return (y_ < 0 || y_ >= this.height)
-                    ? new Array(this.width).fill(g)
-                    : xs.map(x => {
-                        const x_ = x + dx;
-                        return (x_ < 0 || x_ >= this.width) ? g : this.glyphs[y_][x_];
-                    });
-            });
-            this.setpos(this.x - dx, this.y - dy);
-        }
-        roll(dx, dy) {
-            this.dirty = true;
-            // roll screen by dx, dy
-            const xs = [...Array(this.width).keys()], ys = [...Array(this.height).keys()];
-            this.glyphs = ys.map(y => xs.map(x => this.glyphs[(y + dy) % this.height][(x + dx) % this.width]));
-            this.setpos(this.x - dx, this.y - dy);
-        }
-        setpos(x, y) {
-            this.x = Math.min(this.width - 1, Math.max(0, x));
-            this.y = Math.min(this.height - 1, Math.max(0, y));
-        }
-        putc(c, opts = {}) {
-            // put a character at current position, with options.  put undefined to clear current chr
-            this.dirty = true;
-            const { x, y } = opts, rest = __rest(opts, ["x", "y"]);
-            this.setpos(x !== null && x !== void 0 ? x : this.x, y !== null && y !== void 0 ? y : this.y);
-            this.glyphs[this.y][this.x] = c != null ? Object.assign({ c }, rest) : undefined;
-            this.x = (this.x + 1) % this.width;
-            if (this.x == 0 && this.endLine == 'newline') {
-                this.y++;
-                if (this.y == this.height) {
-                    if (this.endScreen == 'wraparound')
-                        this.y = 0;
-                    else
-                        this.scroll(0, 1);
-                }
-            }
-        }
-        puts(s, opts = {}) {
-            var _a;
-            const { x, y } = opts, rest = __rest(opts, ["x", "y"]), cs = s.split(''), charMap = (_a = opts.charMap) !== null && _a !== void 0 ? _a : atascii, stops = { '<': 0, '>': this.width, '^': Math.floor(this.width / 2) };
-            this.setpos(x !== null && x !== void 0 ? x : this.x, y !== null && y !== void 0 ? y : this.y);
-            let justify = undefined, jlen = 0;
-            opts = Object.assign({}, rest);
-            function nextch() {
-                console.assert(cs.length);
-                return cs.shift();
-            }
-            function nextval() {
-                return nextch().charCodeAt(0);
-            }
-            const outch = (c) => {
-                const eol = this.endLine;
-                if ('>^'.includes(justify !== null && justify !== void 0 ? justify : 'X')) {
-                    this.endLine = 'wraparound'; // disable non-explicit newline while center/right justify
-                    let x0, xoff;
-                    const row = this.glyphs[this.y];
-                    if (justify == '>') {
-                        x0 = stops['>'] - 1;
-                        xoff = Math.max(0, x0 - jlen);
-                        row.splice(xoff, 1);
-                        row.splice(x0, 0, undefined);
-                    }
-                    else /* justify == '^' */ {
-                        x0 = stops['^'] + Math.floor((jlen + 1) / 2) - 1;
-                        xoff = Math.max(0, x0 - jlen);
-                        if (x0 > this.width)
-                            return;
-                        if (jlen % 2 == 0) {
-                            row.splice(xoff, 1); // remove one char @ xoff
-                            row.splice(x0, 0, undefined); // add placeholder at x0
-                        }
-                    }
-                    opts.x = x0;
-                }
-                else {
-                    opts.x = undefined;
-                }
-                jlen++;
-                this.putc(charMap(c), opts);
-                this.endLine = eol;
-            };
-            while (cs.length) {
-                const c = nextch(), x0 = this.x, y0 = this.y;
-                switch (c) {
-                    case '\n': // hex 0a
-                        this.setpos(justify != null ? stops[justify] : 0, this.y);
-                        jlen = 0;
-                        this.y++;
-                        if (this.y == this.height) {
-                            if (this.endScreen == 'wraparound')
-                                this.y = 0;
-                            else
-                                this.scroll(0, 1);
-                        }
-                        break;
-                    case '\f': { // hex 0c
-                        const k = nextch();
-                        switch (k) {
-                            // emit literal \f or \n character with \ff, \fn
-                            case 'f':
-                                outch('\f');
-                                break;
-                            case 'n':
-                                outch('\n');
-                                break;
-                            // set/unset glyph style
-                            case '-':
-                                opts.animate = undefined;
-                                opts.invert = undefined;
-                                break;
-                            case '.':
-                                opts.animate = 0 /* GlyphAnimation.blink */;
-                                break;
-                            case ':':
-                                opts.animate = 1 /* GlyphAnimation.flash */;
-                                break;
-                            case '#':
-                                opts.invert = true;
-                                break;
-                            // set/unset glyph color
-                            case 'C':
-                                opts.foregroundColor = undefined;
-                                break;
-                            case 'B':
-                                opts.backgroundColor = undefined;
-                                break;
-                            case 'c':
-                                opts.foregroundColor = nextval();
-                                break;
-                            case 'b':
-                                opts.backgroundColor = nextval();
-                                break;
-                            // home, clear+home
-                            case 'H':
-                                this.x = this.y = 0;
-                                break;
-                            case 'h':
-                                this.cls();
-                                break;
-                            // move cursor up/down/left/right
-                            case 'I':
-                                if (this.y > 0)
-                                    this.y--;
-                                break;
-                            case 'J':
-                                if (this.x > 0)
-                                    this.x--;
-                                break;
-                            case 'K':
-                                if (this.y < this.height - 1)
-                                    this.y++;
-                                break;
-                            case 'L':
-                                if (this.x < this.width - 1)
-                                    this.x++;
-                                break;
-                            case 'i':
-                                this.y = 0;
-                                break;
-                            case 'j':
-                                this.x = 0;
-                                break;
-                            case 'k':
-                                this.y = this.height - 1;
-                                break;
-                            case 'l':
-                                this.x = this.width - 1;
-                                break;
-                            // set cursor, e.g. \fx\06
-                            case 'x':
-                                this.setpos(nextval(), 0);
-                                break;
-                            case 'y':
-                                this.setpos(0, nextval());
-                                break;
-                            case 'z':
-                                this.setpos(nextval(), nextval());
-                                break;
-                            // clear to start/end of line/screen
-                            case 'S':
-                                for (let x = 0; x < x0; x++)
-                                    this.putc(undefined, { x });
-                                this.setpos(x0, y0);
-                                break;
-                            case 'E':
-                                for (let x = x0; x < this.width; x++)
-                                    this.putc(undefined, { x });
-                                this.setpos(x0, y0);
-                                break;
-                            case 's':
-                                for (let y = 0; y <= y0; y++)
-                                    for (let x = 0; x < ((y == y0) ? x0 : this.width); x++)
-                                        this.putc(undefined, { x, y });
-                                this.setpos(x0, y0);
-                                break;
-                            case 'e':
-                                for (let y = y0; y < this.height; y++)
-                                    for (let x = ((y == y0) ? x0 : 0); x < this.width; x++)
-                                        this.putc(undefined, { x, y });
-                                this.setpos(x0, y0);
-                                break;
-                            // justify left/center/right, with default or explicit stop
-                            // explicitly justified text is delimited with matching paren
-                            // or arbitrary matching character
-                            // use \f@ to specify explicit tab stop, eg:
-                            //   \f>/dexter\ndroit/ => justify 'dexter' and 'droit' to right-hand edge
-                            //   \f^(centrist) => center-align 'centrist'
-                            //   \f@\x04>[indent\n\some\n\lines] => left-justify text @ indent 4
-                            case '@': // follow with single byte tab stop value
-                            case '^': // follow ^,>,< with delimited text block
-                            case '>':
-                            case '<': {
-                                if (k == '@') { // \f@\x3^...
-                                    const stop = nextval(), ch = nextch();
-                                    console.assert(Object.keys(stops).includes(ch));
-                                    justify = ch;
-                                    stops[justify] = stop;
-                                    this.setpos(stop, this.y);
-                                }
-                                else {
-                                    justify = k;
-                                }
-                                jlen = 0;
-                                break;
-                            }
-                            case '/': // stop justifying
-                                justify = undefined;
-                                break;
-                            default:
-                                console.assert(false, `Unknown format character '${k}'`);
-                        }
-                        break;
-                    }
-                    default:
-                        outch(c);
-                }
-            }
-        }
-    }
-    class SpriteDisplayLayer extends DisplayLayer {
-        constructor() {
-            super(...arguments);
-            this.sprites = {};
-        }
-        cls() {
-            super.cls();
-            this.sprites = {};
-        }
-        put(key, c, x, y, opts = {}) {
-            this.dirty = true;
-            this.sprites[key] = Object.assign({ key, c, x, y }, opts);
-        }
-        moveto(key, x, y) {
-            if (!(key in this.sprites)) {
-                throw new Error(`SpriteDisplayLayer.moveto: key error for '${key}'`);
-            }
-            this.dirty = true;
-            Object.assign(this.sprites[key], { x: x, y: y });
-        }
-        delete(key) {
-            if (!(key in this.sprites)) {
-                throw new Error(`SpriteDisplayLayer.delete: key error for '${key}'`);
-            }
-            this.dirty = true;
-            delete this.sprites[key];
-        }
-        spritelist() {
-            return Object.values(this.sprites);
-        }
-    }
-
     var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
     var vnode;
@@ -3418,7 +3725,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
     	return vnode;
     }
 
-    var Vnode$5 = requireVnode();
+    var Vnode$4 = requireVnode();
 
     // Call via `hyperscriptVnode.apply(startOffset, arguments)`
     //
@@ -3467,12 +3774,12 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
     		while (start < arguments.length) children.push(arguments[start++]);
     	}
 
-    	return Vnode$5("", attrs.key, attrs, children)
+    	return Vnode$4("", attrs.key, attrs, children)
     };
 
     var hasOwn$2 = {}.hasOwnProperty;
 
-    var Vnode$4 = requireVnode();
+    var Vnode$3 = requireVnode();
     var hyperscriptVnode$1 = hyperscriptVnode$2;
     var hasOwn$1 = hasOwn$2;
 
@@ -3554,7 +3861,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
     	var vnode = hyperscriptVnode$1.apply(1, arguments);
 
     	if (typeof selector === "string") {
-    		vnode.children = Vnode$4.normalizeChildren(vnode.children);
+    		vnode.children = Vnode$3.normalizeChildren(vnode.children);
     		if (selector !== "[") return execSelector(selectorCache[selector] || compileSelector(selector), vnode)
     	}
 
@@ -3564,21 +3871,21 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
 
     var hyperscript_1$1 = hyperscript$2;
 
-    var Vnode$3 = requireVnode();
+    var Vnode$2 = requireVnode();
 
     var trust = function(html) {
     	if (html == null) html = "";
-    	return Vnode$3("<", undefined, undefined, html, undefined, undefined)
+    	return Vnode$2("<", undefined, undefined, html, undefined, undefined)
     };
 
-    var Vnode$2 = requireVnode();
+    var Vnode$1 = requireVnode();
     var hyperscriptVnode = hyperscriptVnode$2;
 
     var fragment = function() {
     	var vnode = hyperscriptVnode.apply(0, arguments);
 
     	vnode.tag = "[";
-    	vnode.children = Vnode$2.normalizeChildren(vnode.children);
+    	vnode.children = Vnode$1.normalizeChildren(vnode.children);
     	return vnode
     };
 
@@ -3733,987 +4040,996 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
     	promise.exports = PromisePolyfill$1;
     }
 
-    var Vnode$1 = requireVnode();
+    var render$2;
+    var hasRequiredRender;
 
-    var render$2 = function($window) {
-    	var $doc = $window && $window.document;
-    	var currentRedraw;
+    function requireRender () {
+    	if (hasRequiredRender) return render$2;
+    	hasRequiredRender = 1;
 
-    	var nameSpace = {
-    		svg: "http://www.w3.org/2000/svg",
-    		math: "http://www.w3.org/1998/Math/MathML"
-    	};
+    	var Vnode = requireVnode();
 
-    	function getNameSpace(vnode) {
-    		return vnode.attrs && vnode.attrs.xmlns || nameSpace[vnode.tag]
-    	}
+    	render$2 = function($window) {
+    		var $doc = $window && $window.document;
+    		var currentRedraw;
 
-    	//sanity check to discourage people from doing `vnode.state = ...`
-    	function checkState(vnode, original) {
-    		if (vnode.state !== original) throw new Error("'vnode.state' must not be modified.")
-    	}
+    		var nameSpace = {
+    			svg: "http://www.w3.org/2000/svg",
+    			math: "http://www.w3.org/1998/Math/MathML"
+    		};
 
-    	//Note: the hook is passed as the `this` argument to allow proxying the
-    	//arguments without requiring a full array allocation to do so. It also
-    	//takes advantage of the fact the current `vnode` is the first argument in
-    	//all lifecycle methods.
-    	function callHook(vnode) {
-    		var original = vnode.state;
-    		try {
-    			return this.apply(original, arguments)
-    		} finally {
-    			checkState(vnode, original);
+    		function getNameSpace(vnode) {
+    			return vnode.attrs && vnode.attrs.xmlns || nameSpace[vnode.tag]
     		}
-    	}
 
-    	// IE11 (at least) throws an UnspecifiedError when accessing document.activeElement when
-    	// inside an iframe. Catch and swallow this error, and heavy-handidly return null.
-    	function activeElement() {
-    		try {
-    			return $doc.activeElement
-    		} catch (e) {
-    			return null
+    		//sanity check to discourage people from doing `vnode.state = ...`
+    		function checkState(vnode, original) {
+    			if (vnode.state !== original) throw new Error("'vnode.state' must not be modified.")
     		}
-    	}
-    	//create
-    	function createNodes(parent, vnodes, start, end, hooks, nextSibling, ns) {
-    		for (var i = start; i < end; i++) {
-    			var vnode = vnodes[i];
-    			if (vnode != null) {
+
+    		//Note: the hook is passed as the `this` argument to allow proxying the
+    		//arguments without requiring a full array allocation to do so. It also
+    		//takes advantage of the fact the current `vnode` is the first argument in
+    		//all lifecycle methods.
+    		function callHook(vnode) {
+    			var original = vnode.state;
+    			try {
+    				return this.apply(original, arguments)
+    			} finally {
+    				checkState(vnode, original);
+    			}
+    		}
+
+    		// IE11 (at least) throws an UnspecifiedError when accessing document.activeElement when
+    		// inside an iframe. Catch and swallow this error, and heavy-handidly return null.
+    		function activeElement() {
+    			try {
+    				return $doc.activeElement
+    			} catch (e) {
+    				return null
+    			}
+    		}
+    		//create
+    		function createNodes(parent, vnodes, start, end, hooks, nextSibling, ns) {
+    			for (var i = start; i < end; i++) {
+    				var vnode = vnodes[i];
+    				if (vnode != null) {
+    					createNode(parent, vnode, hooks, ns, nextSibling);
+    				}
+    			}
+    		}
+    		function createNode(parent, vnode, hooks, ns, nextSibling) {
+    			var tag = vnode.tag;
+    			if (typeof tag === "string") {
+    				vnode.state = {};
+    				if (vnode.attrs != null) initLifecycle(vnode.attrs, vnode, hooks);
+    				switch (tag) {
+    					case "#": createText(parent, vnode, nextSibling); break
+    					case "<": createHTML(parent, vnode, ns, nextSibling); break
+    					case "[": createFragment(parent, vnode, hooks, ns, nextSibling); break
+    					default: createElement(parent, vnode, hooks, ns, nextSibling);
+    				}
+    			}
+    			else createComponent(parent, vnode, hooks, ns, nextSibling);
+    		}
+    		function createText(parent, vnode, nextSibling) {
+    			vnode.dom = $doc.createTextNode(vnode.children);
+    			insertNode(parent, vnode.dom, nextSibling);
+    		}
+    		var possibleParents = {caption: "table", thead: "table", tbody: "table", tfoot: "table", tr: "tbody", th: "tr", td: "tr", colgroup: "table", col: "colgroup"};
+    		function createHTML(parent, vnode, ns, nextSibling) {
+    			var match = vnode.children.match(/^\s*?<(\w+)/im) || [];
+    			// not using the proper parent makes the child element(s) vanish.
+    			//     var div = document.createElement("div")
+    			//     div.innerHTML = "<td>i</td><td>j</td>"
+    			//     console.log(div.innerHTML)
+    			// --> "ij", no <td> in sight.
+    			var temp = $doc.createElement(possibleParents[match[1]] || "div");
+    			if (ns === "http://www.w3.org/2000/svg") {
+    				temp.innerHTML = "<svg xmlns=\"http://www.w3.org/2000/svg\">" + vnode.children + "</svg>";
+    				temp = temp.firstChild;
+    			} else {
+    				temp.innerHTML = vnode.children;
+    			}
+    			vnode.dom = temp.firstChild;
+    			vnode.domSize = temp.childNodes.length;
+    			// Capture nodes to remove, so we don't confuse them.
+    			vnode.instance = [];
+    			var fragment = $doc.createDocumentFragment();
+    			var child;
+    			while (child = temp.firstChild) {
+    				vnode.instance.push(child);
+    				fragment.appendChild(child);
+    			}
+    			insertNode(parent, fragment, nextSibling);
+    		}
+    		function createFragment(parent, vnode, hooks, ns, nextSibling) {
+    			var fragment = $doc.createDocumentFragment();
+    			if (vnode.children != null) {
+    				var children = vnode.children;
+    				createNodes(fragment, children, 0, children.length, hooks, null, ns);
+    			}
+    			vnode.dom = fragment.firstChild;
+    			vnode.domSize = fragment.childNodes.length;
+    			insertNode(parent, fragment, nextSibling);
+    		}
+    		function createElement(parent, vnode, hooks, ns, nextSibling) {
+    			var tag = vnode.tag;
+    			var attrs = vnode.attrs;
+    			var is = attrs && attrs.is;
+
+    			ns = getNameSpace(vnode) || ns;
+
+    			var element = ns ?
+    				is ? $doc.createElementNS(ns, tag, {is: is}) : $doc.createElementNS(ns, tag) :
+    				is ? $doc.createElement(tag, {is: is}) : $doc.createElement(tag);
+    			vnode.dom = element;
+
+    			if (attrs != null) {
+    				setAttrs(vnode, attrs, ns);
+    			}
+
+    			insertNode(parent, element, nextSibling);
+
+    			if (!maybeSetContentEditable(vnode)) {
+    				if (vnode.children != null) {
+    					var children = vnode.children;
+    					createNodes(element, children, 0, children.length, hooks, null, ns);
+    					if (vnode.tag === "select" && attrs != null) setLateSelectAttrs(vnode, attrs);
+    				}
+    			}
+    		}
+    		function initComponent(vnode, hooks) {
+    			var sentinel;
+    			if (typeof vnode.tag.view === "function") {
+    				vnode.state = Object.create(vnode.tag);
+    				sentinel = vnode.state.view;
+    				if (sentinel.$$reentrantLock$$ != null) return
+    				sentinel.$$reentrantLock$$ = true;
+    			} else {
+    				vnode.state = void 0;
+    				sentinel = vnode.tag;
+    				if (sentinel.$$reentrantLock$$ != null) return
+    				sentinel.$$reentrantLock$$ = true;
+    				vnode.state = (vnode.tag.prototype != null && typeof vnode.tag.prototype.view === "function") ? new vnode.tag(vnode) : vnode.tag(vnode);
+    			}
+    			initLifecycle(vnode.state, vnode, hooks);
+    			if (vnode.attrs != null) initLifecycle(vnode.attrs, vnode, hooks);
+    			vnode.instance = Vnode.normalize(callHook.call(vnode.state.view, vnode));
+    			if (vnode.instance === vnode) throw Error("A view cannot return the vnode it received as argument")
+    			sentinel.$$reentrantLock$$ = null;
+    		}
+    		function createComponent(parent, vnode, hooks, ns, nextSibling) {
+    			initComponent(vnode, hooks);
+    			if (vnode.instance != null) {
+    				createNode(parent, vnode.instance, hooks, ns, nextSibling);
+    				vnode.dom = vnode.instance.dom;
+    				vnode.domSize = vnode.dom != null ? vnode.instance.domSize : 0;
+    			}
+    			else {
+    				vnode.domSize = 0;
+    			}
+    		}
+
+    		//update
+    		/**
+    		 * @param {Element|Fragment} parent - the parent element
+    		 * @param {Vnode[] | null} old - the list of vnodes of the last `render()` call for
+    		 *                               this part of the tree
+    		 * @param {Vnode[] | null} vnodes - as above, but for the current `render()` call.
+    		 * @param {Function[]} hooks - an accumulator of post-render hooks (oncreate/onupdate)
+    		 * @param {Element | null} nextSibling - the next DOM node if we're dealing with a
+    		 *                                       fragment that is not the last item in its
+    		 *                                       parent
+    		 * @param {'svg' | 'math' | String | null} ns) - the current XML namespace, if any
+    		 * @returns void
+    		 */
+    		// This function diffs and patches lists of vnodes, both keyed and unkeyed.
+    		//
+    		// We will:
+    		//
+    		// 1. describe its general structure
+    		// 2. focus on the diff algorithm optimizations
+    		// 3. discuss DOM node operations.
+
+    		// ## Overview:
+    		//
+    		// The updateNodes() function:
+    		// - deals with trivial cases
+    		// - determines whether the lists are keyed or unkeyed based on the first non-null node
+    		//   of each list.
+    		// - diffs them and patches the DOM if needed (that's the brunt of the code)
+    		// - manages the leftovers: after diffing, are there:
+    		//   - old nodes left to remove?
+    		// 	 - new nodes to insert?
+    		// 	 deal with them!
+    		//
+    		// The lists are only iterated over once, with an exception for the nodes in `old` that
+    		// are visited in the fourth part of the diff and in the `removeNodes` loop.
+
+    		// ## Diffing
+    		//
+    		// Reading https://github.com/localvoid/ivi/blob/ddc09d06abaef45248e6133f7040d00d3c6be853/packages/ivi/src/vdom/implementation.ts#L617-L837
+    		// may be good for context on longest increasing subsequence-based logic for moving nodes.
+    		//
+    		// In order to diff keyed lists, one has to
+    		//
+    		// 1) match nodes in both lists, per key, and update them accordingly
+    		// 2) create the nodes present in the new list, but absent in the old one
+    		// 3) remove the nodes present in the old list, but absent in the new one
+    		// 4) figure out what nodes in 1) to move in order to minimize the DOM operations.
+    		//
+    		// To achieve 1) one can create a dictionary of keys => index (for the old list), then iterate
+    		// over the new list and for each new vnode, find the corresponding vnode in the old list using
+    		// the map.
+    		// 2) is achieved in the same step: if a new node has no corresponding entry in the map, it is new
+    		// and must be created.
+    		// For the removals, we actually remove the nodes that have been updated from the old list.
+    		// The nodes that remain in that list after 1) and 2) have been performed can be safely removed.
+    		// The fourth step is a bit more complex and relies on the longest increasing subsequence (LIS)
+    		// algorithm.
+    		//
+    		// the longest increasing subsequence is the list of nodes that can remain in place. Imagine going
+    		// from `1,2,3,4,5` to `4,5,1,2,3` where the numbers are not necessarily the keys, but the indices
+    		// corresponding to the keyed nodes in the old list (keyed nodes `e,d,c,b,a` => `b,a,e,d,c` would
+    		//  match the above lists, for example).
+    		//
+    		// In there are two increasing subsequences: `4,5` and `1,2,3`, the latter being the longest. We
+    		// can update those nodes without moving them, and only call `insertNode` on `4` and `5`.
+    		//
+    		// @localvoid adapted the algo to also support node deletions and insertions (the `lis` is actually
+    		// the longest increasing subsequence *of old nodes still present in the new list*).
+    		//
+    		// It is a general algorithm that is fireproof in all circumstances, but it requires the allocation
+    		// and the construction of a `key => oldIndex` map, and three arrays (one with `newIndex => oldIndex`,
+    		// the `LIS` and a temporary one to create the LIS).
+    		//
+    		// So we cheat where we can: if the tails of the lists are identical, they are guaranteed to be part of
+    		// the LIS and can be updated without moving them.
+    		//
+    		// If two nodes are swapped, they are guaranteed not to be part of the LIS, and must be moved (with
+    		// the exception of the last node if the list is fully reversed).
+    		//
+    		// ## Finding the next sibling.
+    		//
+    		// `updateNode()` and `createNode()` expect a nextSibling parameter to perform DOM operations.
+    		// When the list is being traversed top-down, at any index, the DOM nodes up to the previous
+    		// vnode reflect the content of the new list, whereas the rest of the DOM nodes reflect the old
+    		// list. The next sibling must be looked for in the old list using `getNextSibling(... oldStart + 1 ...)`.
+    		//
+    		// In the other scenarios (swaps, upwards traversal, map-based diff),
+    		// the new vnodes list is traversed upwards. The DOM nodes at the bottom of the list reflect the
+    		// bottom part of the new vnodes list, and we can use the `v.dom`  value of the previous node
+    		// as the next sibling (cached in the `nextSibling` variable).
+
+
+    		// ## DOM node moves
+    		//
+    		// In most scenarios `updateNode()` and `createNode()` perform the DOM operations. However,
+    		// this is not the case if the node moved (second and fourth part of the diff algo). We move
+    		// the old DOM nodes before updateNode runs because it enables us to use the cached `nextSibling`
+    		// variable rather than fetching it using `getNextSibling()`.
+    		//
+    		// The fourth part of the diff currently inserts nodes unconditionally, leading to issues
+    		// like #1791 and #1999. We need to be smarter about those situations where adjascent old
+    		// nodes remain together in the new list in a way that isn't covered by parts one and
+    		// three of the diff algo.
+
+    		function updateNodes(parent, old, vnodes, hooks, nextSibling, ns) {
+    			if (old === vnodes || old == null && vnodes == null) return
+    			else if (old == null || old.length === 0) createNodes(parent, vnodes, 0, vnodes.length, hooks, nextSibling, ns);
+    			else if (vnodes == null || vnodes.length === 0) removeNodes(parent, old, 0, old.length);
+    			else {
+    				var isOldKeyed = old[0] != null && old[0].key != null;
+    				var isKeyed = vnodes[0] != null && vnodes[0].key != null;
+    				var start = 0, oldStart = 0;
+    				if (!isOldKeyed) while (oldStart < old.length && old[oldStart] == null) oldStart++;
+    				if (!isKeyed) while (start < vnodes.length && vnodes[start] == null) start++;
+    				if (isOldKeyed !== isKeyed) {
+    					removeNodes(parent, old, oldStart, old.length);
+    					createNodes(parent, vnodes, start, vnodes.length, hooks, nextSibling, ns);
+    				} else if (!isKeyed) {
+    					// Don't index past the end of either list (causes deopts).
+    					var commonLength = old.length < vnodes.length ? old.length : vnodes.length;
+    					// Rewind if necessary to the first non-null index on either side.
+    					// We could alternatively either explicitly create or remove nodes when `start !== oldStart`
+    					// but that would be optimizing for sparse lists which are more rare than dense ones.
+    					start = start < oldStart ? start : oldStart;
+    					for (; start < commonLength; start++) {
+    						o = old[start];
+    						v = vnodes[start];
+    						if (o === v || o == null && v == null) continue
+    						else if (o == null) createNode(parent, v, hooks, ns, getNextSibling(old, start + 1, nextSibling));
+    						else if (v == null) removeNode(parent, o);
+    						else updateNode(parent, o, v, hooks, getNextSibling(old, start + 1, nextSibling), ns);
+    					}
+    					if (old.length > commonLength) removeNodes(parent, old, start, old.length);
+    					if (vnodes.length > commonLength) createNodes(parent, vnodes, start, vnodes.length, hooks, nextSibling, ns);
+    				} else {
+    					// keyed diff
+    					var oldEnd = old.length - 1, end = vnodes.length - 1, map, o, v, oe, ve, topSibling;
+
+    					// bottom-up
+    					while (oldEnd >= oldStart && end >= start) {
+    						oe = old[oldEnd];
+    						ve = vnodes[end];
+    						if (oe.key !== ve.key) break
+    						if (oe !== ve) updateNode(parent, oe, ve, hooks, nextSibling, ns);
+    						if (ve.dom != null) nextSibling = ve.dom;
+    						oldEnd--, end--;
+    					}
+    					// top-down
+    					while (oldEnd >= oldStart && end >= start) {
+    						o = old[oldStart];
+    						v = vnodes[start];
+    						if (o.key !== v.key) break
+    						oldStart++, start++;
+    						if (o !== v) updateNode(parent, o, v, hooks, getNextSibling(old, oldStart, nextSibling), ns);
+    					}
+    					// swaps and list reversals
+    					while (oldEnd >= oldStart && end >= start) {
+    						if (start === end) break
+    						if (o.key !== ve.key || oe.key !== v.key) break
+    						topSibling = getNextSibling(old, oldStart, nextSibling);
+    						moveNodes(parent, oe, topSibling);
+    						if (oe !== v) updateNode(parent, oe, v, hooks, topSibling, ns);
+    						if (++start <= --end) moveNodes(parent, o, nextSibling);
+    						if (o !== ve) updateNode(parent, o, ve, hooks, nextSibling, ns);
+    						if (ve.dom != null) nextSibling = ve.dom;
+    						oldStart++; oldEnd--;
+    						oe = old[oldEnd];
+    						ve = vnodes[end];
+    						o = old[oldStart];
+    						v = vnodes[start];
+    					}
+    					// bottom up once again
+    					while (oldEnd >= oldStart && end >= start) {
+    						if (oe.key !== ve.key) break
+    						if (oe !== ve) updateNode(parent, oe, ve, hooks, nextSibling, ns);
+    						if (ve.dom != null) nextSibling = ve.dom;
+    						oldEnd--, end--;
+    						oe = old[oldEnd];
+    						ve = vnodes[end];
+    					}
+    					if (start > end) removeNodes(parent, old, oldStart, oldEnd + 1);
+    					else if (oldStart > oldEnd) createNodes(parent, vnodes, start, end + 1, hooks, nextSibling, ns);
+    					else {
+    						// inspired by ivi https://github.com/ivijs/ivi/ by Boris Kaul
+    						var originalNextSibling = nextSibling, vnodesLength = end - start + 1, oldIndices = new Array(vnodesLength), li=0, i=0, pos = 2147483647, matched = 0, map, lisIndices;
+    						for (i = 0; i < vnodesLength; i++) oldIndices[i] = -1;
+    						for (i = end; i >= start; i--) {
+    							if (map == null) map = getKeyMap(old, oldStart, oldEnd + 1);
+    							ve = vnodes[i];
+    							var oldIndex = map[ve.key];
+    							if (oldIndex != null) {
+    								pos = (oldIndex < pos) ? oldIndex : -1; // becomes -1 if nodes were re-ordered
+    								oldIndices[i-start] = oldIndex;
+    								oe = old[oldIndex];
+    								old[oldIndex] = null;
+    								if (oe !== ve) updateNode(parent, oe, ve, hooks, nextSibling, ns);
+    								if (ve.dom != null) nextSibling = ve.dom;
+    								matched++;
+    							}
+    						}
+    						nextSibling = originalNextSibling;
+    						if (matched !== oldEnd - oldStart + 1) removeNodes(parent, old, oldStart, oldEnd + 1);
+    						if (matched === 0) createNodes(parent, vnodes, start, end + 1, hooks, nextSibling, ns);
+    						else {
+    							if (pos === -1) {
+    								// the indices of the indices of the items that are part of the
+    								// longest increasing subsequence in the oldIndices list
+    								lisIndices = makeLisIndices(oldIndices);
+    								li = lisIndices.length - 1;
+    								for (i = end; i >= start; i--) {
+    									v = vnodes[i];
+    									if (oldIndices[i-start] === -1) createNode(parent, v, hooks, ns, nextSibling);
+    									else {
+    										if (lisIndices[li] === i - start) li--;
+    										else moveNodes(parent, v, nextSibling);
+    									}
+    									if (v.dom != null) nextSibling = vnodes[i].dom;
+    								}
+    							} else {
+    								for (i = end; i >= start; i--) {
+    									v = vnodes[i];
+    									if (oldIndices[i-start] === -1) createNode(parent, v, hooks, ns, nextSibling);
+    									if (v.dom != null) nextSibling = vnodes[i].dom;
+    								}
+    							}
+    						}
+    					}
+    				}
+    			}
+    		}
+    		function updateNode(parent, old, vnode, hooks, nextSibling, ns) {
+    			var oldTag = old.tag, tag = vnode.tag;
+    			if (oldTag === tag) {
+    				vnode.state = old.state;
+    				vnode.events = old.events;
+    				if (shouldNotUpdate(vnode, old)) return
+    				if (typeof oldTag === "string") {
+    					if (vnode.attrs != null) {
+    						updateLifecycle(vnode.attrs, vnode, hooks);
+    					}
+    					switch (oldTag) {
+    						case "#": updateText(old, vnode); break
+    						case "<": updateHTML(parent, old, vnode, ns, nextSibling); break
+    						case "[": updateFragment(parent, old, vnode, hooks, nextSibling, ns); break
+    						default: updateElement(old, vnode, hooks, ns);
+    					}
+    				}
+    				else updateComponent(parent, old, vnode, hooks, nextSibling, ns);
+    			}
+    			else {
+    				removeNode(parent, old);
     				createNode(parent, vnode, hooks, ns, nextSibling);
     			}
     		}
-    	}
-    	function createNode(parent, vnode, hooks, ns, nextSibling) {
-    		var tag = vnode.tag;
-    		if (typeof tag === "string") {
-    			vnode.state = {};
-    			if (vnode.attrs != null) initLifecycle(vnode.attrs, vnode, hooks);
-    			switch (tag) {
-    				case "#": createText(parent, vnode, nextSibling); break
-    				case "<": createHTML(parent, vnode, ns, nextSibling); break
-    				case "[": createFragment(parent, vnode, hooks, ns, nextSibling); break
-    				default: createElement(parent, vnode, hooks, ns, nextSibling);
+    		function updateText(old, vnode) {
+    			if (old.children.toString() !== vnode.children.toString()) {
+    				old.dom.nodeValue = vnode.children;
+    			}
+    			vnode.dom = old.dom;
+    		}
+    		function updateHTML(parent, old, vnode, ns, nextSibling) {
+    			if (old.children !== vnode.children) {
+    				removeHTML(parent, old);
+    				createHTML(parent, vnode, ns, nextSibling);
+    			}
+    			else {
+    				vnode.dom = old.dom;
+    				vnode.domSize = old.domSize;
+    				vnode.instance = old.instance;
     			}
     		}
-    		else createComponent(parent, vnode, hooks, ns, nextSibling);
-    	}
-    	function createText(parent, vnode, nextSibling) {
-    		vnode.dom = $doc.createTextNode(vnode.children);
-    		insertNode(parent, vnode.dom, nextSibling);
-    	}
-    	var possibleParents = {caption: "table", thead: "table", tbody: "table", tfoot: "table", tr: "tbody", th: "tr", td: "tr", colgroup: "table", col: "colgroup"};
-    	function createHTML(parent, vnode, ns, nextSibling) {
-    		var match = vnode.children.match(/^\s*?<(\w+)/im) || [];
-    		// not using the proper parent makes the child element(s) vanish.
-    		//     var div = document.createElement("div")
-    		//     div.innerHTML = "<td>i</td><td>j</td>"
-    		//     console.log(div.innerHTML)
-    		// --> "ij", no <td> in sight.
-    		var temp = $doc.createElement(possibleParents[match[1]] || "div");
-    		if (ns === "http://www.w3.org/2000/svg") {
-    			temp.innerHTML = "<svg xmlns=\"http://www.w3.org/2000/svg\">" + vnode.children + "</svg>";
-    			temp = temp.firstChild;
-    		} else {
-    			temp.innerHTML = vnode.children;
-    		}
-    		vnode.dom = temp.firstChild;
-    		vnode.domSize = temp.childNodes.length;
-    		// Capture nodes to remove, so we don't confuse them.
-    		vnode.instance = [];
-    		var fragment = $doc.createDocumentFragment();
-    		var child;
-    		while (child = temp.firstChild) {
-    			vnode.instance.push(child);
-    			fragment.appendChild(child);
-    		}
-    		insertNode(parent, fragment, nextSibling);
-    	}
-    	function createFragment(parent, vnode, hooks, ns, nextSibling) {
-    		var fragment = $doc.createDocumentFragment();
-    		if (vnode.children != null) {
-    			var children = vnode.children;
-    			createNodes(fragment, children, 0, children.length, hooks, null, ns);
-    		}
-    		vnode.dom = fragment.firstChild;
-    		vnode.domSize = fragment.childNodes.length;
-    		insertNode(parent, fragment, nextSibling);
-    	}
-    	function createElement(parent, vnode, hooks, ns, nextSibling) {
-    		var tag = vnode.tag;
-    		var attrs = vnode.attrs;
-    		var is = attrs && attrs.is;
-
-    		ns = getNameSpace(vnode) || ns;
-
-    		var element = ns ?
-    			is ? $doc.createElementNS(ns, tag, {is: is}) : $doc.createElementNS(ns, tag) :
-    			is ? $doc.createElement(tag, {is: is}) : $doc.createElement(tag);
-    		vnode.dom = element;
-
-    		if (attrs != null) {
-    			setAttrs(vnode, attrs, ns);
-    		}
-
-    		insertNode(parent, element, nextSibling);
-
-    		if (!maybeSetContentEditable(vnode)) {
-    			if (vnode.children != null) {
-    				var children = vnode.children;
-    				createNodes(element, children, 0, children.length, hooks, null, ns);
-    				if (vnode.tag === "select" && attrs != null) setLateSelectAttrs(vnode, attrs);
-    			}
-    		}
-    	}
-    	function initComponent(vnode, hooks) {
-    		var sentinel;
-    		if (typeof vnode.tag.view === "function") {
-    			vnode.state = Object.create(vnode.tag);
-    			sentinel = vnode.state.view;
-    			if (sentinel.$$reentrantLock$$ != null) return
-    			sentinel.$$reentrantLock$$ = true;
-    		} else {
-    			vnode.state = void 0;
-    			sentinel = vnode.tag;
-    			if (sentinel.$$reentrantLock$$ != null) return
-    			sentinel.$$reentrantLock$$ = true;
-    			vnode.state = (vnode.tag.prototype != null && typeof vnode.tag.prototype.view === "function") ? new vnode.tag(vnode) : vnode.tag(vnode);
-    		}
-    		initLifecycle(vnode.state, vnode, hooks);
-    		if (vnode.attrs != null) initLifecycle(vnode.attrs, vnode, hooks);
-    		vnode.instance = Vnode$1.normalize(callHook.call(vnode.state.view, vnode));
-    		if (vnode.instance === vnode) throw Error("A view cannot return the vnode it received as argument")
-    		sentinel.$$reentrantLock$$ = null;
-    	}
-    	function createComponent(parent, vnode, hooks, ns, nextSibling) {
-    		initComponent(vnode, hooks);
-    		if (vnode.instance != null) {
-    			createNode(parent, vnode.instance, hooks, ns, nextSibling);
-    			vnode.dom = vnode.instance.dom;
-    			vnode.domSize = vnode.dom != null ? vnode.instance.domSize : 0;
-    		}
-    		else {
-    			vnode.domSize = 0;
-    		}
-    	}
-
-    	//update
-    	/**
-    	 * @param {Element|Fragment} parent - the parent element
-    	 * @param {Vnode[] | null} old - the list of vnodes of the last `render()` call for
-    	 *                               this part of the tree
-    	 * @param {Vnode[] | null} vnodes - as above, but for the current `render()` call.
-    	 * @param {Function[]} hooks - an accumulator of post-render hooks (oncreate/onupdate)
-    	 * @param {Element | null} nextSibling - the next DOM node if we're dealing with a
-    	 *                                       fragment that is not the last item in its
-    	 *                                       parent
-    	 * @param {'svg' | 'math' | String | null} ns) - the current XML namespace, if any
-    	 * @returns void
-    	 */
-    	// This function diffs and patches lists of vnodes, both keyed and unkeyed.
-    	//
-    	// We will:
-    	//
-    	// 1. describe its general structure
-    	// 2. focus on the diff algorithm optimizations
-    	// 3. discuss DOM node operations.
-
-    	// ## Overview:
-    	//
-    	// The updateNodes() function:
-    	// - deals with trivial cases
-    	// - determines whether the lists are keyed or unkeyed based on the first non-null node
-    	//   of each list.
-    	// - diffs them and patches the DOM if needed (that's the brunt of the code)
-    	// - manages the leftovers: after diffing, are there:
-    	//   - old nodes left to remove?
-    	// 	 - new nodes to insert?
-    	// 	 deal with them!
-    	//
-    	// The lists are only iterated over once, with an exception for the nodes in `old` that
-    	// are visited in the fourth part of the diff and in the `removeNodes` loop.
-
-    	// ## Diffing
-    	//
-    	// Reading https://github.com/localvoid/ivi/blob/ddc09d06abaef45248e6133f7040d00d3c6be853/packages/ivi/src/vdom/implementation.ts#L617-L837
-    	// may be good for context on longest increasing subsequence-based logic for moving nodes.
-    	//
-    	// In order to diff keyed lists, one has to
-    	//
-    	// 1) match nodes in both lists, per key, and update them accordingly
-    	// 2) create the nodes present in the new list, but absent in the old one
-    	// 3) remove the nodes present in the old list, but absent in the new one
-    	// 4) figure out what nodes in 1) to move in order to minimize the DOM operations.
-    	//
-    	// To achieve 1) one can create a dictionary of keys => index (for the old list), then iterate
-    	// over the new list and for each new vnode, find the corresponding vnode in the old list using
-    	// the map.
-    	// 2) is achieved in the same step: if a new node has no corresponding entry in the map, it is new
-    	// and must be created.
-    	// For the removals, we actually remove the nodes that have been updated from the old list.
-    	// The nodes that remain in that list after 1) and 2) have been performed can be safely removed.
-    	// The fourth step is a bit more complex and relies on the longest increasing subsequence (LIS)
-    	// algorithm.
-    	//
-    	// the longest increasing subsequence is the list of nodes that can remain in place. Imagine going
-    	// from `1,2,3,4,5` to `4,5,1,2,3` where the numbers are not necessarily the keys, but the indices
-    	// corresponding to the keyed nodes in the old list (keyed nodes `e,d,c,b,a` => `b,a,e,d,c` would
-    	//  match the above lists, for example).
-    	//
-    	// In there are two increasing subsequences: `4,5` and `1,2,3`, the latter being the longest. We
-    	// can update those nodes without moving them, and only call `insertNode` on `4` and `5`.
-    	//
-    	// @localvoid adapted the algo to also support node deletions and insertions (the `lis` is actually
-    	// the longest increasing subsequence *of old nodes still present in the new list*).
-    	//
-    	// It is a general algorithm that is fireproof in all circumstances, but it requires the allocation
-    	// and the construction of a `key => oldIndex` map, and three arrays (one with `newIndex => oldIndex`,
-    	// the `LIS` and a temporary one to create the LIS).
-    	//
-    	// So we cheat where we can: if the tails of the lists are identical, they are guaranteed to be part of
-    	// the LIS and can be updated without moving them.
-    	//
-    	// If two nodes are swapped, they are guaranteed not to be part of the LIS, and must be moved (with
-    	// the exception of the last node if the list is fully reversed).
-    	//
-    	// ## Finding the next sibling.
-    	//
-    	// `updateNode()` and `createNode()` expect a nextSibling parameter to perform DOM operations.
-    	// When the list is being traversed top-down, at any index, the DOM nodes up to the previous
-    	// vnode reflect the content of the new list, whereas the rest of the DOM nodes reflect the old
-    	// list. The next sibling must be looked for in the old list using `getNextSibling(... oldStart + 1 ...)`.
-    	//
-    	// In the other scenarios (swaps, upwards traversal, map-based diff),
-    	// the new vnodes list is traversed upwards. The DOM nodes at the bottom of the list reflect the
-    	// bottom part of the new vnodes list, and we can use the `v.dom`  value of the previous node
-    	// as the next sibling (cached in the `nextSibling` variable).
-
-
-    	// ## DOM node moves
-    	//
-    	// In most scenarios `updateNode()` and `createNode()` perform the DOM operations. However,
-    	// this is not the case if the node moved (second and fourth part of the diff algo). We move
-    	// the old DOM nodes before updateNode runs because it enables us to use the cached `nextSibling`
-    	// variable rather than fetching it using `getNextSibling()`.
-    	//
-    	// The fourth part of the diff currently inserts nodes unconditionally, leading to issues
-    	// like #1791 and #1999. We need to be smarter about those situations where adjascent old
-    	// nodes remain together in the new list in a way that isn't covered by parts one and
-    	// three of the diff algo.
-
-    	function updateNodes(parent, old, vnodes, hooks, nextSibling, ns) {
-    		if (old === vnodes || old == null && vnodes == null) return
-    		else if (old == null || old.length === 0) createNodes(parent, vnodes, 0, vnodes.length, hooks, nextSibling, ns);
-    		else if (vnodes == null || vnodes.length === 0) removeNodes(parent, old, 0, old.length);
-    		else {
-    			var isOldKeyed = old[0] != null && old[0].key != null;
-    			var isKeyed = vnodes[0] != null && vnodes[0].key != null;
-    			var start = 0, oldStart = 0;
-    			if (!isOldKeyed) while (oldStart < old.length && old[oldStart] == null) oldStart++;
-    			if (!isKeyed) while (start < vnodes.length && vnodes[start] == null) start++;
-    			if (isOldKeyed !== isKeyed) {
-    				removeNodes(parent, old, oldStart, old.length);
-    				createNodes(parent, vnodes, start, vnodes.length, hooks, nextSibling, ns);
-    			} else if (!isKeyed) {
-    				// Don't index past the end of either list (causes deopts).
-    				var commonLength = old.length < vnodes.length ? old.length : vnodes.length;
-    				// Rewind if necessary to the first non-null index on either side.
-    				// We could alternatively either explicitly create or remove nodes when `start !== oldStart`
-    				// but that would be optimizing for sparse lists which are more rare than dense ones.
-    				start = start < oldStart ? start : oldStart;
-    				for (; start < commonLength; start++) {
-    					o = old[start];
-    					v = vnodes[start];
-    					if (o === v || o == null && v == null) continue
-    					else if (o == null) createNode(parent, v, hooks, ns, getNextSibling(old, start + 1, nextSibling));
-    					else if (v == null) removeNode(parent, o);
-    					else updateNode(parent, o, v, hooks, getNextSibling(old, start + 1, nextSibling), ns);
-    				}
-    				if (old.length > commonLength) removeNodes(parent, old, start, old.length);
-    				if (vnodes.length > commonLength) createNodes(parent, vnodes, start, vnodes.length, hooks, nextSibling, ns);
-    			} else {
-    				// keyed diff
-    				var oldEnd = old.length - 1, end = vnodes.length - 1, map, o, v, oe, ve, topSibling;
-
-    				// bottom-up
-    				while (oldEnd >= oldStart && end >= start) {
-    					oe = old[oldEnd];
-    					ve = vnodes[end];
-    					if (oe.key !== ve.key) break
-    					if (oe !== ve) updateNode(parent, oe, ve, hooks, nextSibling, ns);
-    					if (ve.dom != null) nextSibling = ve.dom;
-    					oldEnd--, end--;
-    				}
-    				// top-down
-    				while (oldEnd >= oldStart && end >= start) {
-    					o = old[oldStart];
-    					v = vnodes[start];
-    					if (o.key !== v.key) break
-    					oldStart++, start++;
-    					if (o !== v) updateNode(parent, o, v, hooks, getNextSibling(old, oldStart, nextSibling), ns);
-    				}
-    				// swaps and list reversals
-    				while (oldEnd >= oldStart && end >= start) {
-    					if (start === end) break
-    					if (o.key !== ve.key || oe.key !== v.key) break
-    					topSibling = getNextSibling(old, oldStart, nextSibling);
-    					moveNodes(parent, oe, topSibling);
-    					if (oe !== v) updateNode(parent, oe, v, hooks, topSibling, ns);
-    					if (++start <= --end) moveNodes(parent, o, nextSibling);
-    					if (o !== ve) updateNode(parent, o, ve, hooks, nextSibling, ns);
-    					if (ve.dom != null) nextSibling = ve.dom;
-    					oldStart++; oldEnd--;
-    					oe = old[oldEnd];
-    					ve = vnodes[end];
-    					o = old[oldStart];
-    					v = vnodes[start];
-    				}
-    				// bottom up once again
-    				while (oldEnd >= oldStart && end >= start) {
-    					if (oe.key !== ve.key) break
-    					if (oe !== ve) updateNode(parent, oe, ve, hooks, nextSibling, ns);
-    					if (ve.dom != null) nextSibling = ve.dom;
-    					oldEnd--, end--;
-    					oe = old[oldEnd];
-    					ve = vnodes[end];
-    				}
-    				if (start > end) removeNodes(parent, old, oldStart, oldEnd + 1);
-    				else if (oldStart > oldEnd) createNodes(parent, vnodes, start, end + 1, hooks, nextSibling, ns);
-    				else {
-    					// inspired by ivi https://github.com/ivijs/ivi/ by Boris Kaul
-    					var originalNextSibling = nextSibling, vnodesLength = end - start + 1, oldIndices = new Array(vnodesLength), li=0, i=0, pos = 2147483647, matched = 0, map, lisIndices;
-    					for (i = 0; i < vnodesLength; i++) oldIndices[i] = -1;
-    					for (i = end; i >= start; i--) {
-    						if (map == null) map = getKeyMap(old, oldStart, oldEnd + 1);
-    						ve = vnodes[i];
-    						var oldIndex = map[ve.key];
-    						if (oldIndex != null) {
-    							pos = (oldIndex < pos) ? oldIndex : -1; // becomes -1 if nodes were re-ordered
-    							oldIndices[i-start] = oldIndex;
-    							oe = old[oldIndex];
-    							old[oldIndex] = null;
-    							if (oe !== ve) updateNode(parent, oe, ve, hooks, nextSibling, ns);
-    							if (ve.dom != null) nextSibling = ve.dom;
-    							matched++;
-    						}
+    		function updateFragment(parent, old, vnode, hooks, nextSibling, ns) {
+    			updateNodes(parent, old.children, vnode.children, hooks, nextSibling, ns);
+    			var domSize = 0, children = vnode.children;
+    			vnode.dom = null;
+    			if (children != null) {
+    				for (var i = 0; i < children.length; i++) {
+    					var child = children[i];
+    					if (child != null && child.dom != null) {
+    						if (vnode.dom == null) vnode.dom = child.dom;
+    						domSize += child.domSize || 1;
     					}
-    					nextSibling = originalNextSibling;
-    					if (matched !== oldEnd - oldStart + 1) removeNodes(parent, old, oldStart, oldEnd + 1);
-    					if (matched === 0) createNodes(parent, vnodes, start, end + 1, hooks, nextSibling, ns);
+    				}
+    				if (domSize !== 1) vnode.domSize = domSize;
+    			}
+    		}
+    		function updateElement(old, vnode, hooks, ns) {
+    			var element = vnode.dom = old.dom;
+    			ns = getNameSpace(vnode) || ns;
+
+    			if (vnode.tag === "textarea") {
+    				if (vnode.attrs == null) vnode.attrs = {};
+    			}
+    			updateAttrs(vnode, old.attrs, vnode.attrs, ns);
+    			if (!maybeSetContentEditable(vnode)) {
+    				updateNodes(element, old.children, vnode.children, hooks, null, ns);
+    			}
+    		}
+    		function updateComponent(parent, old, vnode, hooks, nextSibling, ns) {
+    			vnode.instance = Vnode.normalize(callHook.call(vnode.state.view, vnode));
+    			if (vnode.instance === vnode) throw Error("A view cannot return the vnode it received as argument")
+    			updateLifecycle(vnode.state, vnode, hooks);
+    			if (vnode.attrs != null) updateLifecycle(vnode.attrs, vnode, hooks);
+    			if (vnode.instance != null) {
+    				if (old.instance == null) createNode(parent, vnode.instance, hooks, ns, nextSibling);
+    				else updateNode(parent, old.instance, vnode.instance, hooks, nextSibling, ns);
+    				vnode.dom = vnode.instance.dom;
+    				vnode.domSize = vnode.instance.domSize;
+    			}
+    			else if (old.instance != null) {
+    				removeNode(parent, old.instance);
+    				vnode.dom = undefined;
+    				vnode.domSize = 0;
+    			}
+    			else {
+    				vnode.dom = old.dom;
+    				vnode.domSize = old.domSize;
+    			}
+    		}
+    		function getKeyMap(vnodes, start, end) {
+    			var map = Object.create(null);
+    			for (; start < end; start++) {
+    				var vnode = vnodes[start];
+    				if (vnode != null) {
+    					var key = vnode.key;
+    					if (key != null) map[key] = start;
+    				}
+    			}
+    			return map
+    		}
+    		// Lifted from ivi https://github.com/ivijs/ivi/
+    		// takes a list of unique numbers (-1 is special and can
+    		// occur multiple times) and returns an array with the indices
+    		// of the items that are part of the longest increasing
+    		// subsequence
+    		var lisTemp = [];
+    		function makeLisIndices(a) {
+    			var result = [0];
+    			var u = 0, v = 0, i = 0;
+    			var il = lisTemp.length = a.length;
+    			for (var i = 0; i < il; i++) lisTemp[i] = a[i];
+    			for (var i = 0; i < il; ++i) {
+    				if (a[i] === -1) continue
+    				var j = result[result.length - 1];
+    				if (a[j] < a[i]) {
+    					lisTemp[i] = j;
+    					result.push(i);
+    					continue
+    				}
+    				u = 0;
+    				v = result.length - 1;
+    				while (u < v) {
+    					// Fast integer average without overflow.
+    					// eslint-disable-next-line no-bitwise
+    					var c = (u >>> 1) + (v >>> 1) + (u & v & 1);
+    					if (a[result[c]] < a[i]) {
+    						u = c + 1;
+    					}
     					else {
-    						if (pos === -1) {
-    							// the indices of the indices of the items that are part of the
-    							// longest increasing subsequence in the oldIndices list
-    							lisIndices = makeLisIndices(oldIndices);
-    							li = lisIndices.length - 1;
-    							for (i = end; i >= start; i--) {
-    								v = vnodes[i];
-    								if (oldIndices[i-start] === -1) createNode(parent, v, hooks, ns, nextSibling);
-    								else {
-    									if (lisIndices[li] === i - start) li--;
-    									else moveNodes(parent, v, nextSibling);
-    								}
-    								if (v.dom != null) nextSibling = vnodes[i].dom;
-    							}
-    						} else {
-    							for (i = end; i >= start; i--) {
-    								v = vnodes[i];
-    								if (oldIndices[i-start] === -1) createNode(parent, v, hooks, ns, nextSibling);
-    								if (v.dom != null) nextSibling = vnodes[i].dom;
-    							}
-    						}
+    						v = c;
     					}
     				}
-    			}
-    		}
-    	}
-    	function updateNode(parent, old, vnode, hooks, nextSibling, ns) {
-    		var oldTag = old.tag, tag = vnode.tag;
-    		if (oldTag === tag) {
-    			vnode.state = old.state;
-    			vnode.events = old.events;
-    			if (shouldNotUpdate(vnode, old)) return
-    			if (typeof oldTag === "string") {
-    				if (vnode.attrs != null) {
-    					updateLifecycle(vnode.attrs, vnode, hooks);
-    				}
-    				switch (oldTag) {
-    					case "#": updateText(old, vnode); break
-    					case "<": updateHTML(parent, old, vnode, ns, nextSibling); break
-    					case "[": updateFragment(parent, old, vnode, hooks, nextSibling, ns); break
-    					default: updateElement(old, vnode, hooks, ns);
+    				if (a[i] < a[result[u]]) {
+    					if (u > 0) lisTemp[i] = result[u - 1];
+    					result[u] = i;
     				}
     			}
-    			else updateComponent(parent, old, vnode, hooks, nextSibling, ns);
-    		}
-    		else {
-    			removeNode(parent, old);
-    			createNode(parent, vnode, hooks, ns, nextSibling);
-    		}
-    	}
-    	function updateText(old, vnode) {
-    		if (old.children.toString() !== vnode.children.toString()) {
-    			old.dom.nodeValue = vnode.children;
-    		}
-    		vnode.dom = old.dom;
-    	}
-    	function updateHTML(parent, old, vnode, ns, nextSibling) {
-    		if (old.children !== vnode.children) {
-    			removeHTML(parent, old);
-    			createHTML(parent, vnode, ns, nextSibling);
-    		}
-    		else {
-    			vnode.dom = old.dom;
-    			vnode.domSize = old.domSize;
-    			vnode.instance = old.instance;
-    		}
-    	}
-    	function updateFragment(parent, old, vnode, hooks, nextSibling, ns) {
-    		updateNodes(parent, old.children, vnode.children, hooks, nextSibling, ns);
-    		var domSize = 0, children = vnode.children;
-    		vnode.dom = null;
-    		if (children != null) {
-    			for (var i = 0; i < children.length; i++) {
-    				var child = children[i];
-    				if (child != null && child.dom != null) {
-    					if (vnode.dom == null) vnode.dom = child.dom;
-    					domSize += child.domSize || 1;
-    				}
+    			u = result.length;
+    			v = result[u - 1];
+    			while (u-- > 0) {
+    				result[u] = v;
+    				v = lisTemp[v];
     			}
-    			if (domSize !== 1) vnode.domSize = domSize;
-    		}
-    	}
-    	function updateElement(old, vnode, hooks, ns) {
-    		var element = vnode.dom = old.dom;
-    		ns = getNameSpace(vnode) || ns;
-
-    		if (vnode.tag === "textarea") {
-    			if (vnode.attrs == null) vnode.attrs = {};
-    		}
-    		updateAttrs(vnode, old.attrs, vnode.attrs, ns);
-    		if (!maybeSetContentEditable(vnode)) {
-    			updateNodes(element, old.children, vnode.children, hooks, null, ns);
-    		}
-    	}
-    	function updateComponent(parent, old, vnode, hooks, nextSibling, ns) {
-    		vnode.instance = Vnode$1.normalize(callHook.call(vnode.state.view, vnode));
-    		if (vnode.instance === vnode) throw Error("A view cannot return the vnode it received as argument")
-    		updateLifecycle(vnode.state, vnode, hooks);
-    		if (vnode.attrs != null) updateLifecycle(vnode.attrs, vnode, hooks);
-    		if (vnode.instance != null) {
-    			if (old.instance == null) createNode(parent, vnode.instance, hooks, ns, nextSibling);
-    			else updateNode(parent, old.instance, vnode.instance, hooks, nextSibling, ns);
-    			vnode.dom = vnode.instance.dom;
-    			vnode.domSize = vnode.instance.domSize;
-    		}
-    		else if (old.instance != null) {
-    			removeNode(parent, old.instance);
-    			vnode.dom = undefined;
-    			vnode.domSize = 0;
-    		}
-    		else {
-    			vnode.dom = old.dom;
-    			vnode.domSize = old.domSize;
-    		}
-    	}
-    	function getKeyMap(vnodes, start, end) {
-    		var map = Object.create(null);
-    		for (; start < end; start++) {
-    			var vnode = vnodes[start];
-    			if (vnode != null) {
-    				var key = vnode.key;
-    				if (key != null) map[key] = start;
-    			}
-    		}
-    		return map
-    	}
-    	// Lifted from ivi https://github.com/ivijs/ivi/
-    	// takes a list of unique numbers (-1 is special and can
-    	// occur multiple times) and returns an array with the indices
-    	// of the items that are part of the longest increasing
-    	// subsequence
-    	var lisTemp = [];
-    	function makeLisIndices(a) {
-    		var result = [0];
-    		var u = 0, v = 0, i = 0;
-    		var il = lisTemp.length = a.length;
-    		for (var i = 0; i < il; i++) lisTemp[i] = a[i];
-    		for (var i = 0; i < il; ++i) {
-    			if (a[i] === -1) continue
-    			var j = result[result.length - 1];
-    			if (a[j] < a[i]) {
-    				lisTemp[i] = j;
-    				result.push(i);
-    				continue
-    			}
-    			u = 0;
-    			v = result.length - 1;
-    			while (u < v) {
-    				// Fast integer average without overflow.
-    				// eslint-disable-next-line no-bitwise
-    				var c = (u >>> 1) + (v >>> 1) + (u & v & 1);
-    				if (a[result[c]] < a[i]) {
-    					u = c + 1;
-    				}
-    				else {
-    					v = c;
-    				}
-    			}
-    			if (a[i] < a[result[u]]) {
-    				if (u > 0) lisTemp[i] = result[u - 1];
-    				result[u] = i;
-    			}
-    		}
-    		u = result.length;
-    		v = result[u - 1];
-    		while (u-- > 0) {
-    			result[u] = v;
-    			v = lisTemp[v];
-    		}
-    		lisTemp.length = 0;
-    		return result
-    	}
-
-    	function getNextSibling(vnodes, i, nextSibling) {
-    		for (; i < vnodes.length; i++) {
-    			if (vnodes[i] != null && vnodes[i].dom != null) return vnodes[i].dom
-    		}
-    		return nextSibling
-    	}
-
-    	// This covers a really specific edge case:
-    	// - Parent node is keyed and contains child
-    	// - Child is removed, returns unresolved promise in `onbeforeremove`
-    	// - Parent node is moved in keyed diff
-    	// - Remaining children still need moved appropriately
-    	//
-    	// Ideally, I'd track removed nodes as well, but that introduces a lot more
-    	// complexity and I'm not exactly interested in doing that.
-    	function moveNodes(parent, vnode, nextSibling) {
-    		var frag = $doc.createDocumentFragment();
-    		moveChildToFrag(parent, frag, vnode);
-    		insertNode(parent, frag, nextSibling);
-    	}
-    	function moveChildToFrag(parent, frag, vnode) {
-    		// Dodge the recursion overhead in a few of the most common cases.
-    		while (vnode.dom != null && vnode.dom.parentNode === parent) {
-    			if (typeof vnode.tag !== "string") {
-    				vnode = vnode.instance;
-    				if (vnode != null) continue
-    			} else if (vnode.tag === "<") {
-    				for (var i = 0; i < vnode.instance.length; i++) {
-    					frag.appendChild(vnode.instance[i]);
-    				}
-    			} else if (vnode.tag !== "[") {
-    				// Don't recurse for text nodes *or* elements, just fragments
-    				frag.appendChild(vnode.dom);
-    			} else if (vnode.children.length === 1) {
-    				vnode = vnode.children[0];
-    				if (vnode != null) continue
-    			} else {
-    				for (var i = 0; i < vnode.children.length; i++) {
-    					var child = vnode.children[i];
-    					if (child != null) moveChildToFrag(parent, frag, child);
-    				}
-    			}
-    			break
-    		}
-    	}
-
-    	function insertNode(parent, dom, nextSibling) {
-    		if (nextSibling != null) parent.insertBefore(dom, nextSibling);
-    		else parent.appendChild(dom);
-    	}
-
-    	function maybeSetContentEditable(vnode) {
-    		if (vnode.attrs == null || (
-    			vnode.attrs.contenteditable == null && // attribute
-    			vnode.attrs.contentEditable == null // property
-    		)) return false
-    		var children = vnode.children;
-    		if (children != null && children.length === 1 && children[0].tag === "<") {
-    			var content = children[0].children;
-    			if (vnode.dom.innerHTML !== content) vnode.dom.innerHTML = content;
-    		}
-    		else if (children != null && children.length !== 0) throw new Error("Child node of a contenteditable must be trusted.")
-    		return true
-    	}
-
-    	//remove
-    	function removeNodes(parent, vnodes, start, end) {
-    		for (var i = start; i < end; i++) {
-    			var vnode = vnodes[i];
-    			if (vnode != null) removeNode(parent, vnode);
-    		}
-    	}
-    	function removeNode(parent, vnode) {
-    		var mask = 0;
-    		var original = vnode.state;
-    		var stateResult, attrsResult;
-    		if (typeof vnode.tag !== "string" && typeof vnode.state.onbeforeremove === "function") {
-    			var result = callHook.call(vnode.state.onbeforeremove, vnode);
-    			if (result != null && typeof result.then === "function") {
-    				mask = 1;
-    				stateResult = result;
-    			}
-    		}
-    		if (vnode.attrs && typeof vnode.attrs.onbeforeremove === "function") {
-    			var result = callHook.call(vnode.attrs.onbeforeremove, vnode);
-    			if (result != null && typeof result.then === "function") {
-    				// eslint-disable-next-line no-bitwise
-    				mask |= 2;
-    				attrsResult = result;
-    			}
-    		}
-    		checkState(vnode, original);
-
-    		// If we can, try to fast-path it and avoid all the overhead of awaiting
-    		if (!mask) {
-    			onremove(vnode);
-    			removeChild(parent, vnode);
-    		} else {
-    			if (stateResult != null) {
-    				var next = function () {
-    					// eslint-disable-next-line no-bitwise
-    					if (mask & 1) { mask &= 2; if (!mask) reallyRemove(); }
-    				};
-    				stateResult.then(next, next);
-    			}
-    			if (attrsResult != null) {
-    				var next = function () {
-    					// eslint-disable-next-line no-bitwise
-    					if (mask & 2) { mask &= 1; if (!mask) reallyRemove(); }
-    				};
-    				attrsResult.then(next, next);
-    			}
+    			lisTemp.length = 0;
+    			return result
     		}
 
-    		function reallyRemove() {
-    			checkState(vnode, original);
-    			onremove(vnode);
-    			removeChild(parent, vnode);
+    		function getNextSibling(vnodes, i, nextSibling) {
+    			for (; i < vnodes.length; i++) {
+    				if (vnodes[i] != null && vnodes[i].dom != null) return vnodes[i].dom
+    			}
+    			return nextSibling
     		}
-    	}
-    	function removeHTML(parent, vnode) {
-    		for (var i = 0; i < vnode.instance.length; i++) {
-    			parent.removeChild(vnode.instance[i]);
+
+    		// This covers a really specific edge case:
+    		// - Parent node is keyed and contains child
+    		// - Child is removed, returns unresolved promise in `onbeforeremove`
+    		// - Parent node is moved in keyed diff
+    		// - Remaining children still need moved appropriately
+    		//
+    		// Ideally, I'd track removed nodes as well, but that introduces a lot more
+    		// complexity and I'm not exactly interested in doing that.
+    		function moveNodes(parent, vnode, nextSibling) {
+    			var frag = $doc.createDocumentFragment();
+    			moveChildToFrag(parent, frag, vnode);
+    			insertNode(parent, frag, nextSibling);
     		}
-    	}
-    	function removeChild(parent, vnode) {
-    		// Dodge the recursion overhead in a few of the most common cases.
-    		while (vnode.dom != null && vnode.dom.parentNode === parent) {
-    			if (typeof vnode.tag !== "string") {
-    				vnode = vnode.instance;
-    				if (vnode != null) continue
-    			} else if (vnode.tag === "<") {
-    				removeHTML(parent, vnode);
-    			} else {
-    				if (vnode.tag !== "[") {
-    					parent.removeChild(vnode.dom);
-    					if (!Array.isArray(vnode.children)) break
-    				}
-    				if (vnode.children.length === 1) {
+    		function moveChildToFrag(parent, frag, vnode) {
+    			// Dodge the recursion overhead in a few of the most common cases.
+    			while (vnode.dom != null && vnode.dom.parentNode === parent) {
+    				if (typeof vnode.tag !== "string") {
+    					vnode = vnode.instance;
+    					if (vnode != null) continue
+    				} else if (vnode.tag === "<") {
+    					for (var i = 0; i < vnode.instance.length; i++) {
+    						frag.appendChild(vnode.instance[i]);
+    					}
+    				} else if (vnode.tag !== "[") {
+    					// Don't recurse for text nodes *or* elements, just fragments
+    					frag.appendChild(vnode.dom);
+    				} else if (vnode.children.length === 1) {
     					vnode = vnode.children[0];
     					if (vnode != null) continue
     				} else {
     					for (var i = 0; i < vnode.children.length; i++) {
     						var child = vnode.children[i];
-    						if (child != null) removeChild(parent, child);
+    						if (child != null) moveChildToFrag(parent, frag, child);
+    					}
+    				}
+    				break
+    			}
+    		}
+
+    		function insertNode(parent, dom, nextSibling) {
+    			if (nextSibling != null) parent.insertBefore(dom, nextSibling);
+    			else parent.appendChild(dom);
+    		}
+
+    		function maybeSetContentEditable(vnode) {
+    			if (vnode.attrs == null || (
+    				vnode.attrs.contenteditable == null && // attribute
+    				vnode.attrs.contentEditable == null // property
+    			)) return false
+    			var children = vnode.children;
+    			if (children != null && children.length === 1 && children[0].tag === "<") {
+    				var content = children[0].children;
+    				if (vnode.dom.innerHTML !== content) vnode.dom.innerHTML = content;
+    			}
+    			else if (children != null && children.length !== 0) throw new Error("Child node of a contenteditable must be trusted.")
+    			return true
+    		}
+
+    		//remove
+    		function removeNodes(parent, vnodes, start, end) {
+    			for (var i = start; i < end; i++) {
+    				var vnode = vnodes[i];
+    				if (vnode != null) removeNode(parent, vnode);
+    			}
+    		}
+    		function removeNode(parent, vnode) {
+    			var mask = 0;
+    			var original = vnode.state;
+    			var stateResult, attrsResult;
+    			if (typeof vnode.tag !== "string" && typeof vnode.state.onbeforeremove === "function") {
+    				var result = callHook.call(vnode.state.onbeforeremove, vnode);
+    				if (result != null && typeof result.then === "function") {
+    					mask = 1;
+    					stateResult = result;
+    				}
+    			}
+    			if (vnode.attrs && typeof vnode.attrs.onbeforeremove === "function") {
+    				var result = callHook.call(vnode.attrs.onbeforeremove, vnode);
+    				if (result != null && typeof result.then === "function") {
+    					// eslint-disable-next-line no-bitwise
+    					mask |= 2;
+    					attrsResult = result;
+    				}
+    			}
+    			checkState(vnode, original);
+
+    			// If we can, try to fast-path it and avoid all the overhead of awaiting
+    			if (!mask) {
+    				onremove(vnode);
+    				removeChild(parent, vnode);
+    			} else {
+    				if (stateResult != null) {
+    					var next = function () {
+    						// eslint-disable-next-line no-bitwise
+    						if (mask & 1) { mask &= 2; if (!mask) reallyRemove(); }
+    					};
+    					stateResult.then(next, next);
+    				}
+    				if (attrsResult != null) {
+    					var next = function () {
+    						// eslint-disable-next-line no-bitwise
+    						if (mask & 2) { mask &= 1; if (!mask) reallyRemove(); }
+    					};
+    					attrsResult.then(next, next);
+    				}
+    			}
+
+    			function reallyRemove() {
+    				checkState(vnode, original);
+    				onremove(vnode);
+    				removeChild(parent, vnode);
+    			}
+    		}
+    		function removeHTML(parent, vnode) {
+    			for (var i = 0; i < vnode.instance.length; i++) {
+    				parent.removeChild(vnode.instance[i]);
+    			}
+    		}
+    		function removeChild(parent, vnode) {
+    			// Dodge the recursion overhead in a few of the most common cases.
+    			while (vnode.dom != null && vnode.dom.parentNode === parent) {
+    				if (typeof vnode.tag !== "string") {
+    					vnode = vnode.instance;
+    					if (vnode != null) continue
+    				} else if (vnode.tag === "<") {
+    					removeHTML(parent, vnode);
+    				} else {
+    					if (vnode.tag !== "[") {
+    						parent.removeChild(vnode.dom);
+    						if (!Array.isArray(vnode.children)) break
+    					}
+    					if (vnode.children.length === 1) {
+    						vnode = vnode.children[0];
+    						if (vnode != null) continue
+    					} else {
+    						for (var i = 0; i < vnode.children.length; i++) {
+    							var child = vnode.children[i];
+    							if (child != null) removeChild(parent, child);
+    						}
+    					}
+    				}
+    				break
+    			}
+    		}
+    		function onremove(vnode) {
+    			if (typeof vnode.tag !== "string" && typeof vnode.state.onremove === "function") callHook.call(vnode.state.onremove, vnode);
+    			if (vnode.attrs && typeof vnode.attrs.onremove === "function") callHook.call(vnode.attrs.onremove, vnode);
+    			if (typeof vnode.tag !== "string") {
+    				if (vnode.instance != null) onremove(vnode.instance);
+    			} else {
+    				var children = vnode.children;
+    				if (Array.isArray(children)) {
+    					for (var i = 0; i < children.length; i++) {
+    						var child = children[i];
+    						if (child != null) onremove(child);
     					}
     				}
     			}
-    			break
     		}
-    	}
-    	function onremove(vnode) {
-    		if (typeof vnode.tag !== "string" && typeof vnode.state.onremove === "function") callHook.call(vnode.state.onremove, vnode);
-    		if (vnode.attrs && typeof vnode.attrs.onremove === "function") callHook.call(vnode.attrs.onremove, vnode);
-    		if (typeof vnode.tag !== "string") {
-    			if (vnode.instance != null) onremove(vnode.instance);
-    		} else {
-    			var children = vnode.children;
-    			if (Array.isArray(children)) {
-    				for (var i = 0; i < children.length; i++) {
-    					var child = children[i];
-    					if (child != null) onremove(child);
-    				}
-    			}
-    		}
-    	}
 
-    	//attrs
-    	function setAttrs(vnode, attrs, ns) {
-    		// If you assign an input type that is not supported by IE 11 with an assignment expression, an error will occur.
-    		//
-    		// Also, the DOM does things to inputs based on the value, so it needs set first.
-    		// See: https://github.com/MithrilJS/mithril.js/issues/2622
-    		if (vnode.tag === "input" && attrs.type != null) vnode.dom.setAttribute("type", attrs.type);
-    		var isFileInput = attrs != null && vnode.tag === "input" && attrs.type === "file";
-    		for (var key in attrs) {
-    			setAttr(vnode, key, null, attrs[key], ns, isFileInput);
-    		}
-    	}
-    	function setAttr(vnode, key, old, value, ns, isFileInput) {
-    		if (key === "key" || key === "is" || value == null || isLifecycleMethod(key) || (old === value && !isFormAttribute(vnode, key)) && typeof value !== "object" || key === "type" && vnode.tag === "input") return
-    		if (key[0] === "o" && key[1] === "n") return updateEvent(vnode, key, value)
-    		if (key.slice(0, 6) === "xlink:") vnode.dom.setAttributeNS("http://www.w3.org/1999/xlink", key.slice(6), value);
-    		else if (key === "style") updateStyle(vnode.dom, old, value);
-    		else if (hasPropertyKey(vnode, key, ns)) {
-    			if (key === "value") {
-    				// Only do the coercion if we're actually going to check the value.
-    				/* eslint-disable no-implicit-coercion */
-    				//setting input[value] to same value by typing on focused element moves cursor to end in Chrome
-    				//setting input[type=file][value] to same value causes an error to be generated if it's non-empty
-    				if ((vnode.tag === "input" || vnode.tag === "textarea") && vnode.dom.value === "" + value && (isFileInput || vnode.dom === activeElement())) return
-    				//setting select[value] to same value while having select open blinks select dropdown in Chrome
-    				if (vnode.tag === "select" && old !== null && vnode.dom.value === "" + value) return
-    				//setting option[value] to same value while having select open blinks select dropdown in Chrome
-    				if (vnode.tag === "option" && old !== null && vnode.dom.value === "" + value) return
-    				//setting input[type=file][value] to different value is an error if it's non-empty
-    				// Not ideal, but it at least works around the most common source of uncaught exceptions for now.
-    				if (isFileInput && "" + value !== "") { console.error("`value` is read-only on file inputs!"); return }
-    				/* eslint-enable no-implicit-coercion */
-    			}
-    			vnode.dom[key] = value;
-    		} else {
-    			if (typeof value === "boolean") {
-    				if (value) vnode.dom.setAttribute(key, "");
-    				else vnode.dom.removeAttribute(key);
-    			}
-    			else vnode.dom.setAttribute(key === "className" ? "class" : key, value);
-    		}
-    	}
-    	function removeAttr(vnode, key, old, ns) {
-    		if (key === "key" || key === "is" || old == null || isLifecycleMethod(key)) return
-    		if (key[0] === "o" && key[1] === "n") updateEvent(vnode, key, undefined);
-    		else if (key === "style") updateStyle(vnode.dom, old, null);
-    		else if (
-    			hasPropertyKey(vnode, key, ns)
-    			&& key !== "className"
-    			&& key !== "title" // creates "null" as title
-    			&& !(key === "value" && (
-    				vnode.tag === "option"
-    				|| vnode.tag === "select" && vnode.dom.selectedIndex === -1 && vnode.dom === activeElement()
-    			))
-    			&& !(vnode.tag === "input" && key === "type")
-    		) {
-    			vnode.dom[key] = null;
-    		} else {
-    			var nsLastIndex = key.indexOf(":");
-    			if (nsLastIndex !== -1) key = key.slice(nsLastIndex + 1);
-    			if (old !== false) vnode.dom.removeAttribute(key === "className" ? "class" : key);
-    		}
-    	}
-    	function setLateSelectAttrs(vnode, attrs) {
-    		if ("value" in attrs) {
-    			if(attrs.value === null) {
-    				if (vnode.dom.selectedIndex !== -1) vnode.dom.value = null;
-    			} else {
-    				var normalized = "" + attrs.value; // eslint-disable-line no-implicit-coercion
-    				if (vnode.dom.value !== normalized || vnode.dom.selectedIndex === -1) {
-    					vnode.dom.value = normalized;
-    				}
-    			}
-    		}
-    		if ("selectedIndex" in attrs) setAttr(vnode, "selectedIndex", null, attrs.selectedIndex, undefined);
-    	}
-    	function updateAttrs(vnode, old, attrs, ns) {
-    		if (old && old === attrs) {
-    			console.warn("Don't reuse attrs object, use new object for every redraw, this will throw in next major");
-    		}
-    		if (attrs != null) {
+    		//attrs
+    		function setAttrs(vnode, attrs, ns) {
     			// If you assign an input type that is not supported by IE 11 with an assignment expression, an error will occur.
     			//
     			// Also, the DOM does things to inputs based on the value, so it needs set first.
     			// See: https://github.com/MithrilJS/mithril.js/issues/2622
     			if (vnode.tag === "input" && attrs.type != null) vnode.dom.setAttribute("type", attrs.type);
-    			var isFileInput = vnode.tag === "input" && attrs.type === "file";
+    			var isFileInput = attrs != null && vnode.tag === "input" && attrs.type === "file";
     			for (var key in attrs) {
-    				setAttr(vnode, key, old && old[key], attrs[key], ns, isFileInput);
+    				setAttr(vnode, key, null, attrs[key], ns, isFileInput);
     			}
     		}
-    		var val;
-    		if (old != null) {
-    			for (var key in old) {
-    				if (((val = old[key]) != null) && (attrs == null || attrs[key] == null)) {
-    					removeAttr(vnode, key, val, ns);
+    		function setAttr(vnode, key, old, value, ns, isFileInput) {
+    			if (key === "key" || key === "is" || value == null || isLifecycleMethod(key) || (old === value && !isFormAttribute(vnode, key)) && typeof value !== "object" || key === "type" && vnode.tag === "input") return
+    			if (key[0] === "o" && key[1] === "n") return updateEvent(vnode, key, value)
+    			if (key.slice(0, 6) === "xlink:") vnode.dom.setAttributeNS("http://www.w3.org/1999/xlink", key.slice(6), value);
+    			else if (key === "style") updateStyle(vnode.dom, old, value);
+    			else if (hasPropertyKey(vnode, key, ns)) {
+    				if (key === "value") {
+    					// Only do the coercion if we're actually going to check the value.
+    					/* eslint-disable no-implicit-coercion */
+    					//setting input[value] to same value by typing on focused element moves cursor to end in Chrome
+    					//setting input[type=file][value] to same value causes an error to be generated if it's non-empty
+    					if ((vnode.tag === "input" || vnode.tag === "textarea") && vnode.dom.value === "" + value && (isFileInput || vnode.dom === activeElement())) return
+    					//setting select[value] to same value while having select open blinks select dropdown in Chrome
+    					if (vnode.tag === "select" && old !== null && vnode.dom.value === "" + value) return
+    					//setting option[value] to same value while having select open blinks select dropdown in Chrome
+    					if (vnode.tag === "option" && old !== null && vnode.dom.value === "" + value) return
+    					//setting input[type=file][value] to different value is an error if it's non-empty
+    					// Not ideal, but it at least works around the most common source of uncaught exceptions for now.
+    					if (isFileInput && "" + value !== "") { console.error("`value` is read-only on file inputs!"); return }
+    					/* eslint-enable no-implicit-coercion */
+    				}
+    				vnode.dom[key] = value;
+    			} else {
+    				if (typeof value === "boolean") {
+    					if (value) vnode.dom.setAttribute(key, "");
+    					else vnode.dom.removeAttribute(key);
+    				}
+    				else vnode.dom.setAttribute(key === "className" ? "class" : key, value);
+    			}
+    		}
+    		function removeAttr(vnode, key, old, ns) {
+    			if (key === "key" || key === "is" || old == null || isLifecycleMethod(key)) return
+    			if (key[0] === "o" && key[1] === "n") updateEvent(vnode, key, undefined);
+    			else if (key === "style") updateStyle(vnode.dom, old, null);
+    			else if (
+    				hasPropertyKey(vnode, key, ns)
+    				&& key !== "className"
+    				&& key !== "title" // creates "null" as title
+    				&& !(key === "value" && (
+    					vnode.tag === "option"
+    					|| vnode.tag === "select" && vnode.dom.selectedIndex === -1 && vnode.dom === activeElement()
+    				))
+    				&& !(vnode.tag === "input" && key === "type")
+    			) {
+    				vnode.dom[key] = null;
+    			} else {
+    				var nsLastIndex = key.indexOf(":");
+    				if (nsLastIndex !== -1) key = key.slice(nsLastIndex + 1);
+    				if (old !== false) vnode.dom.removeAttribute(key === "className" ? "class" : key);
+    			}
+    		}
+    		function setLateSelectAttrs(vnode, attrs) {
+    			if ("value" in attrs) {
+    				if(attrs.value === null) {
+    					if (vnode.dom.selectedIndex !== -1) vnode.dom.value = null;
+    				} else {
+    					var normalized = "" + attrs.value; // eslint-disable-line no-implicit-coercion
+    					if (vnode.dom.value !== normalized || vnode.dom.selectedIndex === -1) {
+    						vnode.dom.value = normalized;
+    					}
+    				}
+    			}
+    			if ("selectedIndex" in attrs) setAttr(vnode, "selectedIndex", null, attrs.selectedIndex, undefined);
+    		}
+    		function updateAttrs(vnode, old, attrs, ns) {
+    			if (old && old === attrs) {
+    				console.warn("Don't reuse attrs object, use new object for every redraw, this will throw in next major");
+    			}
+    			if (attrs != null) {
+    				// If you assign an input type that is not supported by IE 11 with an assignment expression, an error will occur.
+    				//
+    				// Also, the DOM does things to inputs based on the value, so it needs set first.
+    				// See: https://github.com/MithrilJS/mithril.js/issues/2622
+    				if (vnode.tag === "input" && attrs.type != null) vnode.dom.setAttribute("type", attrs.type);
+    				var isFileInput = vnode.tag === "input" && attrs.type === "file";
+    				for (var key in attrs) {
+    					setAttr(vnode, key, old && old[key], attrs[key], ns, isFileInput);
+    				}
+    			}
+    			var val;
+    			if (old != null) {
+    				for (var key in old) {
+    					if (((val = old[key]) != null) && (attrs == null || attrs[key] == null)) {
+    						removeAttr(vnode, key, val, ns);
+    					}
     				}
     			}
     		}
-    	}
-    	function isFormAttribute(vnode, attr) {
-    		return attr === "value" || attr === "checked" || attr === "selectedIndex" || attr === "selected" && vnode.dom === activeElement() || vnode.tag === "option" && vnode.dom.parentNode === $doc.activeElement
-    	}
-    	function isLifecycleMethod(attr) {
-    		return attr === "oninit" || attr === "oncreate" || attr === "onupdate" || attr === "onremove" || attr === "onbeforeremove" || attr === "onbeforeupdate"
-    	}
-    	function hasPropertyKey(vnode, key, ns) {
-    		// Filter out namespaced keys
-    		return ns === undefined && (
-    			// If it's a custom element, just keep it.
-    			vnode.tag.indexOf("-") > -1 || vnode.attrs != null && vnode.attrs.is ||
-    			// If it's a normal element, let's try to avoid a few browser bugs.
-    			key !== "href" && key !== "list" && key !== "form" && key !== "width" && key !== "height"// && key !== "type"
-    			// Defer the property check until *after* we check everything.
-    		) && key in vnode.dom
-    	}
+    		function isFormAttribute(vnode, attr) {
+    			return attr === "value" || attr === "checked" || attr === "selectedIndex" || attr === "selected" && vnode.dom === activeElement() || vnode.tag === "option" && vnode.dom.parentNode === $doc.activeElement
+    		}
+    		function isLifecycleMethod(attr) {
+    			return attr === "oninit" || attr === "oncreate" || attr === "onupdate" || attr === "onremove" || attr === "onbeforeremove" || attr === "onbeforeupdate"
+    		}
+    		function hasPropertyKey(vnode, key, ns) {
+    			// Filter out namespaced keys
+    			return ns === undefined && (
+    				// If it's a custom element, just keep it.
+    				vnode.tag.indexOf("-") > -1 || vnode.attrs != null && vnode.attrs.is ||
+    				// If it's a normal element, let's try to avoid a few browser bugs.
+    				key !== "href" && key !== "list" && key !== "form" && key !== "width" && key !== "height"// && key !== "type"
+    				// Defer the property check until *after* we check everything.
+    			) && key in vnode.dom
+    		}
 
-    	//style
-    	var uppercaseRegex = /[A-Z]/g;
-    	function toLowerCase(capital) { return "-" + capital.toLowerCase() }
-    	function normalizeKey(key) {
-    		return key[0] === "-" && key[1] === "-" ? key :
-    			key === "cssFloat" ? "float" :
-    				key.replace(uppercaseRegex, toLowerCase)
-    	}
-    	function updateStyle(element, old, style) {
-    		if (old === style) ; else if (style == null) {
-    			// New style is missing, just clear it.
-    			element.style.cssText = "";
-    		} else if (typeof style !== "object") {
-    			// New style is a string, let engine deal with patching.
-    			element.style.cssText = style;
-    		} else if (old == null || typeof old !== "object") {
-    			// `old` is missing or a string, `style` is an object.
-    			element.style.cssText = "";
-    			// Add new style properties
-    			for (var key in style) {
-    				var value = style[key];
-    				if (value != null) element.style.setProperty(normalizeKey(key), String(value));
-    			}
-    		} else {
-    			// Both old & new are (different) objects.
-    			// Update style properties that have changed
-    			for (var key in style) {
-    				var value = style[key];
-    				if (value != null && (value = String(value)) !== String(old[key])) {
-    					element.style.setProperty(normalizeKey(key), value);
+    		//style
+    		var uppercaseRegex = /[A-Z]/g;
+    		function toLowerCase(capital) { return "-" + capital.toLowerCase() }
+    		function normalizeKey(key) {
+    			return key[0] === "-" && key[1] === "-" ? key :
+    				key === "cssFloat" ? "float" :
+    					key.replace(uppercaseRegex, toLowerCase)
+    		}
+    		function updateStyle(element, old, style) {
+    			if (old === style) ; else if (style == null) {
+    				// New style is missing, just clear it.
+    				element.style.cssText = "";
+    			} else if (typeof style !== "object") {
+    				// New style is a string, let engine deal with patching.
+    				element.style.cssText = style;
+    			} else if (old == null || typeof old !== "object") {
+    				// `old` is missing or a string, `style` is an object.
+    				element.style.cssText = "";
+    				// Add new style properties
+    				for (var key in style) {
+    					var value = style[key];
+    					if (value != null) element.style.setProperty(normalizeKey(key), String(value));
     				}
-    			}
-    			// Remove style properties that no longer exist
-    			for (var key in old) {
-    				if (old[key] != null && style[key] == null) {
-    					element.style.removeProperty(normalizeKey(key));
+    			} else {
+    				// Both old & new are (different) objects.
+    				// Update style properties that have changed
+    				for (var key in style) {
+    					var value = style[key];
+    					if (value != null && (value = String(value)) !== String(old[key])) {
+    						element.style.setProperty(normalizeKey(key), value);
+    					}
+    				}
+    				// Remove style properties that no longer exist
+    				for (var key in old) {
+    					if (old[key] != null && style[key] == null) {
+    						element.style.removeProperty(normalizeKey(key));
+    					}
     				}
     			}
     		}
-    	}
 
-    	// Here's an explanation of how this works:
-    	// 1. The event names are always (by design) prefixed by `on`.
-    	// 2. The EventListener interface accepts either a function or an object
-    	//    with a `handleEvent` method.
-    	// 3. The object does not inherit from `Object.prototype`, to avoid
-    	//    any potential interference with that (e.g. setters).
-    	// 4. The event name is remapped to the handler before calling it.
-    	// 5. In function-based event handlers, `ev.target === this`. We replicate
-    	//    that below.
-    	// 6. In function-based event handlers, `return false` prevents the default
-    	//    action and stops event propagation. We replicate that below.
-    	function EventDict() {
-    		// Save this, so the current redraw is correctly tracked.
-    		this._ = currentRedraw;
-    	}
-    	EventDict.prototype = Object.create(null);
-    	EventDict.prototype.handleEvent = function (ev) {
-    		var handler = this["on" + ev.type];
-    		var result;
-    		if (typeof handler === "function") result = handler.call(ev.currentTarget, ev);
-    		else if (typeof handler.handleEvent === "function") handler.handleEvent(ev);
-    		if (this._ && ev.redraw !== false) (0, this._)();
-    		if (result === false) {
-    			ev.preventDefault();
-    			ev.stopPropagation();
+    		// Here's an explanation of how this works:
+    		// 1. The event names are always (by design) prefixed by `on`.
+    		// 2. The EventListener interface accepts either a function or an object
+    		//    with a `handleEvent` method.
+    		// 3. The object does not inherit from `Object.prototype`, to avoid
+    		//    any potential interference with that (e.g. setters).
+    		// 4. The event name is remapped to the handler before calling it.
+    		// 5. In function-based event handlers, `ev.target === this`. We replicate
+    		//    that below.
+    		// 6. In function-based event handlers, `return false` prevents the default
+    		//    action and stops event propagation. We replicate that below.
+    		function EventDict() {
+    			// Save this, so the current redraw is correctly tracked.
+    			this._ = currentRedraw;
+    		}
+    		EventDict.prototype = Object.create(null);
+    		EventDict.prototype.handleEvent = function (ev) {
+    			var handler = this["on" + ev.type];
+    			var result;
+    			if (typeof handler === "function") result = handler.call(ev.currentTarget, ev);
+    			else if (typeof handler.handleEvent === "function") handler.handleEvent(ev);
+    			if (this._ && ev.redraw !== false) (0, this._)();
+    			if (result === false) {
+    				ev.preventDefault();
+    				ev.stopPropagation();
+    			}
+    		};
+
+    		//event
+    		function updateEvent(vnode, key, value) {
+    			if (vnode.events != null) {
+    				vnode.events._ = currentRedraw;
+    				if (vnode.events[key] === value) return
+    				if (value != null && (typeof value === "function" || typeof value === "object")) {
+    					if (vnode.events[key] == null) vnode.dom.addEventListener(key.slice(2), vnode.events, false);
+    					vnode.events[key] = value;
+    				} else {
+    					if (vnode.events[key] != null) vnode.dom.removeEventListener(key.slice(2), vnode.events, false);
+    					vnode.events[key] = undefined;
+    				}
+    			} else if (value != null && (typeof value === "function" || typeof value === "object")) {
+    				vnode.events = new EventDict();
+    				vnode.dom.addEventListener(key.slice(2), vnode.events, false);
+    				vnode.events[key] = value;
+    			}
+    		}
+
+    		//lifecycle
+    		function initLifecycle(source, vnode, hooks) {
+    			if (typeof source.oninit === "function") callHook.call(source.oninit, vnode);
+    			if (typeof source.oncreate === "function") hooks.push(callHook.bind(source.oncreate, vnode));
+    		}
+    		function updateLifecycle(source, vnode, hooks) {
+    			if (typeof source.onupdate === "function") hooks.push(callHook.bind(source.onupdate, vnode));
+    		}
+    		function shouldNotUpdate(vnode, old) {
+    			do {
+    				if (vnode.attrs != null && typeof vnode.attrs.onbeforeupdate === "function") {
+    					var force = callHook.call(vnode.attrs.onbeforeupdate, vnode, old);
+    					if (force !== undefined && !force) break
+    				}
+    				if (typeof vnode.tag !== "string" && typeof vnode.state.onbeforeupdate === "function") {
+    					var force = callHook.call(vnode.state.onbeforeupdate, vnode, old);
+    					if (force !== undefined && !force) break
+    				}
+    				return false
+    			} while (false); // eslint-disable-line no-constant-condition
+    			vnode.dom = old.dom;
+    			vnode.domSize = old.domSize;
+    			vnode.instance = old.instance;
+    			// One would think having the actual latest attributes would be ideal,
+    			// but it doesn't let us properly diff based on our current internal
+    			// representation. We have to save not only the old DOM info, but also
+    			// the attributes used to create it, as we diff *that*, not against the
+    			// DOM directly (with a few exceptions in `setAttr`). And, of course, we
+    			// need to save the children and text as they are conceptually not
+    			// unlike special "attributes" internally.
+    			vnode.attrs = old.attrs;
+    			vnode.children = old.children;
+    			vnode.text = old.text;
+    			return true
+    		}
+
+    		var currentDOM;
+
+    		return function(dom, vnodes, redraw) {
+    			if (!dom) throw new TypeError("DOM element being rendered to does not exist.")
+    			if (currentDOM != null && dom.contains(currentDOM)) {
+    				throw new TypeError("Node is currently being rendered to and thus is locked.")
+    			}
+    			var prevRedraw = currentRedraw;
+    			var prevDOM = currentDOM;
+    			var hooks = [];
+    			var active = activeElement();
+    			var namespace = dom.namespaceURI;
+
+    			currentDOM = dom;
+    			currentRedraw = typeof redraw === "function" ? redraw : undefined;
+    			try {
+    				// First time rendering into a node clears it out
+    				if (dom.vnodes == null) dom.textContent = "";
+    				vnodes = Vnode.normalizeChildren(Array.isArray(vnodes) ? vnodes : [vnodes]);
+    				updateNodes(dom, dom.vnodes, vnodes, hooks, null, namespace === "http://www.w3.org/1999/xhtml" ? undefined : namespace);
+    				dom.vnodes = vnodes;
+    				// `document.activeElement` can return null: https://html.spec.whatwg.org/multipage/interaction.html#dom-document-activeelement
+    				if (active != null && activeElement() !== active && typeof active.focus === "function") active.focus();
+    				for (var i = 0; i < hooks.length; i++) hooks[i]();
+    			} finally {
+    				currentRedraw = prevRedraw;
+    				currentDOM = prevDOM;
+    			}
     		}
     	};
+    	return render$2;
+    }
 
-    	//event
-    	function updateEvent(vnode, key, value) {
-    		if (vnode.events != null) {
-    			vnode.events._ = currentRedraw;
-    			if (vnode.events[key] === value) return
-    			if (value != null && (typeof value === "function" || typeof value === "object")) {
-    				if (vnode.events[key] == null) vnode.dom.addEventListener(key.slice(2), vnode.events, false);
-    				vnode.events[key] = value;
-    			} else {
-    				if (vnode.events[key] != null) vnode.dom.removeEventListener(key.slice(2), vnode.events, false);
-    				vnode.events[key] = undefined;
-    			}
-    		} else if (value != null && (typeof value === "function" || typeof value === "object")) {
-    			vnode.events = new EventDict();
-    			vnode.dom.addEventListener(key.slice(2), vnode.events, false);
-    			vnode.events[key] = value;
-    		}
-    	}
-
-    	//lifecycle
-    	function initLifecycle(source, vnode, hooks) {
-    		if (typeof source.oninit === "function") callHook.call(source.oninit, vnode);
-    		if (typeof source.oncreate === "function") hooks.push(callHook.bind(source.oncreate, vnode));
-    	}
-    	function updateLifecycle(source, vnode, hooks) {
-    		if (typeof source.onupdate === "function") hooks.push(callHook.bind(source.onupdate, vnode));
-    	}
-    	function shouldNotUpdate(vnode, old) {
-    		do {
-    			if (vnode.attrs != null && typeof vnode.attrs.onbeforeupdate === "function") {
-    				var force = callHook.call(vnode.attrs.onbeforeupdate, vnode, old);
-    				if (force !== undefined && !force) break
-    			}
-    			if (typeof vnode.tag !== "string" && typeof vnode.state.onbeforeupdate === "function") {
-    				var force = callHook.call(vnode.state.onbeforeupdate, vnode, old);
-    				if (force !== undefined && !force) break
-    			}
-    			return false
-    		} while (false); // eslint-disable-line no-constant-condition
-    		vnode.dom = old.dom;
-    		vnode.domSize = old.domSize;
-    		vnode.instance = old.instance;
-    		// One would think having the actual latest attributes would be ideal,
-    		// but it doesn't let us properly diff based on our current internal
-    		// representation. We have to save not only the old DOM info, but also
-    		// the attributes used to create it, as we diff *that*, not against the
-    		// DOM directly (with a few exceptions in `setAttr`). And, of course, we
-    		// need to save the children and text as they are conceptually not
-    		// unlike special "attributes" internally.
-    		vnode.attrs = old.attrs;
-    		vnode.children = old.children;
-    		vnode.text = old.text;
-    		return true
-    	}
-
-    	var currentDOM;
-
-    	return function(dom, vnodes, redraw) {
-    		if (!dom) throw new TypeError("DOM element being rendered to does not exist.")
-    		if (currentDOM != null && dom.contains(currentDOM)) {
-    			throw new TypeError("Node is currently being rendered to and thus is locked.")
-    		}
-    		var prevRedraw = currentRedraw;
-    		var prevDOM = currentDOM;
-    		var hooks = [];
-    		var active = activeElement();
-    		var namespace = dom.namespaceURI;
-
-    		currentDOM = dom;
-    		currentRedraw = typeof redraw === "function" ? redraw : undefined;
-    		try {
-    			// First time rendering into a node clears it out
-    			if (dom.vnodes == null) dom.textContent = "";
-    			vnodes = Vnode$1.normalizeChildren(Array.isArray(vnodes) ? vnodes : [vnodes]);
-    			updateNodes(dom, dom.vnodes, vnodes, hooks, null, namespace === "http://www.w3.org/1999/xhtml" ? undefined : namespace);
-    			dom.vnodes = vnodes;
-    			// `document.activeElement` can return null: https://html.spec.whatwg.org/multipage/interaction.html#dom-document-activeelement
-    			if (active != null && activeElement() !== active && typeof active.focus === "function") active.focus();
-    			for (var i = 0; i < hooks.length; i++) hooks[i]();
-    		} finally {
-    			currentRedraw = prevRedraw;
-    			currentDOM = prevDOM;
-    		}
-    	}
-    };
-
-    var render$1 = render$2(typeof window !== "undefined" ? window : null);
+    var render$1 = requireRender()(typeof window !== "undefined" ? window : null);
 
     var Vnode = requireVnode();
 
@@ -5612,6 +5928,72 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
     m.censor = requireCensor();
 
     var mithril = m;
+
+    var _HelpModel_init;
+    const helpScrambleMillis = 2000, helpUrl = 'https://github.com/patricksurry/eastern-front-1941', helpText = ('\fh\x11' + '\x12'.repeat(40) + '\x05'
+        + '|\fl|'.repeat(22)
+        + '\x1a' + '\x12'.repeat(40) + '\x03'
+        + `\fH\f^
+
+
+Welcome to Chris Crawford's
+Eastern Front  1941
+Reversed by Patrick Surry \fc\x94}\fC
+
+\f@\x04<
+Select: \f#Click\f-, \f#n\f-ext, \f#p\f-rev, \f#<\f-, \f#>\f-
+
+Orders: \f#\x1f\f- \f#\x1c\f- \f#\x1d\f- \f#\x1e\f-, \f#Bksp\f-, \f#Space\f-, \f#Esc\f-
+
+Modes: \f#1\f- \f#2\f- \f#3\f- ..., \f#m\f- toggles
+
+Submit: \f#End\f-, \f#Fn \x1f\f-
+
+Toggle: \f#z\f-oom, e\f#x\f-tras, debu\f#g\f-
+
+\f^
+\f#?\f- shows this help
+Press any key to play!`);
+    class HelpModel {
+        constructor(clickHandler) {
+            this.window = new MappedDisplayLayer(42, 24, atasciiFont, { foregroundColor: 0x04, layerColor: 0x0E });
+            _HelpModel_init.set(this, false);
+            this.clickHandler = clickHandler;
+        }
+        paint(p, scramble) {
+            if (!__classPrivateFieldGet(this, _HelpModel_init, "f")) {
+                __classPrivateFieldSet(this, _HelpModel_init, true, "f");
+                const t0 = +new Date();
+                p = 0;
+                scramble = this.window.glyphs.map(row => row.map(() => Math.random()));
+                const paintScrambled = setInterval(() => {
+                    const pp = (+new Date() - t0) / helpScrambleMillis;
+                    this.paint(pp, scramble);
+                    mithril.redraw();
+                    if (pp >= 1)
+                        clearInterval(paintScrambled);
+                }, 250);
+            }
+            this.window.cls();
+            this.window.puts(helpText, { onclick: this.clickHandler });
+            this.window.glyphs.forEach(line => line.forEach(g => {
+                if (g === null || g === void 0 ? void 0 : g.foregroundColor)
+                    g.onclick = () => window.open(helpUrl);
+            }));
+            if (p != null && scramble != null) {
+                scramble.forEach((line, y) => line.forEach((v, x) => {
+                    if (p < v) {
+                        this.window.putc(Math.floor(Math.random() * 128), {
+                            x, y,
+                            foregroundColor: Math.floor(Math.random() * 256),
+                            backgroundColor: Math.floor(Math.random() * 256),
+                        });
+                    }
+                }));
+            }
+        }
+    }
+    _HelpModel_init = new WeakMap();
 
     var global$1 = (typeof global !== "undefined" ? global :
       typeof self !== "undefined" ? self :
@@ -7276,34 +7658,260 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         keyframes = _createEmotion.keyframes,
         css = _createEmotion.css;
 
-    const 
-    // Antic NTSC palette via https://en.wikipedia.org/wiki/List_of_video_game_console_palettes#NTSC
+    // various colour palettes to map the 128 color antic display to RGB
+    // WikiNTSC and (very similar) Atari800MacXnewStellaNTSC seem to work well in practice
+    function rgbs(strs) {
+        const rgbs = strs[0].trim().split(/\s+/).map(s => '#' + s);
+        if (rgbs.length == 128) {
+            return rgbs;
+        }
+        else if (rgbs.length == 256) {
+            return rgbs.filter((_, i) => i % 2 == 0);
+        }
+        else {
+            throw new Error("rgbs: Expected 128 or 256 rgb triples");
+        }
+    }
+    // from .act dump via: xxd -c24 -g3 Atari\ 128\ \(NTSC\).act | cut -c11-65 | head -16
     // 128 colors indexed via high 7 bits, e.g. 0x00 and 0x01 refer to the first entry
-    anticPaletteRGB = [
-        "#000000", "#404040", "#6c6c6c", "#909090", "#b0b0b0", "#c8c8c8", "#dcdcdc", "#ececec",
-        "#444400", "#646410", "#848424", "#a0a034", "#b8b840", "#d0d050", "#e8e85c", "#fcfc68",
-        "#702800", "#844414", "#985c28", "#ac783c", "#bc8c4c", "#cca05c", "#dcb468", "#ecc878",
-        "#841800", "#983418", "#ac5030", "#c06848", "#d0805c", "#e09470", "#eca880", "#fcbc94",
-        "#880000", "#9c2020", "#b03c3c", "#c05858", "#d07070", "#e08888", "#eca0a0", "#fcb4b4",
-        "#78005c", "#8c2074", "#a03c88", "#b0589c", "#c070b0", "#d084c0", "#dc9cd0", "#ecb0e0",
-        "#480078", "#602090", "#783ca4", "#8c58b8", "#a070cc", "#b484dc", "#c49cec", "#d4b0fc",
-        "#140084", "#302098", "#4c3cac", "#6858c0", "#7c70d0", "#9488e0", "#a8a0ec", "#bcb4fc",
-        "#000088", "#1c209c", "#3840b0", "#505cc0", "#6874d0", "#7c8ce0", "#90a4ec", "#a4b8fc",
-        "#00187c", "#1c3890", "#3854a8", "#5070bc", "#6888cc", "#7c9cdc", "#90b4ec", "#a4c8fc",
-        "#002c5c", "#1c4c78", "#386890", "#5084ac", "#689cc0", "#7cb4d4", "#90cce8", "#a4e0fc",
-        "#003c2c", "#1c5c48", "#387c64", "#509c80", "#68b494", "#7cd0ac", "#90e4c0", "#a4fcd4",
-        "#003c00", "#205c20", "#407c40", "#5c9c5c", "#74b474", "#8cd08c", "#a4e4a4", "#b8fcb8",
-        "#143800", "#345c1c", "#507c38", "#6c9850", "#84b468", "#9ccc7c", "#b4e490", "#c8fca4",
-        "#2c3000", "#4c501c", "#687034", "#848c4c", "#9ca864", "#b4c078", "#ccd488", "#e0ec9c",
-        "#442800", "#644818", "#846830", "#a08444", "#b89c58", "#d0b46c", "#e8cc7c", "#fce08c",
-    ];
+    const colorPalettes = {
+        // See Antic NTSC palette via https://en.wikipedia.org/wiki/List_of_video_game_console_palettes#NTSC
+        WikiNTSC: rgbs `
+000000 404040 6c6c6c 909090 b0b0b0 c8c8c8 dcdcdc ececec
+444400 646410 848424 a0a034 b8b840 d0d050 e8e85c fcfc68
+702800 844414 985c28 ac783c bc8c4c cca05c dcb468 ecc878
+841800 983418 ac5030 c06848 d0805c e09470 eca880 fcbc94
+880000 9c2020 b03c3c c05858 d07070 e08888 eca0a0 fcb4b4
+78005c 8c2074 a03c88 b0589c c070b0 d084c0 dc9cd0 ecb0e0
+480078 602090 783ca4 8c58b8 a070cc b484dc c49cec d4b0fc
+140084 302098 4c3cac 6858c0 7c70d0 9488e0 a8a0ec bcb4fc
+000088 1c209c 3840b0 505cc0 6874d0 7c8ce0 90a4ec a4b8fc
+00187c 1c3890 3854a8 5070bc 6888cc 7c9cdc 90b4ec a4c8fc
+002c5c 1c4c78 386890 5084ac 689cc0 7cb4d4 90cce8 a4e0fc
+003c2c 1c5c48 387c64 509c80 68b494 7cd0ac 90e4c0 a4fcd4
+003c00 205c20 407c40 5c9c5c 74b474 8cd08c a4e4a4 b8fcb8
+143800 345c1c 507c38 6c9850 84b468 9ccc7c b4e490 c8fca4
+2c3000 4c501c 687034 848c4c 9ca864 b4c078 ccd488 e0ec9c
+442800 644818 846830 a08444 b89c58 d0b46c e8cc7c fce08c
+`,
+        // from https://forums.atariage.com/topic/243369-atari-128-color-palettes/
+        AltirraNTSC: rgbs `
+000000 101010 393939 636363 7b7b7b a5a5a5 c6c6c6 efefef
+100000 312100 5a4200 846b00 9c8400 c6ad00 e7d629 fff74a
+310000 5a0800 7b2900 a55200 bd6b00 e79429 ffb552 ffde73
+4a0000 6b0000 941000 bd3929 d65242 ff7b6b ffa594 ffc6b5
+4a0000 730029 94004a bd2973 d64294 ff6bb5 ff94de ffb5ff
+39004a 630073 8c0094 ad21bd ce42d6 ef63ff ff8cff ffb5ff
+21007b 4200a5 6b00c6 9429ef ad42ff d66bff f794ff ffb5ff
+000094 2100bd 4210de 6b39ff 8452ff ad7bff ce9cff f7c6ff
+00008c 0000b5 1829d6 4252ff 5a6bff 8494ff a5b5ff cedeff
+000063 00218c 0042ad 186bd6 3984f7 5aadff 84ceff adf7ff
+001021 00394a 005a73 008494 219cb5 4ac6de 6be7ff 94ffff
+002100 004a00 006b21 00944a 18ad6b 42d68c 63f7b5 8cffde
+002900 004a00 007300 109c08 29b521 52de4a 73ff6b 9cff94
+002100 004a00 006b00 299400 42ad00 6bd610 94ff39 b5ff5a
+001000 083900 296300 528400 6ba500 94c600 b5ef18 deff42
+080000 312100 524a00 7b6b00 948c00 bdb500 e7d621 ffff4a
+`,
+        AltirraPAL: rgbs `
+000000 212121 4a4a4a 6b6b6b 848484 a5a5a5 cecece efefef
+420000 631800 843900 ad5a08 c67321 e79c42 ffbd63 ffde8c
+520000 730800 942918 bd4a39 d66352 f78c7b ffad9c ffcebd
+520000 7b0029 9c184a bd426b d65a84 ff7bad ff9cce ffc6ef
+520031 73005a 94107b bd399c d652b5 f773de ff94ff ffbdff
+39006b 63008c 8410ad a539d6 bd52ef e773ff ff94ff ffbdff
+21008c 4200ad 6318ce 8c42f7 a55aff c67bff e79cff ffc6ff
+00008c 0018ad 2139ce 4a63f7 637bff 849cff a5bdff cee7ff
+000863 00318c 0852ad 2973ce 4294e7 6bb5ff 8cd6ff adffff
+002131 004252 006373 188c9c 31a5b5 5ac6d6 7be7f7 9cffff
+002900 005221 007342 18946b 31ad84 52d6a5 73f7c6 9cffef
+003100 005a00 087b00 319c00 4ab518 6bde42 8cff63 b5ff84
+002900 005200 297300 4a9400 63ad00 8cd621 adf742 ceff63
+001800 294200 4a6300 6b8400 849c00 adc610 cee731 efff5a
+210800 4a2900 6b5200 8c7300 a58c00 ceb521 efd642 fff763
+420000 631800 843900 ad5a08 c67321 e79c42 ffbd63 ffde8c
+`,
+        // 256 color palettes from Atari800MacX
+        Atari800MacXreal: rgbs `
+323132 3f3e3f 4d4c4d 5b5b5b 6a696a 797879 888788 979797
+a1a0a1 afafaf bebebe cecdce dbdbdb ebeaeb fafafa ffffff
+612e00 6c3b00 7a4a00 885800 94670c a5761b b2842a c1943a
+ca9d43 daad53 e8bb62 f8cb72 ffd87f ffe88f fff79f ffffae
+6c2400 773000 844003 924e11 9e5d22 af6c31 bc7b41 cc8a50
+d5935b e4a369 f2b179 ffc289 ffcf97 ffdfa6 ffedb5 fffdc4
+751618 812324 8f3134 9d4043 aa4e50 b85e60 c66d6f d57d7f
+de8787 ed9596 fca4a5 ffb4b5 ffc2c4 ffd1d3 ffe0e1 ffeff0
+620e71 6e1b7c 7b2a8a 8a3998 9647a5 a557b5 b365c3 c375d1
+cd7eda dc8de9 ea97f7 f9acff ffbaff ffc9ff ffd9ff ffe8ff
+560f87 611d90 712c9e 7f3aac 8d48ba 9b58c7 a967d5 b877e5
+c280ed d090fc df9fff eeafff fcbdff ffccff ffdbff ffeaff
+461695 5122a0 6032ac 6e41bb 7c4fc8 8a5ed6 996de3 a87cf2
+b185fb c095ff cfa3ff dfb3ff eec1ff fcd0ff ffdfff ffefff
+212994 2d359f 3d44ad 4b53ba 5961c7 686fd5 777ee2 878ef2
+9097fa 96a6ff aeb5ff bfc4ff cdd2ff dae3ff eaf1ff fafeff
+0f3584 1c418d 2c509b 3a5eaa 486cb7 587bc5 678ad2 7699e2
+80a2eb 8fb2f9 9ec0ff add0ff bdddff cbecff dbfcff eaffff
+043f70 114b79 215988 2f6896 3e75a4 4d83b2 5c92c1 6ca1d2
+74abd9 83bae7 93c9f6 a2d8ff b1e6ff c0f5ff d0ffff deffff
+005918 006526 0f7235 1d8144 2c8e50 3b9d60 4aac6f 59bb7e
+63c487 72d396 82e2a5 92f1b5 9ffec3 aeffd2 beffe2 cefff1
+075c00 146800 227500 328300 3f910b 4fa01b 5eae2a 6ebd3b
+77c644 87d553 96e363 a7f373 b3fe80 c3ff8f d3ffa0 e3ffb0
+1a5600 286200 367000 457e00 538c00 629b07 70a916 80b926
+89c22f 99d13e a8df4d b7ef5c c5fc6b d5ff7b e3ff8b f3ff99
+334b00 405700 4d6500 5d7300 6a8200 7a9100 889e0f 98ae1f
+a1b728 bac638 bfd548 cee458 dcf266 ebff75 faff85 ffff95
+4b3c00 584900 655700 746500 817400 908307 9f9116 aea126
+b7aa2e c7ba3e d5c74d e5d75d f2e56b fef47a ffff8b ffff9a
+602e00 6d3a00 7a4900 895800 95670a a4761b b2832a c2943a
+cb9d44 daac53 e8ba62 f8cb73 ffd77f ffe791 fff69f ffffaf
+`,
+        Atari800MacXdefault: rgbs `
+000000 1c1c1c 393939 595959 797979 929292 ababab bcbcbc
+cdcdcd d9d9d9 e6e6e6 ececec f2f2f2 f8f8f8 ffffff ffffff
+391701 5e2304 833008 a54716 c85f24 e37820 ff911d ffab1d
+ffc51d ffce34 ffd84c ffe651 fff456 fff977 ffff98 ffff98
+451904 721e11 9f241e b33a20 c85122 e36920 ff811e ff8c25
+ff982c ffae38 ffc545 ffc559 ffc66d ffd587 ffe4a1 ffe4a1
+4a1704 7e1a0d b21d17 c82119 df251c ec3b38 fa5255 fc6161
+ff706e ff7f7e ff8f8f ff9d9e ffabad ffb9bd ffc7ce ffc7ce
+050568 3b136d 712272 8b2a8c a532a6 b938ba cd3ecf db47dd
+ea51eb f45ff5 fe6dff fe7afd ff87fb ff95fd ffa4ff ffa4ff
+280479 400984 590f90 70249d 8839aa a441c3 c04adc d054ed
+e05eff e96dff f27cff f88aff ff98ff fea1ff feabff feabff
+35088a 420aad 500cd0 6428d0 7945d0 8d4bd4 a251d9 b058ec
+be60ff c56bff cc77ff d183ff d790ff db9dff dfaaff dfaaff
+051e81 0626a5 082fca 263dd4 444cde 4f5aee 5a68ff 6575ff
+7183ff 8091ff 90a0ff 97a9ff 9fb2ff afbeff c0cbff c0cbff
+0c048b 2218a0 382db5 483ec7 584fda 6159ec 6b64ff 7a74ff
+8a84ff 918eff 9998ff a5a3ff b1aeff b8b8ff c0c2ff c0c2ff
+1d295a 1d3876 1d4892 1c5cac 1c71c6 3286cf 489bd9 4ea8ec
+55b6ff 70c7ff 8cd8ff 93dbff 9bdfff afe4ff c3e9ff c3e9ff
+2f4302 395202 446103 417a12 3e9421 4a9f2e 57ab3b 5cbd55
+61d070 69e27a 72f584 7cfa8d 87ff97 9affa6 adffb6 adffb6
+0a4108 0d540a 10680d 137d0f 169212 19a514 1cb917 1ec919
+21d91b 47e42d 6ef040 78f74d 83ff5b 9aff7a b2ff9a b2ff9a
+04410b 05530e 066611 077714 088817 099b1a 0baf1d 48c41f
+86d922 8fe924 99f927 a8fc41 b7ff5b c9ff6e dcff81 dcff81
+02350f 073f15 0c4a1c 2d5f1e 4f7420 598324 649228 82a12e
+a1b034 a9c13a b2d241 c4d945 d6e149 e4f04e f2ff53 f2ff53
+263001 243803 234005 51541b 806931 978135 af993a c2a73e
+d5b543 dbc03d e1cb38 e2d836 e3e534 eff258 fbff7d fbff7d
+401a02 581f05 702408 8d3a13 ab511f b56427 bf7730 d0853a
+e19344 eda04e f9ad58 fcb75c ffc160 ffc671 ffcb83 ffcb83
+`,
+        Atari800MacXnewStellaNTSC: rgbs `
+000000 000000 4a4a4a 4a4a4a 6f6f6f 6f6f6f 8e8e8e 8e8e8e
+aaaaaa aaaaaa c0c0c0 c0c0c0 d6d6d6 d6d6d6 ececec ececec
+484800 484800 69690f 69690f 86861d 86861d a2a22a a2a22a
+bbbb35 bbbb35 d2d240 d2d240 e8e84a e8e84a fcfc54 fcfc54
+7c2c00 7c2c00 904811 904811 a26221 a26221 b47a30 b47a30
+c3903d c3903d d2a44a d2a44a dfb755 dfb755 ecc860 ecc860
+901c00 901c00 a33915 a33915 b55328 b55328 c66c3a c66c3a
+d5824a d5824a e39759 e39759 f0aa67 f0aa67 fcbc74 fcbc74
+940000 940000 a71a1a a71a1a b83232 b83232 c84848 c84848
+d65c5c d65c5c e46f6f e46f6f f08080 f08080 fc9090 fc9090
+840064 840064 97197a 97197a a8308f a8308f b846a2 b846a2
+c659b3 c659b3 d46cc3 d46cc3 e07cd2 e07cd2 ec8ce0 ec8ce0
+500084 500084 68199a 68199a 7d30ad 7d30ad 9246c0 9246c0
+a459d0 a459d0 b56ce0 b56ce0 c57cee c57cee d48cfc d48cfc
+140090 140090 331aa3 331aa3 4e32b5 4e32b5 6848c6 6848c6
+7f5cd5 7f5cd5 956fe3 956fe3 a980f0 a980f0 bc90fc bc90fc
+000094 000094 181aa7 181aa7 2d32b8 2d32b8 4248c8 4248c8
+545cd6 545cd6 656fe4 656fe4 7580f0 7580f0 8490fc 8490fc
+001c88 001c88 183b9d 183b9d 2d57b0 2d57b0 4272c2 4272c2
+548ad2 548ad2 65a0e1 65a0e1 75b5ef 75b5ef 84c8fc 84c8fc
+003064 003064 185080 185080 2d6d98 2d6d98 4288b0 4288b0
+54a0c5 54a0c5 65b7d9 65b7d9 75cceb 75cceb 84e0fc 84e0fc
+004030 004030 18624e 18624e 2d8169 2d8169 429e82 429e82
+54b899 54b899 65d1ae 65d1ae 75e7c2 75e7c2 84fcd4 84fcd4
+004400 004400 1a661a 1a661a 328432 328432 48a048 48a048
+5cba5c 5cba5c 6fd26f 6fd26f 80e880 80e880 90fc90 90fc90
+143c00 143c00 355f18 355f18 527e2d 527e2d 6e9c42 6e9c42
+87b754 87b754 9ed065 9ed065 b4e775 b4e775 c8fc84 c8fc84
+303800 303800 505916 505916 6d762b 6d762b 88923e 88923e
+a0ab4f a0ab4f b7c25f b7c25f ccd86e ccd86e e0ec7c e0ec7c
+482c00 482c00 694d14 694d14 866a26 866a26 a28638 a28638
+bb9f47 bb9f47 d2b656 d2b656 e8cc63 e8cc63 fce070 fce070
+`,
+        Atari800MacXz26NTSC: rgbs `
+000000 000000 505050 505050 646464 646464 787878 787878
+8c8c8c 8c8c8c a0a0a0 a0a0a0 b4b4b4 b4b4b4 c8c8c8 c8c8c8
+445400 445400 586800 586800 6c7c00 6c7c00 809000 809000
+94a414 94a414 a8b828 a8b828 bccc3c bccc3c d0e050 d0e050
+673900 673900 7b4d00 7b4d00 8f6100 8f6100 a37513 a37513
+b78927 b78927 cb9d3b cb9d3b dfb14f dfb14f f3c563 f3c563
+7b2504 7b2504 8f3918 8f3918 a34d2c a34d2c b76140 b76140
+cb7554 cb7554 df8968 df8968 f39d7c f39d7c ffb190 ffb190
+7d122c 7d122c 912640 912640 a53a54 a53a54 b94e68 b94e68
+cd627c cd627c e17690 e17690 f58aa4 f58aa4 ff9eb8 ff9eb8
+730871 730871 871c85 871c85 9b3099 9b3099 af44ad af44ad
+c358c1 c358c1 d76cd5 d76cd5 eb80e9 eb80e9 ff94fd ff94fd
+5d0b92 5d0b92 711fa6 711fa6 8533ba 8533ba 9947ce 9947ce
+ad5be2 ad5be2 c16ff6 c16ff6 d583ff d583ff e997ff e997ff
+401599 401599 5429ad 5429ad 683dc1 683dc1 7c51d5 7c51d5
+9065e9 9065e9 a479fd a479fd b88dff b88dff cca1ff cca1ff
+252593 252593 3939a7 3939a7 4d4dbb 4d4dbb 6161cf 6161cf
+7575e3 7575e3 8989f7 8989f7 9d9dff 9d9dff b1b1ff b1b1ff
+0f3480 0f3480 234894 234894 375ca8 375ca8 4b70bc 4b70bc
+5f84d0 5f84d0 7398e4 7398e4 87acf8 87acf8 9bc0ff 9bc0ff
+04425a 04425a 18566e 18566e 2c6a82 2c6a82 407e96 407e96
+5492aa 5492aa 68a6be 68a6be 7cbad2 7cbad2 90cee6 90cee6
+044f30 044f30 186344 186344 2c7758 2c7758 408b6c 408b6c
+549f80 549f80 68b394 68b394 7cc7a8 7cc7a8 90dbbc 90dbbc
+0f550a 0f550a 23691e 23691e 377d32 377d32 4b9146 4b9146
+5fa55a 5fa55a 73b96e 73b96e 87cd82 87cd82 9be196 9be196
+1f5100 1f5100 336505 336505 477919 477919 5b8d2d 5b8d2d
+6fa141 6fa141 83b555 83b555 97c969 97c969 abdd7d abdd7d
+344600 344600 485a00 485a00 5c6e14 5c6e14 708228 708228
+84963c 84963c 98aa50 98aa50 acbe64 acbe64 c0d278 c0d278
+463e00 463e00 5a5205 5a5205 6e6619 6e6619 827a2d 827a2d
+968e41 968e41 aaa255 aaa255 beb669 beb669 d2ca7d d2ca7d
+`,
+        Atari800MacXxformer: rgbs `
+000000 202020 404040 606060 7c7c7c 909090 a0a0a0 b0b0b0
+bcbcbc c8c8c8 d4d4d4 e0e0e0 e8e8e8 f0f0f0 f8f8f8 fcfcfc
+181400 302800 603c04 785008 8c6c0c 9c8418 b0a830 bcb044
+c4c050 d0cc5c d8d468 dcdc74 e0e084 e4e490 e8e89c ececa4
+241400 382400 503400 705000 907004 ac8404 bc9c28 c4ac44
+ccb860 d4bc68 dcc470 e4c878 eccc80 f0d490 f4dc9c f8e0a0
+2c0c04 481408 6c1c10 902c20 b05034 b86040 c47054 cc7864
+d48c78 d89888 dca894 e0ac98 e4b09c e4b8a0 e8c0a8 ecc4b0
+2c040c 581824 942844 a83c58 b45470 c06078 c86880 d07088
+d47890 d88498 dc8ca0 e094a8 e49cb0 e8a4b4 eca8b8 f0acbc
+30002c 500848 701068 9c2094 c048c4 d460d4 dc74dc e080e0
+e48ce4 e894e8 ec9cec eca4ec eca8ec ecacec ecb0ec f0b4f0
+140440 280880 5828b8 6c3cc4 8054cc 8c64d0 9870d4 a080d8
+a88cdc b094e0 b898e4 bca0e4 c0a4e8 c4ace8 c8b0ec ccb4ec
+000034 101068 2828b8 4848c4 6060d4 6c6cd8 7878dc 8484e0
+9090e4 9c9ce4 a4a4e8 acace8 b0b0ec b8b8f0 c0c0f4 c4c4f8
+041c48 083478 0c4ca8 1060a8 2470b4 3880c0 448ccc 5094d4
+609cdc 70a4e0 7cb0e4 88b8e4 94bce8 9cc0e8 a4c4ec a8c8f0
+041030 081858 0c2880 143c90 205098 3c64b0 5478bc 6088c4
+6c98d0 74a8d8 7cb0dc 84b8e0 90bce4 98c4e8 a0c8ec a8ccf0
+00241c 044838 086850 0c8c6c 10a884 18bc98 38ccb0 48d4b8
+58dcc4 64e0cc 70e4d0 80e8d4 90ecdc a0f0e0 b0f4e4 b4f8e8
+002804 00400c 045814 14841c 24b040 38c054 4ccc60 58d070
+60d47c 78dc8c 90e498 9ce8a4 a4ecb0 acecbc b8ecc4 bcf0c8
+0c2800 185000 247804 389410 48b01c 58b830 68c044 74c858
+84d068 90d870 98dc78 a0e084 a8e490 b4e89c c0eca8 c4f0ac
+142400 2c5800 448c04 5ca808 74c020 88c830 98cc44 a0d054
+a8d460 b0d86c b8dc74 bce07c c0e488 c8e894 d0eca0 d4f0a8
+201c00 4c4000 706010 847c18 c09820 d0b030 dcc83c e4d04c
+e8d858 e8e060 ece468 ece874 f0e884 f4ec8c f4ec90 f8f098
+201400 342400 583804 80540c a87414 b4841c c09030 c89c48
+d4a860 d8b46c dcb878 e0bc84 e4c490 e8c898 e8d49c ecd8a0
+`,
+    };
+
+    const palette = colorPalettes[options.colorPalette];
     function antic2rgb(color) {
         if (color == null)
             return undefined;
         if (!Number.isInteger(color) || color < 0 || color > 255) {
             throw new Error(`DisplayLayer: Invalid antic color ${color}`);
         }
-        return anticPaletteRGB[color >> 1];
+        return palette[color >> 1];
     }
     const DisplayComponent = {
         onbeforeupdate({ attrs: { display } }) {
@@ -7349,6 +7957,8 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         }
     };
     function maybeAnimate(elt, animate, f) {
+        if (!elt)
+            return;
         if (animate == null) {
             elt.getAnimations().forEach(a => a.cancel());
             return;
@@ -7409,7 +8019,10 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         onupdate: ({ dom, attrs: { g: { animate }, f } }) => maybeAnimate(dom, animate, f),
         view: ({ attrs: { g, f, gc, defaults } }) => {
             var _a, _b;
-            const sz = f.glyphSize, visible = ((_a = g.opacity) !== null && _a !== void 0 ? _a : 1) > 0;
+            if (((_a = g.opacity) !== null && _a !== void 0 ? _a : 1) == 0) {
+                return; // skip invisible glyphs
+            }
+            const sz = f.glyphSize;
             return mithril('.glyph', {
                 onclick: g.onclick,
                 onmouseover: g.onmouseover,
@@ -7418,7 +8031,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                     'background-color': antic2rgb(g.invert
                         ? ((_b = g.foregroundColor) !== null && _b !== void 0 ? _b : defaults.foregroundColor)
                         : g.backgroundColor),
-                    'pointer-events': visible && g.backgroundColor != null ? 'auto' : null,
+                    'pointer-events': g.backgroundColor != null ? 'auto' : null,
                     transform: `translate(${g.x * sz}px, ${g.y * sz}px)`,
                 },
             }, mithril(gc, { g, f, defaults }));
@@ -7434,13 +8047,16 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         onupdate: ({ dom, attrs: { g: { animate }, f } }) => maybeAnimate(dom, animate, f),
         view: ({ attrs: { g, f, defaults } }) => {
             var _a, _b, _c;
-            const { glyphSize: sz, glyphsPerRow: nc } = f, visible = ((_a = g.opacity) !== null && _a !== void 0 ? _a : 1) > 0;
+            if (((_a = g.opacity) !== null && _a !== void 0 ? _a : 1) == 0) {
+                return;
+            }
+            const { glyphSize: sz, glyphsPerRow: nc } = f;
             return mithril('.glyph-foreground', {
                 style: {
                     'background-color': antic2rgb(g.invert
                         ? ((_c = (_b = g.backgroundColor) !== null && _b !== void 0 ? _b : defaults.backgroundColor) !== null && _c !== void 0 ? _c : defaults.layerColor)
                         : g.foregroundColor),
-                    'pointer-events': visible && g.foregroundColor != null ? 'auto' : null,
+                    'pointer-events': g.foregroundColor != null ? 'auto' : null,
                     '-webkit-mask-position': `${-(g.c % nc) * sz}px ${-Math.floor(g.c / nc) * sz}px`,
                     'mask-position': `${-(g.c % nc) * sz}px ${-Math.floor(g.c / nc) * sz}px`,
                 }
@@ -7448,8 +8064,16 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         }
     };
 
+    class AppView {
+        constructor(attrs) {
+            mithril.mount(document.body, { view: () => mithril(Layout, attrs) });
+        }
+        redraw() {
+            mithril.redraw();
+        }
+    }
     const Layout = {
-        view: ({ attrs: { hscr, scr, flags } }) => {
+        view: ({ attrs: { help, app } }) => {
             return mithril('.layout', {
                 class: css `
                     background-color: ${antic2rgb(0xD4)};
@@ -7459,21 +8083,21 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                 `
             }, mithril('.screen', {
                 class: css `
-                        width: 320px;        /* 40x24 8px characters */
+                        width: 336px;        /* 42x24 8px characters */
                         height: 192px;
                         transform: scale(4);
                         transform-origin: top center;
                         margin: 0 auto;
                         position: relative;
                     `,
-            }, flags.help ? mithril(HelpComponent, { hscr }) : mithril(GameComponent, { scr, flags })));
+            }, app.help ? mithril(HelpComponent, { help }) : mithril(GameComponent, { app })));
         }
     };
     const HelpComponent = {
-        onupdate: ({ attrs: { hscr: { window } } }) => {
+        onupdate: ({ attrs: { help: { window } } }) => {
             window.dirty = false;
         },
-        view: ({ attrs: { hscr: { window } } }) => {
+        view: ({ attrs: { help: { window } } }) => {
             return mithril(DisplayComponent, {
                 display: window,
                 class: 'help',
@@ -7481,14 +8105,16 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         },
     };
     const GameComponent = {
-        onupdate: ({ attrs: { scr } }) => {
-            Object.values(scr).forEach(layer => layer.dirty = false);
+        onupdate: ({ attrs: { app } }) => {
+            Object.values(app)
+                .filter(v => v instanceof DisplayLayer)
+                .forEach(layer => layer.dirty = false);
         },
-        view: ({ attrs: { flags, scr: { dateWindow, infoWindow, errorWindow, mapLayer, labelLayer, unitLayer, kreuzeLayer, maskLayer } } }) => {
+        view: ({ attrs: { app } }) => {
             return [
                 // double-width date-window at the top
                 mithril(DisplayComponent, {
-                    display: dateWindow,
+                    display: app.dateWindow,
                     class: ['game', css `
                     transform-origin: top left;
                     transform: scale(2, 1);
@@ -7518,11 +8144,11 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                                 top: 0;
                             }
                         `,
-                    style: { transform: flags.zoom ? 'scale(2)' : null },
+                    style: { transform: app.zoom ? 'scale(2)' : null },
                 }, [
                     // bottom layer showing terrain
                     mithril(DisplayComponent, {
-                        display: mapLayer,
+                        display: app.mapLayer,
                         class: [
                             'terrain',
                             css `
@@ -7533,8 +8159,8 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                         ],
                     }),
                     // conditionally show text labels near cities
-                    flags.extras ? mithril(DisplayComponent, {
-                        display: labelLayer,
+                    app.extras ? mithril(DisplayComponent, {
+                        display: app.labelLayer,
                         glyphComponent: LabelComponent,
                         class: [
                             'labels',
@@ -7545,7 +8171,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                     }) : null,
                     // layer with unit icons as sprites
                     mithril(DisplayComponent, {
-                        display: unitLayer,
+                        display: app.unitLayer,
                         glyphComponent: GlyphComponent,
                         class: [
                             'units',
@@ -7562,17 +8188,17 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                     }),
                     //TODO does flags conditional work with dirty indicator?
                     // conditionally show current order paths for all units
-                    flags.extras ? mithril(UnitOverlayComponent, {
-                        display: unitLayer,
+                    app.extras ? mithril(UnitOverlayComponent, {
+                        display: app.unitLayer,
                     }) : null,
                     // conditionally show a semit-transparent mask to highlight unit reach
-                    flags.extras ? mithril(DisplayComponent, {
-                        display: maskLayer,
+                    app.extras ? mithril(DisplayComponent, {
+                        display: app.maskLayer,
                         glyphComponent: BlockComponent,
                         class: [
                             'mask',
                             css `
-                                    opacity: 0.5;
+                                    opacity: 0.33;
                                     .glyph {
                                         pointer-events: none;
                                     }
@@ -7581,15 +8207,15 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                     }) : null,
                     // show animated orders for focussed unit
                     mithril(DisplayComponent, {
-                        display: kreuzeLayer,
+                        display: app.kreuzeLayer,
                         glyphComponent: KreuzeComponent,
                         class: ['kreuze'],
                     }),
                 ])),
                 mithril(DividerComponent, { color: 0x02 }),
-                mithril(DisplayComponent, { display: infoWindow }),
+                mithril(DisplayComponent, { display: app.infoWindow }),
                 mithril(DividerComponent, { color: 0x8A }),
-                mithril(DisplayComponent, { display: errorWindow }),
+                mithril(DisplayComponent, { display: app.errorWindow }),
                 mithril(DividerComponent, { color: 0x8A }),
             ];
         }
@@ -7662,16 +8288,24 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                     transform: "scale(8)"
                 }, mithril('g.status', sprites.filter(g => g.props).map(g => {
                     var _a, _b, _c;
-                    const cstrng = (_a = g.props) === null || _a === void 0 ? void 0 : _a.cstrng, mstrng = (_b = g.props) === null || _b === void 0 ? void 0 : _b.cstrng, mode = (_c = g.props) === null || _c === void 0 ? void 0 : _c.mode;
+                    const cstrng = (_a = g.props) === null || _a === void 0 ? void 0 : _a.cstrng, mstrng = (_b = g.props) === null || _b === void 0 ? void 0 : _b.mstrng, mode = (_c = g.props) === null || _c === void 0 ? void 0 : _c.mode, ramp = [0x68, 0x38, 0x18, 0xc8].map(antic2rgb), cutoff = [1 / 4, 1 / 2, 3 / 4];
+                    let cfill = '';
+                    if (cstrng != null && mstrng != null) {
+                        let i = 0;
+                        while (i < cutoff.length && cstrng / mstrng > cutoff[i])
+                            i++;
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        cfill = ramp[i];
+                    }
                     return mithril('g', { transform: `translate(${g.x},${g.y})` }, [
                         mode != null && mode != 0 /* UnitMode.standard */ ? mithril('use', {
                             transform: `translate(1, 0) scale(.04) translate(-15, -6)`,
                             href: modeIcons[mode],
                             fill: antic2rgb(0x96),
                         }) : null,
-                        cstrng != null && mstrng != null ? mithril('g', { fill: 'rgb(50,205,50)' }, [
-                            mithril('rect', { x: 1.5 / 8, y: 6.5 / 8, height: 1 / 8, width: 6 / 8 * cstrng / 255, rx: 1 / 16, opacity: 0.4 }),
-                            mithril('rect', { x: 1.5 / 8, y: 6.5 / 8, height: 1 / 8, width: 6 / 8 * mstrng / 255, rx: 1 / 16, opacity: 0.8 }),
+                        cstrng != null && mstrng != null ? mithril('g', [
+                            mithril('rect', { x: 1 / 8, y: 7 / 8, height: 1 / 8, width: 7 / 8 * mstrng / 255, rx: 1 / 16, opacity: 0.5, fill: cfill }),
+                            mithril('rect', { x: 1 / 8, y: 7 / 8, height: 1 / 8, width: 7 / 8 * cstrng / 255, rx: 1 / 16, fill: cfill }),
                         ]) : null,
                     ]);
                 })), mithril('g.orders', { opacity: 0.5 }, sprites.filter(g => { var _a; return (_a = g.props) === null || _a === void 0 ? void 0 : _a.orders; }).map(g => {
@@ -7766,444 +8400,68 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         }
     };
 
-    const atasciiFont = fontMap('static/fontmap-atascii.png', 128), helpUrl = 'https://github.com/patricksurry/eastern-front-1941', helpScrambleMillis = 2000, helpText = ('\fh\x11' + '\x12'.repeat(38) + '\x05'
-        + '|\fl|'.repeat(22)
-        + '\x1a' + '\x12'.repeat(38) + '\x03'
-        + `\fH\f^
-
-
-Welcome to Chris Crawford's
-Eastern Front  1941
-Reversed by Patrick Surry \fc\x94}\fC
-
-\f@\x04<
-Select: \f#Click\f-, \f#n\f-ext, \f#p\f-rev
-
-Orders: \f#\x1f\f- \f#\x1c\f- \f#\x1d\f- \f#\x1e\f-, \f#Bksp\f-
-
-Cancel: \f#Space\f-, \f#Esc\f-
-
-Submit: \f#End\f-, \f#Fn \x1f\f-
-
-Toggle: \f#z\f-oom, e\f#x\f-tras, debu\f#g\f-
-
-\f^
-\f#?\f- shows this help
-Press any key to play!`), resume = window.location.hash.slice(1) || undefined, game = resume ? new Game(resume) : new Game().start(1 /* ScenarioKey.learner */), flags = {
-        help: resume ? false : true,
-        extras: true,
-        debug: false,
-        zoom: false, // zoom 2x or not?
-    }, 
-    // placeholder to allow AI v AI, human Russian or both human play
-    ai = Object.keys(players)
-        .filter(player => +player != game.human)
-        .map(player => new Thinker(game, +player)), hscr = {
-        window: new MappedDisplayLayer(40, 24, atasciiFont, { foregroundColor: 0x04, layerColor: 0x0E }),
-    }, scr = {
-        dateWindow: new MappedDisplayLayer(20, 2, atasciiFont, { foregroundColor: 0x6A, layerColor: 0xB0 }),
-        infoWindow: new MappedDisplayLayer(40, 2, atasciiFont, { foregroundColor: 0x28, layerColor: 0x22 }),
-        errorWindow: new MappedDisplayLayer(40, 1, atasciiFont, { foregroundColor: 0x22, layerColor: 0x3A }),
-        // placecholders until we load the map
-        mapLayer: new MappedDisplayLayer(0, 0, atasciiFont),
-        labelLayer: new SpriteDisplayLayer(0, 0, atasciiFont),
-        unitLayer: new SpriteDisplayLayer(0, 0, atasciiFont),
-        kreuzeLayer: new SpriteDisplayLayer(0, 0, atasciiFont),
-        maskLayer: new MappedDisplayLayer(0, 0, atasciiFont),
-    };
-    let uimode = resume ? 1 /* UIModeKey.orders */ : 0 /* UIModeKey.setup */, helpInit = false;
-    function paintHelp(h, p, scramble) {
-        if (!helpInit) {
-            helpInit = true;
-            const t0 = +new Date();
-            p = 0;
-            scramble = h.window.glyphs.map(row => row.map(() => Math.random()));
-            const paintScrambled = setInterval(() => {
-                const pp = (+new Date() - t0) / helpScrambleMillis;
-                paintHelp(h, pp, scramble);
-                mithril.redraw();
-                if (pp >= 1)
-                    clearInterval(paintScrambled);
-            }, 250);
-        }
-        h.window.cls();
-        h.window.puts(helpText, { onclick: () => flags.help = !flags.help });
-        h.window.glyphs.forEach(line => line.forEach(g => {
-            if (g === null || g === void 0 ? void 0 : g.foregroundColor)
-                g.onclick = () => window.open(helpUrl);
-        }));
-        if (p != null && scramble != null) {
-            scramble.forEach((line, y) => line.forEach((v, x) => {
-                if (p < v) {
-                    h.window.putc(Math.floor(Math.random() * 128), {
-                        x, y,
-                        foregroundColor: Math.floor(Math.random() * 256),
-                        backgroundColor: Math.floor(Math.random() * 256),
-                    });
-                }
-            }));
-        }
-    }
-    function paintCityLabels() {
-        // these are static so never need redrawn, color changes via paintMap
-        const { lon: left, lat: top } = game.mapboard.locations[0][0].point;
-        game.mapboard.cities.forEach((c, i) => {
-            scr.labelLayer.put(i.toString(), 32, left - c.lon, top - c.lat, {
-                props: { label: c.label, points: c.points }
-            });
-        });
-    }
-    function paintMap() {
-        const { earth, contrast } = weatherdata[game.weather];
-        scr.labelLayer.setcolors({ foregroundColor: contrast });
-        scr.mapLayer.setcolors({ layerColor: earth });
-        //TODO tree colors are updated in place in terrain defs :-(
-        game.mapboard.locations.forEach(row => row.forEach(loc => {
-            const t = terraintypes[loc.terrain], city = loc.cityid != null ? game.mapboard.cities[loc.cityid] : null, color = city ? players[city === null || city === void 0 ? void 0 : city.owner].color : (loc.alt ? t.altcolor : t.color);
-            scr.mapLayer.putc(loc.icon, {
-                foregroundColor: color,
-                onclick: () => {
-                    if (uimode != 1 /* UIModeKey.orders */)
-                        return;
-                    scr.errorWindow.cls();
-                    focus.off();
-                    if (city)
-                        scr.infoWindow.puts(`\fz\x05\x00\fe\f^${city.label.toUpperCase()}`);
-                },
-                onmouseover: (e) => {
-                    e.currentTarget.title = game.mapboard.describe(loc);
-                    e.redraw = false; // prevent mithril redraw
-                },
-            });
-        }));
-    }
-    function paintUnits() {
-        game.oob.forEach(paintUnit);
-    }
-    function paintUnit(u) {
-        const focussed = u === focus.u(), { earth } = weatherdata[game.weather], { lon: left, lat: top } = game.mapboard.locations[0][0].point, ux = left - u.lon, uy = top - u.lat;
-        let animation = undefined;
-        if (focussed) {
-            const f = u.foggyStrength(game.human);
-            // game uses offset \x06 but then '4 RUMANIAN INFANTRY CORPS' touches STANDARD
-            scr.infoWindow.puts(`\fz\x05\x00\fe\f@\x05<${u.label}\n\feMUSTER: ${f.mstrng}  COMBAT: ${f.cstrng}`);
-            if (u.player == game.human) {
-                if (scenarios[game.scenario].mvmode)
-                    scr.infoWindow.puts(`\fH\f>${unitModes[u.mode].label} \nMODE   `);
-                animation = 0 /* GlyphAnimation.blink */;
-                const props = { orders: u.orders };
-                scr.kreuzeLayer.put('#', 0x80, ux, uy, { foregroundColor: 0x1A, props }),
-                    Object.values(directions).forEach(d => scr.kreuzeLayer.put(d.label, d.icon, ux, uy, { foregroundColor: 0xDC, props }));
-            }
-        }
-        else if (u.active) {
-            if (u.flags & unitFlag.attack) {
-                animation = 1 /* GlyphAnimation.flash */;
-            }
-            else if (u.flags & unitFlag.defend) {
-                animation = 2 /* GlyphAnimation.flash_reverse */;
-            }
-        }
-        const opts = {
-            backgroundColor: earth,
-            foregroundColor: players[u.player].color,
-            opacity: u.active ? 1 : 0,
-            animate: animation,
-            onmouseover: (e) => {
-                e.currentTarget.title = game.mapboard.describe(u.location);
-                e.redraw = false; // prevent mithril redraw
-            },
-            onclick: () => {
-                if (uimode != 1 /* UIModeKey.orders */)
-                    return;
-                scr.errorWindow.cls();
-                (uimode == 1 /* UIModeKey.orders */ && focus.u() !== u) ? focus.on(u) : focus.off();
-            }
-        };
-        opts.props = u.foggyStrength(game.human);
-        if (u.player == game.human || flags.debug) {
-            Object.assign(opts.props, {
-                orders: u.orders,
-                mode: u.mode,
-            });
-        }
-        scr.unitLayer.put(`${game.scenario}:${u.id}`, unitkinds[u.kind].icon, ux, uy, opts);
-    }
-    function paintReach(u) {
-        const { lon: left, lat: top } = game.mapboard.locations[0][0].point, pts = u.reach();
-        scr.maskLayer.cls(0); // mask everything with block char, then clear reach squares
-        pts.forEach(({ lon, lat }) => scr.maskLayer.putc(undefined, { x: left - lon, y: top - lat }));
-    }
-    function setScenario(scenario, inc) {
-        /*
-            orginal game shows errmsg "[SELECT]: LEARNER  [START] TO BEGIN" with copyright in txt window,
-            where [] is reverse video.  could switch to "[< >]: LEARNER  [ENTER] TO BEGIN(RESUME)"
-            so < > increments scenario, # picks directly
-        */
-        inc !== null && inc !== void 0 ? inc : (inc = 0);
-        const n = Object.keys(scenarios).length;
-        if (scenario == null) {
-            scenario = (game.scenario + inc + n) % n;
-        }
-        start(scenario);
-    }
-    const focus = {
-        id: -1,
-        active: false,
-        u: () => focus.active ? game.oob.at(focus.id) : undefined,
-        on: (u) => {
-            focus.off();
-            focus.id = u.id;
-            focus.active = true;
-            paintUnit(u);
-            paintReach(u);
-        },
-        off: () => {
-            const u = focus.u();
-            focus.active = false;
-            scr.infoWindow.puts('\fz\x05\x00\fe');
-            if (u) {
-                paintUnit(u); // repaint to clear blink etc
-                scr.maskLayer.cls(); // remove all mask glyphs
-                scr.kreuzeLayer.cls(); // remove any order animation
-            }
-        },
-        shift: (offset) => {
-            const locid = (u) => game.mapboard.locationOf(u).id, humanUnits = game.oob.activeUnits(game.human).sort((a, b) => locid(b) - locid(a)), n = humanUnits.length;
-            let i;
-            if (focus.id >= 0) {
-                i = humanUnits.findIndex(u => u.id == focus.id);
-                if (i < 0) {
-                    // if last unit no longer active, find the nearest active unit
-                    const id = locid(game.oob.at(focus.id));
-                    while (++i < n && locid(humanUnits[i]) > id) { /**/ }
-                }
+    var _AppCtrl_game, _AppCtrl_ai;
+    class AppCtrl {
+        constructor() {
+            _AppCtrl_game.set(this, void 0);
+            // placeholder to allow AI v AI, human Russian or both human play
+            _AppCtrl_ai.set(this, void 0);
+            this.app = new AppModel();
+            this.help = new HelpModel(() => this.app.help = !this.app.help);
+            this.view = new AppView({ app: this.app, help: this.help });
+            this.app.dateWindow.puts('\fh\n\f^EASTERN FRONT 1941');
+            this.app.infoWindow.puts('\fh\f^COPYRIGHT 1982 ATARI\nALL RIGHTS RESERVED');
+            const token = window.location.hash.slice(1) || undefined;
+            if (token) {
+                this.setGame(new Game(token));
+                this.setMode(1 /* UIModeKey.orders */);
+                this.app.help = false;
             }
             else {
-                i = offset > 0 ? -1 : 0;
+                this.setScenario(1 /* ScenarioKey.learner */);
+                this.setMode(0 /* UIModeKey.setup */);
             }
-            i = (i + n + offset) % n;
-            focus.on(humanUnits[i]);
-        },
-    };
-    function editUnitMode(mode) {
-        const u = focus.u();
-        if (!u)
-            return;
-        if (mode == null)
-            u.nextmode();
-        else
-            u.mode = mode;
-        focus.on(u); // redraw reach
-    }
-    function editOrders(dir) {
-        // dir => add step, -1 => remove step, null => clear or unfocus
-        const u = focus.u();
-        if (!u)
-            return;
-        if (!u.human) {
-            scr.errorWindow.puts(`\fh\f^THAT IS A ${players[u.player].label.toUpperCase()} UNIT!`);
-            return;
+            this.help.paint();
+            document.addEventListener('keydown', (e) => this.keyHandler(e));
         }
-        if (dir == null) {
-            if (u.orders.length == 0) {
-                focus.off();
-                return;
-            }
-            u.resetOrders();
-        }
-        else if (u.kind == 2 /* UnitKindKey.air */ && u.mode == 1 /* UnitMode.assault */) {
-            if (!(dir in directions)) {
-                u.resetOrders();
-            }
-            else {
-                // air support towards next unit in given direction
-                u.setOrdersSupportingFriendlyFurther(dir);
-            }
-        }
-        else if (dir == -1) {
-            u.delOrder();
-        }
-        else {
-            u.addOrder(dir);
-        }
-    }
-    const keymap = {
-        help: '?/',
-        prev: '<,p',
-        next: '>.n',
-        cancel: ['Escape', ' '],
-        scenario: Object.keys(scenarios).map((k, i) => i).join(''),
-        extras: 'xX',
-        zoom: 'zZ',
-        debug: 'gG',
-        mode: 'mM',
-        modes: '1234',
-    }, arrowmap = {
-        ArrowUp: 0 /* DirectionKey.north */,
-        ArrowDown: 2 /* DirectionKey.south */,
-        ArrowRight: 1 /* DirectionKey.east */,
-        ArrowLeft: 3 /* DirectionKey.west */,
-    };
-    function keyHandler(e) {
-        let handled = true;
-        if (flags.help || keymap.help.includes(e.key)) {
-            flags.help = !flags.help;
-        }
-        else if (keymap.zoom.includes(e.key)) {
-            flags.zoom = !flags.zoom;
-        }
-        else if (keymap.extras.includes(e.key)) {
-            flags.extras = !flags.extras;
-        }
-        else if (keymap.debug.includes(e.key)) {
-            flags.debug = !flags.debug;
-        }
-        else {
-            const f = modes[uimode].keyHandler;
-            if (f)
-                handled = f(e.key);
-        }
-        if (handled) {
-            if (!scr.errorWindow.dirty)
-                scr.errorWindow.cls(); // clear error if nothing wrote earlier
-            mithril.redraw();
-            e.preventDefault(); // eat event if handled
-        }
-    }
-    function setMode(m) {
-        var _a, _b;
-        uimode = m;
-        (_b = (_a = modes[m]).enter) === null || _b === void 0 ? void 0 : _b.call(_a);
-    }
-    const modes = {
-        [0 /* UIModeKey.setup */]: {
-            enter: () => {
-                const label = scenarios[game.scenario].label.padEnd(8, ' ');
-                scr.errorWindow.puts(`\fh\f^\f#<\f- ${label} \f#>\f-    \f#ENTER\f- TO START`);
-            },
-            keyHandler: (key) => {
-                if (keymap.prev.includes(key) || key == 'ArrowLeft') {
-                    setScenario(null, -1);
-                }
-                else if (keymap.next.includes(key) || key == 'ArrowRight') {
-                    setScenario(null, +1);
-                }
-                else if (keymap.scenario.includes(key)) {
-                    setScenario(parseInt(key));
-                }
-                else if (key == 'Enter') {
-                    setMode(1 /* UIModeKey.orders */);
-                }
-                else {
-                    return false;
-                }
-                return true;
-            },
-        },
-        [1 /* UIModeKey.orders */]: {
-            enter: () => {
-                // save game state
-                window.location.hash = game.token;
-                // start thinking...
-                ai.forEach(t => t.thinkRecurring(250));
-                const date = game.date.toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' });
-                scr.dateWindow.puts(`\fh\n\f^${date}`);
-                scr.infoWindow.puts(`\fh\f@\x04>${game.score(game.human)}`);
-                scr.errorWindow.puts('\fh\f^PLEASE ENTER YOUR ORDERS NOW');
-            },
-            keyHandler: (key) => {
-                if (keymap.prev.includes(key)) {
-                    focus.shift(-1);
-                }
-                else if (keymap.next.includes(key) || key == 'Enter') {
-                    focus.shift(+1);
-                }
-                else if (scenarios[game.scenario].mvmode && keymap.mode.includes(key)) {
-                    editUnitMode(null);
-                }
-                else if (scenarios[game.scenario].mvmode && keymap.modes.includes(key)) {
-                    editUnitMode(keymap.modes.indexOf(key));
-                }
-                else if (key in arrowmap) {
-                    editOrders(arrowmap[key]);
-                }
-                else if (keymap.cancel.includes(key)) {
-                    editOrders(null);
-                }
-                else if (key == 'Backspace') {
-                    editOrders(-1);
-                }
-                else if (key == 'End') {
-                    setMode(2 /* UIModeKey.resolve */);
-                }
-                else {
-                    return false;
-                }
-                return true;
-            },
-        },
-        [2 /* UIModeKey.resolve */]: {
-            enter: () => {
-                // finalize AI orders
-                ai.forEach(t => t.finalize());
-                focus.off();
-                scr.infoWindow.cls();
-                scr.errorWindow.puts('\fh\f^EXECUTING MOVE');
-                game.nextTurn(250);
-            },
-            keyHandler: (key) => {
-                if (keymap.prev.includes(key)) {
-                    focus.shift(-1);
-                }
-                else if (keymap.next.includes(key) || key == 'Enter') {
-                    focus.shift(+1);
-                }
-                else {
-                    return false;
-                }
-                return true;
-            }
-        }
-    };
-    function start(scenario) {
-        if (scenario == null) { // initial setup
-            scr.dateWindow.puts('\fh\n\f^EASTERN FRONT 1941');
-            scr.infoWindow.puts('\fh\f^COPYRIGHT 1982 ATARI\nALL RIGHTS RESERVED');
-            paintHelp(hscr);
-            document.addEventListener('keydown', keyHandler);
-            mithril.mount(document.body, { view: () => mithril(Layout, { scr, hscr, flags }) });
+        setGame(game) {
+            __classPrivateFieldSet(this, _AppCtrl_game, game, "f");
+            this.app.setGame(game);
+            this.view.redraw();
+            //TODO kill old ones?
+            __classPrivateFieldSet(this, _AppCtrl_ai, Object.keys(players)
+                .filter(player => +player != __classPrivateFieldGet(this, _AppCtrl_game, "f").human)
+                .map(player => new Thinker(__classPrivateFieldGet(this, _AppCtrl_game, "f"), +player)), "f");
             game.on('game', (action) => {
-                console.debug('game', action);
                 switch (action) {
                     case 'end': {
                         const advice = game.score(game.human) >= scenarios[game.scenario].win
                             ? 'ADVANCE TO NEXT LEVEL'
                             : 'TRY AGAIN';
-                        scr.infoWindow.puts(`\fz\x05\x00\fe\f^GAME OVER\n${advice}`);
-                        setMode(0 /* UIModeKey.setup */);
+                        this.app.infoWindow.puts(`\fz\x06\x00\fe\f^GAME OVER\n${advice}`);
+                        //TODO clear executing move but leave score, &  doesn't show < > ENTER stuff
+                        this.setMode(0 /* UIModeKey.setup */);
                         break;
                     }
                     case 'turn':
-                        paintMap();
-                        paintUnits();
-                        if (uimode == 2 /* UIModeKey.resolve */)
-                            setMode(1 /* UIModeKey.orders */);
+                        this.app.paintMap();
+                        this.app.paintUnits();
+                        if (this.app.uimode == 2 /* UIModeKey.resolve */)
+                            this.setMode(1 /* UIModeKey.orders */);
                         break;
                     case 'tick':
-                        paintUnits();
+                        this.app.paintUnits();
                         break;
                     default: {
                         const fail = action;
                         throw new Error(`Unhandled game action: ${fail}`);
                     }
                 }
-                mithril.redraw();
+                this.view.redraw();
             }).on('map', (action) => {
-                console.debug('map', action);
                 switch (action) {
                     case 'citycontrol':
-                        paintMap();
+                        this.app.paintMap();
                         break;
                     default: {
                         const fail = action;
@@ -8211,35 +8469,118 @@ Press any key to play!`), resume = window.location.hash.slice(1) || undefined, g
                     }
                 }
             }).on('unit', (action, u) => {
-                console.debug(`${action}: ${u.label}`);
                 if (action == 'orders') {
-                    paintUnit(u);
+                    this.app.paintUnit(u);
                     // save game state
                     if (u.human)
                         window.location.hash = game.token;
                 }
-                else if (action == 'exit' && flags.extras) {
-                    scr.infoWindow.puts(`\fz\x05\x00\fe\f^${u.label}\nELIMINATED!`);
+                else if (action == 'exit' && this.app.extras) {
+                    this.app.infoWindow.puts(`\fz\x06\x00\fe\f^${u.label}\nELIMINATED!`);
                 }
                 // the rest of the actions happen during turn processing, which we pick up via game.tick
             }).on('message', (_, message) => {
-                scr.errorWindow.puts(`\fh\f^${message}`);
+                this.app.errorWindow.puts(`\fh\f^${message}`);
             });
         }
-        else {
-            game.start(scenario);
+        keyHandler(event) {
+            let handled = globalHandler(event.key, this);
+            if (!handled) {
+                handled = modeHandlers[this.app.uimode](event.key, this);
+            }
+            if (handled) {
+                if (this.app.uimode == 1 /* UIModeKey.orders */ && !this.app.errorWindow.dirty) {
+                    // in orders mode, clear error if nothing else wrote to the err window
+                    this.app.errorWindow.cls();
+                }
+                this.view.redraw();
+                event.preventDefault(); // eat event if handled
+            }
         }
-        const font = fontMap(`static/fontmap-custom-${game.mapboard.font}.png`, 128 + 6), { width, height } = game.mapboard.extent;
-        scr.mapLayer = new MappedDisplayLayer(width, height, font);
-        scr.labelLayer = new SpriteDisplayLayer(width, height, font, { foregroundColor: undefined });
-        scr.unitLayer = new SpriteDisplayLayer(width, height, font);
-        scr.kreuzeLayer = new SpriteDisplayLayer(width, height, font);
-        scr.maskLayer = new MappedDisplayLayer(width, height, font, { backgroundColor: 0x00 });
-        paintMap();
-        paintCityLabels();
-        paintUnits();
-        setMode(uimode);
-        mithril.redraw();
+        setMode(m) {
+            this.app.uimode = m;
+            switch (m) {
+                case 0 /* UIModeKey.setup */:
+                    break;
+                case 1 /* UIModeKey.orders */: {
+                    // save game state
+                    window.location.hash = __classPrivateFieldGet(this, _AppCtrl_game, "f").token;
+                    // start thinking...
+                    __classPrivateFieldGet(this, _AppCtrl_ai, "f").forEach(t => t.thinkRecurring(250));
+                    const date = __classPrivateFieldGet(this, _AppCtrl_game, "f").date.toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' });
+                    this.app.dateWindow.puts(`\fh\n\f^${date}`);
+                    this.app.infoWindow.puts(`\fh\f@\x04>${__classPrivateFieldGet(this, _AppCtrl_game, "f").score(__classPrivateFieldGet(this, _AppCtrl_game, "f").human)}`);
+                    this.app.errorWindow.puts('\fh\f^PLEASE ENTER YOUR ORDERS NOW');
+                    break;
+                }
+                case 2 /* UIModeKey.resolve */: {
+                    // finalize AI orders
+                    __classPrivateFieldGet(this, _AppCtrl_ai, "f").forEach(t => t.finalize());
+                    this.app.focusOff();
+                    this.app.infoWindow.cls();
+                    this.app.errorWindow.puts('\fh\f^EXECUTING MOVE');
+                    __classPrivateFieldGet(this, _AppCtrl_game, "f").nextTurn(250);
+                    break;
+                }
+            }
+        }
+        setScenario(scenario, inc) {
+            inc !== null && inc !== void 0 ? inc : (inc = 0);
+            const n = Object.keys(scenarios).length;
+            if (scenario == null) {
+                scenario = (__classPrivateFieldGet(this, _AppCtrl_game, "f").scenario + inc + n) % n;
+            }
+            this.setGame(new Game().start(scenario));
+            const label = scenarios[__classPrivateFieldGet(this, _AppCtrl_game, "f").scenario].label.padEnd(8, ' ');
+            this.app.errorWindow.puts(`\fh\f^\f#<\f- ${label} \f#>\f-    \f#ENTER\f- TO START`);
+        }
+        editUnitMode(mode) {
+            const u = this.app.focussed();
+            if (!u)
+                return;
+            if (mode == null)
+                u.nextmode();
+            else
+                u.mode = mode;
+            this.app.focusOn(u); // redraw reach
+        }
+        editOrders(dir) {
+            // dir => add step, -1 => remove step, null => clear or unfocus
+            const u = this.app.focussed();
+            if (!u)
+                return;
+            if (!u.human) {
+                this.app.errorWindow.puts(`\fh\f^THAT IS A ${players[u.player].label.toUpperCase()} UNIT!`);
+                return;
+            }
+            if (dir == null) {
+                if (u.orders.length == 0) {
+                    this.app.focusOff();
+                    return;
+                }
+                u.resetOrders();
+            }
+            else if (u.kind == 2 /* UnitKindKey.air */ && u.mode == 1 /* UnitMode.assault */) {
+                if (!(dir in directions)) {
+                    u.resetOrders();
+                }
+                else {
+                    // air support towards next unit in given direction
+                    u.setOrdersSupportingFriendlyFurther(dir);
+                }
+            }
+            else if (dir == -1) {
+                u.delOrder();
+            }
+            else {
+                u.addOrder(dir);
+            }
+        }
+    }
+    _AppCtrl_game = new WeakMap(), _AppCtrl_ai = new WeakMap();
+
+    function start() {
+        new AppCtrl();
     }
 
     exports.start = start;

@@ -2,6 +2,7 @@
 // in general false reflects the original APX/cartridge condition
 // the values here show my current choices, but aren't actually configurable in code yet
 const options = {
+    colorPalette: 'WikiNTSC', // 'Atari800MacXnewStellaNTSC', 'Atari800MacXz26NTSC' are also playable
     mapIncludeSevastopol: false,
     germanReinforcementsMoveOnArrival: true,
     russianReinforcementsMoveOnArrival: false,

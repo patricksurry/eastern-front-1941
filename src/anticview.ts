@@ -2,35 +2,17 @@ import m from 'mithril';
 import type {AnticColor, Glyph, Sprite, DisplayLayer, FontMap, LayerOpts} from './anticmodel';
 import {GlyphAnimation} from './anticmodel';
 import {css, cx, keyframes} from '@emotion/css';
+import {colorPalettes} from './palettes';
+import {options} from './config';
 
-const
-    // Antic NTSC palette via https://en.wikipedia.org/wiki/List_of_video_game_console_palettes#NTSC
-    // 128 colors indexed via high 7 bits, e.g. 0x00 and 0x01 refer to the first entry
-    anticPaletteRGB = [
-        "#000000",  "#404040",  "#6c6c6c",  "#909090",  "#b0b0b0",  "#c8c8c8",  "#dcdcdc",  "#ececec",
-        "#444400",  "#646410",  "#848424",  "#a0a034",  "#b8b840",  "#d0d050",  "#e8e85c",  "#fcfc68",
-        "#702800",  "#844414",  "#985c28",  "#ac783c",  "#bc8c4c",  "#cca05c",  "#dcb468",  "#ecc878",
-        "#841800",  "#983418",  "#ac5030",  "#c06848",  "#d0805c",  "#e09470",  "#eca880",  "#fcbc94",
-        "#880000",  "#9c2020",  "#b03c3c",  "#c05858",  "#d07070",  "#e08888",  "#eca0a0",  "#fcb4b4",
-        "#78005c",  "#8c2074",  "#a03c88",  "#b0589c",  "#c070b0",  "#d084c0",  "#dc9cd0",  "#ecb0e0",
-        "#480078",  "#602090",  "#783ca4",  "#8c58b8",  "#a070cc",  "#b484dc",  "#c49cec",  "#d4b0fc",
-        "#140084",  "#302098",  "#4c3cac",  "#6858c0",  "#7c70d0",  "#9488e0",  "#a8a0ec",  "#bcb4fc",
-        "#000088",  "#1c209c",  "#3840b0",  "#505cc0",  "#6874d0",  "#7c8ce0",  "#90a4ec",  "#a4b8fc",
-        "#00187c",  "#1c3890",  "#3854a8",  "#5070bc",  "#6888cc",  "#7c9cdc",  "#90b4ec",  "#a4c8fc",
-        "#002c5c",  "#1c4c78",  "#386890",  "#5084ac",  "#689cc0",  "#7cb4d4",  "#90cce8",  "#a4e0fc",
-        "#003c2c",  "#1c5c48",  "#387c64",  "#509c80",  "#68b494",  "#7cd0ac",  "#90e4c0",  "#a4fcd4",
-        "#003c00",  "#205c20",  "#407c40",  "#5c9c5c",  "#74b474",  "#8cd08c",  "#a4e4a4",  "#b8fcb8",
-        "#143800",  "#345c1c",  "#507c38",  "#6c9850",  "#84b468",  "#9ccc7c",  "#b4e490",  "#c8fca4",
-        "#2c3000",  "#4c501c",  "#687034",  "#848c4c",  "#9ca864",  "#b4c078",  "#ccd488",  "#e0ec9c",
-        "#442800",  "#644818",  "#846830",  "#a08444",  "#b89c58",  "#d0b46c",  "#e8cc7c",  "#fce08c",
-    ];
+const palette = colorPalettes[options.colorPalette];
 
 function antic2rgb(color?: AnticColor): string|undefined {
     if (color == null) return undefined;
     if (!Number.isInteger(color) || color < 0 || color > 255) {
         throw new Error(`DisplayLayer: Invalid antic color ${color}`);
     }
-    return anticPaletteRGB[color >> 1];
+    return palette[color >> 1];
 }
 
 interface GlyphAttr {g: Glyph, f: FontMap, defaults: LayerOpts}
@@ -97,7 +79,8 @@ const DisplayComponent: m.Component<DisplayAttr> = {
     }
 }
 
-function maybeAnimate(elt: Element, animate: GlyphAnimation|undefined, f: FontMap) {
+function maybeAnimate(elt: Element|undefined, animate: GlyphAnimation|undefined, f: FontMap) {
+    if (!elt) return;
     if (animate == null) {
         elt.getAnimations().forEach(a => a.cancel());
         return;
@@ -164,9 +147,10 @@ const SpriteComponent: m.Component<SpriteAttr> = {
     oncreate: ({dom, attrs: {g: {animate}, f}}) => maybeAnimate(dom, animate, f),
     onupdate: ({dom, attrs: {g: {animate}, f}}) => maybeAnimate(dom, animate, f),
     view: ({attrs: {g, f, gc, defaults}}) => {
-        const sz = f.glyphSize,
-            visible = (g.opacity ?? 1) > 0;
-
+        if ((g.opacity ?? 1) == 0) {
+            return;  // skip invisible glyphs
+        }
+        const sz = f.glyphSize;
         return m('.glyph',
             {
                 onclick: g.onclick,
@@ -178,7 +162,7 @@ const SpriteComponent: m.Component<SpriteAttr> = {
                         ? (g.foregroundColor ?? defaults.foregroundColor)
                         : g.backgroundColor
                     ),
-                    'pointer-events': visible && g.backgroundColor != null ? 'auto': null,
+                    'pointer-events': g.backgroundColor != null ? 'auto': null,
                     transform: `translate(${g.x * sz}px, ${g.y * sz}px)`,
                 },
             },
@@ -197,9 +181,10 @@ const GlyphComponent: m.Component<GlyphAttr> = {
     oncreate: ({dom, attrs: {g: {animate}, f}}) => maybeAnimate(dom, animate, f),
     onupdate: ({dom, attrs: {g: {animate}, f}}) => maybeAnimate(dom, animate, f),
     view: ({attrs: {g, f, defaults}}): m.Children => {
-        const {glyphSize: sz, glyphsPerRow: nc} = f,
-            visible = (g.opacity ?? 1) > 0;
-
+        if ((g.opacity ?? 1) == 0) {
+            return;
+        }
+        const {glyphSize: sz, glyphsPerRow: nc} = f;
         return m('.glyph-foreground', {
             style: {
                 'background-color': antic2rgb(
@@ -207,7 +192,7 @@ const GlyphComponent: m.Component<GlyphAttr> = {
                     ? (g.backgroundColor ?? defaults.backgroundColor ?? defaults.layerColor)
                     : g.foregroundColor
                 ),
-                'pointer-events': visible && g.foregroundColor != null ? 'auto': null,
+                'pointer-events': g.foregroundColor != null ? 'auto': null,
                 '-webkit-mask-position': `${-(g.c % nc) * sz}px ${-Math.floor(g.c / nc) * sz}px`,
                 'mask-position': `${-(g.c % nc) * sz}px ${-Math.floor(g.c / nc) * sz}px`,
             }

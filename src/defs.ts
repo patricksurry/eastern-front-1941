@@ -7,6 +7,10 @@ function sum(xs: number[]): number {
     return xs.reduce((s: number, x: number) => s + x, 0);
 }
 
+function clamp(v: number, min: number, max: number): number {
+    return Math.max(min, Math.min(max, v));
+}
+
 function memoize<S, T>(fn: (x: S) => T): (x: S) => T {
     const cache = new Map<S, T>();
     const cached = function (x: S): T {
@@ -167,7 +171,7 @@ const unitkinds: Record<UnitKindKey, UnitKind> = {
 export type {Flag, Point};
 
 export {
-    sum, memoize,
+    sum, memoize, clamp,
     directions, DirectionKey,
     players, PlayerKey,
     terraintypes, TerrainKey,

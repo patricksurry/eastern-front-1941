@@ -2,9 +2,15 @@ import {oobVariants} from './oob-data';
 import {GridPoint} from './map';
 
 import {Game} from './game';
-import { PlayerKey } from './defs';
+import { DirectionKey, PlayerKey } from './defs';
+import { ScenarioKey } from './scenarios';
 
-const game = new Game().start();
+let game: Game;
+
+beforeEach(() => {
+    game = new Game();
+    game.rand.state(9792904);
+})
 
 // the second last column of raw data is CORPT for both apx and cart,
 // and indexes the main unit name.  the high bit of low nibble is unused
@@ -28,16 +34,21 @@ test("No fog is a no-op", () => {
 })
 
 test("Fog is bounded", () => {
+    const fog = 7;
     let diff = 0;
     game.oob.activeUnits().forEach(u => {
-        u.fog = 3;
+        u.fog = fog;
         const {mstrng, cstrng} = u,
             {mstrng: mfog, cstrng: cfog} = u.foggyStrength(1-u.player);
         const dm = Math.abs(mfog-mstrng),
             dc = Math.abs(cfog-cstrng);
+        expect(mfog).toBeGreaterThan(0);
+        expect(mfog).toBeLessThanOrEqual(255);
+        expect(cfog).toBeGreaterThan(0);
+        expect(cfog).toBeLessThanOrEqual(255);
         expect(mfog).toBeGreaterThanOrEqual(cfog);
-        expect(dm).toBeLessThan(8);
-        expect(dc).toBeLessThan(8);
+        expect(dm).toBeLessThan(1 << (fog-1));
+        expect(dc).toBeLessThan(1 << (fog-1));
         diff += dm + dc;
         u.fog = 0;
     })
@@ -64,6 +75,52 @@ test("Fog is repeatable", () => {
     expect(ms).toEqual(m2s);
     game.oob.activeUnits().forEach(u => {u.fog = 0});
 })
+
+test("Fog changes each turn", () => {
+    game.oob.activeUnits().forEach(u => {u.fog = 3});
+    const ms  = game.oob.activeUnits().map(u => u.foggyStrength(1-u.player).mstrng);
+    game.nextTurn();
+    const m2s = game.oob.activeUnits().map(u => u.foggyStrength(1-u.player).mstrng);
+    expect(ms).not.toEqual(m2s);
+    game.oob.activeUnits().forEach(u => {u.fog = 0});
+})
+
+test("ZoC blocked", () => {
+    // blocked scenario from doc/apxzoc1.png
+    const g = new Game(ScenarioKey.learner);
+    const p0 = g.oob.findIndex(u => u.player == PlayerKey.German),
+        p1 = g.oob.findIndex(u => u.player == PlayerKey.Russian),
+        u = g.oob.at(p0),
+        start = g.mapboard.locationOf({lon: 14, lat: 25});
+
+    g.mapboard.locationOf({lon: 12, lat: 24}).unitid = p1;
+    g.mapboard.locationOf({lon: 12, lat: 26}).unitid = p1;
+
+    u.moveTo(start);
+    for (let i=0; i<4; i++) u.addOrder(DirectionKey.east);
+    g.nextTurn();
+    console.log('blocked', u.point)
+    expect(u.point).toEqual({lon: 13, lat: 25});
+})
+
+test("ZoC not blocked", () => {
+    // unblocked scenario from doc/apxzoc1.png
+    const g = new Game(ScenarioKey.learner);
+    const p0 = g.oob.findIndex(u => u.player == PlayerKey.German),
+        p1 = g.oob.findIndex(u => u.player == PlayerKey.Russian),
+        u = g.oob.at(p0),
+        start = g.mapboard.locationOf({lon: 14, lat: 25});
+
+    g.mapboard.locationOf({lon: 12, lat: 24}).unitid = p1;
+    g.mapboard.locationOf({lon: 12, lat: 27}).unitid = p1;
+
+    u.moveTo(start);
+    for (let i=0; i<4; i++) u.addOrder(DirectionKey.east);
+    g.nextTurn();
+    console.log('not blocked', u.point)
+    expect(u.point).toEqual({lon: 10, lat: 25});
+})
+
 
 test("ZoC is calculated correctly", () => {
     /*

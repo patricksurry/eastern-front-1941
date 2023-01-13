@@ -1,13 +1,11 @@
 import {PlayerKey, players} from './defs';
-import {ScenarioKey} from './scenarios';
+import {ScenarioKey, scenarios} from './scenarios';
 import {Game} from './game';
 
 let game: Game;
 
-// TODO - test reloaded game has units and cities on map
-
 beforeEach(() => {
-    game = new Game().start();
+    game = new Game();
     game.rand.state(9792904);
 })
 
@@ -27,8 +25,23 @@ test("Unit scores should be non-negative", () => {
     game.oob.forEach(u => expect(u.score()).toBeGreaterThanOrEqual(0));
 });
 
-test("Initial score should be 12", () => {
-    expect(game.score(PlayerKey.German)).toBe(12);
+test("Initial score check", () => {
+    const expected = {
+/* TODO
+        [ScenarioKey.learner]: 0,
+        [ScenarioKey.beginner]: 0,
+        [ScenarioKey.intermediate]: 0,
+        [ScenarioKey.advanced]: 0,
+        [ScenarioKey.expert41]: -128,
+        [ScenarioKey.expert42]: -131,
+*/
+        [ScenarioKey.apx]: 12,
+    };
+
+    Object.entries(expected).forEach(([k, score]) => {
+        const g = new Game(+k as ScenarioKey);
+        expect(g.score(PlayerKey.German)).toBe(score);
+    })
 });
 
 test("Game turn", () => {
@@ -63,13 +76,18 @@ test("Game turn roundtrip", () => {
     expect(game2.token).toEqual(game.token);
 })
 
-test("Switch scenario", () => {
-    //TODO fails with game.start(ScenarioKey.expert42);
-    game.start(ScenarioKey.advanced);
-    addSimpleOrders(game);
-    game.nextTurn();
-    const token = game.token;
-    const game2 = new Game(token);
-    expect(game2.token).toEqual(token);
-})
-
+test("Play and recover all scenarios", () => {
+    const tokens: Partial<Record<ScenarioKey, string>> = {};
+    for (const s in scenarios) {
+        const k = +s as ScenarioKey,
+            g = new Game(k);
+        addSimpleOrders(g);
+        g.nextTurn();
+        tokens[k] = g.token;
+    }
+    for (const s in scenarios) {
+        const k = +s as ScenarioKey;
+        const game2 = new Game(tokens[k]);
+        expect(game2.token).toEqual(tokens[k]);
+    }
+});

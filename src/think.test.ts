@@ -8,7 +8,7 @@ import { ScenarioKey } from './scenarios';
 let game: Game;
 
 beforeEach(() => {
-    game = new Game().start();
+    game = new Game();
     game.rand.state(9792904);
 })
 
@@ -27,7 +27,7 @@ test("Expected linePoints() values", () => {
 });
 
 test("Flee home", () => {
-    const g = new Game().start(ScenarioKey.learner),
+    const g = new Game(ScenarioKey.learner),
         ai = new Thinker(g, PlayerKey.Russian),
         ug = g.oob.at(1),
         ur = g.oob.at(48);

@@ -34,11 +34,14 @@ class Game extends EventEmitter {
     oob: Oob;
     rand: Generator;
 
-    constructor(token?: string) {
+    constructor(token?: string | ScenarioKey) {
         super();    // init EventEmitter
         let memento: number[] | undefined = undefined,
             seed: number | undefined = undefined;
-        if (token != null) {
+
+        if (typeof token == 'number') {
+            this.#scenario = token;
+        } else if (typeof token === 'string') {
             const payload = unwrap64(token, tokenPrefix);
 
             seed = bitsdecode(payload, 24);
@@ -59,11 +62,11 @@ class Game extends EventEmitter {
         this.oob = new Oob(this, memento);
         this.rand = lfsr24(seed);
 
-        if (memento) {
-            if (memento.length != 0)
-                throw new Error("Game: unexpected save data overflow");
-            this.#newTurn(true);
+        if (memento && memento.length != 0) {
+            throw new Error("Game: unexpected save data overflow");
         }
+
+        this.#newTurn(true);
     }
     get memento() {
         // return a list of uint representing the state of the game
@@ -88,15 +91,6 @@ class Game extends EventEmitter {
         return wrap64(payload, tokenPrefix);
     }
     get scenario() { return this.#scenario; }
-    start(scenario?: ScenarioKey) {
-        if (scenario != null) {
-            this.#scenario = scenario;
-            this.mapboard = new Mapboard(this);
-            this.oob = new Oob(this);
-        }
-        this.#newTurn(true);
-        return this;
-    }
     #setDates() {
         const dt = new Date(scenarios[this.scenario].start)
         this.date = new Date(dt.setDate(dt.getDate() + 7 * this.turn));
@@ -118,6 +112,19 @@ class Game extends EventEmitter {
 
         this.mapboard.newTurn(initialize);
         this.oob.newTurn(initialize);
+
+        // integrity test
+        this.mapboard.locations.forEach(
+            row => row.filter(p => p.unitid).forEach(p => {
+                if (!this.oob.at(p.unitid!).active)
+                    throw new Error(`${this.mapboard.describe(p)} occupied by inactive unit`);
+            })
+        );
+        this.oob.activeUnits().forEach(u => {
+            const mp = this.mapboard.locationOf(u.point);
+            if (mp.unitid != u.id)
+                throw new Error(`${u.describe()} not found at ${this.mapboard.describe(mp)}`);
+        });
 
         this.emit('game', 'turn');
     }

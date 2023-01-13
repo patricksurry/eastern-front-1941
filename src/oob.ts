@@ -23,6 +23,7 @@ class Oob {
                 const u = new Unit(game, i, ...vs);
                 // exclude units not in the scenario, but leave them in array
                 if (u.id >= maxunit[u.player]) u.eliminate();
+                u.fog = scenario.fog ?? 0;
                 return u;
             });
         this.#game = game;
@@ -42,16 +43,17 @@ class Oob {
                 });
             const active = this.activeUnits(),
                 human = active.filter(u => u.human),
-                mvmode = scenarios[this.#game.scenario].mvmode;
+                expected = 4*active.length + human.length + (scenario.mvmode ? human.length : 0) + (scenario.fog ? human.length : 0);
 
-            if (memento.length < 4*active.length + human.length +(mvmode ? human.length : 0))
+            if (memento.length < expected)
                 throw new Error('oob: malformed save data for active unit properties');
 
             const lats = zagzig(memento.splice(0, active.length)),
                 lons = zagzig(memento.splice(0, active.length)),
                 mstrs = zagzig(memento.splice(0, active.length)),
                 cdmgs = memento.splice(0, active.length),
-                modes = mvmode ? memento.splice(0, human.length): [],
+                modes = scenario.mvmode ? memento.splice(0, human.length): [],
+                dfogs = scenario.fog ? memento.splice(0, human.length): [],
                 nords = memento.splice(0, human.length);
             let lat = 0, lon = 0, mstr = 255;
             active.forEach(u => {
@@ -69,7 +71,9 @@ class Oob {
                 throw new Error('oob: malformed save data for unit orders');
             human.forEach(u => {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                if (mvmode) u.mode = modes.shift()!;
+                if (scenario.mvmode) u.mode = modes.shift()!;
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                if (scenario.fog) u.fog -= dfogs.shift()!;
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 u.orders = memento.splice(0, nords.shift()!);
             });
@@ -90,11 +94,13 @@ class Oob {
     slice(start?: number, end?: number) { return this.#units.slice(start, end)}
 
     get memento() {
-        const lats: number[] = [],
+        const scenario = scenarios[this.#game.scenario],
+            lats: number[] = [],
             lons: number[] = [],
             mstrs: number[] = [],
             cdmgs: number[] = [],
             modes: number[] = [],
+            dfogs: number[] = [],
             nords: number[] = [],
             ords: number[] = [];
         let lat = 0, lon = 0, mstr = 255;
@@ -114,11 +120,12 @@ class Oob {
             if (u.human) {
                 nords.push(u.orders.length);
                 ords.push(...u.orders);
-                if (scenarios[this.#game.scenario].mvmode) modes.push(u.mode);
+                if (scenario.mvmode) modes.push(u.mode);
+                if (scenario.fog) dfogs.push(scenario.fog - u.fog);
             }
         });
 
-        return (status as number[]).concat(zigzag(lats), zigzag(lons), zigzag(mstrs), cdmgs, modes, nords, ords);
+        return (status as number[]).concat(zigzag(lats), zigzag(lons), zigzag(mstrs), cdmgs, modes, dfogs, nords, ords);
     }
     newTurn(initialize: boolean) {
         if (initialize) {
@@ -166,13 +173,16 @@ class Oob {
                 }
             });
     }
-    zocAffecting(player: PlayerKey, loc: MapPoint) {
+    zocAffecting(player: PlayerKey, loc: MapPoint, omitSelf = false) {
         // evaluate zoc experienced by player (eg. exerted by !player) in the square at loc
         let zoc = 0;
         // same player in target square negates any zoc, enemy exerts 4
         if (loc.unitid != null) {
-            if (this.at(loc.unitid).player == player) return zoc;
-            zoc += 4;
+            if (this.at(loc.unitid).player == player) {
+                if (!omitSelf) return 0;
+            } else {
+                zoc += 4;
+            }
         }
         // look at square spiral excluding center, so even squares are adj, odd are corners
         GridPoint.squareSpiral(loc, 1).slice(1).forEach((p, i) => {
@@ -187,7 +197,7 @@ class Oob {
     }
     zocBlocked(player: PlayerKey, src: MapPoint, dst: MapPoint): boolean {
         // does enemy ZoC block player move from src to dst?
-        return this.zocAffecting(player, src) >= 2 && this.zocAffecting(player, dst) >= 2;
+        return this.zocAffecting(player, src, true) >= 2 && this.zocAffecting(player, dst) >= 2;
     }
 }
 

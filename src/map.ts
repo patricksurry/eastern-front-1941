@@ -6,6 +6,7 @@ import {
     waterstate, WaterStateKey,
     monthdata,
     PlayerKey,
+    clamp,
 } from './defs';
 import {ravel, unravel, zigzag, zagzig} from './codec';
 import {mapVariants, blocked} from './map-data';
@@ -250,8 +251,9 @@ class Mapboard {
         const city = loc.cityid != null ? this.cities[loc.cityid] : undefined,
             label = city
                 ? ` ${city.label} (${city.points ?? 0})`
-                : (terraintypes[loc.terrain].label + (loc.alt ? "-alt": ""));
-        return `[${loc.id}] ${label}\nlon ${loc.lon}, lat ${loc.lat}`;
+                : (terraintypes[loc.terrain].label + (loc.alt ? "-alt": "")),
+            unit = loc.unitid != null ? this.#game.oob.at(loc.unitid).describe(): "";
+        return `[${loc.id}] ${label}\nlon ${loc.lon}, lat ${loc.lat}\n\n${unit}`.trim()
     }
     valid(pt: Point) {
         return pt.lat >= 0 && pt.lat < this.#maxlat && pt.lon >= 0 && pt.lon < this.#maxlon;
@@ -299,7 +301,7 @@ class Mapboard {
             this.#icelat = newlat;
         } else {
             const change = this.#game.rand.bits(3) + 7;
-            this.#icelat = Math.min(this.#maxlat, Math.max(1, oldlat + dlat * change));
+            this.#icelat = clamp(oldlat + dlat * change, 1, this.#maxlat);
         }
 
         const skip = (w == WaterStateKey.freeze) ? oldlat: this.#icelat;  // for freeze skip old line, for thaw skip new new
