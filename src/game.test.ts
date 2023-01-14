@@ -112,7 +112,6 @@ test("Maelstrom doesn't error", () => {
             let i = 0;
             convergeOnMoscow(g);
             while (i++ < 100 && g.turn < scenarios[k].endturn) {
-                console.log(g.turn)
                 g.nextTurn();
             }
         }).not.toThrow();

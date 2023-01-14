@@ -1,6 +1,7 @@
 import {players, unitkinds, terraintypes, weatherdata, directions} from './defs';
 import {scenarios} from './scenarios';
 import {Game} from './game';
+import {Grid} from './grid';
 import {Unit, unitFlag, unitModes} from './unit';
 import {
     type SpriteOpts, atasciiFont, fontMap,
@@ -78,7 +79,7 @@ class AppModel {
     focusShift(offset: number) {
         const
             g = this.#game,
-            locid = (u: Unit) => g.mapboard.locationOf(u).gid,
+            locid = (u: Unit) => g.mapboard.locationOf(Grid.point(u)).gid,
             humanUnits = g.oob.activeUnits(g.human).sort((a, b) => locid(b) - locid(a)),
             n = humanUnits.length;
         let i;
@@ -97,7 +98,7 @@ class AppModel {
     }
     paintCityLabels() {
         // these are static so never need redrawn, color changes via paintMap
-        const {lon: left, lat: top} = this.#game.mapboard.locations[0][0].point;
+        const {lon: left, lat: top} = this.#game.mapboard.locations[0][0];
 
         this.#game.mapboard.cities.forEach((c, i) => {
             this.labelLayer.put(
@@ -141,7 +142,7 @@ class AppModel {
         this.#game.oob.forEach(u => this.paintUnit(u));
     }
     paintReach(u: Unit) {
-        const {lon: left, lat: top} = this.#game.mapboard.locations[0][0].point,
+        const {lon: left, lat: top} = this.#game.mapboard.locations[0][0],
             pts = u.reach();
 
         this.maskLayer.cls(0);  // mask everything with block char, then clear reach squares
@@ -151,7 +152,7 @@ class AppModel {
         const
             g = this.#game,
             {earth} = weatherdata[g.weather],
-            {lon: left, lat: top} = g.mapboard.locations[0][0].point,
+            {lon: left, lat: top} = g.mapboard.locations[0][0],
             ux = left - u.lon, uy = top - u.lat;
 
         let animation = undefined;

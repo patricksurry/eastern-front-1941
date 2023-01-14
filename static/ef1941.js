@@ -761,7 +761,7 @@ var ef1941 = (function (exports, node_crypto) {
         ]
     ];
 
-    var _Mapboard_instances, _Mapboard_game, _Mapboard_maxlon, _Mapboard_maxlat, _Mapboard_icelat, _Mapboard_freezeThaw;
+    var _Mapboard_instances, _Mapboard_game, _Mapboard_maxlon, _Mapboard_maxlat, _Mapboard_icelat, _Mapboard_validlocs, _Mapboard_neighborids, _Mapboard_neighborids_, _Mapboard_freezeThaw;
     // mapboard constructor, used as a container of MapPoints
     class Mapboard {
         constructor(game, memento) {
@@ -770,6 +770,8 @@ var ef1941 = (function (exports, node_crypto) {
             _Mapboard_maxlon.set(this, void 0);
             _Mapboard_maxlat.set(this, void 0);
             _Mapboard_icelat.set(this, 39); // via M.ASM:8600 PSXVAL initial value is 0x27
+            _Mapboard_validlocs.set(this, new Map());
+            _Mapboard_neighborids.set(this, memoize$1(((gid) => __classPrivateFieldGet(this, _Mapboard_instances, "m", _Mapboard_neighborids_).call(this, gid))));
             const scenario = scenarios[game.scenario], variant = mapVariants[scenario.map], ncity = scenario.ncity, mapencoding = variant.encoding.map((enc, i) => {
                 // convert the encoding table into a lookup of char => [icon, terraintype, alt-flag]
                 const lookup = {};
@@ -794,8 +796,11 @@ var ef1941 = (function (exports, node_crypto) {
             __classPrivateFieldSet(this, _Mapboard_maxlat, mapdata.length - 2, "f");
             __classPrivateFieldSet(this, _Mapboard_game, game, "f");
             this.locations = mapdata.map((row, i) => row.map((data, j) => {
-                const lon = __classPrivateFieldGet(this, _Mapboard_maxlon, "f") - j, lat = __classPrivateFieldGet(this, _Mapboard_maxlat, "f") - i;
-                return Object.assign(Object.assign({}, Grid.lonlat(lon, lat)), data);
+                const lon = __classPrivateFieldGet(this, _Mapboard_maxlon, "f") - j, lat = __classPrivateFieldGet(this, _Mapboard_maxlat, "f") - i, pt = Grid.lonlat(lon, lat), loc = Object.assign(Object.assign({}, pt), data);
+                if (pt.lat >= 0 && pt.lat < __classPrivateFieldGet(this, _Mapboard_maxlat, "f") && pt.lon >= 0 && pt.lon < __classPrivateFieldGet(this, _Mapboard_maxlon, "f")) {
+                    __classPrivateFieldGet(this, _Mapboard_validlocs, "f").set(pt.gid, loc);
+                }
+                return loc;
             }));
             this.cities = variant.cities.map(c => { return Object.assign({}, c); });
             this.cities.forEach((city, i) => {
@@ -859,12 +864,14 @@ var ef1941 = (function (exports, node_crypto) {
             return `[${loc.gid}] ${label}\nlon ${loc.lon}, lat ${loc.lat}\n\n${unit}`.trim();
         }
         valid(pt) {
-            return pt.lat >= 0 && pt.lat < __classPrivateFieldGet(this, _Mapboard_maxlat, "f") && pt.lon >= 0 && pt.lon < __classPrivateFieldGet(this, _Mapboard_maxlon, "f");
+            return __classPrivateFieldGet(this, _Mapboard_validlocs, "f").has(pt.gid);
         }
         locationOf(pt) {
-            if (!this.valid(pt)) // nb this throws for impassable boundary points
+            // nb throws for impassable boundary points
+            const loc = __classPrivateFieldGet(this, _Mapboard_validlocs, "f").get(pt.gid);
+            if (loc == null)
                 throw new Error(`MapBoard.locationOf: invalid point ${pt.lon}, ${pt.lat}`);
-            return this.locations[__classPrivateFieldGet(this, _Mapboard_maxlat, "f") - pt.lat][__classPrivateFieldGet(this, _Mapboard_maxlon, "f") - pt.lon];
+            return loc;
         }
         boundaryDistance(pt, dir) {
             switch (dir) {
@@ -874,16 +881,13 @@ var ef1941 = (function (exports, node_crypto) {
                 case 3 /* DirectionKey.west */: return __classPrivateFieldGet(this, _Mapboard_maxlon, "f") - 1 - pt.lon;
             }
         }
-        neighborOf(pt, dir) {
-            const q = Grid.adjacent(pt, dir);
-            if (!this.valid(q))
-                return null;
-            const nbr = this.locationOf(q);
-            const legal = (nbr.terrain != 9 /* TerrainKey.impassable */
-                && !((dir == 0 /* DirectionKey.north */ || dir == 2 /* DirectionKey.south */)
-                    ? blocked[0].find(d => d.lon == pt.lon && d.lat == (dir == 0 /* DirectionKey.north */ ? pt.lat : nbr.lat))
-                    : blocked[1].find(d => d.lon == (dir == 3 /* DirectionKey.west */ ? pt.lon : nbr.lon) && d.lat == pt.lat)));
-            return legal ? nbr : null;
+        neighborsOf({ gid }) {
+            return __classPrivateFieldGet(this, _Mapboard_neighborids, "f").call(this, gid)
+                .map(v => v == null ? v : __classPrivateFieldGet(this, _Mapboard_validlocs, "f").get(v));
+        }
+        neighborOf({ gid }, dir) {
+            const nbrid = __classPrivateFieldGet(this, _Mapboard_neighborids, "f").call(this, gid)[dir];
+            return nbrid == null ? undefined : __classPrivateFieldGet(this, _Mapboard_validlocs, "f").get(nbrid);
         }
         occupy(loc, player) {
             if (loc.cityid != null) {
@@ -950,11 +954,10 @@ var ef1941 = (function (exports, node_crypto) {
                 else {
                     frontier.delete(_head);
                 }
-                Object.keys(directions).forEach(i => {
-                    const d = +i, dst = this.neighborOf(src, d);
+                this.neighborsOf(src).forEach((dst, i) => {
                     if (!dst)
                         return;
-                    const cost = found.get(src.gid).cost + costs[dst.terrain];
+                    const d = +i, cost = found.get(src.gid).cost + costs[dst.terrain];
                     if (!found.has(dst.gid)) { // with consistent estimate we always find best first
                         found.set(dst.gid, { dir: d, cost });
                         const est = cost + minCost * Grid.manhattanDistance(src, dst);
@@ -994,8 +997,7 @@ var ef1941 = (function (exports, node_crypto) {
             while (cost < range) {
                 Object.entries(locs).filter(([, v]) => v == cost).forEach(([k,]) => {
                     const src = Grid.byid(+k);
-                    Object.keys(directions).forEach(i => {
-                        const dst = this.neighborOf(src, +i);
+                    this.neighborsOf(src).forEach(dst => {
                         if (!dst)
                             return;
                         const curr = dst.gid in locs ? locs[dst.gid] : 255;
@@ -1011,7 +1013,21 @@ var ef1941 = (function (exports, node_crypto) {
             return locs;
         }
     }
-    _Mapboard_game = new WeakMap(), _Mapboard_maxlon = new WeakMap(), _Mapboard_maxlat = new WeakMap(), _Mapboard_icelat = new WeakMap(), _Mapboard_instances = new WeakSet(), _Mapboard_freezeThaw = function _Mapboard_freezeThaw(w, newlat) {
+    _Mapboard_game = new WeakMap(), _Mapboard_maxlon = new WeakMap(), _Mapboard_maxlat = new WeakMap(), _Mapboard_icelat = new WeakMap(), _Mapboard_validlocs = new WeakMap(), _Mapboard_neighborids = new WeakMap(), _Mapboard_instances = new WeakSet(), _Mapboard_neighborids_ = function _Mapboard_neighborids_(gid) {
+        const pt = __classPrivateFieldGet(this, _Mapboard_validlocs, "f").get(gid);
+        if (pt == null)
+            return [undefined, undefined, undefined, undefined];
+        return Grid.neighbors(pt).map((q, i) => {
+            const nbr = __classPrivateFieldGet(this, _Mapboard_validlocs, "f").get(q.gid), dir = +i;
+            if (nbr == null)
+                return undefined;
+            const legal = (nbr.terrain != 9 /* TerrainKey.impassable */
+                && !((dir == 0 /* DirectionKey.north */ || dir == 2 /* DirectionKey.south */)
+                    ? blocked[0].find(d => d.lon == pt.lon && d.lat == (dir == 0 /* DirectionKey.north */ ? pt.lat : nbr.lat))
+                    : blocked[1].find(d => d.lon == (dir == 3 /* DirectionKey.west */ ? pt.lon : nbr.lon) && d.lat == pt.lat)));
+            return legal ? nbr.gid : null;
+        });
+    }, _Mapboard_freezeThaw = function _Mapboard_freezeThaw(w, newlat) {
         // move ice by freeze/thaw rivers and swamps, where w is Water.freeze or Water.thaw
         // ICELAT -= [7,14] incl]; clamp 1-39 incl
         // small bug in APX code? freeze chrs $0B - $29 (exclusive, seems like it could freeze Kerch straight?)
@@ -1189,7 +1205,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
             return this.player == __classPrivateFieldGet(this, _Unit_game, "f").human;
         }
         get location() {
-            return __classPrivateFieldGet(this, _Unit_game, "f").mapboard.locationOf(this);
+            return __classPrivateFieldGet(this, _Unit_game, "f").mapboard.locationOf(Grid.point(this));
         }
         get path() {
             let loc = this.location;
@@ -1237,7 +1253,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
             return { mstrng, cstrng };
         }
         addOrder(dir) {
-            let dst = null, err = null;
+            let dst, err;
             if (this.mode == 3 /* UnitMode.entrench */) {
                 err = "THAT UNIT IS ENTRENCHED";
             }
@@ -1448,7 +1464,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                 if (dst == null || (dst.terrain == 9 /* TerrainKey.impassable */ && (supply.sea == 0 || dst.alt == 1))) {
                     cost = 1;
                 }
-                else if (__classPrivateFieldGet(this, _Unit_game, "f").oob.zocAffecting(this.player, dst) >= 2) {
+                else if (__classPrivateFieldGet(this, _Unit_game, "f").oob.zocAffects(this.player, dst)) {
                     cost = 2;
                 }
                 else {
@@ -1502,9 +1518,10 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         // return 1 if target square is vacant
         if (!this.canAttack)
             return 0;
+        const dst = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.locationOf(Grid.point(opp));
         this.emit('attack');
         opp.emit('defend');
-        let modifier = terraintypes[__classPrivateFieldGet(this, _Unit_game, "f").mapboard.locationOf(opp).terrain].defence;
+        let modifier = terraintypes[dst.terrain].defence;
         if (opp.orders.length)
             modifier--; // movement penalty
         // opponent attacks
@@ -1515,7 +1532,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
             if (!this.orders)
                 return 0;
         }
-        const t = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.locationOf(opp).terrain;
+        const t = dst.terrain;
         modifier = terraintypes[t].offence;
         str = multiplier(this.cstrng, modifier);
         if (str >= __classPrivateFieldGet(this, _Unit_game, "f").rand.byte()) {
@@ -2226,7 +2243,10 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                 }
             });
         }
-        zocAffecting(player, loc, omitSelf = false) {
+        zocAffects(player, loc, omitSelf = false) {
+            return this.zocAffecting(player, loc, 2, omitSelf) >= 2;
+        }
+        zocAffecting(player, loc, threshold = 99, omitSelf = false) {
             // evaluate zoc experienced by player (eg. exerted by !player) in the square at loc
             let zoc = 0;
             // same player in target square negates any zoc, enemy exerts 4
@@ -2247,13 +2267,15 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                 // center-adjacent (even) exert 2, corners (odd) exert 1
                 if (pt.unitid != null && this.at(pt.unitid).player != player) {
                     zoc += (i % 2) ? 1 : 2;
+                    if (zoc >= threshold)
+                        return zoc;
                 }
             });
             return zoc;
         }
         zocBlocked(player, src, dst) {
             // does enemy ZoC block player move from src to dst?
-            return this.zocAffecting(player, src, true) >= 2 && this.zocAffecting(player, dst) >= 2;
+            return this.zocAffects(player, src, true) && this.zocAffects(player, dst);
         }
     }
     _Oob_game = new WeakMap(), _Oob_units = new WeakMap();
@@ -3262,7 +3284,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
             }
         }
         focusShift(offset) {
-            const g = __classPrivateFieldGet(this, _AppModel_game, "f"), locid = (u) => g.mapboard.locationOf(u).gid, humanUnits = g.oob.activeUnits(g.human).sort((a, b) => locid(b) - locid(a)), n = humanUnits.length;
+            const g = __classPrivateFieldGet(this, _AppModel_game, "f"), locid = (u) => g.mapboard.locationOf(Grid.point(u)).gid, humanUnits = g.oob.activeUnits(g.human).sort((a, b) => locid(b) - locid(a)), n = humanUnits.length;
             let i;
             if (__classPrivateFieldGet(this, _AppModel_id, "f") >= 0) {
                 i = humanUnits.findIndex(u => u.id == __classPrivateFieldGet(this, _AppModel_id, "f"));
@@ -3280,7 +3302,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         }
         paintCityLabels() {
             // these are static so never need redrawn, color changes via paintMap
-            const { lon: left, lat: top } = __classPrivateFieldGet(this, _AppModel_game, "f").mapboard.locations[0][0].point;
+            const { lon: left, lat: top } = __classPrivateFieldGet(this, _AppModel_game, "f").mapboard.locations[0][0];
             __classPrivateFieldGet(this, _AppModel_game, "f").mapboard.cities.forEach((c, i) => {
                 this.labelLayer.put(i.toString(), 32, left - c.lon, top - c.lat, {
                     props: { label: c.label, points: c.points }
@@ -3315,12 +3337,12 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
             __classPrivateFieldGet(this, _AppModel_game, "f").oob.forEach(u => this.paintUnit(u));
         }
         paintReach(u) {
-            const { lon: left, lat: top } = __classPrivateFieldGet(this, _AppModel_game, "f").mapboard.locations[0][0].point, pts = u.reach();
+            const { lon: left, lat: top } = __classPrivateFieldGet(this, _AppModel_game, "f").mapboard.locations[0][0], pts = u.reach();
             this.maskLayer.cls(0); // mask everything with block char, then clear reach squares
             pts.forEach(({ lon, lat }) => this.maskLayer.putc(undefined, { x: left - lon, y: top - lat }));
         }
         paintUnit(u) {
-            const g = __classPrivateFieldGet(this, _AppModel_game, "f"), { earth } = weatherdata[g.weather], { lon: left, lat: top } = g.mapboard.locations[0][0].point, ux = left - u.lon, uy = top - u.lat;
+            const g = __classPrivateFieldGet(this, _AppModel_game, "f"), { earth } = weatherdata[g.weather], { lon: left, lat: top } = g.mapboard.locations[0][0], ux = left - u.lon, uy = top - u.lat;
             let animation = undefined;
             if (u === this.focussed()) {
                 const f = u.foggyStrength(g.human);
@@ -3520,15 +3542,14 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                     const bbox = __classPrivateFieldGet(this, _Thinker_game, "f").mapboard.bbox, lon = bbox[pinfo.homedir], south = bbox[2 /* DirectionKey.south */], north = bbox[0 /* DirectionKey.north */], lat = (_a = [...Array(north - south + 1).keys()]
                         .map(k => k + south)
                         .sort((a, b) => (Math.abs(a - u.lat) - Math.abs(b - u.lat)) || a - b)
-                        .find(lat => __classPrivateFieldGet(this, _Thinker_game, "f").mapboard.locationOf({ lat, lon }).terrain != 9 /* TerrainKey.impassable */)) !== null && _a !== void 0 ? _a : u.lat;
+                        .find(lat => __classPrivateFieldGet(this, _Thinker_game, "f").mapboard.locationOf(Grid.lonlat(lon, lat)).terrain != 9 /* TerrainKey.impassable */)) !== null && _a !== void 0 ? _a : u.lat;
                     u.objective = { lon, lat };
                 }
                 else {
                     // find nearest best square
-                    const start = __classPrivateFieldGet(this, _Thinker_game, "f").mapboard.locationOf(u.objective);
+                    const start = __classPrivateFieldGet(this, _Thinker_game, "f").mapboard.locationOf(Grid.point(u.objective));
                     let bestval = __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_evalLocation).call(this, u, start, friends, foes);
-                    Object.keys(directions).forEach(d => {
-                        const loc = __classPrivateFieldGet(this, _Thinker_game, "f").mapboard.neighborOf(start, +d);
+                    __classPrivateFieldGet(this, _Thinker_game, "f").mapboard.neighborsOf(start).forEach(loc => {
                         if (!loc)
                             return;
                         const sqval = __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_evalLocation).call(this, u, loc, friends, foes);

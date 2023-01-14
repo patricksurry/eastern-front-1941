@@ -7,6 +7,7 @@ import {
     monthdata,
     PlayerKey,
     clamp,
+    memoize,
 } from './defs';
 import {Grid, GridPoint} from './grid';
 import {mapVariants, blocked} from './map-data';
@@ -38,6 +39,9 @@ class Mapboard {
     #maxlon;
     #maxlat;
     #icelat = 39;       // via M.ASM:8600 PSXVAL initial value is 0x27
+    #validlocs: Map<number, MapPoint> = new Map();
+
+    #neighborids = memoize(((gid: number): [number?, number?, number?, number?] => this.#neighborids_(gid)));
 
     constructor(game: Game, memento?: number[]) {
         const
@@ -80,11 +84,13 @@ class Mapboard {
             (row, i) => row.map(
                 (data, j) => {
                     const lon: number = this.#maxlon - j,
-                        lat = this.#maxlat - i;
-                    return {
-                        ...Grid.lonlat(lon, lat),
-                        ...data
+                        lat = this.#maxlat - i,
+                        pt = Grid.lonlat(lon, lat),
+                        loc = {...pt, ...data};
+                    if (pt.lat >= 0 && pt.lat < this.#maxlat && pt.lon >= 0 && pt.lon < this.#maxlon) {
+                        this.#validlocs.set(pt.gid, loc);
                     }
+                    return loc
                 }
             )
         );
@@ -159,13 +165,15 @@ class Mapboard {
             unit = loc.unitid != null ? this.#game.oob.at(loc.unitid).describe(): "";
         return `[${loc.gid}] ${label}\nlon ${loc.lon}, lat ${loc.lat}\n\n${unit}`.trim()
     }
-    valid(pt: Point) {
-        return pt.lat >= 0 && pt.lat < this.#maxlat && pt.lon >= 0 && pt.lon < this.#maxlon;
+    valid(pt: GridPoint) {
+        return this.#validlocs.has(pt.gid);
     }
-    locationOf(pt: Point): MapPoint {
-        if (!this.valid(pt))  // nb this throws for impassable boundary points
+    locationOf(pt: GridPoint): MapPoint {
+        // nb throws for impassable boundary points
+        const loc = this.#validlocs.get(pt.gid);
+        if (loc == null)
             throw new Error(`MapBoard.locationOf: invalid point ${pt.lon}, ${pt.lat}`);
-        return this.locations[this.#maxlat - pt.lat][this.#maxlon - pt.lon];
+        return loc;
     }
     boundaryDistance(pt: Point, dir: DirectionKey): number {
         switch (dir) {
@@ -175,21 +183,33 @@ class Mapboard {
             case DirectionKey.west: return this.#maxlon - 1 - pt.lon;
         }
     }
-    neighborOf(pt: GridPoint, dir: DirectionKey): (MapPoint|null) {
-        const q = Grid.adjacent(pt, dir);
-        if (!this.valid(q)) return null;
-        const nbr = this.locationOf(q);
+    #neighborids_(gid: number): [number?, number?, number?, number?] {
+        const pt = this.#validlocs.get(gid);
+        if (pt == null) return [undefined, undefined, undefined, undefined];
 
-        const legal = (
-            nbr.terrain != TerrainKey.impassable
-            && !(
-                (dir == DirectionKey.north || dir == DirectionKey.south)
-                ? blocked[0].find(d => d.lon == pt.lon && d.lat == (dir == DirectionKey.north ? pt.lat : nbr.lat))
-                : blocked[1].find(d => d.lon == (dir == DirectionKey.west ? pt.lon : nbr.lon) && d.lat == pt.lat)
-            )
-        );
-
-        return legal ? nbr: null;
+        return Grid.neighbors(pt).map((q, i) => {
+            const nbr = this.#validlocs.get(q.gid),
+                dir = +i as DirectionKey;
+            if (nbr == null) return undefined;
+            const legal = (
+                nbr.terrain != TerrainKey.impassable
+                && !(
+                    (dir == DirectionKey.north || dir == DirectionKey.south)
+                    ? blocked[0].find(d => d.lon == pt.lon && d.lat == (dir == DirectionKey.north ? pt.lat : nbr.lat))
+                    : blocked[1].find(d => d.lon == (dir == DirectionKey.west ? pt.lon : nbr.lon) && d.lat == pt.lat)
+                )
+            );
+            return legal ? nbr.gid: null;
+        }) as [number?, number?, number?, number?];
+    }
+    neighborsOf({gid}: GridPoint): [MapPoint?, MapPoint?, MapPoint?, MapPoint?] {
+        return this.#neighborids(gid)
+            .map(v => v == null ? v : this.#validlocs.get(v)) as
+            [MapPoint?, MapPoint?, MapPoint?, MapPoint?];
+    }
+    neighborOf({gid}: GridPoint, dir: DirectionKey): MapPoint | undefined {
+        const nbrid = this.#neighborids(gid)[dir];
+        return nbrid == null ? undefined : this.#validlocs.get(nbrid);
     }
     #freezeThaw(w: WaterStateKey, newlat?: number) {
         // move ice by freeze/thaw rivers and swamps, where w is Water.freeze or Water.thaw
@@ -295,11 +315,10 @@ class Mapboard {
                 frontier.delete(_head);
             }
 
-            Object.keys(directions).forEach(i => {
-                const d = +i as DirectionKey,
-                    dst = this.neighborOf(src, d);
+            this.neighborsOf(src).forEach((dst, i) => {
                 if (!dst) return;
-                const cost = found.get(src.gid)!.cost + costs[dst.terrain];
+                const d = +i as DirectionKey,
+                    cost = found.get(src.gid)!.cost + costs[dst.terrain];
                 if (!found.has(dst.gid)) {  // with consistent estimate we always find best first
                     found.set(dst.gid, {dir: d, cost});
                     const est = cost + minCost * Grid.manhattanDistance(src, dst);
@@ -340,8 +359,7 @@ class Mapboard {
         while (cost < range) {
             Object.entries(locs).filter(([ ,v]) => v == cost).forEach(([k, ]) => {
                 const src = Grid.byid(+k);
-                Object.keys(directions).forEach(i => {
-                    const dst = this.neighborOf(src, +i);
+                this.neighborsOf(src).forEach(dst => {
                     if (!dst) return;
                     const curr = dst.gid in locs ? locs[dst.gid] : 255;
                     if (curr <= cost) return;

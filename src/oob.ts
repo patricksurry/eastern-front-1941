@@ -173,7 +173,10 @@ class Oob {
                 }
             });
     }
-    zocAffecting(player: PlayerKey, loc: MapPoint, omitSelf = false) {
+    zocAffects(player: PlayerKey, loc: MapPoint, omitSelf = false): boolean {
+        return this.zocAffecting(player, loc, 2, omitSelf) >= 2;
+    }
+    zocAffecting(player: PlayerKey, loc: MapPoint, threshold = 99, omitSelf = false) {
         // evaluate zoc experienced by player (eg. exerted by !player) in the square at loc
         let zoc = 0;
         // same player in target square negates any zoc, enemy exerts 4
@@ -191,13 +194,14 @@ class Oob {
             // center-adjacent (even) exert 2, corners (odd) exert 1
             if (pt.unitid != null && this.at(pt.unitid).player != player) {
                 zoc += (i % 2) ? 1: 2;
+                if (zoc >= threshold) return zoc;
             }
         });
         return zoc;
     }
     zocBlocked(player: PlayerKey, src: MapPoint, dst: MapPoint): boolean {
         // does enemy ZoC block player move from src to dst?
-        return this.zocAffecting(player, src, true) >= 2 && this.zocAffecting(player, dst) >= 2;
+        return this.zocAffects(player, src, true) && this.zocAffects(player, dst);
     }
 }
 

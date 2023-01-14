@@ -79,15 +79,14 @@ class Thinker {
                     lat = [...Array(north-south+1).keys()]
                         .map(k => k+south)
                         .sort((a, b) => (Math.abs(a-u.lat) - Math.abs(b-u.lat)) || a-b)
-                        .find(lat => this.#game.mapboard.locationOf({lat, lon}).terrain != TerrainKey.impassable)
+                        .find(lat => this.#game.mapboard.locationOf(Grid.lonlat(lon, lat)).terrain != TerrainKey.impassable)
                         ?? u.lat;
                 u.objective = {lon, lat};
             } else {
                 // find nearest best square
-                const start = this.#game.mapboard.locationOf(u.objective!);
+                const start = this.#game.mapboard.locationOf(Grid.point(u.objective!));
                 let bestval = this.#evalLocation(u, start, friends, foes);
-                Object.keys(directions).forEach(d => {
-                    const loc = this.#game.mapboard.neighborOf(start, +d as DirectionKey);
+                this.#game.mapboard.neighborsOf(start).forEach(loc => {
                     if (!loc) return;
                     const sqval = this.#evalLocation(u, loc, friends, foes);
                     if (sqval > bestval) {

@@ -9,7 +9,7 @@ const
     loc34 = mapboard.locationOf(Grid.lonlat(3, 4));
 
 test("Locations should match", () => {
-    expect(loc34).toBe(mapboard.locationOf({lon: 3, lat: 4}));
+    expect(loc34).toBe(mapboard.locationOf(Grid.point({lon: 3, lat: 4})));
 })
 
 test("Location.fromid round-trip failed", () => {
@@ -28,7 +28,7 @@ test("unique locations", () => {
 
 test("Neighbor location", () => {
     expect(mapboard.neighborOf(loc34, DirectionKey.east))
-        .toBe(mapboard.locationOf({lon: 2, lat: 4}))
+        .toBe(mapboard.locationOf(Grid.lonlat(2, 4)))
 })
 
 test("Wrong manhattan distance", () => {

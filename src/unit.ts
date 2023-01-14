@@ -178,7 +178,7 @@ class Unit {
         return this.player == this.#game.human;
     }
     get location(): MapPoint {
-        return this.#game.mapboard.locationOf(this);
+        return this.#game.mapboard.locationOf(Grid.point(this));
     }
     get path(): MapPoint[] {  // note returns non-empty list
         let loc = this.location;
@@ -228,14 +228,14 @@ class Unit {
         return {mstrng, cstrng};
     }
     addOrder(dir: number) {
-        let dst: MapPoint | null = null,
-            err: string | null = null;
+        let dst: MapPoint|undefined,
+            err: string|undefined;
         if (this.mode == UnitMode.entrench) {
             err = "THAT UNIT IS ENTRENCHED"
         } else if (!this.movable) {
             err = this.immobile ? "MILITIA UNITS CAN'T MOVE": "NEW ARRIVALS CAN'T MOVE";
         } else if (this.orders.length == 8) {
-            err ="ONLY 8 ORDERS ARE ALLOWED";
+            err = "ONLY 8 ORDERS ARE ALLOWED";
         } else {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             dst = this.#game.mapboard.neighborOf(this.path.pop()!, dir);
@@ -403,10 +403,11 @@ class Unit {
         // return 1 if target square is vacant
         if (!this.canAttack) return 0;
 
+        const dst = this.#game.mapboard.locationOf(Grid.point(opp));
         this.emit('attack');
         opp.emit('defend');
 
-        let modifier = terraintypes[this.#game.mapboard.locationOf(opp).terrain].defence;
+        let modifier = terraintypes[dst.terrain].defence;
         if (opp.orders.length) modifier--;  // movement penalty
 
         // opponent attacks
@@ -416,7 +417,7 @@ class Unit {
             this.#takeDamage(1, 5, true);
             if (!this.orders) return 0;
         }
-        const t = this.#game.mapboard.locationOf(opp).terrain;
+        const t = dst.terrain;
         modifier = terraintypes[t].offence;
         str = multiplier(this.cstrng, modifier);
         if (str >= this.#game.rand.byte()) {
@@ -510,7 +511,7 @@ class Unit {
             if (dst == null || (
                     dst.terrain == TerrainKey.impassable && (supply.sea == 0 || dst.alt == 1))) {
                 cost = 1;
-            } else if (this.#game.oob.zocAffecting(this.player, dst) >= 2) {
+            } else if (this.#game.oob.zocAffects(this.player, dst)) {
                 cost = 2;
             } else {
                 loc = dst;
