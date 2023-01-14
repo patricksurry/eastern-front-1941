@@ -446,51 +446,142 @@ var ef1941 = (function (exports, node_crypto) {
         return vs;
     }
     /** map a seq<int> (or singleton int) to seq<uint> */
+    const zigzag1 = memoize$1((v) => v < 0 ? ((-v) << 1) - 1 : v << 1);
     function zigzag(vs) {
         if (!vs.every(Number.isInteger))
             throw new Error(`zigzag: Expected list of integers: ${vs}`);
-        return vs.map(v => v < 0 ? ((-v) << 1) - 1 : v << 1);
+        return vs.map(zigzag1);
     }
     /** recover seq<int> from a zigzag()d seq<uint> */
+    const zagzig1 = memoize$1((v) => v & 0x1 ? -((v + 1) >> 1) : v >> 1);
     function zagzig(vs) {
         if (!vs.every(isuint))
             throw new Error(`zagzig: Expected list of unsigned integers: ${vs}`);
-        return vs.map(v => v & 0x1 ? -((v + 1) >> 1) : v >> 1);
+        return vs.map(zagzig1);
     }
     /** combine multiple small numbers into a single result by interleaving bits
      * this is not safe for large numbers / long lists without switching to bigint
      * since JS works with signed 32-bit integers for bitwise ops
      */
-    function ravel(vs) {
-        let z = 0, m = Math.max(...vs), bit = 1;
-        if (!vs.every(isuint))
-            throw new Error(`ravel: Expected list of unsigned integers: ${vs}`);
-        while (m) {
-            vs = vs.map(v => {
-                if (v & 1)
-                    z |= bit;
-                bit <<= 1;
-                return v >> 1;
-            });
-            m >>= 1;
-        }
-        return z;
+    function ravel0_(v) {
+        v = (v | (v << 8)) & 0x00FF00FF;
+        v = (v | (v << 4)) & 0x0F0F0F0F;
+        v = (v | (v << 2)) & 0x33333333;
+        v = (v | (v << 1)) & 0x55555555;
+        return v;
     }
-    function unravel(z, n) {
+    const ravel0 = memoize$1(ravel0_);
+    function unravel0_(v) {
+        v &= 0x55555555;
+        v = (v | (v >> 1)) & 0x33333333;
+        v = (v | (v >> 2)) & 0x0F0F0F0F;
+        v = (v | (v >> 4)) & 0x00FF00FF;
+        v = (v | (v >> 8)) & 0x0000FFFF;
+        return v;
+    }
+    const unravel0 = memoize$1(unravel0_);
+    function ravel2(x, y) {
+        if (!(isuint(x) && isuint(y)))
+            throw new Error(`ravel: Expected pair of unsigned int, got ${x}, ${y}`);
+        return ravel0(x) | (ravel0(y) << 1);
+    }
+    function unravel2(z) {
         if (!isuint(z))
             throw new Error(`unravel: Expected unsigned int: ${z}`);
-        let vs = new Array(n).fill(0), bit = 1;
-        while (z) {
-            vs = vs.map(v => {
-                if (z & 1)
-                    v |= bit;
-                z >>= 1;
-                return v;
-            });
-            bit <<= 1;
-        }
-        return vs;
+        return [unravel0(z), unravel0(z >> 1)];
     }
+
+    function toid(lon, lat) {
+        return ravel2(zigzag1(lon), zigzag1(lat));
+    }
+    function byid_(gid) {
+        const [lon, lat] = zagzig(unravel2(gid));
+        return { lon, lat, gid };
+    }
+    const byid = memoize$1(byid_);
+    function nbrsbyid_(gid) {
+        const { lon, lat } = Grid.byid(gid);
+        return Object.values(directions)
+            .map(({ dlon, dlat }) => Grid.lonlat(lon + dlon, lat + dlat).gid);
+    }
+    const nbrsbyid = memoize$1(nbrsbyid_);
+    function directionsFrom(p, q) {
+        // project all directions from p to q and rank them, ensuring tie breaking has no bias
+        // returned pairs are like [ (q - p) . dir, key ], ordered by projection magnitude
+        // if p == q an empty list is returned
+        const dlat = (q.lat - p.lat), dlon = (q.lon - p.lon);
+        if (dlat == 0 && dlon == 0)
+            return [];
+        return Object.entries(directions)
+            .map(([k, d]) => [d.dlon * dlon + d.dlat * dlat, +k])
+            // in case of tied dirs (which will be neighbors) pick the clockwise leader
+            .sort(([a, i], [b, j]) => (b - a) || ((j - i + 4 + 2) % 4) - 2);
+    }
+    function directionFrom(p, q) {
+        // return the index of the closest cardinal direction from p to q, null if p == q
+        const projections = directionsFrom(p, q);
+        return projections.length ? projections[0][1] : null;
+    }
+    function squareSpiral(center, radius) {
+        // return list of the (2*radius+1)^2 locations spiraling out from loc
+        // which form a square of given radius, based on a spiralpattern
+        // that looks like N, E, S,S, W,W, N,N,N, E,E,E, S,S,S,S, W,W,W,W, ...
+        let loc = center, dir = 0, i = 0, side = 1;
+        const locs = [loc];
+        while (++i < 2 * radius + 1) {
+            loc = Grid.adjacent(loc, dir);
+            locs.push(loc);
+            if (i == side) {
+                side += dir % 2;
+                dir = (dir + 1) % 4;
+                i = 0;
+            }
+        }
+        return locs;
+    }
+    // hack to memoize squarespiral of radius 1 which get used a lot
+    function squareSpira11_(gid) {
+        return squareSpiral(Grid.byid(gid), 1).map(({ gid }) => gid);
+    }
+    const squareSpira11 = memoize$1(squareSpira11_);
+    function diamondSpiral(center, radius, facing = 0 /* DirectionKey.north */) {
+        // return list of GridPoints within radius manhattan distance of center,
+        // spiraling out from the origin starting in direction facting
+        // the 0th shell has a single point, with the i-th shell having 4*i points for i>1
+        // so the result has 2*r*(r+1) + 1 points
+        let loc = Grid.lonlat(center.lon, center.lat);
+        // the zeroth shell
+        const locs = [loc];
+        for (let r = 1; r <= radius; r++) {
+            // bump out one shell in the required direction
+            loc = Grid.adjacent(loc, facing);
+            // loop over the four sides of the shell
+            for (let d = 0; d < 4; d++) {
+                const d1 = (facing + d + 1) % 4, d2 = (facing + d + 2) % 4;
+                for (let i = 0; i < r; i++) {
+                    // push the point and make a diagonal step
+                    locs.push(loc);
+                    loc = Grid.adjacent(Grid.adjacent(loc, d1), d2);
+                }
+            }
+        }
+        return locs;
+    }
+    const Grid = {
+        byid: byid,
+        lonlat: (lon, lat) => byid(toid(lon, lat)),
+        point: ({ lon, lat }) => byid(toid(lon, lat)),
+        neighbors: ({ gid }) => nbrsbyid(gid).map(Grid.byid),
+        adjacent: ({ gid }, d) => Grid.byid(nbrsbyid(gid)[d]),
+        // calculate the taxicab metric between two locations
+        manhattanDistance: (p, q) => Math.abs(p.lat - q.lat) + Math.abs(p.lon - q.lon),
+        directionsFrom: directionsFrom,
+        directionFrom: directionFrom,
+        squareSpiral: (center, radius) => {
+            return (radius == 1) ? squareSpira11(center.gid).map(Grid.byid) : squareSpiral(center, radius);
+        },
+        diamondSpiral: diamondSpiral,
+    };
 
     const mapVariants = {
         [0 /* MapVariantKey.apx */]: {
@@ -671,100 +762,6 @@ var ef1941 = (function (exports, node_crypto) {
     ];
 
     var _Mapboard_instances, _Mapboard_game, _Mapboard_maxlon, _Mapboard_maxlat, _Mapboard_icelat, _Mapboard_freezeThaw;
-    // the map is made up of locations, each with a lon and lat
-    // grid points have integer coordinates and a unique identifier
-    class GridPoint {
-        constructor(lon, lat) {
-            if (!Number.isInteger(lon) || !Number.isInteger(lat))
-                throw (`bad Location(lon: int, lat: int, ...data), got lon=${lon}, lat=${lat}`);
-            this.lon = lon;
-            this.lat = lat;
-        }
-        get id() {
-            return ravel(zigzag([this.lon, this.lat]));
-        }
-        get point() {
-            return { lon: this.lon, lat: this.lat };
-        }
-        next(dir) {
-            const d = directions[dir];
-            return new GridPoint(this.lon + d.dlon, this.lat + d.dlat);
-        }
-        static get(p) {
-            return new GridPoint(p.lon, p.lat);
-        }
-        static fromid(v) {
-            const [lon, lat] = zagzig(unravel(v, 2));
-            return new GridPoint(lon, lat);
-        }
-        static directionsFrom(p, q) {
-            // project all directions from p to q and rank them, ensuring tie breaking has no bias
-            const dlat = (q.lat - p.lat), dlon = (q.lon - p.lon);
-            if (dlat == 0 && dlon == 0)
-                return [];
-            return Object.entries(directions)
-                .map(([k, d]) => [d.dlon * dlon + d.dlat * dlat, +k])
-                // in case tied dirs (which will be neighbors) pick the  the clockwise leader
-                .sort(([a, i], [b, j]) => (b - a) || ((j - i + 4 + 2) % 4) - 2);
-        }
-        static squareSpiral(center, radius) {
-            // return list of the (2*radius+1)^2 locations spiraling out from loc
-            // which form a square of given radius, based on a spiralpattern
-            // that looks like N, E, S,S, W,W, N,N,N, E,E,E, S,S,S,S, W,W,W,W, ...
-            let loc = new GridPoint(center.lon, center.lat), dir = 0, i = 0, side = 1;
-            const locs = [loc];
-            while (++i < 2 * radius + 1) {
-                loc = loc.next(dir);
-                locs.push(loc);
-                if (i == side) {
-                    side += dir % 2;
-                    dir = (dir + 1) % 4;
-                    i = 0;
-                }
-            }
-            return locs;
-        }
-        static diamondSpiral(center, radius, facing = 0 /* DirectionKey.north */) {
-            // return list of GridPoints within radius manhattan distance of center,
-            // spiraling out from the origin starting in direction facting
-            // the 0th shell has a single point, with the i-th shell having 4*i points for i>1
-            // so the result has 2*r*(r+1) + 1 points
-            let loc = new GridPoint(center.lon, center.lat);
-            // the zeroth shell
-            const locs = [loc];
-            for (let r = 1; r <= radius; r++) {
-                // bump out one shell in the required direction
-                loc = loc.next(facing);
-                // loop over the four sides of the shell
-                for (let d = 0; d < 4; d++) {
-                    const d1 = (facing + d + 1) % 4, d2 = (facing + d + 2) % 4;
-                    for (let i = 0; i < r; i++) {
-                        // push the point and make a diagonal step
-                        locs.push(loc);
-                        loc = loc.next(d1).next(d2);
-                    }
-                }
-            }
-            return locs;
-        }
-    }
-    GridPoint.manhattanDistance = function (p, q) {
-        // calculate the taxicab metric between two locations
-        return Math.abs(p.lat - q.lat) + Math.abs(p.lon - q.lon);
-    };
-    GridPoint.directionFrom = function (p, q) {
-        // return the index of the winning direction
-        const projections = GridPoint.directionsFrom(p, q);
-        return projections.length ? projections[0][1] : null;
-    };
-    class MapPoint extends GridPoint {
-        constructor(lon, lat, terrain, alt, icon) {
-            super(lon, lat);
-            this.terrain = terrain;
-            this.alt = alt;
-            this.icon = icon;
-        }
-    }
     // mapboard constructor, used as a container of MapPoints
     class Mapboard {
         constructor(game, memento) {
@@ -774,6 +771,7 @@ var ef1941 = (function (exports, node_crypto) {
             _Mapboard_maxlat.set(this, void 0);
             _Mapboard_icelat.set(this, 39); // via M.ASM:8600 PSXVAL initial value is 0x27
             const scenario = scenarios[game.scenario], variant = mapVariants[scenario.map], ncity = scenario.ncity, mapencoding = variant.encoding.map((enc, i) => {
+                // convert the encoding table into a lookup of char => [icon, terraintype, alt-flag]
                 const lookup = {};
                 let ch = 0;
                 enc.split('|').forEach((s, t) => s.split('').forEach(c => {
@@ -797,13 +795,13 @@ var ef1941 = (function (exports, node_crypto) {
             __classPrivateFieldSet(this, _Mapboard_game, game, "f");
             this.locations = mapdata.map((row, i) => row.map((data, j) => {
                 const lon = __classPrivateFieldGet(this, _Mapboard_maxlon, "f") - j, lat = __classPrivateFieldGet(this, _Mapboard_maxlat, "f") - i;
-                return new MapPoint(lon, lat, data.terrain, data.alt, data.icon);
+                return Object.assign(Object.assign({}, Grid.lonlat(lon, lat)), data);
             }));
             this.cities = variant.cities.map(c => { return Object.assign({}, c); });
             this.cities.forEach((city, i) => {
                 var _a;
                 city.points = i < ncity ? ((_a = city.points) !== null && _a !== void 0 ? _a : 0) : 0;
-                const loc = this.locationOf(city);
+                const loc = this.locationOf(Grid.point(city));
                 if (loc.terrain != 2 /* TerrainKey.city */)
                     throw new Error(`Mapboard: city at (${loc.lon}, ${loc.lat}) missing city terrain`);
                 loc.cityid = i;
@@ -858,7 +856,7 @@ var ef1941 = (function (exports, node_crypto) {
             const city = loc.cityid != null ? this.cities[loc.cityid] : undefined, label = city
                 ? ` ${city.label} (${(_a = city.points) !== null && _a !== void 0 ? _a : 0})`
                 : (terraintypes[loc.terrain].label + (loc.alt ? "-alt" : "")), unit = loc.unitid != null ? __classPrivateFieldGet(this, _Mapboard_game, "f").oob.at(loc.unitid).describe() : "";
-            return `[${loc.id}] ${label}\nlon ${loc.lon}, lat ${loc.lat}\n\n${unit}`.trim();
+            return `[${loc.gid}] ${label}\nlon ${loc.lon}, lat ${loc.lat}\n\n${unit}`.trim();
         }
         valid(pt) {
             return pt.lat >= 0 && pt.lat < __classPrivateFieldGet(this, _Mapboard_maxlat, "f") && pt.lon >= 0 && pt.lon < __classPrivateFieldGet(this, _Mapboard_maxlon, "f");
@@ -877,7 +875,7 @@ var ef1941 = (function (exports, node_crypto) {
             }
         }
         neighborOf(pt, dir) {
-            const q = pt.next(dir);
+            const q = Grid.adjacent(pt, dir);
             if (!this.valid(q))
                 return null;
             const nbr = this.locationOf(q);
@@ -911,20 +909,20 @@ var ef1941 = (function (exports, node_crypto) {
             */
             let loc = this.locationOf(p);
             const goal = this.locationOf(q);
-            if (loc.id == goal.id)
+            if (loc.gid == goal.gid)
                 return { cost: 0, orders: [] };
             const A = q.lat - p.lat, B = -(q.lon - p.lon), 
             // C = q.lon * p.lat - q.lat * p.lon,
-            projections = GridPoint.directionsFrom(p, q), i = projections[0][1], j = projections[1][1], // best two directinoe
+            projections = Grid.directionsFrom(p, q), i = projections[0][1], j = projections[1][1], // best two directinoe
             s = directions[i], t = directions[j], ds = A * s.dlon + B * s.dlat, dt = A * t.dlon + B * t.dlat;
             let err = 0, cost = 0;
             const orders = [];
-            while (loc.id != goal.id) {
+            while (loc.gid != goal.gid) {
                 const [k, de] = Math.abs(err + ds) < Math.abs(err + dt) ? [i, ds] : [j, dt];
                 err += de;
                 orders.push(k);
                 //NB. not validating that we can actually take this path
-                loc = this.locationOf(loc.next(k));
+                loc = this.locationOf(Grid.adjacent(loc, k));
                 cost += costs ? costs[loc.terrain] : 1;
             }
             return { cost, orders };
@@ -937,13 +935,13 @@ var ef1941 = (function (exports, node_crypto) {
             let src = this.locationOf(p);
             const goal = this.locationOf(q), 
             // linked list of points to search next, ordered by estimated total cost via this point
-            frontier = new Map([[_head, { id: src.id, est: 0 }]]), 
+            frontier = new Map([[_head, { id: src.gid, est: 0 }]]), 
             // dir arrived from and cost from start to here
-            found = new Map([[src.id, { dir: null, cost: 0 }]]);
+            found = new Map([[src.gid, { dir: null, cost: 0 }]]);
             while (frontier.has(_head)) {
                 const { id: next } = frontier.get(_head);
-                src = this.locationOf(GridPoint.fromid(next));
-                if (src.id == goal.id)
+                src = this.locationOf(Grid.byid(next));
+                if (src.gid == goal.gid)
                     break;
                 if (frontier.has(next)) {
                     frontier.set(_head, frontier.get(next));
@@ -956,10 +954,10 @@ var ef1941 = (function (exports, node_crypto) {
                     const d = +i, dst = this.neighborOf(src, d);
                     if (!dst)
                         return;
-                    const cost = found.get(src.id).cost + costs[dst.terrain];
-                    if (!found.has(dst.id)) { // with consistent estimate we always find best first
-                        found.set(dst.id, { dir: d, cost });
-                        const est = cost + minCost * GridPoint.manhattanDistance(src, dst);
+                    const cost = found.get(src.gid).cost + costs[dst.terrain];
+                    if (!found.has(dst.gid)) { // with consistent estimate we always find best first
+                        found.set(dst.gid, { dir: d, cost });
+                        const est = cost + minCost * Grid.manhattanDistance(src, dst);
                         let tail = _head;
                         // insert point in linked list before tail to maintain asc sort by est
                         while (frontier.has(tail)) {
@@ -969,43 +967,43 @@ var ef1941 = (function (exports, node_crypto) {
                             tail = _next;
                         }
                         if (frontier.has(tail)) {
-                            frontier.set(dst.id, frontier.get(tail));
+                            frontier.set(dst.gid, frontier.get(tail));
                         }
-                        frontier.set(tail, { id: dst.id, est: est });
+                        frontier.set(tail, { id: dst.gid, est: est });
                     }
                 });
             }
-            if (src.id != goal.id)
+            if (src.gid != goal.gid)
                 throw new Error(`MapBoard.bestPath: no path from ${p} to ${q}`);
             const orders = [];
             let pt = goal;
             for (;;) {
-                const dir = found.get(pt.id).dir;
+                const dir = found.get(pt.gid).dir;
                 if (dir == null)
                     break;
                 orders.unshift(dir);
-                pt = pt.next((dir + 2) % 4); // walk back in reverse direction
+                pt = Grid.adjacent(pt, (dir + 2) % 4); // walk back in reverse direction
             }
-            return { cost: found.get(goal.id).cost, orders: orders };
+            return { cost: found.get(goal.gid).cost, orders: orders };
         }
         reach(src, range, costs) {
             // find all squares accessible to unit within range, ignoring other units, zoc
             // returns a map of point ids => range
             let cost = 0;
-            const start = this.locationOf(src), locs = { [start.id]: 0 };
+            const start = this.locationOf(src), locs = { [start.gid]: 0 };
             while (cost < range) {
                 Object.entries(locs).filter(([, v]) => v == cost).forEach(([k,]) => {
-                    const src = GridPoint.fromid(+k);
+                    const src = Grid.byid(+k);
                     Object.keys(directions).forEach(i => {
                         const dst = this.neighborOf(src, +i);
                         if (!dst)
                             return;
-                        const curr = dst.id in locs ? locs[dst.id] : 255;
+                        const curr = dst.gid in locs ? locs[dst.gid] : 255;
                         if (curr <= cost)
                             return;
                         const c = cost + costs[dst.terrain];
                         if (c <= range && c < curr)
-                            locs[dst.id] = c;
+                            locs[dst.gid] = c;
                     });
                 });
                 cost++;
@@ -1193,9 +1191,6 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         get location() {
             return __classPrivateFieldGet(this, _Unit_game, "f").mapboard.locationOf(this);
         }
-        get point() {
-            return { lon: this.lon, lat: this.lat };
-        }
         get path() {
             let loc = this.location;
             const path = [loc];
@@ -1287,12 +1282,12 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         }
         setOrdersSupportingFriendlyFurther(dir) {
             const mb = __classPrivateFieldGet(this, _Unit_game, "f").mapboard;
-            let loc = GridPoint.get(this.point);
-            this.orders.forEach(d => loc = loc.next(d));
-            const { dlon, dlat } = directions[dir], target = GridPoint.diamondSpiral(loc, 8, dir)
+            let loc = Grid.point(this);
+            this.orders.forEach(d => loc = Grid.adjacent(loc, d));
+            const { dlon, dlat } = directions[dir], target = Grid.diamondSpiral(loc, 8, dir)
                 .find(p => {
                 if ((p.lon - loc.lon) * dlon + (p.lat - loc.lat) * dlat <= 0
-                    || GridPoint.manhattanDistance(p, this.point) > 8
+                    || Grid.manhattanDistance(p, this) > 8
                     || !mb.valid(p)) {
                     return false;
                 }
@@ -1306,7 +1301,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                 __classPrivateFieldGet(this, _Unit_game, "f").emit('message', 'error', 'NO FRIENDLY UNIT IN RANGE THAT WAY');
             }
             else {
-                this.setOrders(__classPrivateFieldGet(this, _Unit_game, "f").mapboard.directPath(this.point, target).orders);
+                this.setOrders(__classPrivateFieldGet(this, _Unit_game, "f").mapboard.directPath(Grid.point(this), target).orders);
             }
         }
         moveCost(terrain, weather) {
@@ -1332,7 +1327,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         orderCost(dir) {
             if (!this.movable)
                 return 255;
-            const dst = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.neighborOf(GridPoint.get(this), dir);
+            const dst = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.neighborOf(Grid.point(this), dir);
             if (!dst)
                 return 255;
             return this.moveCost(dst.terrain, __classPrivateFieldGet(this, _Unit_game, "f").weather);
@@ -1345,23 +1340,23 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                 : 255;
         }
         pathTo(goal) {
-            const m = __classPrivateFieldGet(this, _Unit_game, "f").mapboard, costs = this.moveCosts(__classPrivateFieldGet(this, _Unit_game, "f").weather);
-            return m.bestPath(this.point, goal, costs)
+            const m = __classPrivateFieldGet(this, _Unit_game, "f").mapboard, costs = this.moveCosts(__classPrivateFieldGet(this, _Unit_game, "f").weather), p = Grid.point(goal);
+            return m.bestPath(Grid.point(this), p, costs)
                 ;
         }
         reach(range = 32) {
             // return a list of grid points within range of this unit
             if (this.mode == 3 /* UnitMode.entrench */) {
-                return [GridPoint.get(this)];
+                return [Grid.point(this)];
             }
             else if (this.kind == 2 /* UnitKindKey.air */ && this.mode == 1 /* UnitMode.assault */) {
-                return GridPoint.diamondSpiral(this.point, range / 4)
+                return Grid.diamondSpiral(this, range / 4)
                     .filter(p => __classPrivateFieldGet(this, _Unit_game, "f").mapboard.valid(p));
             }
             else {
                 const costs = this.moveCosts(__classPrivateFieldGet(this, _Unit_game, "f").weather);
-                return Object.keys(__classPrivateFieldGet(this, _Unit_game, "f").mapboard.reach(this, range, costs))
-                    .map(id => GridPoint.fromid(+id));
+                return Object.keys(__classPrivateFieldGet(this, _Unit_game, "f").mapboard.reach(Grid.point(this), range, costs))
+                    .map(id => Grid.byid(+id));
             }
         }
         moveTo(dst) {
@@ -1376,7 +1371,8 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                 if (dst.unitid != null)
                     throw new Error(`moveTo into occupied square:\n${__classPrivateFieldGet(this, _Unit_game, "f").mapboard.describe(dst)}\nby:\n${this.describe()}\nfrom lon: ${this.lon}, lat: ${this.lat}`);
                 // occupy the new one and repaint
-                Object.assign(this, dst.point);
+                this.lon = dst.lon;
+                this.lat = dst.lat;
                 dst.unitid = this.id;
                 __classPrivateFieldGet(this, _Unit_game, "f").mapboard.occupy(dst, this.player);
             }
@@ -2244,7 +2240,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                 }
             }
             // look at square spiral excluding center, so even squares are adj, odd are corners
-            GridPoint.squareSpiral(loc, 1).slice(1).forEach((p, i) => {
+            Grid.squareSpiral(loc, 1).slice(1).forEach((p, i) => {
                 if (!__classPrivateFieldGet(this, _Oob_game, "f").mapboard.valid(p))
                     return;
                 const pt = __classPrivateFieldGet(this, _Oob_game, "f").mapboard.locationOf(p);
@@ -2867,28 +2863,17 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         this.month = this.date.getMonth(); // note JS getMonth is 0-indexed
         this.weather = monthdata[this.month].weather;
     }, _Game_newTurn = function _Game_newTurn(initialize = false) {
-        if (!initialize) {
-            this.turn++;
-            if (this.turn > scenarios[this.scenario].endturn
-                // special case for learner mode
-                || (this.scenario == 1 /* ScenarioKey.learner */ && this.mapboard.cities[0].owner == 0 /* PlayerKey.German */)) {
-                this.emit('game', 'end');
-                return;
-            }
+        if (this.turn >= scenarios[this.scenario].endturn
+            // special case for learner mode
+            || (this.scenario == 1 /* ScenarioKey.learner */ && this.mapboard.cities[0].owner == 0 /* PlayerKey.German */)) {
+            this.emit('game', 'end');
+            return;
         }
+        if (!initialize)
+            this.turn++;
         __classPrivateFieldGet(this, _Game_instances, "m", _Game_setDates).call(this);
         this.mapboard.newTurn(initialize);
         this.oob.newTurn(initialize);
-        // integrity test
-        this.mapboard.locations.forEach(row => row.filter(p => p.unitid).forEach(p => {
-            if (!this.oob.at(p.unitid).active)
-                throw new Error(`${this.mapboard.describe(p)} occupied by inactive unit`);
-        }));
-        this.oob.activeUnits().forEach(u => {
-            const mp = this.mapboard.locationOf(u.point);
-            if (mp.unitid != u.id)
-                throw new Error(`${u.describe()} not found at ${this.mapboard.describe(mp)}`);
-        });
         this.emit('game', 'turn');
     };
 
@@ -3277,7 +3262,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
             }
         }
         focusShift(offset) {
-            const g = __classPrivateFieldGet(this, _AppModel_game, "f"), locid = (u) => g.mapboard.locationOf(u).id, humanUnits = g.oob.activeUnits(g.human).sort((a, b) => locid(b) - locid(a)), n = humanUnits.length;
+            const g = __classPrivateFieldGet(this, _AppModel_game, "f"), locid = (u) => g.mapboard.locationOf(u).gid, humanUnits = g.oob.activeUnits(g.human).sort((a, b) => locid(b) - locid(a)), n = humanUnits.length;
             let i;
             if (__classPrivateFieldGet(this, _AppModel_id, "f") >= 0) {
                 i = humanUnits.findIndex(u => u.id == __classPrivateFieldGet(this, _AppModel_id, "f"));
@@ -3517,7 +3502,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
             let ofr = 0; // only used in first pass
             if (firstpass) {
                 ofr = calcForceRatios(__classPrivateFieldGet(this, _Thinker_game, "f").oob, __classPrivateFieldGet(this, _Thinker_player, "f")).ofr;
-                friends.forEach(u => { u.objective = u.point; });
+                friends.forEach(u => { u.objective = { lon: u.lon, lat: u.lat }; });
             }
             friends.filter(u => u.movable).forEach(u => {
                 var _a;
@@ -3527,7 +3512,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                     //TODO this tends to send most units to same beleagured square
                     const v = __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_findBeleaguered).call(this, u, friends);
                     if (v)
-                        u.objective = v.point;
+                        u.objective = { lon: v.lon, lat: v.lat };
                 }
                 else if (firstpass && (u.cstrng <= (u.mstrng >> 1) || u.ifrdir[pinfo.homedir] >= 16)) {
                     // run home if hurting or outnumbered in the rear
@@ -3549,7 +3534,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                         const sqval = __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_evalLocation).call(this, u, loc, friends, foes);
                         if (sqval > bestval) {
                             bestval = sqval;
-                            u.objective = loc.point;
+                            u.objective = { lon: loc.lon, lat: loc.lat };
                         }
                     });
                 }
@@ -3580,7 +3565,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
     }, _Thinker_findBeleaguered = function _Thinker_findBeleaguered(u, friends) {
         let best = null, score = 0;
         friends.filter(v => v.ifr > u.ifr).forEach(v => {
-            const d = GridPoint.manhattanDistance(u, v);
+            const d = Grid.manhattanDistance(u, v);
             if (d <= 8)
                 return; // APX code does weird bit 3 check
             const s = v.ifr - (d >> 3);
@@ -3591,23 +3576,23 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         });
         return best;
     }, _Thinker_evalLocation = function _Thinker_evalLocation(u, loc, friends, foes) {
-        const ghosts = {}, range = GridPoint.manhattanDistance(u, loc);
+        const ghosts = {}, range = Grid.manhattanDistance(u, loc);
         // too far, early exit
         if (range >= 8)
             return 0;
-        const nbval = Math.min(...foes.map(v => GridPoint.manhattanDistance(loc, v)));
+        const nbval = Math.min(...foes.map(v => Grid.manhattanDistance(loc, v)));
         // on the defensive and square is occupied by an enemy
         if (u.ifr >= 16 && nbval == 0)
             return 0;
         friends.filter(v => v.id != u.id)
-            .forEach(v => { ghosts[GridPoint.get(v.objective).id] = v.id; });
-        const isOccupied = (pt) => !!ghosts[pt.id];
+            .forEach(v => { ghosts[Grid.point(v.objective).gid] = v.id; });
+        const isOccupied = (pt) => !!ghosts[pt.gid];
         let dibs = false;
         if (isOccupied(loc))
             dibs = true; // someone else have dibs already?
         else
-            ghosts[loc.id] = u.id;
-        const square = GridPoint.squareSpiral(loc, 2), linepts = Object.keys(directions).map(d => linePoints(sortSquareFacing(loc, 5, +d, square), 5, isOccupied)), tadj = terraintypes[loc.terrain].defence + 2; // our 0 adj is equiv to his 2
+            ghosts[loc.gid] = u.id;
+        const square = Grid.squareSpiral(loc, 2), linepts = Object.keys(directions).map(d => linePoints(sortSquareFacing(loc, 5, +d, square), 5, isOccupied)), tadj = terraintypes[loc.terrain].defence + 2; // our 0 adj is equiv to his 2
         let sqval = sum(linepts.map((scr, i) => scr * u.ifrdir[i])) >> 8;
         sqval += u.ifr >= 16 ? u.ifr * (nbval + tadj) : 2 * (15 - u.ifr) * (9 - nbval + tadj);
         if (dibs)
@@ -3618,7 +3603,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
     function calcForceRatios(oob, player) {
         const active = oob.activeUnits(), friend = sum(active.filter(u => u.player == player).map(u => u.cstrng)), foe = sum(active.filter(u => u.player != player).map(u => u.cstrng)), ofr = Math.floor((foe << 4) / friend), ofropp = Math.floor((friend << 4) / foe);
         active.forEach(u => {
-            const nearby = active.filter(v => GridPoint.manhattanDistance(u, v) <= 8), p = u.point;
+            const nearby = active.filter(v => Grid.manhattanDistance(u, v) <= 8), p = Grid.point(u);
             let friend = 0;
             u.ifrdir = [0, 0, 0, 0];
             nearby.forEach(v => {
@@ -3626,7 +3611,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                 if (v.player == u.player)
                     friend += inc;
                 else
-                    u.ifrdir[GridPoint.directionFrom(p, v.point)] += inc;
+                    u.ifrdir[Grid.directionFrom(p, Grid.point(v))] += inc;
             });
             // individual and overall ifr max 255
             const ifr = Math.floor((sum(u.ifrdir) << 4) / friend);
@@ -8530,7 +8515,7 @@ d4a860 d8b46c dcb878 e0bc84 e4c490 e8c898 e8d49c ecd8a0
             if (scenario == null) {
                 scenario = (__classPrivateFieldGet(this, _AppCtrl_game, "f").scenario + inc + n) % n;
             }
-            this.setGame(new Game().start(scenario));
+            this.setGame(new Game(scenario));
             const label = scenarios[__classPrivateFieldGet(this, _AppCtrl_game, "f").scenario].label.padEnd(8, ' ');
             this.app.errorWindow.puts(`\fh\f^\f#<\f- ${label} \f#>\f-    \f#ENTER\f- TO START`);
         }

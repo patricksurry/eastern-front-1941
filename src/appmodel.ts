@@ -78,7 +78,7 @@ class AppModel {
     focusShift(offset: number) {
         const
             g = this.#game,
-            locid = (u: Unit) => g.mapboard.locationOf(u).id,
+            locid = (u: Unit) => g.mapboard.locationOf(u).gid,
             humanUnits = g.oob.activeUnits(g.human).sort((a, b) => locid(b) - locid(a)),
             n = humanUnits.length;
         let i;

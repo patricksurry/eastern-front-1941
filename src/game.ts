@@ -22,6 +22,7 @@ class Game extends EventEmitter {
     human = PlayerKey.German;
 
     turn = 0;       // 0-based turn index
+
     // helpers derived from turn via #setDates
     date!: Date;
     month!: MonthKey;
@@ -98,33 +99,19 @@ class Game extends EventEmitter {
         this.weather = monthdata[this.month].weather;
     }
     #newTurn(initialize = false) {
-        if (!initialize) {
-            this.turn++;
-            if (this.turn > scenarios[this.scenario].endturn
-                // special case for learner mode
-                || (this.scenario == ScenarioKey.learner && this.mapboard.cities[0].owner == PlayerKey.German)) {
-                this.emit('game', 'end');
-                return;
-            }
+        if (this.turn >= scenarios[this.scenario].endturn
+            // special case for learner mode
+            || (this.scenario == ScenarioKey.learner && this.mapboard.cities[0].owner == PlayerKey.German)) {
+            this.emit('game', 'end');
+            return;
         }
+
+        if (!initialize) this.turn++;
 
         this.#setDates();
 
         this.mapboard.newTurn(initialize);
         this.oob.newTurn(initialize);
-
-        // integrity test
-        this.mapboard.locations.forEach(
-            row => row.filter(p => p.unitid).forEach(p => {
-                if (!this.oob.at(p.unitid!).active)
-                    throw new Error(`${this.mapboard.describe(p)} occupied by inactive unit`);
-            })
-        );
-        this.oob.activeUnits().forEach(u => {
-            const mp = this.mapboard.locationOf(u.point);
-            if (mp.unitid != u.id)
-                throw new Error(`${u.describe()} not found at ${this.mapboard.describe(mp)}`);
-        });
 
         this.emit('game', 'turn');
     }

@@ -1,5 +1,5 @@
 import {oobVariants} from './oob-data';
-import {GridPoint} from './map';
+import {Grid} from './grid';
 
 import {Game} from './game';
 import { DirectionKey, PlayerKey } from './defs';
@@ -99,8 +99,7 @@ test("ZoC blocked", () => {
     u.moveTo(start);
     for (let i=0; i<4; i++) u.addOrder(DirectionKey.east);
     g.nextTurn();
-    console.log('blocked', u.point)
-    expect(u.point).toEqual({lon: 13, lat: 25});
+    expect(u).toMatchObject({lon: 13, lat: 25});
 })
 
 test("ZoC not blocked", () => {
@@ -109,7 +108,7 @@ test("ZoC not blocked", () => {
     const p0 = g.oob.findIndex(u => u.player == PlayerKey.German),
         p1 = g.oob.findIndex(u => u.player == PlayerKey.Russian),
         u = g.oob.at(p0),
-        start = g.mapboard.locationOf({lon: 14, lat: 25});
+        start = g.mapboard.locationOf(Grid.point({lon: 14, lat: 25}));
 
     g.mapboard.locationOf({lon: 12, lat: 24}).unitid = p1;
     g.mapboard.locationOf({lon: 12, lat: 27}).unitid = p1;
@@ -117,8 +116,7 @@ test("ZoC not blocked", () => {
     u.moveTo(start);
     for (let i=0; i<4; i++) u.addOrder(DirectionKey.east);
     g.nextTurn();
-    console.log('not blocked', u.point)
-    expect(u.point).toEqual({lon: 10, lat: 25});
+    expect(u).toMatchObject({lon: 10, lat: 25});
 })
 
 
@@ -133,7 +131,7 @@ test("ZoC is calculated correctly", () => {
     in spiral ordering that's []. O . X . X X . .] => [5 0 2 5 4 7 6 3 0]
     */
 
-    const locs = GridPoint.squareSpiral({lon: 20, lat: 20}, 1)
+    const locs = Grid.squareSpiral(Grid.point({lon: 20, lat: 20}), 1)
             .map(p => game.mapboard.locationOf(p)),
         p0 = game.oob.findIndex(u => u.player == PlayerKey.German),
         p1 = game.oob.findIndex(u => u.player == PlayerKey.Russian),

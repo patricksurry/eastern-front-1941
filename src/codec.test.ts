@@ -7,28 +7,30 @@ import {
     fibencode, fibdecode,
     rlencode, rldecode,
     zigzag, zagzig,
-    ravel, unravel,
+    ravel2, unravel2,
 } from './codec';
 
 
 const fibs = [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181, 6765, 10946, 17711, 28657, 46368, 75025, 121393, 196418, 317811],
     fibs2 = [-8, 5, -3, 2, -1, 1, 0, 1, 1, 2, 3, 5, 8];
 
-test("ravel is reversible", () => {
-    const vs = [3,4,5];
-    expect(unravel(ravel(vs), vs.length)).toEqual(vs);
+test("ravel2 is reversible", () => {
+    expect(unravel2(ravel2(13, 22))).toEqual([13, 22]);
+    expect(unravel2(ravel2(2, 1))).toEqual([2, 1]);
 });
 
-test("ravel is bijective", () => {
+test("ravel2 is bijective", () => {
     const xs = Object.keys([...Array(100)]),
-        vs = xs.flatMap(x => xs.map(y => ravel([+x, +y])));
+        vs = xs.flatMap(x => xs.map(y => ravel2(+x, +y)));
     expect(vs.length).toBe(100*100);
     expect(new Set(vs).size).toBe(100*100);
 });
 
-test("zigzag+ravel is reversible", () => {
-    const vs = fibs2.slice(0,5);
-    expect(zagzig(unravel(ravel(zigzag(vs)),vs.length))).toEqual(vs);
+test("zigzag+ravel2 is reversible", () => {
+    const vs = [-7, 11],
+        zs = zigzag(vs) as [number, number];
+    console.log(vs, zs)
+    expect(zagzig(unravel2(ravel2(...zs)))).toEqual(vs);
 });
 
 test("zigzag is reversible", () => {

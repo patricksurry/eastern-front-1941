@@ -150,7 +150,7 @@ class AppCtrl {
         if (scenario == null) {
             scenario = (this.#game.scenario + inc + n) % n;
         }
-        this.setGame(new Game().start(scenario));
+        this.setGame(new Game(scenario));
 
         const label = scenarios[this.#game.scenario].label.padEnd(8, ' ');
         this.app.errorWindow.puts(`\fh\f^\f#<\f- ${label} \f#>\f-    \f#ENTER\f- TO START`);

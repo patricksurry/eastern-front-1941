@@ -4,8 +4,8 @@ import {Unit} from './unit';
 import {oobVariants} from './oob-data';
 import {sum, PlayerKey} from './defs';
 import {Game} from './game';
-
-import {type MapPoint, GridPoint} from './map';
+import {Grid} from './grid';
+import {type MapPoint} from './map';
 
 type UnitPredicate = (u: Unit, index: number) => boolean;
 type UnitMap<T> = (u: Unit, index: number) => T;
@@ -185,7 +185,7 @@ class Oob {
             }
         }
         // look at square spiral excluding center, so even squares are adj, odd are corners
-        GridPoint.squareSpiral(loc, 1).slice(1).forEach((p, i) => {
+        Grid.squareSpiral(loc, 1).slice(1).forEach((p, i) => {
             if (!this.#game.mapboard.valid(p)) return;
             const pt = this.#game.mapboard.locationOf(p);
             // center-adjacent (even) exert 2, corners (odd) exert 1

@@ -1,5 +1,6 @@
 import {sum, players, type Point, PlayerKey, directions, DirectionKey, terraintypes, TerrainKey} from './defs';
-import {MapPoint, GridPoint} from './map';
+import {Grid, type GridPoint} from './grid';
+import {MapPoint} from './map';
 import {type Oob} from './oob';
 import {Unit} from './unit';
 
@@ -58,7 +59,7 @@ class Thinker {
         let ofr = 0;  // only used in first pass
         if (firstpass) {
             ofr = calcForceRatios(this.#game.oob, this.#player).ofr;
-            friends.forEach(u => {u.objective = u.point});
+            friends.forEach(u => {u.objective = {lon: u.lon, lat: u.lat}});
         }
 
         friends.filter(u => u.movable).forEach(u => {
@@ -67,7 +68,7 @@ class Thinker {
                 // head to reinforce if no local threat since (Local + OFR) / 2 = OFR / 2
                 //TODO this tends to send most units to same beleagured square
                 const v = this.#findBeleaguered(u, friends);
-                if (v) u.objective = v.point;
+                if (v) u.objective = {lon: v.lon, lat: v.lat};
             } else if (firstpass && (u.cstrng <= (u.mstrng >> 1) || u.ifrdir[pinfo.homedir] >= 16)) {
                 // run home if hurting or outnumbered in the rear
                 // for Russian the whole eastern edge is valid, but generalize to support German AI
@@ -91,7 +92,7 @@ class Thinker {
                     const sqval = this.#evalLocation(u, loc, friends, foes);
                     if (sqval > bestval) {
                         bestval = sqval;
-                        u.objective = loc.point;
+                        u.objective = {lon: loc.lon, lat: loc.lat};
                     }
                 });
             }
@@ -106,7 +107,7 @@ class Thinker {
     #findBeleaguered(u: Unit, friends: Unit[]): Unit | null {
         let best: Unit | null = null, score = 0;
         friends.filter(v => v.ifr > u.ifr).forEach(v => {
-            const d = GridPoint.manhattanDistance(u, v);
+            const d = Grid.manhattanDistance(u, v);
                 if (d <= 8) return;  // APX code does weird bit 3 check
                 const s = v.ifr - (d >> 3);
                 if (s > score) {
@@ -118,26 +119,26 @@ class Thinker {
     }
     #evalLocation(u: Unit, loc: MapPoint, friends: Unit[], foes: Unit[]) {
         const ghosts: Record<number, number> = {},
-            range = GridPoint.manhattanDistance(u, loc);
+            range = Grid.manhattanDistance(u, loc);
 
         // too far, early exit
         if (range >= 8) return 0;
 
-        const nbval = Math.min(...foes.map(v => GridPoint.manhattanDistance(loc, v)));
+        const nbval = Math.min(...foes.map(v => Grid.manhattanDistance(loc, v)));
 
         // on the defensive and square is occupied by an enemy
         if (u.ifr >= 16 && nbval == 0) return 0;
 
         friends.filter(v => v.id != u.id)
-            .forEach(v => { ghosts[GridPoint.get(v.objective!).id] = v.id; });
+            .forEach(v => { ghosts[Grid.point(v.objective!).gid] = v.id; });
 
-        const isOccupied = (pt: GridPoint) => !!ghosts[pt.id];
+        const isOccupied = (pt: GridPoint) => !!ghosts[pt.gid];
         let dibs = false;
 
         if (isOccupied(loc)) dibs = true;      // someone else have dibs already?
-        else ghosts[loc.id] = u.id;
+        else ghosts[loc.gid] = u.id;
 
-        const square = GridPoint.squareSpiral(loc, 2),
+        const square = Grid.squareSpiral(loc, 2),
             linepts = Object.keys(directions).map(
                 d => linePoints(sortSquareFacing(loc, 5, +d, square), 5, isOccupied)
             ),
@@ -159,14 +160,14 @@ function calcForceRatios(oob: Oob, player: PlayerKey) {
         ofropp = Math.floor((friend << 4) / foe);
 
     active.forEach(u => {
-        const nearby = active.filter(v => GridPoint.manhattanDistance(u, v) <= 8),
-            p = u.point;
+        const nearby = active.filter(v => Grid.manhattanDistance(u, v) <= 8),
+            p = Grid.point(u);
         let friend = 0;
         u.ifrdir = [0, 0, 0, 0];
         nearby.forEach(v => {
             const inc = v.cstrng >> 4;
             if (v.player == u.player) friend += inc;
-            else u.ifrdir[GridPoint.directionFrom(p, v.point)!] += inc;
+            else u.ifrdir[Grid.directionFrom(p, Grid.point(v))!] += inc;
         })
         // individual and overall ifr max 255
         const ifr = Math.floor((sum(u.ifrdir) << 4) / friend);

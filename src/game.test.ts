@@ -1,6 +1,7 @@
 import {PlayerKey, players} from './defs';
 import {ScenarioKey, scenarios} from './scenarios';
 import {Game} from './game';
+import {Grid} from './grid';
 
 let game: Game;
 
@@ -91,3 +92,29 @@ test("Play and recover all scenarios", () => {
         expect(game2.token).toEqual(tokens[k]);
     }
 });
+
+test("Maelstrom doesn't error", () => {
+    const moscow = Grid.point(game.mapboard.cities[0]);
+    function convergeOnMoscow(g: Game) {
+        g.oob.activeUnits().forEach(u => {
+            if (u.movable) {
+                const {orders} = g.mapboard.bestPath(Grid.point(u), moscow, u.moveCosts(game.weather));
+                u.setOrders(orders);
+            }
+        });
+    }
+    // for (const s in [ScenarioKey.learner]) {
+        let s = ScenarioKey.apx;
+        const k = +s as ScenarioKey,
+            g = new Game(k);
+        console.log('Playing scenario', scenarios[k].label);
+        expect(() => {
+            let i = 0;
+            convergeOnMoscow(g);
+            while (i++ < 100 && g.turn < scenarios[k].endturn) {
+                console.log(g.turn)
+                g.nextTurn();
+            }
+        }).not.toThrow();
+    // }
+})

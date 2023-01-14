@@ -10,7 +10,8 @@ import {
 } from './defs';
 
 import {scenarios} from './scenarios';
-import {Path, GridPoint, MapPoint} from './map';
+import {Grid, type GridPoint} from './grid';
+import {Path, MapPoint} from './map';
 import {Game} from './game';
 
 type UnitType = {label: string, kind: UnitKindKey, immobile?: number};
@@ -179,9 +180,6 @@ class Unit {
     get location(): MapPoint {
         return this.#game.mapboard.locationOf(this);
     }
-    get point(): Point {
-        return {lon: this.lon, lat: this.lat}
-    }
     get path(): MapPoint[] {  // note returns non-empty list
         let loc = this.location;
         const path = [loc];
@@ -271,14 +269,14 @@ class Unit {
     }
     setOrdersSupportingFriendlyFurther(dir: DirectionKey) {
         const mb = this.#game.mapboard;
-        let loc = GridPoint.get(this.point);
-        this.orders.forEach(d => loc = loc.next(d));
+        let loc = Grid.point(this);
+        this.orders.forEach(d => loc = Grid.adjacent(loc, d));
         const
             {dlon, dlat} = directions[dir],
-            target = GridPoint.diamondSpiral(loc, 8, dir)
+            target = Grid.diamondSpiral(loc, 8, dir)
                 .find(p => {
                     if ((p.lon - loc.lon)*dlon + (p.lat - loc.lat)*dlat <= 0
-                            || GridPoint.manhattanDistance(p, this.point) > 8
+                            || Grid.manhattanDistance(p, this) > 8
                             || !mb.valid(p)) {
                         return false;
                     } else {
@@ -293,7 +291,7 @@ class Unit {
         if (target == null) {
             this.#game.emit('message', 'error', 'NO FRIENDLY UNIT IN RANGE THAT WAY')
         } else {
-            this.setOrders(this.#game.mapboard.directPath(this.point, target).orders);
+            this.setOrders(this.#game.mapboard.directPath(Grid.point(this), target).orders);
         }
     }
     moveCost(terrain: TerrainKey, weather: WeatherKey): number {
@@ -316,7 +314,7 @@ class Unit {
     }
     orderCost(dir: DirectionKey): number {
         if (!this.movable) return 255;
-        const dst = this.#game.mapboard.neighborOf(GridPoint.get(this), dir);
+        const dst = this.#game.mapboard.neighborOf(Grid.point(this), dir);
         if (!dst) return 255;
         return this.moveCost(dst.terrain, this.#game.weather);
     }
@@ -329,22 +327,23 @@ class Unit {
     }
     pathTo(goal: Point): Path {
         const m = this.#game.mapboard,
-            costs = this.moveCosts(this.#game.weather);
+            costs = this.moveCosts(this.#game.weather),
+            p = Grid.point(goal);
         return options.astarPathFinding
-            ? m.bestPath(this.point, goal, costs)
-            : m.directPath(this.point, goal, costs)
+            ? m.bestPath(Grid.point(this), p, costs)
+            : m.directPath(Grid.point(this), p, costs)
     }
     reach(range = 32): GridPoint[] {
         // return a list of grid points within range of this unit
         if (this.mode == UnitMode.entrench) {
-            return [GridPoint.get(this)];
+            return [Grid.point(this)];
         } else if (this.kind == UnitKindKey.air && this.mode == UnitMode.assault) {
-            return GridPoint.diamondSpiral(this.point, range / 4)
+            return Grid.diamondSpiral(this, range / 4)
                 .filter(p => this.#game.mapboard.valid(p));
         } else {
             const costs = this.moveCosts(this.#game.weather);
-            return Object.keys(this.#game.mapboard.reach(this, range, costs))
-                .map(id => GridPoint.fromid(+id));
+            return Object.keys(this.#game.mapboard.reach(Grid.point(this), range, costs))
+                .map(id => Grid.byid(+id));
         }
     }
     moveTo(dst: MapPoint|null) {
@@ -359,7 +358,8 @@ class Unit {
             if (dst.unitid != null)
                 throw new Error(`moveTo into occupied square:\n${this.#game.mapboard.describe(dst)}\nby:\n${this.describe()}\nfrom lon: ${this.lon}, lat: ${this.lat}`);
             // occupy the new one and repaint
-            Object.assign(this, dst.point);
+            this.lon = dst.lon;
+            this.lat = dst.lat;
             dst.unitid = this.id;
             this.#game.mapboard.occupy(dst, this.player);
         } else {

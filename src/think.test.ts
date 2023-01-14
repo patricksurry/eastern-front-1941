@@ -1,5 +1,5 @@
 import {directions, PlayerKey} from './defs';
-import {GridPoint} from './map';
+import {type GridPoint, Grid} from './grid';
 import {Game} from './game';
 import {Thinker, privateExports} from './think';
 import { ScenarioKey } from './scenarios';
@@ -14,12 +14,12 @@ beforeEach(() => {
 
 test("Expected linePoints() values", () => {
     // set up the linepts position from the PDF diagram, and test from all directions
-    const p = new GridPoint(102, 102),
-        sq = GridPoint.squareSpiral(p, 2),
+    const p = Grid.lonlat(102, 102),
+        sq = Grid.squareSpiral(p, 2),
         occ: number[] = [[103, 103], [103, 101], [103, 100], [102, 102], [101, 101]].map(
-            ([lon, lat]) => new GridPoint(lon, lat).id
+            ([lon, lat]) => Grid.lonlat(lon, lat).gid
         ),
-        occfn = (pt: GridPoint) => occ.includes(pt.id);
+        occfn = (pt: GridPoint) => occ.includes(pt.gid);
 
     const linepts = Object.keys(directions).map((d) =>
         privateExports.linePoints(privateExports.sortSquareFacing(p, 5, +d, sq), 5, occfn));

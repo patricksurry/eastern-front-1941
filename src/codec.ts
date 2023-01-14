@@ -228,7 +228,6 @@ function fibdecode(seq: uint[]): uint[] {
  * @param {function} vsize - Function returning the expected size of encoding a value
  */
 function rlencode(vs: uint[], marker = 0, vsize = fibencsize): uint[] {
-
     if (!vs.every(isuint)) throw new Error(`rlencode: Expected list of unsigned integers: ${vs}`);
     if (!isuint(marker)) throw new Error(`rlencode: Expected unsigned integer marker: ${marker}`);
 
@@ -295,47 +294,52 @@ function rldecode(zs: uint[], marker = 0, vsize = fibencsize): uint[] {
 }
 
 /** map a seq<int> (or singleton int) to seq<uint> */
+const zigzag1 = memoize((v: uint): uint => v < 0 ? ((-v) << 1) - 1: v << 1);
+
 function zigzag(vs: int[]): uint[] {
     if (!vs.every(Number.isInteger)) throw new Error(`zigzag: Expected list of integers: ${vs}`);
-    return vs.map(v => v < 0 ? ((-v) << 1) - 1: v << 1);
+    return vs.map(zigzag1);
 }
 
 /** recover seq<int> from a zigzag()d seq<uint> */
+const zagzig1 = memoize((v: uint): uint => v & 0x1 ? -((v + 1) >> 1): v >> 1);
+
 function zagzig(vs: uint[]): int[] {
     if (!vs.every(isuint)) throw new Error(`zagzig: Expected list of unsigned integers: ${vs}`);
-    return vs.map(v => v & 0x1 ? -((v + 1) >> 1): v >> 1);
+    return vs.map(zagzig1);
 }
 
 /** combine multiple small numbers into a single result by interleaving bits
  * this is not safe for large numbers / long lists without switching to bigint
  * since JS works with signed 32-bit integers for bitwise ops
  */
-function ravel(vs: uint[]): uint {
-    let z = 0, m = Math.max(...vs), bit = 1;
-    if (!vs.every(isuint)) throw new Error(`ravel: Expected list of unsigned integers: ${vs}`);
-    while(m) {
-        vs = vs.map(v => {
-            if (v & 1) z |= bit;
-            bit <<= 1;
-            return v >> 1;
-        });
-        m >>= 1;
-    }
-    return z;
+function ravel0_(v: uint): uint {
+    v = (v | (v << 8)) & 0x00FF00FF;
+    v = (v | (v << 4)) & 0x0F0F0F0F;
+    v = (v | (v << 2)) & 0x33333333;
+    v = (v | (v << 1)) & 0x55555555;
+    return v;
+}
+const ravel0 = memoize(ravel0_);
+
+function unravel0_(v: uint): uint {
+    v &= 0x55555555;
+    v = (v | (v >> 1)) & 0x33333333;
+    v = (v | (v >> 2)) & 0x0F0F0F0F;
+    v = (v | (v >> 4)) & 0x00FF00FF;
+    v = (v | (v >> 8)) & 0x0000FFFF;
+    return v;
+}
+const unravel0 = memoize(unravel0_);
+
+function ravel2(x: uint, y: uint): uint {
+    if (!(isuint(x) && isuint(y))) throw new Error(`ravel: Expected pair of unsigned int, got ${x}, ${y}`);
+    return ravel0(x) | (ravel0(y) << 1);
 }
 
-function unravel(z: uint, n: uint): uint[] {
-    if (!isuint(z)) throw new Error(`unravel: Expected unsigned int: ${z}`)
-    let vs = new Array(n).fill(0), bit = 1;
-    while(z) {
-        vs = vs.map(v => {
-            if (z & 1) v |= bit;
-            z >>= 1;
-            return v;
-        })
-        bit <<= 1;
-    }
-    return vs;
+function unravel2(z: uint): [uint, uint] {
+    if (!isuint(z)) throw new Error(`unravel: Expected unsigned int: ${z}`);
+    return [unravel0(z), unravel0(z >> 1)]
 }
 
 export {
@@ -346,5 +350,6 @@ export {
     fibencode, fibdecode,
     rlencode, rldecode,
     zigzag, zagzig,
-    ravel, unravel,
+    zigzag1, zagzig1,
+    ravel2, unravel2,
 };
