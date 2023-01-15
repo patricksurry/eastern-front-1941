@@ -88,32 +88,44 @@ test("Play and recover all scenarios", () => {
     }
     for (const s in scenarios) {
         const k = +s as ScenarioKey;
-        const game2 = new Game(tokens[k]);
-        expect(game2.token).toEqual(tokens[k]);
+        const g2 = new Game(tokens[k]);
+        expect(g2.token).toEqual(tokens[k]);
     }
 });
 
-test("Maelstrom doesn't error", () => {
+test("Maelstrom doesn't throw", () => {
     const moscow = Grid.point(game.mapboard.cities[0]);
-    function convergeOnMoscow(g: Game) {
-        g.oob.activeUnits().forEach(u => {
-            if (u.movable) {
-                const {orders} = g.mapboard.bestPath(Grid.point(u), moscow, u.moveCosts(game.weather));
-                u.setOrders(orders);
-            }
-        });
-    }
-    // for (const s in [ScenarioKey.learner]) {
-        let s = ScenarioKey.apx;
-        const k = +s as ScenarioKey,
+
+    Object.keys(scenarios).forEach(v => {
+        const k = +v as ScenarioKey,
             g = new Game(k);
-        console.log('Playing scenario', scenarios[k].label);
+
         expect(() => {
-            let i = 0;
-            convergeOnMoscow(g);
-            while (i++ < 100 && g.turn < scenarios[k].endturn) {
+            let lastturn = -1;
+            while (g.turn != lastturn) {
+                lastturn = g.turn;
+                g.oob.activeUnits().forEach(u => {
+                    if (u.movable && u.orders.length == 0) {
+                        const {orders} = g.mapboard.directPath(Grid.point(u), moscow);
+                        u.setOrders(orders);
+                    }
+                });
                 g.nextTurn();
+
+                // integrity tests
+                g.mapboard.locations.forEach(
+                    row => row.filter(p => p.unitid).forEach(p => {
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        if (!g.oob.at(p.unitid!).active)
+                            throw new Error(`${g.mapboard.describe(p)} occupied by inactive unit`);
+                    })
+                );
+                g.oob.activeUnits().forEach(u => {
+                    const mp = g.mapboard.locationOf(Grid.point(u));
+                    if (mp.unitid != u.id)
+                        throw new Error(`${u.describe()} not found at ${g.mapboard.describe(mp)}`);
+                });
             }
         }).not.toThrow();
-    // }
+    });
 })

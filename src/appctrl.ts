@@ -1,5 +1,5 @@
 import {players, UnitKindKey, directions, DirectionKey} from './defs';
-import {UnitMode} from './unit';
+import {unitFlag, UnitMode} from './unit';
 import {AppModel, UIModeKey} from './appmodel';
 import {globalHandler, modeHandlers} from './appkeys';
 import {ScenarioKey, scenarios} from './scenarios';

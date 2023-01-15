@@ -271,6 +271,8 @@ const UnitOverlayComponent: m.Component<DisplayAttr> = {
                             const cstrng = g.props?.cstrng as number|undefined,
                                  mstrng = g.props?.mstrng as number|undefined,
                                  mode = g.props?.mode as UnitMode|undefined,
+                                 oos = g.props?.oos as boolean|undefined,
+                                 enter = g.props?.enter as boolean|undefined,
                                  ramp = [0x68, 0x38, 0x18, 0xc8].map(antic2rgb),
                                  cutoff = [1/4, 1/2, 3/4];
 
@@ -288,6 +290,7 @@ const UnitOverlayComponent: m.Component<DisplayAttr> = {
                                     href: modeIcons[mode],
                                     fill: antic2rgb(0x96),
                                 }) : null,
+                                oos || enter ? m('circle', {cx: 1/8, cy: 1/8, r: 1/8, fill: oos ? ramp[0]: ramp[3]}) : null,
                                 cstrng != null && mstrng != null ? m('g', [
                                     m('rect', {x: 1/8, y: 7/8, height: 1/8, width: 7/8 * mstrng/255, rx: 1/16, opacity: 0.5, fill: cfill}),
                                     m('rect', {x: 1/8, y: 7/8, height: 1/8, width: 7/8 * cstrng/255, rx: 1/16, fill: cfill}),

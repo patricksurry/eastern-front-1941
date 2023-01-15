@@ -194,7 +194,9 @@ class AppModel {
                     (this.uimode == UIModeKey.orders && this.focussed() !== u) ? this.focusOn(u) : this.focusOff()
                 }
             };
-        opts.props = u.foggyStrength(g.human);
+        opts.props = u.foggyStrength(g.human);  // cstrng, mstrng
+        opts.props.oos = (u.flags & unitFlag.oos) ? true: false;
+        opts.props.enter = (u.flags & unitFlag.enter) && g.turn > 0 ? true: false;
         if (u.player == g.human || this.debug) {
             Object.assign(opts.props, {
                 orders: u.orders,

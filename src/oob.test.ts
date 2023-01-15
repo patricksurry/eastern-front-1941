@@ -3,7 +3,8 @@ import {Grid} from './grid';
 
 import {Game} from './game';
 import { DirectionKey, PlayerKey } from './defs';
-import { ScenarioKey } from './scenarios';
+import { ScenarioKey, scenarios } from './scenarios';
+import { unitFlag } from './unit';
 
 let game: Game;
 
@@ -34,10 +35,13 @@ test("No fog is a no-op", () => {
 })
 
 test("Fog is bounded", () => {
-    const fog = 7;
+    const k = ScenarioKey.expert42,
+        scenario = scenarios[k],
+        fog = scenario.fog ?? 0,
+        g = new Game(k);
     let diff = 0;
-    game.oob.activeUnits().forEach(u => {
-        u.fog = fog;
+    expect(fog).toBeGreaterThan(0);
+    g.oob.activeUnits().forEach(u => {
         const {mstrng, cstrng} = u,
             {mstrng: mfog, cstrng: cfog} = u.foggyStrength(1-u.player);
         const dm = Math.abs(mfog-mstrng),
@@ -50,39 +54,75 @@ test("Fog is bounded", () => {
         expect(dm).toBeLessThan(1 << (fog-1));
         expect(dc).toBeLessThan(1 << (fog-1));
         diff += dm + dc;
-        u.fog = 0;
     })
     expect(diff).toBeGreaterThan(0);
 })
 
 test("Fog is asymmetrical", () => {
-    game.oob.activeUnits().forEach(u => {
-        u.fog = 3;
+    const g = new Game(ScenarioKey.expert41);
+    g.oob.activeUnits().forEach(u => {
         const {mstrng, cstrng} = u,
             {mstrng: mfog, cstrng: cfog} = u.foggyStrength(u.player);
         const dm = Math.abs(mfog-mstrng),
             dc = Math.abs(cfog-cstrng);
         expect(dm).toBe(0);
         expect(dc).toBe(0);
-        u.fog = 0;
     })
 })
 
 test("Fog is repeatable", () => {
-    game.oob.activeUnits().forEach(u => {u.fog = 3});
-    const ms  = game.oob.activeUnits().map(u => u.foggyStrength(1-u.player).mstrng),
-        m2s = game.oob.activeUnits().map(u => u.foggyStrength(1-u.player).mstrng);
+    const g = new Game(ScenarioKey.advanced);
+    const ms  = g.oob.activeUnits().map(u => u.foggyStrength(1-u.player).mstrng),
+        m2s = g.oob.activeUnits().map(u => u.foggyStrength(1-u.player).mstrng);
     expect(ms).toEqual(m2s);
-    game.oob.activeUnits().forEach(u => {u.fog = 0});
 })
 
-test("Fog changes each turn", () => {
-    game.oob.activeUnits().forEach(u => {u.fog = 3});
-    const ms  = game.oob.activeUnits().map(u => u.foggyStrength(1-u.player).mstrng);
-    game.nextTurn();
-    const m2s = game.oob.activeUnits().map(u => u.foggyStrength(1-u.player).mstrng);
+test("Fog strength changes each turn", () => {
+    const g = new Game(ScenarioKey.advanced);
+    const ms  = g.oob.activeUnits().map(u => u.foggyStrength(1-u.player).mstrng);
+    g.nextTurn();
+    const m2s = g.oob.activeUnits().map(u => u.foggyStrength(1-u.player).mstrng);
     expect(ms).not.toEqual(m2s);
-    game.oob.activeUnits().forEach(u => {u.fog = 0});
+})
+
+test("Fog values update each turn", () => {
+    const g = new Game(ScenarioKey.advanced),
+        fs = g.oob.activeUnits().map(u => u.fog);
+    g.nextTurn();
+    const f2s = g.oob.activeUnits().map(u => u.fog);
+    expect(fs).not.toEqual(f2s);
+})
+
+test("Simple supply", () => {
+    const g = new Game(ScenarioKey.learner);
+    g.oob.activeUnits().forEach(u => {
+        expect(u.traceSupply()).toBe(1);
+        expect(u.flags & unitFlag.oos).toBeFalsy();
+    })
+});
+
+test("Supply blocked", () => {
+    const g = new Game(ScenarioKey.learner);
+    const u0 = g.oob.activeUnits(PlayerKey.Russian)[0],
+        u1 = g.oob.activeUnits(PlayerKey.German)[0];
+
+    for (let lat=7; lat<=38; lat+=3) {
+        g.mapboard.locationOf(Grid.lonlat(18,lat)).unitid = u1.id;
+    }
+    expect(u0.traceSupply()).toBe(0);
+    expect(u0.flags & unitFlag.oos).toBeTruthy();
+})
+
+test("Supply thru gaps", () => {
+    const g = new Game(ScenarioKey.learner);
+    const u0 = g.oob.activeUnits(PlayerKey.Russian)[0],
+        u1 = g.oob.activeUnits(PlayerKey.German)[0];
+
+    for (let lat=7; lat<=38; lat+=4) {
+        g.mapboard.locationOf(Grid.lonlat(18,lat)).unitid = u1.id;
+    }
+    expect(u0.traceSupply()).toBe(1);
+    expect(u0.flags & unitFlag.oos).toBeFalsy();
 })
 
 test("ZoC blocked", () => {

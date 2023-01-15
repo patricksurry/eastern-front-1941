@@ -761,7 +761,7 @@ var ef1941 = (function (exports, node_crypto) {
         ]
     ];
 
-    var _Mapboard_instances, _Mapboard_game, _Mapboard_maxlon, _Mapboard_maxlat, _Mapboard_icelat, _Mapboard_validlocs, _Mapboard_neighborids, _Mapboard_neighborids_, _Mapboard_freezeThaw;
+    var _Mapboard_instances, _Mapboard_game, _Mapboard_maxlon, _Mapboard_maxlat, _Mapboard_icelat, _Mapboard_validlocs, _Mapboard_neighborids_, _Mapboard_neighborids, _Mapboard_freezeThaw;
     // mapboard constructor, used as a container of MapPoints
     class Mapboard {
         constructor(game, memento) {
@@ -771,7 +771,8 @@ var ef1941 = (function (exports, node_crypto) {
             _Mapboard_maxlat.set(this, void 0);
             _Mapboard_icelat.set(this, 39); // via M.ASM:8600 PSXVAL initial value is 0x27
             _Mapboard_validlocs.set(this, new Map());
-            _Mapboard_neighborids.set(this, memoize$1(((gid) => __classPrivateFieldGet(this, _Mapboard_instances, "m", _Mapboard_neighborids_).call(this, gid))));
+            // hack to memoize class method.  probably a better way to do it?
+            _Mapboard_neighborids.set(this, memoize$1((gid) => __classPrivateFieldGet(this, _Mapboard_instances, "m", _Mapboard_neighborids_).call(this, gid)));
             const scenario = scenarios[game.scenario], variant = mapVariants[scenario.map], ncity = scenario.ncity, mapencoding = variant.encoding.map((enc, i) => {
                 // convert the encoding table into a lookup of char => [icon, terraintype, alt-flag]
                 const lookup = {};
@@ -1057,10 +1058,12 @@ var ef1941 = (function (exports, node_crypto) {
     // the values here show my current choices, but aren't actually configurable in code yet
     const options = {
         colorPalette: 'WikiNTSC',
+        astarPathFinding: true,
+        reduceInitialFogInContact: true,
+        // hard-wired settings (these config options aren't referenced)
         mapIncludeSevastopol: false,
         germanReinforcementsMoveOnArrival: true,
         russianReinforcementsMoveOnArrival: false,
-        astarPathFinding: true,
         moreRandomSupplyAndRetreat: true,
         shuffleUnitInitiative: false,
         shuffleThinkingOrder: false,
@@ -1096,6 +1099,7 @@ var ef1941 = (function (exports, node_crypto) {
         { key: 'mountain' },
         { key: 'guards' },
     ];
+    // output-only status flags persisted during turn processing and emitted as events
     const unitFlag = {
         orders: 1 << 0,
         attack: 1 << 1,
@@ -1104,6 +1108,7 @@ var ef1941 = (function (exports, node_crypto) {
         move: 1 << 4,
         enter: 1 << 5,
         exit: 1 << 6,
+        oos: 1 << 7,
     };
     const unitModes = {
         [0 /* UnitMode.standard */]: { label: 'STANDARD' },
@@ -1111,34 +1116,26 @@ var ef1941 = (function (exports, node_crypto) {
         [2 /* UnitMode.march */]: { label: 'MARCH' },
         [3 /* UnitMode.entrench */]: { label: 'ENTRENCH' },
     };
+    // random bytes to use for deterministic fog of war matching
     const fogTable = `
-e6 63 03 60 39 b0 1a 5f 1b 2f 95 2c 37 0d 1c 09
-08 a5 35 22 4f c5 fe fe c5 49 75 95 34 22 f8 37
-c5 39 0c 51 48 53 d6 c2 c6 d8 1f 48 ac 2f f2 fb
-91 06 34 86 a7 93 af f1 0a 3a 42 22 8b b4 e1 af
-b4 21 93 60 85 f1 62 5c 11 f8 2f 7a 79 79 f0 9d
-cd 05 40 ae 2b d1 e2 94 bc d0 d1 88 dc 22 7d 93
-61 bd cb 7f 64 79 a9 86 47 ee 6f a5 08 70 05 2f
-01 2e b0 a5 8a 1e a5 00 c5 fa 0e 18 83 34 af 49
-6b 2a 25 aa 30 64 d6 4c 79 03 7b d7 25 fe 88 04
-f5 0f a1 af b3 18 dd f0 10 ca 69 08 07 0e a2 73
-4b 27 4e ba 15 8a 5b d1 65 c1 3e 04 b2 13 2b f7
-97 7e e7 e9 6f b8 5c 18 28 e5 65 d9 d7 65 26 4c
-c6 5e 1f 3a 88 0a f4 54 ac 9f 04 d6 ab 83 c5 bf
-38 0a 93 e4 76 46 15 0b 24 fb b4 ba e6 55 4f 45
-aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
-72 26 f9 ae 6d af af cf 57 4c cc 62 6f e5 e3 b1
+e6 63 03 60 39 b0 1a 5f 1b 2f 95 2c 37 0d 1c 09 08 a5 35 22 4f c5 fe fe c5 49 75 95 34 22 f8 37
+c5 39 0c 51 48 53 d6 c2 c6 d8 1f 48 ac 2f f2 fb 91 06 34 86 a7 93 af f1 0a 3a 42 22 8b b4 e1 af
+b4 21 93 60 85 f1 62 5c 11 f8 2f 7a 79 79 f0 9d cd 05 40 ae 2b d1 e2 94 bc d0 d1 88 dc 22 7d 93
+61 bd cb 7f 64 79 a9 86 47 ee 6f a5 08 70 05 2f 01 2e b0 a5 8a 1e a5 00 c5 fa 0e 18 83 34 af 49
+6b 2a 25 aa 30 64 d6 4c 79 03 7b d7 25 fe 88 04 f5 0f a1 af b3 18 dd f0 10 ca 69 08 07 0e a2 73
+4b 27 4e ba 15 8a 5b d1 65 c1 3e 04 b2 13 2b f7 97 7e e7 e9 6f b8 5c 18 28 e5 65 d9 d7 65 26 4c
+c6 5e 1f 3a 88 0a f4 54 ac 9f 04 d6 ab 83 c5 bf 38 0a 93 e4 76 46 15 0b 24 fb b4 ba e6 55 4f 45
+aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc 62 6f e5 e3 b1
 `.trim().split(/\s+/).map(s => parseInt(s, 16));
     class Unit {
         constructor(game, id, ...args) {
-            var _a, _b;
+            var _a, _b, _c;
             _Unit_instances.add(this);
             this.immobile = 0;
             this.canAttack = 1;
             this.resolute = 0;
             _Unit_mode.set(this, void 0);
             this.orders = []; // WHORDRS, HMORDS
-            this.fog = 0;
             this.tick = 255;
             this.ifr = 0;
             this.ifrdir = [0, 0, 0, 0];
@@ -1176,8 +1173,9 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
             this.lat = corpsy;
             this.mstrng = mstrng;
             this.cstrng = mstrng;
-            this.immobile = (_a = ut.immobile) !== null && _a !== void 0 ? _a : 0;
-            this.canAttack = (_b = modifiers[this.modifier].canAttack) !== null && _b !== void 0 ? _b : 1;
+            this.fog = (_a = scenarios[game.scenario].fog) !== null && _a !== void 0 ? _a : 0;
+            this.immobile = (_b = ut.immobile) !== null && _b !== void 0 ? _b : 0;
+            this.canAttack = (_c = modifiers[this.modifier].canAttack) !== null && _c !== void 0 ? _c : 1;
             this.resolute = this.player == 0 /* PlayerKey.German */ && !this.modifier ? 1 : 0;
             this.label = [
                 this.unitno,
@@ -1219,8 +1217,8 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
             return path;
         }
         emit(event) {
-            __classPrivateFieldGet(this, _Unit_game, "f").emit('unit', event, this);
             this.flags |= unitFlag[event];
+            __classPrivateFieldGet(this, _Unit_game, "f").emit('unit', event, this);
         }
         get mode() { return __classPrivateFieldGet(this, _Unit_mode, "f"); }
         set mode(mode) {
@@ -1435,13 +1433,39 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
             this.flags = 0;
             this.resetOrders();
         }
-        replace(mstr) {
-            this.mstrng = Math.max(255, this.mstrng + mstr);
-        }
-        recover() {
-            // M.ASM:5070  recover combat strength
-            if (this.mstrng - this.cstrng >= 2)
-                this.cstrng += 1 + __classPrivateFieldGet(this, _Unit_game, "f").rand.bit();
+        newTurn(initialize) {
+            if (!this.active)
+                return;
+            const scenario = scenarios[__classPrivateFieldGet(this, _Unit_game, "f").scenario];
+            if (initialize) {
+                this.moveTo(this.location);
+                if (__classPrivateFieldGet(this, _Unit_game, "f").turn == 0 && scenario.fog) {
+                    this.fog = scenario.fog;
+                    {
+                        // a unit completely surrounded sees zoc = 12, unit with seven units on a corner sees 7
+                        this.fog >>= __classPrivateFieldGet(this, _Unit_game, "f").oob.zocAffecting(this.player, this.location, true) / 2;
+                    }
+                }
+            }
+            else {
+                this.flags = 0;
+                if (!scenario.skipsupply) {
+                    const inSupply = this.traceSupply();
+                    if (scenario.repl && inSupply) {
+                        // possibly receive replacements
+                        this.mstrng = Math.max(255, this.mstrng + scenario.repl[this.player]);
+                    }
+                    if (!this.active)
+                        return; // quit if we were elimiated
+                }
+                // M.ASM:5070  recover combat strength
+                if (this.mstrng - this.cstrng >= 2)
+                    this.cstrng += 1 + __classPrivateFieldGet(this, _Unit_game, "f").rand.bit();
+                if (scenario.fog) {
+                    const change = __classPrivateFieldGet(this, _Unit_game, "f").oob.zocAffects(this.player, this.location, true) ? -1 : 1;
+                    this.fog = clamp(this.fog + change, 0, scenario.fog);
+                }
+            }
         }
         traceSupply() {
             // implement the supply check from C.ASM:3430
@@ -1483,6 +1507,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                 }
             }
             __classPrivateFieldGet(this, _Unit_instances, "m", _Unit_takeDamage).call(this, 0, Math.ceil(this.cstrng / 2));
+            this.emit('oos');
             return 0;
         }
         score() {
@@ -2104,12 +2129,10 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
             const scenario = scenarios[game.scenario], maxunit = scenario.nunit;
             __classPrivateFieldSet(this, _Oob_units, oobVariants[scenario.oob]
                 .map((vs, i) => {
-                var _a;
                 const u = new Unit(game, i, ...vs);
                 // exclude units not in the scenario, but leave them in array
                 if (u.id >= maxunit[u.player])
                     u.eliminate();
-                u.fog = (_a = scenario.fog) !== null && _a !== void 0 ? _a : 0;
                 return u;
             }), "f");
             __classPrivateFieldSet(this, _Oob_game, game, "f");
@@ -2127,21 +2150,24 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                         u.arrive = game.turn + 1;
                     }
                 });
-                const active = this.activeUnits(), human = active.filter(u => u.human), expected = 4 * active.length + human.length + (scenario.mvmode ? human.length : 0) + (scenario.fog ? human.length : 0);
+                const active = this.activeUnits(), human = active.filter(u => u.human), expected = (scenario.fog ? 5 : 4) * active.length + human.length * (scenario.mvmode ? 2 : 1);
                 if (memento.length < expected)
                     throw new Error('oob: malformed save data for active unit properties');
-                const lats = zagzig(memento.splice(0, active.length)), lons = zagzig(memento.splice(0, active.length)), mstrs = zagzig(memento.splice(0, active.length)), cdmgs = memento.splice(0, active.length), modes = scenario.mvmode ? memento.splice(0, human.length) : [], dfogs = scenario.fog ? memento.splice(0, human.length) : [], nords = memento.splice(0, human.length);
+                const dlats = zagzig(memento.splice(0, active.length)), dlons = zagzig(memento.splice(0, active.length)), dmstrs = zagzig(memento.splice(0, active.length)), cdmgs = memento.splice(0, active.length), dfogs = scenario.fog ? memento.splice(0, active.length) : [], modes = scenario.mvmode ? memento.splice(0, human.length) : [], nords = memento.splice(0, human.length);
                 let lat = 0, lon = 0, mstr = 255;
                 active.forEach(u => {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    lat += lats.shift();
+                    lat += dlats.shift();
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    lon += lons.shift();
+                    lon += dlons.shift();
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    mstr += mstrs.shift();
+                    mstr += dmstrs.shift();
                     [u.lat, u.lon, u.mstrng] = [lat, lon, mstr];
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     u.cstrng = u.mstrng - cdmgs.shift();
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    if (scenario.fog)
+                        u.fog -= dfogs.shift();
                 });
                 if (memento.length < sum(nords))
                     throw new Error('oob: malformed save data for unit orders');
@@ -2149,9 +2175,6 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     if (scenario.mvmode)
                         u.mode = modes.shift();
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    if (scenario.fog)
-                        u.fog -= dfogs.shift();
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     u.orders = memento.splice(0, nords.shift());
                 });
@@ -2172,37 +2195,42 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         map(f) { return __classPrivateFieldGet(this, _Oob_units, "f").map(f); }
         slice(start, end) { return __classPrivateFieldGet(this, _Oob_units, "f").slice(start, end); }
         get memento() {
-            const scenario = scenarios[__classPrivateFieldGet(this, _Oob_game, "f").scenario], lats = [], lons = [], mstrs = [], cdmgs = [], modes = [], dfogs = [], nords = [], ords = [];
+            const scenario = scenarios[__classPrivateFieldGet(this, _Oob_game, "f").scenario], dlats = [], dlons = [], dmstrs = [], cdmgs = [], modes = [], dfogs = [], nords = [], ords = [];
             let lat = 0, lon = 0, mstr = 255;
             // for scheduled units, status = 0 (active), 1 (dead), 2 (delayed)
             const scheduled = this.filter(u => u.scheduled <= __classPrivateFieldGet(this, _Oob_game, "f").turn), status = scheduled.map(u => u.active ? 0 : (u.cstrng == 0 ? 1 : 2)), active = scheduled.filter(u => u.active);
             active.forEach(u => {
-                lats.push(u.lat - lat);
-                lons.push(u.lon - lon);
-                mstrs.push(u.mstrng - mstr);
+                dlats.push(u.lat - lat);
+                dlons.push(u.lon - lon);
+                dmstrs.push(u.mstrng - mstr);
                 [lat, lon, mstr] = [u.lat, u.lon, u.mstrng];
+                if (scenario.fog)
+                    dfogs.push(scenario.fog - u.fog);
                 cdmgs.push(u.mstrng - u.cstrng);
                 if (u.human) {
                     nords.push(u.orders.length);
                     ords.push(...u.orders);
                     if (scenario.mvmode)
                         modes.push(u.mode);
-                    if (scenario.fog)
-                        dfogs.push(scenario.fog - u.fog);
                 }
             });
-            return status.concat(zigzag(lats), zigzag(lons), zigzag(mstrs), cdmgs, modes, dfogs, nords, ords);
+            return status.concat(zigzag(dlats), zigzag(dlons), zigzag(dmstrs), cdmgs, dfogs, modes, nords, ords);
         }
         newTurn(initialize) {
-            if (initialize) {
-                this.activeUnits().forEach(u => u.moveTo(u.location));
+            this.activeUnits().forEach(u => u.newTurn(initialize));
+            if (!initialize) {
+                // M.ASM:3720 delay reinforcements scheduled for an occuplied square
+                this.filter(u => u.arrive == __classPrivateFieldGet(this, _Oob_game, "f").turn)
+                    .forEach(u => {
+                    const loc = u.location;
+                    if (loc.unitid != null) {
+                        u.arrive++;
+                    }
+                    else {
+                        u.moveTo(loc); // reveal unit and link to the map square
+                    }
+                });
             }
-            else {
-                this.supply();
-                this.regroup();
-                this.reinforce();
-            }
-            this.activeUnits().forEach(u => u.flags = 0);
         }
         activeUnits(player) {
             return this.filter((u) => u.active && (player == null || u.player == player));
@@ -2216,37 +2244,10 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
             // could be interesting to randomize, or allow a delay/no-op order to handle traffic
             this.filter(u => u.tick == tick).reverse().forEach(u => u.tryOrder());
         }
-        regroup() {
-            // regroup, recover...
-            this.activeUnits().forEach(u => u.recover());
-        }
-        supply() {
-            const scenario = scenarios[__classPrivateFieldGet(this, _Oob_game, "f").scenario];
-            if (scenario.skipsupply)
-                return;
-            this.activeUnits().forEach(u => {
-                const inSupply = u.traceSupply();
-                if (scenario.repl && inSupply)
-                    u.replace(scenario.repl[u.player]);
-            });
-        }
-        reinforce() {
-            // M.ASM:3720  delay reinforcements scheduled for an occuplied square
-            this.filter(u => u.arrive == __classPrivateFieldGet(this, _Oob_game, "f").turn)
-                .forEach(u => {
-                const loc = u.location;
-                if (loc.unitid != null) {
-                    u.arrive++;
-                }
-                else {
-                    u.moveTo(loc); // reveal unit and link to the map square
-                }
-            });
-        }
         zocAffects(player, loc, omitSelf = false) {
-            return this.zocAffecting(player, loc, 2, omitSelf) >= 2;
+            return this.zocAffecting(player, loc, omitSelf, 2) >= 2;
         }
-        zocAffecting(player, loc, threshold = 99, omitSelf = false) {
+        zocAffecting(player, loc, omitSelf = false, threshold) {
             // evaluate zoc experienced by player (eg. exerted by !player) in the square at loc
             let zoc = 0;
             // same player in target square negates any zoc, enemy exerts 4
@@ -2267,7 +2268,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                 // center-adjacent (even) exert 2, corners (odd) exert 1
                 if (pt.unitid != null && this.at(pt.unitid).player != player) {
                     zoc += (i % 2) ? 1 : 2;
-                    if (zoc >= threshold)
+                    if (threshold && zoc >= threshold)
                         return zoc;
                 }
             });
@@ -2886,7 +2887,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
         this.weather = monthdata[this.month].weather;
     }, _Game_newTurn = function _Game_newTurn(initialize = false) {
         if (this.turn >= scenarios[this.scenario].endturn
-            // special case for learner mode
+            // special end condition for learner mode
             || (this.scenario == 1 /* ScenarioKey.learner */ && this.mapboard.cities[0].owner == 0 /* PlayerKey.German */)) {
             this.emit('game', 'end');
             return;
@@ -3380,7 +3381,9 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
                     (this.uimode == 1 /* UIModeKey.orders */ && this.focussed() !== u) ? this.focusOn(u) : this.focusOff();
                 }
             };
-            opts.props = u.foggyStrength(g.human);
+            opts.props = u.foggyStrength(g.human); // cstrng, mstrng
+            opts.props.oos = (u.flags & unitFlag.oos) ? true : false;
+            opts.props.enter = (u.flags & unitFlag.enter) && g.turn > 0 ? true : false;
             if (u.player == g.human || this.debug) {
                 Object.assign(opts.props, {
                     orders: u.orders,
@@ -8293,8 +8296,8 @@ d4a860 d8b46c dcb878 e0bc84 e4c490 e8c898 e8d49c ecd8a0
                 mithril('g', {
                     transform: "scale(8)"
                 }, mithril('g.status', sprites.filter(g => g.props).map(g => {
-                    var _a, _b, _c;
-                    const cstrng = (_a = g.props) === null || _a === void 0 ? void 0 : _a.cstrng, mstrng = (_b = g.props) === null || _b === void 0 ? void 0 : _b.mstrng, mode = (_c = g.props) === null || _c === void 0 ? void 0 : _c.mode, ramp = [0x68, 0x38, 0x18, 0xc8].map(antic2rgb), cutoff = [1 / 4, 1 / 2, 3 / 4];
+                    var _a, _b, _c, _d, _e;
+                    const cstrng = (_a = g.props) === null || _a === void 0 ? void 0 : _a.cstrng, mstrng = (_b = g.props) === null || _b === void 0 ? void 0 : _b.mstrng, mode = (_c = g.props) === null || _c === void 0 ? void 0 : _c.mode, oos = (_d = g.props) === null || _d === void 0 ? void 0 : _d.oos, enter = (_e = g.props) === null || _e === void 0 ? void 0 : _e.enter, ramp = [0x68, 0x38, 0x18, 0xc8].map(antic2rgb), cutoff = [1 / 4, 1 / 2, 3 / 4];
                     let cfill = '';
                     if (cstrng != null && mstrng != null) {
                         let i = 0;
@@ -8309,6 +8312,7 @@ d4a860 d8b46c dcb878 e0bc84 e4c490 e8c898 e8d49c ecd8a0
                             href: modeIcons[mode],
                             fill: antic2rgb(0x96),
                         }) : null,
+                        oos || enter ? mithril('circle', { cx: 1 / 8, cy: 1 / 8, r: 1 / 8, fill: oos ? ramp[0] : ramp[3] }) : null,
                         cstrng != null && mstrng != null ? mithril('g', [
                             mithril('rect', { x: 1 / 8, y: 7 / 8, height: 1 / 8, width: 7 / 8 * mstrng / 255, rx: 1 / 16, opacity: 0.5, fill: cfill }),
                             mithril('rect', { x: 1 / 8, y: 7 / 8, height: 1 / 8, width: 7 / 8 * cstrng / 255, rx: 1 / 16, fill: cfill }),

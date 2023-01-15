@@ -100,8 +100,8 @@ class Game extends EventEmitter {
     }
     #newTurn(initialize = false) {
         if (this.turn >= scenarios[this.scenario].endturn
-            // special case for learner mode
-            || (this.scenario == ScenarioKey.learner && this.mapboard.cities[0].owner == PlayerKey.German)) {
+                // special end condition for learner mode
+                || (this.scenario == ScenarioKey.learner && this.mapboard.cities[0].owner == PlayerKey.German)) {
             this.emit('game', 'end');
             return;
         }

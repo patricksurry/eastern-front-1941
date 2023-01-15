@@ -50,14 +50,16 @@ const apxXref: Record<number, UnitTypeKey> = {
         {key: 'guards'},
     ];
 
+// output-only status flags persisted during turn processing and emitted as events
 const unitFlag = {
     orders: 1 << 0,
     attack: 1 << 1,
     defend: 1 << 2,
     damage: 1 << 3,
-    move: 1 << 4,
-    enter: 1 << 5,
-    exit: 1 << 6,
+    move:   1 << 4,
+    enter:  1 << 5,
+    exit:   1 << 6,
+    oos:    1 << 7,
 } as const
 type UnitEvent = keyof typeof unitFlag;
 
@@ -69,23 +71,16 @@ const unitModes = {
     [UnitMode.entrench]: {label: 'ENTRENCH'},
 } as const;
 
+// random bytes to use for deterministic fog of war matching
 const fogTable = `
-e6 63 03 60 39 b0 1a 5f 1b 2f 95 2c 37 0d 1c 09
-08 a5 35 22 4f c5 fe fe c5 49 75 95 34 22 f8 37
-c5 39 0c 51 48 53 d6 c2 c6 d8 1f 48 ac 2f f2 fb
-91 06 34 86 a7 93 af f1 0a 3a 42 22 8b b4 e1 af
-b4 21 93 60 85 f1 62 5c 11 f8 2f 7a 79 79 f0 9d
-cd 05 40 ae 2b d1 e2 94 bc d0 d1 88 dc 22 7d 93
-61 bd cb 7f 64 79 a9 86 47 ee 6f a5 08 70 05 2f
-01 2e b0 a5 8a 1e a5 00 c5 fa 0e 18 83 34 af 49
-6b 2a 25 aa 30 64 d6 4c 79 03 7b d7 25 fe 88 04
-f5 0f a1 af b3 18 dd f0 10 ca 69 08 07 0e a2 73
-4b 27 4e ba 15 8a 5b d1 65 c1 3e 04 b2 13 2b f7
-97 7e e7 e9 6f b8 5c 18 28 e5 65 d9 d7 65 26 4c
-c6 5e 1f 3a 88 0a f4 54 ac 9f 04 d6 ab 83 c5 bf
-38 0a 93 e4 76 46 15 0b 24 fb b4 ba e6 55 4f 45
-aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa
-72 26 f9 ae 6d af af cf 57 4c cc 62 6f e5 e3 b1
+e6 63 03 60 39 b0 1a 5f 1b 2f 95 2c 37 0d 1c 09 08 a5 35 22 4f c5 fe fe c5 49 75 95 34 22 f8 37
+c5 39 0c 51 48 53 d6 c2 c6 d8 1f 48 ac 2f f2 fb 91 06 34 86 a7 93 af f1 0a 3a 42 22 8b b4 e1 af
+b4 21 93 60 85 f1 62 5c 11 f8 2f 7a 79 79 f0 9d cd 05 40 ae 2b d1 e2 94 bc d0 d1 88 dc 22 7d 93
+61 bd cb 7f 64 79 a9 86 47 ee 6f a5 08 70 05 2f 01 2e b0 a5 8a 1e a5 00 c5 fa 0e 18 83 34 af 49
+6b 2a 25 aa 30 64 d6 4c 79 03 7b d7 25 fe 88 04 f5 0f a1 af b3 18 dd f0 10 ca 69 08 07 0e a2 73
+4b 27 4e ba 15 8a 5b d1 65 c1 3e 04 b2 13 2b f7 97 7e e7 e9 6f b8 5c 18 28 e5 65 d9 d7 65 26 4c
+c6 5e 1f 3a 88 0a f4 54 ac 9f 04 d6 ab 83 c5 bf 38 0a 93 e4 76 46 15 0b 24 fb b4 ba e6 55 4f 45
+aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc 62 6f e5 e3 b1
 `.trim().split(/\s+/).map(s => parseInt(s, 16));
 
 class Unit {
@@ -105,9 +100,9 @@ class Unit {
     lat: number;
     mstrng: number;
     cstrng: number;
+    fog: number;
     #mode: UnitMode;
     orders: DirectionKey[] = [];        // WHORDRS, HMORDS
-    fog = 0;
     tick = 255;
     ifr = 0;
     ifrdir: [number, number, number, number] = [0, 0, 0, 0];
@@ -149,7 +144,7 @@ class Unit {
         this.lat = corpsy;
         this.mstrng = mstrng;
         this.cstrng = mstrng;
-
+        this.fog = scenarios[game.scenario].fog ?? 0;
         this.immobile = ut.immobile ?? 0;
         this.canAttack = modifiers[this.modifier].canAttack ?? 1;
         this.resolute = this.player == PlayerKey.German && !this.modifier ? 1: 0;
@@ -191,8 +186,8 @@ class Unit {
         return path;
     }
     emit(event: UnitEvent) {
-        this.#game.emit('unit', event, this);
         this.flags |= unitFlag[event];
+        this.#game.emit('unit', event, this);
     }
     get mode() { return this.#mode; }
     set mode(mode: UnitMode) {
@@ -476,12 +471,40 @@ class Unit {
         this.flags = 0;
         this.resetOrders();
     }
-    replace(mstr: number) {
-        this.mstrng = Math.max(255, this.mstrng + mstr);
-    }
-    recover() {
-        // M.ASM:5070  recover combat strength
-        if (this.mstrng - this.cstrng >= 2) this.cstrng += 1 + this.#game.rand.bit();
+    newTurn(initialize: boolean) {
+        if (!this.active) return;
+
+        const scenario = scenarios[this.#game.scenario];
+
+        if (initialize) {
+            this.moveTo(this.location);
+
+            if (this.#game.turn == 0 && scenario.fog) {
+                this.fog = scenario.fog;
+                if (options.reduceInitialFogInContact) {
+                    // a unit completely surrounded sees zoc = 12, unit with seven units on a corner sees 7
+                    this.fog >>= this.#game.oob.zocAffecting(this.player, this.location, true) / 2;
+                }
+            }
+        } else {
+            this.flags = 0;
+            if (!scenario.skipsupply) {
+                const inSupply = this.traceSupply();
+                if (scenario.repl && inSupply) {
+                    // possibly receive replacements
+                    this.mstrng = Math.max(255, this.mstrng + scenario.repl[this.player]);
+                }
+                if (!this.active) return;  // quit if we were elimiated
+            }
+
+            // M.ASM:5070  recover combat strength
+            if (this.mstrng - this.cstrng >= 2) this.cstrng += 1 + this.#game.rand.bit();
+
+            if (scenario.fog) {
+                const change = this.#game.oob.zocAffects(this.player, this.location, true) ? -1 : 1;
+                this.fog = clamp(this.fog + change, 0, scenario.fog)
+            }
+        }
     }
     traceSupply(): Flag {
         // implement the supply check from C.ASM:3430
@@ -516,7 +539,6 @@ class Unit {
             } else {
                 loc = dst;
             }
-
             if (cost) {
                 fail += cost;
                 // either flip a coin or try the opposite direction (potentially repeatedly until failure)
@@ -527,6 +549,7 @@ class Unit {
             }
         }
         this.#takeDamage(0, Math.ceil(this.cstrng/2));
+        this.emit('oos');
         return 0;
     }
     score() {

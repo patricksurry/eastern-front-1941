@@ -1,38 +1,35 @@
 # Open issues
 
-## Game play issues
+## Bugs
 
-[ ] get rid of game.start(), create new game each time
+- [ ] 8th inf in the south accepted but stoppped processing/following orders?  id=8. could it be blocked by a dead unit somehow?  sadly works on resume :(  http://localhost:3000/#EF4123J7PPcdU5ls-txzsMVOjBM_-t-rshjVx_r6q1COOWLN3TdbSNBEyYL3cpfFnnClqfdQqm5BvbzoSm9ZBBuOSlCXn7iuWZ1J6cMD7OrnbLQIMDq0OWHDXXBon4viebb97fX07neHQLNr16YBvWZZOLCfbcuYXCrGBNcUo56orxB3JSi43dyd7kCy_erpvV_xrU-1Hm
 
-[ ] move game sanity tests into a multi-turn all-converge on Moscow unit test
+- [ ] game over erases final score :(
 
-[ ] add a dot for units OoS (or nearly so?)
-
-[ ] 3 cav army 0/0 "that is a russian unit" occupying same square as 6 inf corps (opacity 0 but still selectable?).  can also assign orders to dead phantom german units :-|
-
-[ ] 8th inf in the south accepted but stoppped processing/following orders?  id=8. could it be blocked by a dead unit somehow?  sadly works on resume :(  http://localhost:3000/#EF4123J7PPcdU5ls-txzsMVOjBM_-t-rshjVx_r6q1COOWLN3TdbSNBEyYL3cpfFnnClqfdQqm5BvbzoSm9ZBBuOSlCXn7iuWZ1J6cMD7OrnbLQIMDq0OWHDXXBon4viebb97fX07neHQLNr16YBvWZZOLCfbcuYXCrGBNcUo56orxB3JSi43dyd7kCy_erpvV_xrU-1Hm
-
-[ ] game over erases final score :(
-
-[ ] reloading a game-over state continues instead of repeating game over message
+- [ ] reloading a game-over state continues instead of repeating game over message
 
 http://localhost:3000/#EF41x28dtxcdyA-txz-VRzarMvzxVjphjVj_rEY1vONDrgZSEEWRsuSiwoIhCn3CuavGBMPvm1cCoq9Mne5hENtnah6P5BPwbHpLNCLZoqm0OWHDXXBnveiLiiOq9OeEg9ugEo5EEYhmHNie9mgTCVCebCqazfEnqku7onUDmZ_cvpDsQ-UDljctUjDhTtQ33Tb
 
-- can early scenario end early after win score, or just moscow capture for learner??
+## Game play issues
+
+- combat
+  - [ ] defender bonus x2 for expert mode
+  - [ ] confirm attack/defend adjust are applied based on correct square - always defender?
+  - [ ] retreat resets mode to standard
+  - [ ] dead unit disperse nearby in cartridge
+  - [ ] break check is simplified for level = 0,1, cartridge:2553
+
+- scoring
+  - [ ] fix cart scoring alg
+  - [ ] show score in error window (see cartemu screenshot)
+  - [x] unit test for starting scores vs cart and apx
+  - [ ] can early scenarios end early after winning score, or just moscow capture for learner?
 
 - finish implementing scenario parameters from defs.ts
   - [ ] mdmg (mstrng dmg at higher levels),
   - [ ] cdmg,
   - [ ] cadj,
   - [ ] dealdmg varies by level via M/CSTRDMG not 1/5 like APX, some weirdness with assault nmode #$01 and cpx ARMY ?
-
-- fog of war
-  - [ ] config option to reduce initial fog
-  - [ ] at end of each turn, unit loses a bit of uncertainty if enemy zoc >= 2, gains otherwise, up to max bits by level; what about start e.g. of 1942?
-  - [x] it's an offset not a simple masking of bits, clamped in (1,255)
-  - [x] state stores current bits for active units relative to max
-  - [x] for display, bits are randomized predictably by turn and unit index
-  - [ ] unit tests, incl test for fog value changing between turns
 
 - logic for u.mode:
   - [x] any mode change clears orders
@@ -46,38 +43,33 @@ http://localhost:3000/#EF41x28dtxcdyA-txz-VRzarMvzxVjphjVj_rEY1vONDrgZSEEWRsuSiw
   - [x] entrench - can't add new orders
   - [ ] option for auto-entrench if no orders?
 
-- supply check
-  - [x] supply option in scenario (not level 0, 1)
-  - [x] refactor (remove) supply defs, merge to player?
-  - [x] traceSupply is unused.
-  - [x] germans automatically OoS in mud
-  - [x] in APX version, russians in supply get MSTRNG+2 in supply check (should be max 255)
-  - [ ] add unit test
-
-- zocAffecting
-  - [x] zocBlocked is currently wrong since starting unit will negate initial ZoC
-  - [x] different central unit treatment for supply check vs move (ignore or not)
-  - [x] add zocBlocked unit test
-
-- scoring
-  - [ ] fix cart scoring alg
-  - [ ] show score in error window (see cartemu screenshot)
-  - [x] unit test for starting scores vs cart and apx
-
-- combat
-  - [ ] defender bonus x2 for expert mode
-  - [ ] confirm attack/defend adjust are applied based on correct square - always defender?
-  - [ ] retreat resets mode to standard
-
 - air units (flieger)
   - [x] forcedMarch (normal movement rules like armor)
   - [x] assault mode (include impassable)
   - [ ] assault mode adds flieger strength / half flight distance to friendly unit cadj
   - [ ] Fliegerkorps break and suffer 75% loss
 
-- [ ] dead unit disperse nearby in cartridge
+- fog of war
+  - [x] config option to reduce initial fog
+  - [x] at end of each turn, unit loses a bit of uncertainty if enemy zoc >= 2, gains otherwise, up to max bits by level
+  - [x] it's an offset not a simple masking of bits, clamped in (1,255)
+  - [x] state stores current bits for active units relative to max
+  - [x] for display, bits are randomized predictably by turn and unit index
+  - [x] unit tests, incl test for fog value changing between turns
 
-- [ ] break check is simplified for level = 0,1, cartridge:2553
+- supply check
+  - [x] add a dot for units OoS
+  - [x] supply option in scenario (not level 0, 1)
+  - [x] refactor (remove) supply defs, merge to player?
+  - [x] traceSupply is unused.
+  - [x] germans automatically OoS in mud
+  - [x] in APX version, russians in supply get MSTRNG+2 in supply check (should be max 255)
+  - [x] add unit test - blocking line of units every 2 sq vs every 3 sq
+
+- zocAffecting
+  - [x] zocBlocked is currently wrong since starting unit will negate initial ZoC
+  - [x] different central unit treatment for supply check vs move (ignore or not)
+  - [x] add zocBlocked unit test
 
 - 1942 scenario
   - [x] oob turn arrival calculation: cartridge:3704
@@ -87,7 +79,9 @@ http://localhost:3000/#EF41x28dtxcdyA-txz-VRzarMvzxVjphjVj_rEY1vONDrgZSEEWRsuSiw
 - AI changes for mvmode
   - [ ] code browse, compare to APX
 
-- [ ] optionally allow >8 orders
+- UX
+  - [ ] optionally allow >8 orders via UI (supported elsewhere)
+  - [ ] n/p vs </> to skip units that already have orders?
 
 ## Display issues
 
@@ -112,7 +106,9 @@ http://localhost:3000/#EF41x28dtxcdyA-txz-VRzarMvzxVjphjVj_rEY1vONDrgZSEEWRsuSiw
 
 - [ ] 'resolving' doesn't capture prior defenders (for animation?)
 
-- [ ] display '*' indicator for movable reinforcements
+- reinforcements
+  - [x] badge new units
+  - [ ] display status window '*' indicator for movable reinforcements
 
 - [ ] animate scroll of unit status report eg. elimination, in info window
 

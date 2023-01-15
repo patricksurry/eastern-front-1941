@@ -41,8 +41,6 @@ class Mapboard {
     #icelat = 39;       // via M.ASM:8600 PSXVAL initial value is 0x27
     #validlocs: Map<number, MapPoint> = new Map();
 
-    #neighborids = memoize(((gid: number): [number?, number?, number?, number?] => this.#neighborids_(gid)));
-
     constructor(game: Game, memento?: number[]) {
         const
             scenario = scenarios[game.scenario],
@@ -202,6 +200,10 @@ class Mapboard {
             return legal ? nbr.gid: null;
         }) as [number?, number?, number?, number?];
     }
+    // hack to memoize class method.  probably a better way to do it?
+    #neighborids = memoize(
+        (gid: number): [number?, number?, number?, number?] => this.#neighborids_(gid)
+    )
     neighborsOf({gid}: GridPoint): [MapPoint?, MapPoint?, MapPoint?, MapPoint?] {
         return this.#neighborids(gid)
             .map(v => v == null ? v : this.#validlocs.get(v)) as

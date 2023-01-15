@@ -23,7 +23,6 @@ class Oob {
                 const u = new Unit(game, i, ...vs);
                 // exclude units not in the scenario, but leave them in array
                 if (u.id >= maxunit[u.player]) u.eliminate();
-                u.fog = scenario.fog ?? 0;
                 return u;
             });
         this.#game = game;
@@ -43,37 +42,37 @@ class Oob {
                 });
             const active = this.activeUnits(),
                 human = active.filter(u => u.human),
-                expected = 4*active.length + human.length + (scenario.mvmode ? human.length : 0) + (scenario.fog ? human.length : 0);
+                expected = (scenario.fog ? 5 : 4) * active.length + human.length * (scenario.mvmode ? 2 : 1);
 
             if (memento.length < expected)
                 throw new Error('oob: malformed save data for active unit properties');
 
-            const lats = zagzig(memento.splice(0, active.length)),
-                lons = zagzig(memento.splice(0, active.length)),
-                mstrs = zagzig(memento.splice(0, active.length)),
+            const dlats = zagzig(memento.splice(0, active.length)),
+                dlons = zagzig(memento.splice(0, active.length)),
+                dmstrs = zagzig(memento.splice(0, active.length)),
                 cdmgs = memento.splice(0, active.length),
+                dfogs = scenario.fog ? memento.splice(0, active.length): [],
                 modes = scenario.mvmode ? memento.splice(0, human.length): [],
-                dfogs = scenario.fog ? memento.splice(0, human.length): [],
                 nords = memento.splice(0, human.length);
             let lat = 0, lon = 0, mstr = 255;
             active.forEach(u => {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                lat += lats.shift()!;
+                lat += dlats.shift()!;
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                lon += lons.shift()!;
+                lon += dlons.shift()!;
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                mstr += mstrs.shift()!;
+                mstr += dmstrs.shift()!;
                 [u.lat, u.lon, u.mstrng] = [lat, lon, mstr];
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 u.cstrng = u.mstrng - cdmgs.shift()!;
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                if (scenario.fog) u.fog -= dfogs.shift()!;
             });
             if (memento.length < sum(nords))
                 throw new Error('oob: malformed save data for unit orders');
             human.forEach(u => {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 if (scenario.mvmode) u.mode = modes.shift()!;
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                if (scenario.fog) u.fog -= dfogs.shift()!;
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 u.orders = memento.splice(0, nords.shift()!);
             });
@@ -95,9 +94,9 @@ class Oob {
 
     get memento() {
         const scenario = scenarios[this.#game.scenario],
-            lats: number[] = [],
-            lons: number[] = [],
-            mstrs: number[] = [],
+            dlats: number[] = [],
+            dlons: number[] = [],
+            dmstrs: number[] = [],
             cdmgs: number[] = [],
             modes: number[] = [],
             dfogs: number[] = [],
@@ -111,31 +110,36 @@ class Oob {
             active = scheduled.filter(u => u.active);
 
         active.forEach(u => {
-            lats.push(u.lat - lat);
-            lons.push(u.lon - lon);
-            mstrs.push(u.mstrng - mstr);
+            dlats.push(u.lat - lat);
+            dlons.push(u.lon - lon);
+            dmstrs.push(u.mstrng - mstr);
             [lat, lon, mstr] = [u.lat, u.lon, u.mstrng];
+            if (scenario.fog) dfogs.push(scenario.fog - u.fog);
 
             cdmgs.push(u.mstrng - u.cstrng);
             if (u.human) {
                 nords.push(u.orders.length);
                 ords.push(...u.orders);
                 if (scenario.mvmode) modes.push(u.mode);
-                if (scenario.fog) dfogs.push(scenario.fog - u.fog);
             }
         });
 
-        return (status as number[]).concat(zigzag(lats), zigzag(lons), zigzag(mstrs), cdmgs, modes, dfogs, nords, ords);
+        return (status as number[]).concat(zigzag(dlats), zigzag(dlons), zigzag(dmstrs), cdmgs, dfogs, modes, nords, ords);
     }
     newTurn(initialize: boolean) {
-        if (initialize) {
-            this.activeUnits().forEach(u => u.moveTo(u.location));
-        } else {
-            this.supply();
-            this.regroup();
-            this.reinforce();
+        this.activeUnits().forEach(u => u.newTurn(initialize));
+        if (!initialize) {
+            // M.ASM:3720 delay reinforcements scheduled for an occuplied square
+            this.filter(u => u.arrive == this.#game.turn)
+                .forEach(u => {
+                    const loc = u.location;
+                    if (loc.unitid != null) {
+                        u.arrive++;
+                    } else {
+                        u.moveTo(loc);   // reveal unit and link to the map square
+                    }
+                });
         }
-        this.activeUnits().forEach(u => u.flags = 0);
     }
     activeUnits(player?: number): Unit[] {
         return this.filter((u: Unit) => u.active && (player == null || u.player == player));
@@ -149,34 +153,10 @@ class Oob {
         // could be interesting to randomize, or allow a delay/no-op order to handle traffic
         this.filter(u => u.tick == tick).reverse().forEach(u => u.tryOrder());
     }
-    regroup() {
-        // regroup, recover...
-        this.activeUnits().forEach(u => u.recover());
-    }
-    supply() {
-        const scenario = scenarios[this.#game.scenario];
-        if (scenario.skipsupply) return;
-        this.activeUnits().forEach(u => {
-            const inSupply = u.traceSupply();
-            if (scenario.repl && inSupply) u.replace(scenario.repl[u.player])
-        })
-    }
-    reinforce() {
-        // M.ASM:3720  delay reinforcements scheduled for an occuplied square
-        this.filter(u => u.arrive == this.#game.turn)
-            .forEach(u => {
-                const loc = u.location;
-                if (loc.unitid != null) {
-                    u.arrive++;
-                } else {
-                    u.moveTo(loc);   // reveal unit and link to the map square
-                }
-            });
-    }
     zocAffects(player: PlayerKey, loc: MapPoint, omitSelf = false): boolean {
-        return this.zocAffecting(player, loc, 2, omitSelf) >= 2;
+        return this.zocAffecting(player, loc, omitSelf, 2) >= 2;
     }
-    zocAffecting(player: PlayerKey, loc: MapPoint, threshold = 99, omitSelf = false) {
+    zocAffecting(player: PlayerKey, loc: MapPoint, omitSelf = false, threshold?: number) {
         // evaluate zoc experienced by player (eg. exerted by !player) in the square at loc
         let zoc = 0;
         // same player in target square negates any zoc, enemy exerts 4
@@ -194,7 +174,7 @@ class Oob {
             // center-adjacent (even) exert 2, corners (odd) exert 1
             if (pt.unitid != null && this.at(pt.unitid).player != player) {
                 zoc += (i % 2) ? 1: 2;
-                if (zoc >= threshold) return zoc;
+                if (threshold && zoc >= threshold) return zoc;
             }
         });
         return zoc;
