@@ -655,8 +655,8 @@ var ef1941 = (function (exports, node_crypto) {
                 { owner: 1 /* PlayerKey.Russian */, lon: 12, lat: 8, points: 0, label: 'Rostov' },
                 { owner: 1 /* PlayerKey.Russian */, lon: 20, lat: 8, points: 0, label: 'Dnepropetrovsk' },
                 { owner: 1 /* PlayerKey.Russian */, lon: 26, lat: 5, points: 0, label: 'Odessa' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 20, lat: 0, points: 0, label: 'Sevastopol' },
                 { owner: 0 /* PlayerKey.German */, lon: 44, lat: 19, points: 0, label: 'Warsaw' },
-                //        {owner: PlayerKey.Russian, lon: 20, lat:  0, points: 10,  label: 'Sevastopol'},
             ]
         },
         [1 /* MapVariantKey.cart */]: {
@@ -730,8 +730,8 @@ var ef1941 = (function (exports, node_crypto) {
                 { owner: 1 /* PlayerKey.Russian */, lon: 12, lat: 8, points: 2, label: 'Rostov' },
                 { owner: 1 /* PlayerKey.Russian */, lon: 20, lat: 8, points: 2, label: 'Dnepropetrovsk' },
                 { owner: 1 /* PlayerKey.Russian */, lon: 26, lat: 5, points: 2, label: 'Odessa' },
+                { owner: 1 /* PlayerKey.Russian */, lon: 20, lat: 0, points: 0, label: 'Sevastopol' },
                 { owner: 0 /* PlayerKey.German */, lon: 44, lat: 19, points: 5, label: 'Warsaw' },
-                //        {owner: PlayerKey.Russian, lon: 20, lat:  0, points: 5,  label: 'Sevastopol'},
             ]
         },
     };
@@ -761,6 +761,23 @@ var ef1941 = (function (exports, node_crypto) {
         ]
     ];
 
+    //TODO these represent deviations from the original implementation
+    // in general false reflects the original APX/cartridge condition
+    // the values here show my current choices, but aren't actually configurable in code yet
+    const options = {
+        colorPalette: 'WikiNTSC',
+        astarPathFinding: true,
+        reduceInitialFogInContact: true,
+        mapIncludesSevastopol: true,
+        // hard-wired settings (these config options aren't referenced)
+        mapIncludeSevastopol: true,
+        germanReinforcementsMoveOnArrival: true,
+        russianReinforcementsMoveOnArrival: false,
+        moreRandomSupplyAndRetreat: true,
+        shuffleUnitInitiative: false,
+        shuffleThinkingOrder: false,
+    };
+
     var _Mapboard_instances, _Mapboard_game, _Mapboard_maxlon, _Mapboard_maxlat, _Mapboard_icelat, _Mapboard_validlocs, _Mapboard_neighborids_, _Mapboard_neighborids, _Mapboard_freezeThaw;
     // mapboard constructor, used as a container of MapPoints
     class Mapboard {
@@ -788,9 +805,11 @@ var ef1941 = (function (exports, node_crypto) {
                     };
                 }));
                 return lookup;
-            }), 
+            });
+            let raw = variant.ascii;
+            raw = raw.slice().replace('~~FJ~~', '~~@J~~');
             // decode the map into a 2-d array of rows x cols of  {lon: , lat:, icon:, terrain:, alt:}
-            mapdata = variant.ascii.split(/\n/).slice(1, -1).map((row, i) => row.split('').map(c => Object.assign({}, mapencoding[i <= 25 ? 0 : 1][c])));
+            const mapdata = raw.split(/\n/).slice(1, -1).map((row, i) => row.split('').map(c => Object.assign({}, mapencoding[i <= 25 ? 0 : 1][c])));
             this.font = variant.font;
             // excluding the impassable border valid is 0..maxlon-1, 0..maxlat-1
             __classPrivateFieldSet(this, _Mapboard_maxlon, mapdata[0].length - 2, "f");
@@ -803,7 +822,9 @@ var ef1941 = (function (exports, node_crypto) {
                 }
                 return loc;
             }));
-            this.cities = variant.cities.map(c => { return Object.assign({}, c); });
+            this.cities = variant.cities
+                .filter(c => options.mapIncludesSevastopol )
+                .map(c => (Object.assign({}, c)));
             this.cities.forEach((city, i) => {
                 var _a;
                 city.points = i < ncity ? ((_a = city.points) !== null && _a !== void 0 ? _a : 0) : 0;
@@ -818,7 +839,7 @@ var ef1941 = (function (exports, node_crypto) {
             // verify each city terrain has a cityid
             const missing = this.locations.map(row => row.filter(loc => loc.terrain == 2 /* TerrainKey.city */ && typeof loc.cityid === 'undefined')).flat();
             if (missing.length > 0)
-                throw new Error(`Mapboard: city terrain missing city details at ${missing}`);
+                throw new Error(`Mapboard: city terrain missing city details, e.g. ${this.describe(missing[0])}`);
             // verify that any control cities exist
             if (scenario.control) {
                 const labels = this.cities.map(c => c.label), diff = scenario.control.filter(label => !labels.includes(label));
@@ -826,11 +847,17 @@ var ef1941 = (function (exports, node_crypto) {
                     throw new Error(`Mapboard: scenario.control has unknown cities ${diff}`);
             }
             if (memento) {
-                if (memento.length < this.cities.length + 1)
+                if (memento.length < variant.cities.length + 1)
                     throw new Error("Mapboard: malformed save data");
                 __classPrivateFieldGet(this, _Mapboard_instances, "m", _Mapboard_freezeThaw).call(this, 0 /* WaterStateKey.freeze */, memento.shift());
-                this.cities.forEach(c => c.owner = memento.shift());
+                this.cities.forEach((c, i) => {
+                    c.owner = memento.shift();
+                });
             }
+        }
+        get memento() {
+            const scenario = scenarios[__classPrivateFieldGet(this, _Mapboard_game, "f").scenario]; mapVariants[scenario.map]; const control = this.cities.map(c => c.owner);
+            return [].concat([__classPrivateFieldGet(this, _Mapboard_icelat, "f")], control);
         }
         newTurn(initialize = false) {
             const mdata = monthdata[__classPrivateFieldGet(this, _Mapboard_game, "f").month];
@@ -851,11 +878,6 @@ var ef1941 = (function (exports, node_crypto) {
                 [3 /* DirectionKey.west */]: __classPrivateFieldGet(this, _Mapboard_maxlon, "f") - 1,
                 [1 /* DirectionKey.east */]: 0,
             };
-        }
-        get memento() {
-            const vs = []
-                .concat([__classPrivateFieldGet(this, _Mapboard_icelat, "f")], this.cities.map(c => c.owner));
-            return vs;
         }
         describe(loc) {
             var _a;
@@ -1051,22 +1073,6 @@ var ef1941 = (function (exports, node_crypto) {
                     d.terrain = state.terrain[k];
             });
         }
-    };
-
-    //TODO these represent deviations from the original implementation
-    // in general false reflects the original APX/cartridge condition
-    // the values here show my current choices, but aren't actually configurable in code yet
-    const options = {
-        colorPalette: 'WikiNTSC',
-        astarPathFinding: true,
-        reduceInitialFogInContact: true,
-        // hard-wired settings (these config options aren't referenced)
-        mapIncludeSevastopol: false,
-        germanReinforcementsMoveOnArrival: true,
-        russianReinforcementsMoveOnArrival: false,
-        moreRandomSupplyAndRetreat: true,
-        shuffleUnitInitiative: false,
-        shuffleThinkingOrder: false,
     };
 
     var _Unit_instances, _Unit_mode, _Unit_game, _Unit_resolveCombat, _Unit_takeDamage;

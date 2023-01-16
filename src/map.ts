@@ -14,6 +14,7 @@ import {mapVariants, blocked} from './map-data';
 import {scenarios} from './scenarios';
 
 import type {Game} from './game';
+import {options} from './config';
 
 type Path = {cost: number, orders: DirectionKey[]};
 
@@ -62,9 +63,13 @@ class Mapboard {
                     })
                 );
                 return lookup;
-            }),
-            // decode the map into a 2-d array of rows x cols of  {lon: , lat:, icon:, terrain:, alt:}
-            mapdata = variant.ascii.split(/\n/).slice(1,-1).map(
+            });
+
+        let raw = variant.ascii;
+        if (options.mapIncludesSevastopol) raw = raw.slice().replace('~~FJ~~', '~~@J~~');
+
+        // decode the map into a 2-d array of rows x cols of  {lon: , lat:, icon:, terrain:, alt:}
+        const mapdata = raw.split(/\n/).slice(1,-1).map(
                 (row, i) =>
                 row.split('').map(
                     c => Object.assign({}, mapencoding[i <= 25 ? 0: 1][c])
@@ -93,7 +98,9 @@ class Mapboard {
             )
         );
 
-        this.cities = variant.cities.map(c => {return {...c}});
+        this.cities = variant.cities
+            .filter(c => options.mapIncludesSevastopol || c.label != 'Sevastopol')
+            .map(c => ({...c}));
         this.cities.forEach((city, i) => {
             city.points = i < ncity ? (city.points ?? 0): 0;
             const loc = this.locationOf(Grid.point(city));
@@ -111,7 +118,7 @@ class Mapboard {
                 loc => loc.terrain == TerrainKey.city && typeof loc.cityid === 'undefined'
             )).flat();
         if (missing.length > 0)
-            throw new Error(`Mapboard: city terrain missing city details at ${missing}`);
+            throw new Error(`Mapboard: city terrain missing city details, e.g. ${this.describe(missing[0])}`);
         // verify that any control cities exist
         if (scenario.control) {
             const labels = this.cities.map(c => c.label),
@@ -120,11 +127,29 @@ class Mapboard {
                 throw new Error(`Mapboard: scenario.control has unknown cities ${diff}`);
         }
         if (memento) {
-            if (memento.length < this.cities.length + 1)
+            if (memento.length < variant.cities.length + 1)
                 throw new Error("Mapboard: malformed save data");
             this.#freezeThaw(WaterStateKey.freeze, memento.shift()!);
-            this.cities.forEach(c => c.owner = memento.shift()!)
+            this.cities.forEach((c, i) => {
+                // skip the control flag for Sevastopol if we're not using it
+                if (!options.mapIncludesSevastopol && variant.cities[i].label == 'Sevastopol') {
+                    memento.shift()!;
+                }
+                c.owner = memento.shift()!;
+            });
         }
+    }
+    get memento(): number[] {
+        const
+            scenario = scenarios[this.#game.scenario],
+            variant = mapVariants[scenario.map],
+            control = this.cities.map(c => c.owner);
+        if (!options.mapIncludesSevastopol) {
+            // always include a control flag for Sevastopol so config doesn't change save format
+            const i = variant.cities.findIndex(c => c.label == 'Sevastopol');
+            control.splice(i, 0, variant.cities[i].owner);
+        }
+        return ([] as number[]).concat([this.#icelat],control);
     }
     newTurn(initialize = false) {
         const mdata = monthdata[this.#game.month];
@@ -146,14 +171,6 @@ class Mapboard {
             [DirectionKey.west]: this.#maxlon-1,
             [DirectionKey.east]: 0,
         }
-    }
-    get memento(): number[] {
-        const vs = ([] as number[])
-            .concat(
-                [this.#icelat],
-                this.cities.map(c => c.owner)
-            );
-        return vs;
     }
     describe(loc: MapPoint) {
         const city = loc.cityid != null ? this.cities[loc.cityid] : undefined,

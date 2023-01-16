@@ -96,8 +96,8 @@ const mapVariants: Record<MapVariantKey, MapVariant> = {
             {owner: PlayerKey.Russian, lon: 12, lat:  8, points: 0,  label: 'Rostov'},
             {owner: PlayerKey.Russian, lon: 20, lat:  8, points: 0,  label: 'Dnepropetrovsk'},
             {owner: PlayerKey.Russian, lon: 26, lat:  5, points: 0,  label: 'Odessa'},
+            {owner: PlayerKey.Russian, lon: 20, lat:  0, points: 0,  label: 'Sevastopol'}, // originally 10pt then omitted from APX
             {owner: PlayerKey.German,  lon: 44, lat: 19, points: 0,  label: 'Warsaw'},
-    //        {owner: PlayerKey.Russian, lon: 20, lat:  0, points: 10,  label: 'Sevastopol'},
         ]
     },
     [MapVariantKey.cart]: {
@@ -171,8 +171,8 @@ const mapVariants: Record<MapVariantKey, MapVariant> = {
             {owner: PlayerKey.Russian, lon: 12, lat:  8, points: 2,  label: 'Rostov'},
             {owner: PlayerKey.Russian, lon: 20, lat:  8, points: 2,  label: 'Dnepropetrovsk'},
             {owner: PlayerKey.Russian, lon: 26, lat:  5, points: 2,  label: 'Odessa'},
+            {owner: PlayerKey.Russian, lon: 20, lat:  0, points: 0,  label: 'Sevastopol'}, // originally 10pt then omitted from APX
             {owner: PlayerKey.German,  lon: 44, lat: 19, points: 5,  label: 'Warsaw'},
-    //        {owner: PlayerKey.Russian, lon: 20, lat:  0, points: 5,  label: 'Sevastopol'},
         ]
     },
  } as const;

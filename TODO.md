@@ -90,6 +90,10 @@ http://localhost:3000/#EF41x28dtxcdyA-txz-VRzarMvzxVjphjVj_rEY1vONDrgZSEEWRsuSiw
   - [ ] optionally allow >8 orders via UI (supported elsewhere)
   - [ ] n/p vs </> to skip units that already have orders?
 
+- config
+  - [x] option to include Sevastopol
+  - [ ] wire up more of the hard-coded options
+
 ## Display issues
 
 - [x] make sure we have a shadow on the color bar, and maybe better background bar,
@@ -145,8 +149,6 @@ http://localhost:3000/#EF41x28dtxcdyA-txz-VRzarMvzxVjphjVj_rEY1vONDrgZSEEWRsuSiw
 
 - have think() track a current unit and bail out once it uses a certain amount of time,
   rather than doing a whole pass at once
-
-- include more config.ts options in code
 
 - toggle key for handicap - increase muster strength of all your units by 50% but halve score,
   self-modifies VBI to change color of text window.  replaced by cartridge difficulty level
