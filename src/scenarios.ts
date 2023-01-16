@@ -16,8 +16,9 @@ type Scenario = {
     endturn: number,        // turn (week) number after which scenario ends
     win: number,            // score required to win
     // original game stored as mask, e.g. 0xC0 is 1100 0000 so fog = 6, 0x80 => 7
-    skipsupply?: boolean,    // whether to skip supply check
-    fog?: number,            // number of randomized lsbits for far-off enemy strength
+    skipsupply?: boolean,   // whether to skip supply check
+    simplebreak?: boolean,  // whether to use simplied break after combat check
+    fog?: number,           // number of randomized lsbits for far-off enemy strength
     mvmode?: boolean,       // true if scenario allows choice of move mode
     repl?: readonly [number, number], // mstrng replacements if in supply by PlayerKey
     control?: readonly string[],     // list of cities whose control is flipped from default
@@ -33,12 +34,12 @@ const scenarios: Record<ScenarioKey, Scenario> = {
     [ScenarioKey.learner]: {
         label: 'LEARNER', map: MapVariantKey.cart, oob: OobVariantKey.cart41, start: '1941/6/22',
         ncity: 1, mdmg: 4, cdmg: 12, cadj: 255, nunit: [0x2,  0x31], endturn: 14, win: 5,
-        skipsupply: true
+        skipsupply: true, simplebreak: true
     },
     [ScenarioKey.beginner]: {
         label: 'BEGINNER', map: MapVariantKey.cart, oob: OobVariantKey.cart41, start: '1941/6/22',
         ncity: 1, mdmg: 4, cdmg: 12, cadj: 150, nunit: [0x12, 0x50], endturn: 14, win: 25,
-        skipsupply: true
+        skipsupply: true, simplebreak: true
     },
     [ScenarioKey.intermediate]: {
         label: 'INTERMED', map: MapVariantKey.cart, oob: OobVariantKey.cart41, start: '1941/6/22',

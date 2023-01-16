@@ -2052,7 +2052,7 @@ _ATAKR_2:   cmp SKREST / RANDOM              ; ad78 cd0ad2  . W: Reset serial po
 _ATAKR_3:   ldx DEFNDR                       ; ad7d a6ad
             jsr DEALDMG                      ; ad7f 2041ae  . X takes damage during ARMY attack, carry clear if dies else set
             bcc VICCOM                       ; ad82 904a
-            jsr BRKCHK                       ; ad84 205ab1  . Maybe break unit X, reset orders, suffer damange
+            jsr BRKCHK                       ; ad84 205ab1  . Maybe break unit X based on cstrng in A, reset orders, suffer damange
             bcc ENDCOM                       ; ad87 9056
             ldy ARMY                         ; ad89 a4ab
             lda WHORDS,y                     ; ad8b b97933  . what unit orders are (2 bits per order)
@@ -2548,22 +2548,22 @@ _DEAD_6:    lda #$00                         ; b141 a900
             sta ARRIVE,x                     ; b156 9da62d  . arrival turns
             rts                              ; b159 60
 
-BRKCHK:     ldy LEVEL                        ; b15a a492    Maybe break unit X, reset orders, suffer damange
+BRKCHK:     ldy LEVEL                        ; b15a a492    Maybe break unit X based on cstrng in A, reset orders, suffer damange
             cpy #$02                         ; b15c c002
             bcs _BRKCHK_1                    ; b15e b008    level >= 2 ?
             lda MSTRNG,x                     ; b160 bdff2c  . muster strengths
             lsr                              ; b163 4a
-            lsr                              ; b164 4a      else A //= 4
+            lsr                              ; b164 4a      else A = mstrng // 4
             jmp __H__                        ; b165 4c98b1
 
 _BRKCHK_1:  cpx #$30                         ; b168 e030
             bcs _BRKCHK_2                    ; b16a b00d
             lda CORPT,x                      ; b16c bd4d2e  . codes for unit types
             and #$f0                         ; b16f 29f0
-            bne _BRKCHK_2                    ; b171 d006    hi bit set (russian) or german ally?
+            bne _BRKCHK_2                    ; b171 d006    hi bit set (russian) or german ally? aka "resolute"
             lda MSTRNG,x                     ; b173 bdff2c  . muster strengths
-            lsr                              ; b176 4a      compare to 50% mstrng
-            bpl _BRKCHK_3                    ; b177 100e
+            lsr                              ; b176 4a      compare to A = mstrng // 2
+            bpl _BRKCHK_3                    ; b177 100e    (always)
 _BRKCHK_2:  lda MSTRNG,x                     ; b179 bdff2c  . muster strengths
             lsr                              ; b17c 4a
             lsr                              ; b17d 4a
@@ -2571,7 +2571,7 @@ _BRKCHK_2:  lda MSTRNG,x                     ; b179 bdff2c  . muster strengths
             sta TEMPR                        ; b17f 85ae
             lda MSTRNG,x                     ; b181 bdff2c  . muster strengths
             sec                              ; b184 38
-            sbc TEMPR                        ; b185 e5ae    compare to 7/8 mstrng
+            sbc TEMPR                        ; b185 e5ae    compare to A = 7/8 mstrng
 _BRKCHK_3:  ldy MVMODE,x                     ; b187 bcc734  . (expert level only) standard/assault/forced march/entrench
             beq __H__                        ; b18a f00c    standard mode
             cpy #$02                         ; b18c c002    forced march?
@@ -2583,7 +2583,7 @@ _BRKCHK_3:  ldy MVMODE,x                     ; b187 bcc734  . (expert level only
 _BRKCHK_4:  lsr                              ; b197 4a      A /= 2 for assault or entrench
 __H__:      cmp CSTRNG,x                     ; b198 dd2b32  . combat strengths
             bcc _H_1                         ; b19b 900a
-            lda #$ff                         ; b19d a9ff    break if A >= cstrng
+            lda #$ff                         ; b19d a9ff    break if cstrng < A
             sta EXEC,x                       ; b19f 9ddc30  . unit execution times
             lda #$00                         ; b1a2 a900
             sta HMORDS,x                     ; b1a4 9dd232  . how many orders queued for each unit

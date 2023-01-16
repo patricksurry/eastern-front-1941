@@ -407,7 +407,7 @@ class Unit {
 
         // opponent attacks
         let str = multiplier(opp.cstrng, modifier);
-        // note APX doesn't skip attacker if break, but cart does
+        //TODO APX doesn't skip attacker if break, but cart does
         if (str >= this.#game.rand.byte()) {
             this.#takeDamage(1, 5, true);
             if (!this.orders) return 0;
@@ -438,9 +438,32 @@ class Unit {
 
         if (!checkBreak) return 0;
 
-        // russian (& ger allies) break if cstrng <= 7/8 mstrng
-        // german regulars break if cstrng < 1/2 mstrng
-        const brkpt = this.mstrng - (this.mstrng >> (this.resolute ? 1: 3));
+        let brkpt;  // calculate the strength value to check for unit breaking point
+        if (scenarios[this.#game.scenario].simplebreak) {
+            // simplified break check at 25% strength
+            brkpt = this.mstrng >> 2;
+        } else {
+            if (this.resolute) {
+                // german regulars break if cstrng < 1/2 mstrng
+                brkpt = this.mstrng >> 1;
+            } else {
+                // russian (& ger allies) break if cstrng < 7/8 mstrng
+                brkpt = this.mstrng - (this.mstrng >> 3);
+            }
+            brkpt = this.mstrng - (this.mstrng >> (this.resolute ? 1: 3));
+            switch (this.mode) {
+                case UnitMode.march:
+                    brkpt <<= 1;
+                    break;
+                case UnitMode.assault:
+                case UnitMode.entrench:
+                    brkpt >>= 1;
+                    break;
+                case UnitMode.standard:
+                    break;
+            }
+        }
+
         if (this.cstrng < brkpt) {
             this.resetOrders();
 

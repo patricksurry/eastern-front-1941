@@ -15,9 +15,11 @@ http://localhost:3000/#EF41x28dtxcdyA-txz-VRzarMvzxVjphjVj_rEY1vONDrgZSEEWRsuSiw
 - combat
   - [ ] defender bonus x2 for expert mode
   - [ ] confirm attack/defend adjust are applied based on correct square - always defender?
-  - [ ] retreat resets mode to standard
-  - [ ] dead unit disperse nearby in cartridge
-  - [ ] break check is simplified for level = 0,1, cartridge:2553
+  - [ ] retreat resets mvmode to standard
+  - [ ] dead units disperse nearby in cartridge
+  - [x] break check is simplified for level = 0,1, cartridge:2553
+  - [ ] zoc damage is cstrng only (even at higher levels, cartridge:2159)
+  - [ ] config for: APX doesn't skip attacker if break, but cart does
 
 - scoring
   - [ ] fix cart scoring alg
@@ -33,15 +35,20 @@ http://localhost:3000/#EF41x28dtxcdyA-txz-VRzarMvzxVjphjVj_rEY1vONDrgZSEEWRsuSiw
 
 - logic for u.mode:
   - [x] any mode change clears orders
-  - [x] march - terrain cost => cost//2 + 2; "intended more for inf than pz (because of terrain cost modifier)"
-  - [ ] march - cstrng halved (min 1), //2 brk chk
-  - [ ] march - cstrng quickly(??) returns afterwards (where?)
-  - [x] assault - cost => cost + cost//2
-  - [ ] assault - 2x brk chk
-  - [ ] assault - deals level 1 damage, receives level 0 damage (normal is level dmg)
-  - [ ] entrench - 2x defense, 2x brk chk
-  - [x] entrench - can't add new orders
-  - [ ] option for auto-entrench if no orders?
+  - march:
+    - [x] terrain cost => cost//2 + 2; "intended more for inf than pz (because of terrain cost modifier)"
+    - [ ] cstrng halved (min 1);
+    - [x] //2 brk chk
+    - [ ] cstrng quickly(??) returns afterwards (where?)
+  - assualt:
+    - [x] cost => cost + cost//2
+    - [x] 2x brk chk
+    - [ ] deals level 1 damage, receives level 0 damage (normal is level dmg)
+  - entrench:
+    - [ ] 2x defense
+    - [x] 2x brk chk
+    - [x] can't add new orders
+    - [ ] option for auto-entrench if no orders?
 
 - air units (flieger)
   - [x] forcedMarch (normal movement rules like armor)
