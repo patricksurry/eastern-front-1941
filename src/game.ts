@@ -99,7 +99,9 @@ class Game extends EventEmitter {
         this.weather = monthdata[this.month].weather;
     }
     #newTurn(initialize = false) {
-        if (this.turn >= scenarios[this.scenario].endturn
+        const scenario = scenarios[this.scenario]
+        if (this.turn >= scenario.endturn
+                || this.score(PlayerKey.German) >= scenario.scoring.win
                 // special end condition for learner mode
                 || (this.scenario == ScenarioKey.learner && this.mapboard.cities[0].owner == PlayerKey.German)) {
             this.emit('game', 'end');
@@ -135,9 +137,11 @@ class Game extends EventEmitter {
     }
     score(player: PlayerKey): number {
         // M.asm:4050
-        const eastwest = sum(this.oob.map(u => u.score() * (u.player == player ? 1: -1))),
-            bonus = sum(this.mapboard.cities.filter(c => c.owner == player).map(c => c.points));
-        let score = Math.max(0, eastwest) + bonus;
+        const scoring = scenarios[this.scenario].scoring;
+        const eastwest = sum(this.oob.map(u => u.locScore() * (u.player == player ? 1: -1))),
+            strng = this.oob.strngScore(player),
+            cities = sum(this.mapboard.cities.filter(c => c.owner == player).map(c => c.points));
+        let score = cities + (scoring.location ? Math.max(0, eastwest) : 0) + strng + (scoring.adjust ?? 0);
         if (this.handicap) score >>= 1;
         return score;
     }

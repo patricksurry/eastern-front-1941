@@ -2,7 +2,7 @@ import {zigzag, zagzig} from './codec';
 import {scenarios} from './scenarios';
 import {Unit} from './unit';
 import {oobVariants} from './oob-data';
-import {sum, PlayerKey} from './defs';
+import {sum, PlayerKey, players} from './defs';
 import {Game} from './game';
 import {Grid} from './grid';
 import {type MapPoint} from './map';
@@ -14,6 +14,7 @@ type UnitForeach = (u: Unit, index: number) => void;
 class Oob {
     #game;
     #units;
+    startmstrng: [number, number] = [0, 0];   // sum all mstrng for scoring
 
     constructor(game: Game, memento?: number[]) {
         const scenario = scenarios[game.scenario],
@@ -23,6 +24,7 @@ class Oob {
                 const u = new Unit(game, i, ...vs);
                 // exclude units not in the scenario, but leave them in array
                 if (u.id >= maxunit[u.player]) u.eliminate();
+                this.startmstrng[u.player] += u.mstrng;
                 return u;
             });
         this.#game = game;
@@ -125,6 +127,23 @@ class Oob {
         });
 
         return (status as number[]).concat(zigzag(dlats), zigzag(dlons), zigzag(dmstrs), cdmgs, dfogs, modes, nords, ords);
+    }
+    strngScore(player: PlayerKey): number {
+        const
+            scenario = this.#game.scenario,
+            scoring = scenarios[scenario].scoring,
+            current = Object.keys(players).map(
+                p => sum(this.#units.filter(u => (u.player == +p)).map(u => u.cstrng)) >> 7
+            ),
+            losses = Object.keys(players).map(
+                p => (this.startmstrng[+p] >> 7) - current[+p]
+            );
+
+        let score = 0;
+        (scoring.strength ?? []).forEach((mode, p) => {
+            if (mode) score += ((p == player) ? 1: -1) * (mode == 'current' ? current[p] : -losses[p]);
+        })
+        return (player == PlayerKey.German ? 1: -1) * score;
     }
     newTurn(initialize: boolean) {
         this.activeUnits().forEach(u => u.newTurn(initialize));

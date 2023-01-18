@@ -66,7 +66,7 @@ class Mapboard {
             });
 
         let raw = variant.ascii;
-        if (options.mapIncludesSevastopol) raw = raw.slice().replace('~~FJ~~', '~~@J~~');
+        if (options.mapIncludesSevastopol) raw = raw.slice().replace('~~FJ~~', '~~$J~~');
 
         // decode the map into a 2-d array of rows x cols of  {lon: , lat:, icon:, terrain:, alt:}
         const mapdata = raw.split(/\n/).slice(1,-1).map(

@@ -1,51 +1,46 @@
 # Open issues
 
-## Bugs
-
-- [ ] 8th inf in the south accepted but stoppped processing/following orders?  id=8. could it be blocked by a dead unit somehow?  sadly works on resume :(  http://localhost:3000/#EF4123J7PPcdU5ls-txzsMVOjBM_-t-rshjVx_r6q1COOWLN3TdbSNBEyYL3cpfFnnClqfdQqm5BvbzoSm9ZBBuOSlCXn7iuWZ1J6cMD7OrnbLQIMDq0OWHDXXBon4viebb97fX07neHQLNr16YBvWZZOLCfbcuYXCrGBNcUo56orxB3JSi43dyd7kCy_erpvV_xrU-1Hm
-
-- [ ] game over erases final score :(
-
-- [ ] reloading a game-over state continues instead of repeating game over message
-
-http://localhost:3000/#EF41x28dtxcdyA-txz-VRzarMvzxVjphjVj_rEY1vONDrgZSEEWRsuSiwoIhCn3CuavGBMPvm1cCoq9Mne5hENtnah6P5BPwbHpLNCLZoqm0OWHDXXBnveiLiiOq9OeEg9ugEo5EEYhmHNie9mgTCVCebCqazfEnqku7onUDmZ_cvpDsQ-UDljctUjDhTtQ33Tb
-
 ## Game play issues
 
 - combat
-  - [ ] defender bonus x2 for expert mode
-  - [ ] confirm attack/defend adjust are applied based on correct square - always defender?
-  - [ ] retreat resets mvmode to standard
-  - [ ] dead units disperse nearby in cartridge
+  - [ ] cadj for both attack & defense
+  - [x] defender bonus x2 for expert mode (cartridge.asm:2003)
+  - [x] defend adjust based on defender terrain
+  - [ ] attack adjust should be based on attacker's square (cartridge.asm:2035)
+  - [x] retreat resets mvmode to standard
+  - [ ] dead units gives 1/4 mstrng to each cardinal nbr of same player as new mstrng (max 255) (cartridge.asm:2509)
   - [x] break check is simplified for level = 0,1, cartridge:2553
   - [ ] zoc damage is cstrng only (even at higher levels, cartridge:2159)
-  - [ ] config for: APX doesn't skip attacker if break, but cart does
+  - [ ] add config for: APX doesn't skip attacker if break, but cart does
 
 - scoring
-  - [ ] fix cart scoring alg
+  - [x] fix cart scoring alg (cartridge.asm:3966 onward)
+  - [x] non-expert levels end after winning score (cartridge.asm:4095)
   - [ ] show score in error window (see cartemu screenshot)
+  - [ ] game over erases final score :(
+  - [ ] reloading a game-over state continues instead of repeating game over message
   - [x] unit test for starting scores vs cart and apx
-  - [ ] can early scenarios end early after winning score, or just moscow capture for learner?
+
+http://localhost:3000/#EF41x28dtxcdyA-txz-VRzarMvzxVjphjVj_rEY1vONDrgZSEEWRsuSiwoIhCn3CuavGBMPvm1cCoq9Mne5hENtnah6P5BPwbHpLNCLZoqm0OWHDXXBnveiLiiOq9OeEg9ugEo5EEYhmHNie9mgTCVCebCqazfEnqku7onUDmZ_cvpDsQ-UDljctUjDhTtQ33Tb
 
 - finish implementing scenario parameters from defs.ts
-  - [ ] mdmg (mstrng dmg at higher levels),
-  - [ ] cdmg,
-  - [ ] cadj,
-  - [ ] dealdmg varies by level via M/CSTRDMG not 1/5 like APX, some weirdness with assault nmode #$01 and cpx ARMY ?
+  - [x] mdmg, cdmg
+  - [ ] base cadj, plus flieger
+  - [x] dealdmg varies by level via M/CSTRDMG not 1/5 like APX,
 
 - logic for u.mode:
   - [x] any mode change clears orders
   - march:
     - [x] terrain cost => cost//2 + 2; "intended more for inf than pz (because of terrain cost modifier)"
-    - [ ] cstrng halved (min 1);
     - [x] //2 brk chk
-    - [ ] cstrng quickly(??) returns afterwards (where?)
-  - assualt:
+    - [ ] cstrng halved (min 1) before movement (cartridge.asm:4153)
+    - [ ] cstrng quickly(??) returns afterwards (but where?)
+  - assault:
     - [x] cost => cost + cost//2
     - [x] 2x brk chk
-    - [ ] deals level 1 damage, receives level 0 damage (normal is level dmg)
+    - [x] deals level 1 damage, receives level 0 damage (normal is level dmg; oddly level 0 and 1 are equal) - implement as triple and double damage
   - entrench:
-    - [ ] 2x defense
+    - [x] 2x defense
     - [x] 2x brk chk
     - [x] can't add new orders
     - [ ] option for auto-entrench if no orders?
@@ -53,7 +48,7 @@ http://localhost:3000/#EF41x28dtxcdyA-txz-VRzarMvzxVjphjVj_rEY1vONDrgZSEEWRsuSiw
 - air units (flieger)
   - [x] forcedMarch (normal movement rules like armor)
   - [x] assault mode (include impassable)
-  - [ ] assault mode adds flieger strength / half flight distance to friendly unit cadj
+  - [ ] assault mode adds flieger strength / half flight distance to friendly unit cadj, clear orders
   - [ ] Fliegerkorps break and suffer 75% loss
 
 - fog of war
@@ -65,6 +60,7 @@ http://localhost:3000/#EF41x28dtxcdyA-txz-VRzarMvzxVjphjVj_rEY1vONDrgZSEEWRsuSiw
   - [x] unit tests, incl test for fog value changing between turns
 
 - supply check
+  - [ ] happens on turn 0, at least in '42 ?
   - [x] add a dot for units OoS
   - [x] supply option in scenario (not level 0, 1)
   - [x] refactor (remove) supply defs, merge to player?
@@ -81,14 +77,16 @@ http://localhost:3000/#EF41x28dtxcdyA-txz-VRzarMvzxVjphjVj_rEY1vONDrgZSEEWRsuSiw
 - 1942 scenario
   - [x] oob turn arrival calculation: cartridge:3704
   - [x] city ownership @ start via CITYOWN_reloc
-  - [ ] unit #$6d = 109 recovers automatically?
+  - [x] unit 109, 7 MILITIA ARMY in Sevastopol recovers full mstrng each turn:
+    "... [your losses] may well be overwhelming if you attack the nearly impregnable fortress of
+    [Sevastopol](https://en.wikipedia.org/wiki/Siege_of_Sevastopol_(1941%E2%80%931942)) ..."
 
 - AI changes for mvmode
   - [ ] code browse, compare to APX
 
 - UX
   - [ ] optionally allow >8 orders via UI (supported elsewhere)
-  - [ ] n/p vs </> to skip units that already have orders?
+  - [ ] n/p vs </> could skip units that already have orders?
 
 - config
   - [x] option to include Sevastopol
@@ -101,21 +99,19 @@ http://localhost:3000/#EF41x28dtxcdyA-txz-VRzarMvzxVjphjVj_rEY1vONDrgZSEEWRsuSiw
 
 - [x] scr.errorWindow.cls() on key/click
 
-- [ ] blink should apply to overlay exc order path, svg overlay within unit div??
-
-- [ ] when's the right time to clear unit flags for flash behavior?
-
-- [ ] toggle x twice reveals debug (because doubly classed, and visibility is local not children vs display)
-
 - [x] fogofwar option for enemy unit strength a la cartridge (level 2+)
 
-- [ ] debug mode show real strength values
-
-- [ ] using flags inside display component won't play nice with dirty flag
-
-- [ ] debug flag behavior
+- debug flag behavior
+  - [ ] toggle x twice reveals debug (because doubly classed, and visibility is local not children vs display)
+  - [ ] debug mode should show real strength values
+  - [ ] using flags inside display component won't play nice with dirty flag
 
 - [ ] 'resolving' doesn't capture prior defenders (for animation?)
+- [ ] when's the right time to clear unit flags for flash behavior?
+
+Nice to have
+
+- [ ] blink should apply to overlay exc order path, svg overlay within unit div??
 
 - reinforcements
   - [x] badge new units
@@ -123,7 +119,7 @@ http://localhost:3000/#EF41x28dtxcdyA-txz-VRzarMvzxVjphjVj_rEY1vONDrgZSEEWRsuSiw
 
 - [ ] animate scroll of unit status report eg. elimination, in info window
 
-- [ ] update title/hover on click (for supply and zoc in debug mode)
+- [ ] update title/hover on click (for supply and zoc in debug mode; don't want to change rng state)
 
 - [ ] some indicator for zoc (both sides?) on click square
 
@@ -142,6 +138,11 @@ http://localhost:3000/#EF41x28dtxcdyA-txz-VRzarMvzxVjphjVj_rEY1vONDrgZSEEWRsuSiw
         d3.select('#map-window .container').classed('doubled', zoomed);
         (elt as HTMLElement)!.scrollIntoView({block: "center", inline: "center"})
     }
+
+## Bugs
+
+- [ ] (possibly fixed; also now maelstrom sanity tests) 8th inf in the south accepted but stopped processing/following orders?  id=8. could it be blocked by a dead unit somehow?  sadly works on resume :(  http://localhost:3000/#EF4123J7PPcdU5ls-txzsMVOjBM_-t-rshjVx_r6q1COOWLN3TdbSNBEyYL3cpfFnnClqfdQqm5BvbzoSm9ZBBuOSlCXn7iuWZ1J6cMD7OrnbLQIMDq0OWHDXXBon4viebb97fX07neHQLNr16YBvWZZOLCfbcuYXCrGBNcUo56orxB3JSi43dyd7kCy_erpvV_xrU-1Hm
+
 
 ## Other improvements
 

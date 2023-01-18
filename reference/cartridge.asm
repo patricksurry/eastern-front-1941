@@ -1996,28 +1996,28 @@ _COMBAT_4:  lda DIAMOND,x                    ; acea bd3fa1  . Diamond shape used
             sta SWAP,x                       ; ad08 9d8331  . terrain code underneath unit
             jsr FLGRBRK                      ; ad0b 2028ae  . Fliegerkorps break and suffer 75% loss
             jsr TERRTY                       ; ad0e 20c8b8  . convert map chr in TRNCOD -> TRNTYP and y, LAT -> x
-            ldx DEFNC,x                      ; ad11 be71a0  Bug?  should be DEFNC,y ??
+            ldx DEFNC,y                      ; ad11 be71a0
             lda LEVEL                        ; ad14 a592    . Level learner/beginner/intermediate/advanced/expert
             cmp #$04                         ; ad16 c904
             bne _COMBAT_5                    ; ad18 d001
             inx                              ; ad1a e8      Double defense in expert mode
 _COMBAT_5:  ldy DEFNDR                       ; ad1b a4ad
             lda CSTRNG,y                     ; ad1d b92b32  . combat strengths
-            lsr                              ; ad20 4a
+            lsr                              ; ad20 4a      halve cstrng (x = 1) ...
 _COMBAT_6:  dex                              ; ad21 ca
             beq _COMBAT_7                    ; ad22 f005
-            rol                              ; ad24 2a
+            rol                              ; ad24 2a      ... then double x-1 times (e.g. x=2 => )
             bcc _COMBAT_6                    ; ad25 90fa
-            lda #$ff                         ; ad27 a9ff
-_COMBAT_7:  ldx HMORDS,x                     ; ad29 bed232  . how many orders queued for each unit
+            lda #$ff                         ; ad27 a9ff    max at 255
+_COMBAT_7:  ldx HMORDS,y                     ; ad29 bed232
             beq _COMBAT_8                    ; ad2c f001
-            lsr                              ; ad2e 4a
-_COMBAT_8:  ldx MVMODE,x                     ; ad2f bec734  Bug?  X now set to HMORDS not unit ??
+            lsr                              ; ad2e 4a      if defender(?) is moving, strength >> 1
+_COMBAT_8:  ldx MVMODE,y                     ; ad2f bec734
             cpx #$03                         ; ad32 e003    Entrenched?
             bne _COMBAT_9                    ; ad34 d003
-            asl                              ; ad36 0a      defender strength doubled
+            asl                              ; ad36 0a      A << 1 if entrenched
             bcs _DOBATL_1                    ; ad37 b00e
-_COMBAT_9:  cpy #$30                         ; ad39 c030
+_COMBAT_9:  cpy #$30                         ; ad39 c030    German defender?
             bcs DOBATL                       ; ad3b b005
             adc CSTRMOD,y                    ; ad3d 79ab30  . German unit CSTR adjustment
             bcs _DOBATL_1                    ; ad40 b005
@@ -2030,7 +2030,7 @@ _DOBATL_1:  ldx ARMY                         ; ad47 a6ab
 
 _DOBATL_2:  jsr BRKCHK                       ; ad4f 205ab1  . Maybe break unit X, reset orders, suffer damange
             bcc ATAKR                        ; ad52 9003
-            jmp ENDCOM                       ; ad54 4cdfad
+            jmp ENDCOM                       ; ad54 4cdfad  broke if carry set, no attack (cf apx code)
 
 ATAKR:      ldx ARMY                         ; ad57 a6ab    evaluate attacker's strike
             jsr SETLL                        ; ad59 2074ab  . CORPSX/Y for X -> LAT, LON
@@ -2054,10 +2054,10 @@ _ATAKR_3:   ldx DEFNDR                       ; ad7d a6ad
             bcc VICCOM                       ; ad82 904a
             jsr BRKCHK                       ; ad84 205ab1  . Maybe break unit X based on cstrng in A, reset orders, suffer damange
             bcc ENDCOM                       ; ad87 9056
-            ldy ARMY                         ; ad89 a4ab
+            ldy ARMY                         ; ad89 a4ab    broke if carry set
             lda WHORDS,y                     ; ad8b b97933  . what unit orders are (2 bits per order)
             and #$03                         ; ad8e 2903
-            tay                              ; ad90 a8
+            tay                              ; ad90 a8      "retreat" into defender square?
             jsr RETRET                       ; ad91 20e5ad  . retreat unit X prefer dir Y. SEC if lives else CLC;  zero set if retreat open, clear if blocked
             bcc VICCOM                       ; ad94 9038
             beq _ATAKR_6                     ; ad96 f030
@@ -2116,7 +2116,7 @@ _RETRET_1:  jsr CHKZOC                       ; ae08 20a4b0
             ldx DEFNDR                       ; ae0b a6ad
             lda ZOC                          ; ae0d a5ed
             cmp #$02                         ; ae0f c902
-            bcs _RETRET_4                    ; ae11 b00f
+            bcs _RETRET_4                    ; ae11 b00f    blocked, take damage
             cpx #$2b                         ; ae13 e02b
             bcc _RETRET_2                    ; ae15 9004
             cpx #$30                         ; ae17 e030
@@ -2507,27 +2507,27 @@ _CHKZOC_6:  dex                              ; b0f8 ca
             rts                              ; b101 60
 
 DEAD:       jsr SETSWTCH                     ; b102 2081bf  Score and remove unit, maybe disperse nearby
-            stx TEMPHI                       ; b105 86bb
-            ldy #$03                         ; b107 a003
+            stx TEMPHI                       ; b105 86bb    X is dead unit
+            ldy #$03                         ; b107 a003    (0=north 1=east 2=south 3=west)
 _DEAD_1:    sty TEMPLO                       ; b109 84ba    . temp word
             jsr SETLL                        ; b10b 2074ab  . CORPSX/Y for X -> LAT, LON
             jsr DY2LL                        ; b10e 20f3ab  . Adds dir idx Y to LAT/LON
             jsr TERR                         ; b111 20e7aa  . TRNCOD <- terrain chr @ LAT/LON, maybe under unit
             ldx TEMPHI                       ; b114 a6bb
             ldy UNITNO                       ; b116 a4ac
-            beq _DEAD_3                      ; b118 f00e
+            beq _DEAD_3                      ; b118 f00e    found a unit in Y?
             cpx #$30                         ; b11a e030
-            bcc _DEAD_2                      ; b11c 9006
+            bcc _DEAD_2                      ; b11c 9006    german?
             cpy #$30                         ; b11e c030
-            bcs _DEAD_4                      ; b120 b00d
+            bcs _DEAD_4                      ; b120 b00d    dead unit not german?
             bcc _DEAD_3                      ; b122 9004
 _DEAD_2:    cpy #$30                         ; b124 c030
             bcc _DEAD_4                      ; b126 9007
 _DEAD_3:    ldy TEMPLO                       ; b128 a4ba    . temp word
             dey                              ; b12a 88
-            bpl _DEAD_1                      ; b12b 10dc
+            bpl _DEAD_1                      ; b12b 10dc    next direction
             bmi _DEAD_6                      ; b12d 3012
-_DEAD_4:    lda MSTRNG,x                     ; b12f bdff2c  Contribute 1/4 MSTRNG from removed X to nearby Y
+_DEAD_4:    lda MSTRNG,x                     ; b12f bdff2c  Contribute 1/4 MSTRNG from removed X to nbr Y
             lsr                              ; b132 4a
             lsr                              ; b133 4a
             clc                              ; b134 18
@@ -2759,7 +2759,7 @@ _DRLOOP_7:  dex                              ; b302 ca
             bcs _DRLOOP_5                    ; b305 b0db
 _DRLOOP_8:  lda #$00                         ; b307 a900
 _DRLOOP_9:  ldy TEMPR                        ; b309 a4ae
-            ldx NDX,x                        ; b30b be94a0
+            ldx NDX,y                        ; b30b be94a0
             sta LINARR,x                     ; b30e 9d4630
             dey                              ; b311 88
             bpl _DRLOOP_4                    ; b312 10c4
@@ -2802,7 +2802,7 @@ _I_6:       cpx #$04                         ; b356 e004
             bne _I_1                         ; b35c d0ca
 _I_7:       lda #$00                         ; b35e a900
             ldy #$04                         ; b360 a004
-_I_8:       ldx LV,x                         ; b362 be2830  . ?Source data seems to be save file name?
+_I_8:       ldx LV,y                         ; b362 be2830  . ?Source data seems to be save file name?
             cpx #$05                         ; b365 e005
             beq _I_9                         ; b367 f003
             clc                              ; b369 18
@@ -3642,25 +3642,25 @@ _V_3:       lda #$fe                         ; ba30 a9fe
             sta ARRIVE,x                     ; ba32 9da62d  . arrival turns
             bcs _V_6                         ; ba35 b01d
 _V_4:       lda MSTRNG,x                     ; ba37 bdff2c  . muster strengths
-            adc GSTRHI                       ; ba3a 659a
-            sta GSTRHI                       ; ba3c 859a
+            adc GSTRLO                       ; ba3a 659a
+            sta GSTRLO                       ; ba3c 859a
             bcc _V_6                         ; ba3e 9014
-            inc GSTRLO                       ; ba40 e698    . 2 x sum of german MSTRNG
+            inc GSTRHI                       ; ba40 e698    . 2 x sum of german MSTRNG
             bcs _V_6                         ; ba42 b010
 _V_5:       cmp MAXRUS,y                     ; ba44 d90d30  . Max Russian unit idx by level
             bcs _V_3                         ; ba47 b0e7
             lda MSTRNG,x                     ; ba49 bdff2c  . muster strengths
-            adc RSTRHI                       ; ba4c 659b
-            sta RSTRHI                       ; ba4e 859b
+            adc RSTRLO                       ; ba4c 659b
+            sta RSTRLO                       ; ba4e 859b
             bcc _V_6                         ; ba50 9002
-            inc RSTRLO                       ; ba52 e699    . 2 x sum of russian MSTRNG
+            inc RSTRHI                       ; ba52 e699    . 2 x sum of russian MSTRNG
 _V_6:       dex                              ; ba54 ca
             bne _V_2                         ; ba55 d0cf
-            asl GSTRHI                       ; ba57 069a
-            rol GSTRLO                       ; ba59 2698    . 2 x sum of german MSTRNG
-            asl RSTRHI                       ; ba5b 069b
-            rol RSTRLO                       ; ba5d 2699    . 2 x sum of russian MSTRNG
-            cpy #$04                         ; ba5f c004
+            asl GSTRLO                       ; ba57 069a
+            rol GSTRHI                       ; ba59 2698    . 2 x sum of german MSTRNG
+            asl RSTRLO                       ; ba5b 069b
+            rol RSTRHI                       ; ba5d 2699    . 2 x sum of russian MSTRNG
+            cpy #$04                         ; ba5f c004    Expert?
             beq _V_7                         ; ba61 f003
             jmp BGNPLY                       ; ba63 4cf4ba
 
@@ -3960,21 +3960,21 @@ _Y_3:       stx ARMY                         ; bcb8 86ab
 
 _Y_4:       sec                              ; bcd5 38      Within ZOC, reduce uncertainty by shifting 1s right
             ror FOGGY-48,x                   ; bcd6 7e8638  . Fog of war masks Russian unit strength
-__Z__:      dex                              ; bcd9 ca      Calcuate overall force ratio (OFR)
+__Z__:      dex                              ; bcd9 ca
             cpx #$30                         ; bcda e030
-            bcs _Y_3                         ; bcdc b0da
-            lda #$00                         ; bcde a900
-            ldx #$01                         ; bce0 a201
+            bcs _Y_3                         ; bcdc b0da    Loop back over fog for all russian units
+            lda #$00                         ; bcde a900    Calculate overall force ratio, and scoring inputs (thru line 4027)
+            ldx #$01                         ; bce0 a201    init four pairs of 2-byte accss by player
 _Z_1:       sta SQX,x                        ; bce2 95e1    . adj sq; also COLUM
-            sta TEMPLO,x                     ; bce4 95ba    . temp word
+            sta TEMPLO,x                     ; bce4 95ba    (ACCLO,x: high, TEMPLO,x: low) sum active+future CSTRNG by player x
             sta ACCLO,x                      ; bce6 95af
-            sta TEMPX,x                      ; bce8 959d
+            sta TEMPX,x                      ; bce8 959d    (TEMPX,x: high, SQX,x: low) sum active CSTRNG by player
             dex                              ; bcea ca
             bpl _Z_1                         ; bceb 10f5
             ldx #$01                         ; bced a201
             ldy #$a6                         ; bcef a0a6
 _Z_2:       lda ARRIVE,y                     ; bcf1 b9a62d  . arrival turns
-            bmi _Z_5                         ; bcf4 3021
+            bmi _Z_5                         ; bcf4 3021    flag for dead units
             lda TEMPLO,x                     ; bcf6 b5ba    . temp word
             clc                              ; bcf8 18
             adc CSTRNG,y                     ; bcf9 792b32  . combat strengths
@@ -3983,8 +3983,8 @@ _Z_2:       lda ARRIVE,y                     ; bcf1 b9a62d  . arrival turns
             inc ACCLO,x                      ; bd00 f6af
 _Z_3:       lda ARRIVE,y                     ; bd02 b9a62d  . arrival turns
             cmp TURN                         ; bd05 c591
-            beq _Z_4                         ; bd07 f002
-            bcs _Z_5                         ; bd09 b00c
+            beq _Z_4                         ; bd07 f002    new or active
+            bcs _Z_5                         ; bd09 b00c    not active yet
 _Z_4:       lda SQX,x                        ; bd0b b5e1    . adj sq; also COLUM
             clc                              ; bd0d 18
             adc CSTRNG,y                     ; bd0e 792b32  . combat strengths
@@ -3994,19 +3994,19 @@ _Z_4:       lda SQX,x                        ; bd0b b5e1    . adj sq; also COLUM
 _Z_5:       dey                              ; bd17 88
             cpy #$30                         ; bd18 c030
             bcs _Z_2                         ; bd1a b0d5
-            ldx #$00                         ; bd1c a200
+            ldx #$00                         ; bd1c a200    repeat for germans
             cpy #$00                         ; bd1e c000
             bne _Z_2                         ; bd20 d0cf
-            asl TEMPLO                       ; bd22 06ba    . temp word
+            asl TEMPLO                       ; bd22 06ba    2 * (active + future strength)
             rol ACCLO                        ; bd24 26af
             asl TEMPHI                       ; bd26 06bb
             rol ACCHI                        ; bd28 26b0
-            ldx #$03                         ; bd2a a203
+            ldx #$03                         ; bd2a a203    active strengh >> 3 (only for russian)
 _Z_6:       lsr TEMPY                        ; bd2c 469e
             ror SQY                          ; bd2e 66e2    . adj sq; also OCOLUM
             dex                              ; bd30 ca
             bpl _Z_6                         ; bd31 10f9
-__AA__:     lda TEMPY                        ; bd33 a59e
+__AA__:     lda TEMPY                        ; bd33 a59e    shift active strength right for both until russian < 256
             beq _AA_1                        ; bd35 f00b
             lsr TEMPY                        ; bd37 469e
             ror SQY                          ; bd39 66e2    . adj sq; also OCOLUM
@@ -4025,44 +4025,44 @@ _AA_1:      lda TEMPX                        ; bd42 a59d
             bne _AA_2                        ; bd53 d002
             lda #$01                         ; bd55 a901
 _AA_2:      sta OFR                          ; bd57 85e5    . Overall force ratio
-            lda RSTRLO                       ; bd59 a599    . 2 x sum of russian MSTRNG
+            lda RSTRHI                       ; bd59 a599    . 2 x sum of all russian MSTRNG (calc at start)
             sec                              ; bd5b 38
-            sbc ACCHI                        ; bd5c e5b0
-            sta SQX                          ; bd5e 85e1    . adj sq; also COLUM
-            lda GSTRLO                       ; bd60 a598    . 2 x sum of german MSTRNG
+            sbc ACCHI                        ; bd5c e5b0    sub 2x remaining CSTRNG
+            sta SQX                          ; bd5e 85e1    high byte of 2x russian losses
+            lda GSTRHI                       ; bd60 a598    . 2 x sum of german MSTRNG
             sec                              ; bd62 38
-            sbc ACCLO                        ; bd63 e5af
-            sta SQY                          ; bd65 85e2    . adj sq; also OCOLUM
+            sbc ACCLO                        ; bd63 e5af    sub 2 x remaining CSTRNG
+            sta SQY                          ; bd65 85e2    high byte of 2x german losses
             lda ACCHI                        ; bd67 a5b0
-            sta TEMPR                        ; bd69 85ae
+            sta TEMPR                        ; bd69 85ae    high byte of 2x remaining russian cstrng
             lda #$00                         ; bd6b a900
             ldy LEVEL                        ; bd6d a492    . Level learner/beginner/intermediate/advanced/expert
-            cpy #$02                         ; bd6f c002
+            cpy #$02                         ; bd6f c002    level >= intermediate?
             bcs _AA_3                        ; bd71 b002
-            sta SQY                          ; bd73 85e2    . adj sq; also OCOLUM
-_AA_3:      cpy #$04                         ; bd75 c004
+            sta SQY                          ; bd73 85e2    zero out german losses
+_AA_3:      cpy #$04                         ; bd75 c004    expert?
             bne _AA_4                        ; bd77 d004
-            sta SQX                          ; bd79 85e1    . adj sq; also COLUM
+            sta SQX                          ; bd79 85e1    zero out russian losses in expert mode
             beq _AA_5                        ; bd7b f002
-_AA_4:      sta TEMPR                        ; bd7d 85ae
-_AA_5:      lda SQY                          ; bd7f a5e2    . adj sq; also OCOLUM
+_AA_4:      sta TEMPR                        ; bd7d 85ae    zero out russian strng in non-expert
+_AA_5:      lda SQY                          ; bd7f a5e2    german losses or zero
             clc                              ; bd81 18
-            adc TEMPR                        ; bd82 65ae
+            adc TEMPR                        ; bd82 65ae    plus russian cstrng or zero
             bcc _AA_6                        ; bd84 9002
             lda #$ff                         ; bd86 a9ff
-_AA_6:      sta TEMPR                        ; bd88 85ae
-            lda SQX                          ; bd8a a5e1    . adj sq; also COLUM
-            ldx CITYMAX,x                    ; bd8c bef42f  . Max city index scored by level
-_AA_7:      ldy CITYOWN,x                    ; bd8f bcc63a  . city ownership
+_AA_6:      sta TEMPR                        ; bd88 85ae    = german losses|0 + russian strng|0 max 255
+            lda SQX                          ; bd8a a5e1    russian losses or zero
+            ldx CITYMAX,y                    ; bd8c bef42f  . Max city index scored by level
+_AA_7:      ldy CITYOWN,x                    ; bd8f bcc63a  add city score
             beq _AA_8                        ; bd92 f008
             clc                              ; bd94 18
             adc CITYPTS,x                    ; bd95 7daca0  . Points earned for city control
             bcc _AA_8                        ; bd98 9002
-            lda #$ff                         ; bd9a a9ff
+            lda #$ff                         ; bd9a a9ff    max 255
 _AA_8:      dex                              ; bd9c ca
             bpl _AA_7                        ; bd9d 10f0
-            sec                              ; bd9f 38
-            sbc TEMPR                        ; bda0 e5ae
+            sec                              ; bd9f 38      score = russian losses|0 + city score
+            sbc TEMPR                        ; bda0 e5ae     - (german losses|0 + russian strng|0)
             ldy #$66                         ; bda2 a066
             sta TEMPR                        ; bda4 85ae
             bcs _AA_9                        ; bda6 b00f
@@ -4082,14 +4082,14 @@ _AA_9:      jsr DNUMBER                      ; bdb7 20a3aa  . Show A as base10 n
             lda LEVEL                        ; bdc3 a592    . Level learner/beginner/intermediate/advanced/expert
             bne _AA_10                       ; bdc5 d005
             lda CITYOWN                      ; bdc7 adc63a  . city ownership
-            bne _AA_12                       ; bdca d01d    learner mode ends on city capture
+            bne _AA_12                       ; bdca d01d    learner mode ends on moscow capture
 _AA_10:     clc                              ; bdcc 18
             adc STARTDT                      ; bdcd 6593    . Scenario start 1941/1942
             tax                              ; bdcf aa
             lda TURN                         ; bdd0 a591
             cmp ENDTURN,x                    ; bdd2 dd1230  . End turn, index by level, +1 if expert'42
             bne NXTTRN                       ; bdd5 d02f
-            cpx #$04                         ; bdd7 e004
+            cpx #$04                         ; bdd7 e004    Expert?
             bcs _AA_11                       ; bdd9 b007
             lda TEMPR                        ; bddb a5ae
             cmp WINSCR,x                     ; bddd dd1d30  . Winning score by level: 5, 25, 40, 80[, 255]
@@ -4197,7 +4197,7 @@ __AC__:     stx ARMY                         ; bebc 86ab
             lda MSTRNG,x                     ; bebe bdff2c  . muster strengths
             ldy STARTDT                      ; bec1 a493    . Scenario start 1941/1942
             beq _AC_1                        ; bec3 f007
-            cpx #$6d                         ; bec5 e06d    ? 1942 unit #$6d = 109 recovers automatically?
+            cpx #$6d                         ; bec5 e06d    1942 russian 7 militia @ sevastopol recovers fully each turn(!)
             bne _AC_1                        ; bec7 d003
             sta CSTRNG,x                     ; bec9 9d2b32  . combat strengths
 _AC_1:      sec                              ; becc 38

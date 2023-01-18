@@ -256,15 +256,15 @@ from apx disassembly preparing for defender strike
             pla             ; 4f28 68
             sta SWAP,x      ; 4f29 9d7c56  . terrain code underneath unit
             jsr TERRTY      ; 4f2c 206973  . convert map chr in TRNCOD -> TRNTYP, also y reg
-            ldx DEFNC,x     ; 4f2f beb479  <= should be DEFENC,y
-            lda CSTRNG,y    ; 4f32 b9dd55  <= indexing OoB via terrain type?
+            ldx DEFNC,y     ; 4f2f beb479
+            lda CSTRNG,y    ; 4f32 b9dd55  <= indexing OoB via terrain type instead of defender?
             lsr             ; 4f35 4a      adjust for terrain, max 255
 _COMBAT_5:  dex             ; 4f36 ca
             beq _COMBAT_6   ; 4f37 f005
             rol             ; 4f39 2a
             bcc _COMBAT_5   ; 4f3a 90fa
             lda #$ff        ; 4f3c a9ff
-_COMBAT_6:  ldx HMORDS,x    ; 4f3e be755d  now adjust for defender's motion [cf. 1740 Y16 LDX HMORDS,Y]
+_COMBAT_6:  ldx HMORDS,y    ; 4f3e be755d  now adjust for defender's motion [y still wrong?]
             beq DOBATL      ; 4f41 f001
             lsr             ; 4f43 4a      penalty if moving
 DOBATL:     cmp  RANDOM     ; 4f44 cd0ad2  evaluate defender's strike
@@ -280,7 +280,7 @@ from EFT18C.ASM
 1600 ;
 1610 ;
 1620  JSR TERRTY terrain in defender's square
-1630  LDX DEFNC,Y defensive bonus factor       <= fixed!
+1630  LDX DEFNC,Y defensive bonus factor
 1640  LDA CSTRNG,Y defender's strength         <= still broken
 1650  LSR A
 1660 Y15 DEX adjust for terrain
@@ -310,7 +310,7 @@ cartridge version
             sta SWAP,x       ; ad08 9d8331  terrain code underneath unit
             jsr FLGRBRK      ; ad0b 2028ae  Fliegerkorps break and suffer 75% loss
             jsr TERRTY       ; ad0e 20c8b8  convert map chr in TRNCOD -> TRNTYP and y, LAT -> x
-            ldx DEFNC,x      ; ad11 be71a0  <= bug is back
+            ldx DEFNC,y      ; ad11 be71a0
             lda LEVEL        ; ad14 a592    Level learner/beginner/intermediate/advanced/expert
             cmp #$04         ; ad16 c904
             bne _COMBAT_5    ; ad18 d001
@@ -323,7 +323,7 @@ _COMBAT_6:  dex              ; ad21 ca
             rol              ; ad24 2a
             bcc _COMBAT_6    ; ad25 90fa
             lda #$ff         ; ad27 a9ff
-_COMBAT_7:  ldx HMORDS,x     ; ad29 bed232  how many orders queued for each unit
+_COMBAT_7:  ldx HMORDS,y     ; ad29 bed232  how many orders queued for each unit
 ```
 
 

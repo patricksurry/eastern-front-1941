@@ -395,28 +395,43 @@ class Unit {
         this.scheduleOrder();
     }
     #resolveCombat(opp: Unit) {
-        // return 1 if target square is vacant
+        // returns 1 if target square becomes vacant
         if (!this.canAttack) return 0;
 
-        const dst = this.#game.mapboard.locationOf(Grid.point(opp));
+        const scenario = scenarios[this.#game.scenario],
+            dst = this.#game.mapboard.locationOf(Grid.point(opp));
+
         this.emit('attack');
         opp.emit('defend');
 
         let modifier = terraintypes[dst.terrain].defence;
+        // expert scenario defense bonus
+        modifier += scenario.defmod ?? 0;
         if (opp.orders.length) modifier--;  // movement penalty
+        if (opp.mode == UnitMode.entrench) modifier++;  // entrench bonus
+
+        //TODO include opp.cadj after modifier
 
         // opponent attacks
-        let str = multiplier(opp.cstrng, modifier);
+        let strength = multiplier(opp.cstrng, modifier);
         //TODO APX doesn't skip attacker if break, but cart does
-        if (str >= this.#game.rand.byte()) {
-            this.#takeDamage(1, 5, true);
+
+        if (strength >= this.#game.rand.byte()) {
+            // attacker in assault mode takes triple damage
+            const mult = this.#mode == UnitMode.assault ? 3: 1;
+            this.#takeDamage(mult * scenario.mdmg, mult * scenario.cdmg, true);
             if (!this.orders) return 0;
         }
+
         const t = dst.terrain;
         modifier = terraintypes[t].offence;
-        str = multiplier(this.cstrng, modifier);
-        if (str >= this.#game.rand.byte()) {
-            return opp.#takeDamage(1, 5, true, this.orders[0]);
+        strength = multiplier(this.cstrng, modifier);
+        //TODO add this.cadj
+
+        if (strength >= this.#game.rand.byte()) {
+            // defender takes double damange
+            const mult = this.#mode == UnitMode.assault ? 2: 1;
+            return opp.#takeDamage(mult * scenario.mdmg, mult * scenario.cdmg, true, this.orders[0]);
         } else {
             return 0;
         }
@@ -465,6 +480,7 @@ class Unit {
         }
 
         if (this.cstrng < brkpt) {
+            this.#mode = this.kind == UnitKindKey.air ? UnitMode.march : UnitMode.standard;
             this.resetOrders();
 
             if (retreatDir != null) {
@@ -511,17 +527,20 @@ class Unit {
             }
         } else {
             this.flags = 0;
-            if (!scenario.skipsupply) {
-                const inSupply = this.traceSupply();
-                if (scenario.repl && inSupply) {
-                    // possibly receive replacements
-                    this.mstrng = Math.max(255, this.mstrng + scenario.repl[this.player]);
-                }
-                if (!this.active) return;  // quit if we were elimiated
+            const inSupply = scenario.skipsupply || this.traceSupply();
+            if (scenario.repl && inSupply) {
+                // possibly receive replacements
+                this.mstrng = Math.max(255, this.mstrng + scenario.repl[this.player]);
             }
+            if (!this.active) return;  // quit if we were elimiated
 
-            // M.ASM:5070  recover combat strength
-            if (this.mstrng - this.cstrng >= 2) this.cstrng += 1 + this.#game.rand.bit();
+            if (this.type == UnitTypeKey.militia && this.lon == 20 && this.lat == 0) {
+                // Sevastopol militia fully recovers each turn
+                this.cstrng = this.mstrng;
+            } else if (this.mstrng - this.cstrng >= 2) {
+                // M.ASM:5070 recover one plus coin-flip combat strength
+                this.cstrng += 1 + this.#game.rand.bit();
+            }
 
             if (scenario.fog) {
                 const change = this.#game.oob.zocAffects(this.player, this.location, true) ? -1 : 1;
@@ -575,7 +594,7 @@ class Unit {
         this.emit('oos');
         return 0;
     }
-    score() {
+    locScore() {
         const dist = this.#game.mapboard.boundaryDistance(this, players[this.player].homedir);
         let v = 0;
         // see M.ASM:4050 - note even inactive units are scored based on future arrival/strength

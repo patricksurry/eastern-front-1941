@@ -23,24 +23,23 @@ function addSimpleOrders(g: Game) {
 }
 
 test("Unit scores should be non-negative", () => {
-    game.oob.forEach(u => expect(u.score()).toBeGreaterThanOrEqual(0));
+    game.oob.forEach(u => expect(u.locScore()).toBeGreaterThanOrEqual(0));
 });
 
 test("Initial score check", () => {
     const expected = {
-/* TODO
         [ScenarioKey.learner]: 0,
         [ScenarioKey.beginner]: 0,
         [ScenarioKey.intermediate]: 0,
         [ScenarioKey.advanced]: 0,
         [ScenarioKey.expert41]: -128,
-        [ScenarioKey.expert42]: -131,
-*/
+        [ScenarioKey.expert42]: -130, //TODO should be -131 after initial supply check
         [ScenarioKey.apx]: 12,
     };
 
     Object.entries(expected).forEach(([k, score]) => {
         const g = new Game(+k as ScenarioKey);
+        //console.log(`checking initial score for ${scenarios[+k as ScenarioKey].label}`)
         expect(g.score(PlayerKey.German)).toBe(score);
     })
 });
@@ -58,9 +57,7 @@ test("Game roundtrip", () => {
         token = game.token;
     const buf = arr.map(v => String.fromCharCode(v)).join('');
     const b64 = Buffer.from(buf).toString('base64');
-    console.log('state array length', arr.length, 'min/max', Math.min(...arr), Math.max(...arr), arr);
-    console.log('state array of', arr.length, 'ints =>', token.length, 'byte token:', token);
-    console.log('cf', b64.length, 'base64 encoding', b64);
+    console.log(`state array int[${arr.length}] => chr[${token.length}] token vs base64[${b64.length}]`);
 
     expect(game.oob.every(u => u.lon >= 0 && u.lat >= 0)).toBe(true);
 

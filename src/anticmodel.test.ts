@@ -21,7 +21,7 @@ what?
 \fj|\f^wahay!\f/\fl|
 `)
     const s = asciiView(display);
-    console.log(s)
+    // console.log(s)
 
     expect(s).toMatch(/^hello world/);
 });
