@@ -5,39 +5,37 @@ const
     helpScrambleMillis = 2000,
     helpUrl = 'https://github.com/patricksurry/eastern-front-1941',
     helpText = (
-    '\fh\x11' + '\x12'.repeat(40) + '\x05'
-    + '|\fl|'.repeat(22)
-    + '\x1a' + '\x12'.repeat(40) + '\x03'
-    + `\fH\f^
+    '\fh\fb\x94' + ' '.repeat(42*12)
+    + '\fb\x1a' + ' '.repeat(42*12)
+    + `\fH\fb\x94\f^
 
-
-Welcome to Chris Crawford's
 Eastern Front  1941
-Reversed by Patrick Surry \fc\x94}\fC
+by Chris Crawford
 
-\f@\x04<
-Select: \f#Click\f-, \f#n\f-ext, \f#p\f-rev, \f#<\f-, \f#>\f-
 
-Orders: \f#\x1f\f- \f#\x1c\f- \f#\x1d\f- \f#\x1e\f-, \f#Bksp\f-, \f#Space\f-, \f#Esc\f-
+\fc\x08Redux\fc\x90}\fc\x08 by Patrick Surry\fC
 
-Modes: \f#1\f- \f#2\f- \f#3\f- ..., \f#m\f- toggles
 
-Submit: \f#End\f-, \f#Fn \x1f\f-
+\f^Press any key to start!
 
-Toggle: \f#z\f-oom, e\f#x\f-tras, debu\f#g\f-
 
-\f^
-\f#?\f- shows this help
-Press any key to play!`
-);
+\fb\x1a\fc\x94\f@\x04<
+Pick unit: \f#Click\f-, \f#<\f- \f#>\f- or \f#p\f-rev \f#n\f-ext
+
+Issue orders: \f#\x1c\f- \f#\x1f\f- \f#\x1d\f- \f#\x1e\f-, \f#Bksp\f-, \f#Esc\f-
+
+Resolve turn: \f#End\f- or \f#Fn \x1f\f-
+
+Expert: set move \f#m\f-ode or \f#1\f- \f#2\f- \f#3\f- \f#4\f-
+
+Toggle: \f#?\f- help, \f#z\f-oom, e\f#x\f-tras, debu\f#g\f-
+`);
 
 
 type EventHandler = (e: Event) => void;
 
 class HelpModel {
-    window = new MappedDisplayLayer(42, 24, atasciiFont,
-        {foregroundColor: 0x04, layerColor: 0x0E}
-    );
+    window = new MappedDisplayLayer(42, 24, atasciiFont);
     #init = false;
     clickHandler: EventHandler;
 

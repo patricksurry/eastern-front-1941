@@ -128,8 +128,8 @@ test("Supply thru gaps", () => {
 test("ZoC blocked", () => {
     // blocked scenario from doc/apxzoc1.png
     const g = new Game(ScenarioKey.learner);
-    const p0 = g.oob.findIndex(u => u.player == PlayerKey.German),
-        p1 = g.oob.findIndex(u => u.player == PlayerKey.Russian),
+    const p0 = g.oob.findIndex(u => u.active && u.player == PlayerKey.German),
+        p1 = g.oob.findIndex(u => u.active && u.player == PlayerKey.Russian),
         u = g.oob.at(p0),
         start = g.mapboard.locationOf(Grid.lonlat(14, 25));
 
@@ -145,8 +145,8 @@ test("ZoC blocked", () => {
 test("ZoC not blocked", () => {
     // unblocked scenario from doc/apxzoc1.png
     const g = new Game(ScenarioKey.learner);
-    const p0 = g.oob.findIndex(u => u.player == PlayerKey.German),
-        p1 = g.oob.findIndex(u => u.player == PlayerKey.Russian),
+    const p0 = g.oob.findIndex(u => u.active && u.player == PlayerKey.German),
+        p1 = g.oob.findIndex(u => u.active && u.player == PlayerKey.Russian),
         u = g.oob.at(p0),
         start = g.mapboard.locationOf(Grid.point({lon: 14, lat: 25}));
 

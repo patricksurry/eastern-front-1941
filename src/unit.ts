@@ -100,6 +100,7 @@ class Unit {
     lat: number;
     mstrng: number;
     cstrng: number;
+    cadj = 0;
     fog: number;
     #mode: UnitMode;
     orders: DirectionKey[] = [];        // WHORDRS, HMORDS
@@ -313,8 +314,26 @@ class Unit {
         if (!dst) return 255;
         return this.moveCost(dst.terrain, this.#game.weather);
     }
-    scheduleOrder(reset = false) {
-        if (reset) this.tick = 0;
+    scheduleOrder(startTurn = false) {
+        if (startTurn) {
+            this.tick = 0;
+            if (this.mode == UnitMode.march && this.orders.length && this.cstrng > 1) {
+                // cstrng halved (min 1) before movement (cartridge.asm:4153)
+                this.cstrng >>= 1;
+            }
+            if (this.kind == UnitKindKey.air && this.mode == UnitMode.assault && this.orders.length) {
+                // add air strength to target cadj (cartridge.asm:4180)
+                const dst = this.path.pop()!;
+                if (dst.unitid != null && dst.gid != this.location.gid) {
+                    const u = this.#game.oob.at(dst.unitid);
+                    if (u.player == this.player) {
+                        const halfDistance = Math.max(1, this.orders.length >> 1);
+                        u.cadj += Math.floor(this.cstrng / halfDistance);
+                    }
+                    u.resetOrders();   // clear orders: air mission flown
+                }
+            }
+        }
 
         this.tick = this.orders.length
             ? this.tick + this.orderCost(this.orders[0])
@@ -398,39 +417,43 @@ class Unit {
         // returns 1 if target square becomes vacant
         if (!this.canAttack) return 0;
 
-        const scenario = scenarios[this.#game.scenario],
-            dst = this.#game.mapboard.locationOf(Grid.point(opp));
+        // Air suffers 75% loss and resetOrders if attack or defend, plus normal combat (cartridge.asm:1968)
+        [this, opp].forEach(u => {
+            if (u.kind == UnitKindKey.air) {
+                u.cstrng >>= 2;
+                u.resetOrders();
+            }
+        })
+
+        const scenario = scenarios[this.#game.scenario];
 
         this.emit('attack');
         opp.emit('defend');
 
-        let modifier = terraintypes[dst.terrain].defence;
+        let modifier = terraintypes[opp.location.terrain].defence;
         // expert scenario defense bonus
         modifier += scenario.defmod ?? 0;
         if (opp.orders.length) modifier--;  // movement penalty
         if (opp.mode == UnitMode.entrench) modifier++;  // entrench bonus
 
-        //TODO include opp.cadj after modifier
-
         // opponent attacks
-        let strength = multiplier(opp.cstrng, modifier);
-        //TODO APX doesn't skip attacker if break, but cart does
+        let strength = multiplier(opp.cstrng, modifier) + opp.cadj;
 
         if (strength >= this.#game.rand.byte()) {
             // attacker in assault mode takes triple damage
-            const mult = this.#mode == UnitMode.assault ? 3: 1;
+            const mult = this.mode == UnitMode.assault ? 3: 1;
             this.#takeDamage(mult * scenario.mdmg, mult * scenario.cdmg, true);
-            if (!this.orders) return 0;
+            // cartridge prevents attack if attacker breaks
+            if (!this.orders && options.defenderFirstStrike) return 0;
         }
 
-        const t = dst.terrain;
-        modifier = terraintypes[t].offence;
-        strength = multiplier(this.cstrng, modifier);
-        //TODO add this.cadj
+        // modifier based on attacker's square (cartridge.asm:2035)
+        modifier = terraintypes[this.location.terrain].offence;
+        strength = multiplier(this.cstrng, modifier) + this.cadj;
 
         if (strength >= this.#game.rand.byte()) {
             // defender takes double damange
-            const mult = this.#mode == UnitMode.assault ? 2: 1;
+            const mult = this.mode == UnitMode.assault ? 2: 1;
             return opp.#takeDamage(mult * scenario.mdmg, mult * scenario.cdmg, true, this.orders[0]);
         } else {
             return 0;
@@ -438,6 +461,7 @@ class Unit {
     }
     #takeDamage(mdmg: number, cdmg: number, checkBreak = false, retreatDir?: DirectionKey) {
         // return 1 if this square is vacated, 0 otherwise
+        const scenario = scenarios[this.#game.scenario];
 
         // apply mdmg/cdmg to unit
         this.mstrng -= mdmg;
@@ -445,7 +469,7 @@ class Unit {
 
         // dead?
         if (this.cstrng <= 0) {
-            this.eliminate();
+            this.eliminate(options.disperseEliminatedUnits);
             this.moveTo(null);
             return 1;
         }
@@ -454,7 +478,7 @@ class Unit {
         if (!checkBreak) return 0;
 
         let brkpt;  // calculate the strength value to check for unit breaking point
-        if (scenarios[this.#game.scenario].simplebreak) {
+        if (scenario.simplebreak) {
             // simplified break check at 25% strength
             brkpt = this.mstrng >> 2;
         } else {
@@ -480,7 +504,7 @@ class Unit {
         }
 
         if (this.cstrng < brkpt) {
-            this.#mode = this.kind == UnitKindKey.air ? UnitMode.march : UnitMode.standard;
+            this.mode = this.kind == UnitKindKey.air ? UnitMode.march : UnitMode.standard;
             this.resetOrders();
 
             if (retreatDir != null) {
@@ -492,7 +516,8 @@ class Unit {
                     const src = this.location,
                         dst = this.#game.mapboard.neighborOf(src, dir);
                     if (!dst || dst.unitid != null || this.#game.oob.zocBlocked(this.player, src, dst)) {
-                        if (this.#takeDamage(0, 5)) return 1;  // dead
+                        // ZoC block deals only CSTR dmg (cartridge:2159)
+                        if (this.#takeDamage(0, scenario.cdmg)) return 1;  // dead
                     } else {
                         this.moveTo(dst);
                         return 1;
@@ -503,7 +528,29 @@ class Unit {
         // otherwise square still occupied (no break or all retreats blocked but defender remains)
         return 0;
     }
-    eliminate() {
+    recover() {
+        // units recover a little each tick
+        if (this.type == UnitTypeKey.militia && this.lon == 20 && this.lat == 0) {
+            // Sevastopol militia fully recovers each turn
+            this.cstrng = this.mstrng;
+        } else if (this.mstrng - this.cstrng >= 2) {
+            // M.ASM:5070 recover one plus coin-flip combat strength
+            this.cstrng += 1 + this.#game.rand.bit();
+        }
+    }
+    eliminate(disperse?: boolean) {
+        if (disperse) {
+            // eliminated units disperse nearby (cartridge.asm:2509)
+            this.#game.mapboard
+                .neighborsOf(this.location)
+                .forEach(loc => {
+                    if (loc?.unitid == null) return;
+                    const u = this.#game.oob.at(loc.unitid);
+                    if (u.player == this.player) {
+                        u.mstrng = Math.min(255, u.mstrng + (this.mstrng >> 2));
+                    }
+                })
+        }
         this.mstrng = 0;
         this.cstrng = 0;
         this.arrive = 255;
@@ -530,23 +577,18 @@ class Unit {
             const inSupply = scenario.skipsupply || this.traceSupply();
             if (scenario.repl && inSupply) {
                 // possibly receive replacements
-                this.mstrng = Math.max(255, this.mstrng + scenario.repl[this.player]);
+                this.mstrng = Math.min(255, this.mstrng + scenario.repl[this.player]);
             }
             if (!this.active) return;  // quit if we were elimiated
-
-            if (this.type == UnitTypeKey.militia && this.lon == 20 && this.lat == 0) {
-                // Sevastopol militia fully recovers each turn
-                this.cstrng = this.mstrng;
-            } else if (this.mstrng - this.cstrng >= 2) {
-                // M.ASM:5070 recover one plus coin-flip combat strength
-                this.cstrng += 1 + this.#game.rand.bit();
-            }
 
             if (scenario.fog) {
                 const change = this.#game.oob.zocAffects(this.player, this.location, true) ? -1 : 1;
                 this.fog = clamp(this.fog + change, 0, scenario.fog)
             }
         }
+
+        // set up base cstrng adjustment
+        this.cadj = this.player == PlayerKey.German ? (scenarios[this.#game.scenario].cadj ?? 0) : 0
     }
     traceSupply(): Flag {
         // implement the supply check from C.ASM:3430

@@ -165,12 +165,16 @@ class Oob {
     }
     scheduleOrders() {
         // M.asm:4950 movement execution
-        this.forEach(u => u.scheduleOrder(true));
+        this.activeUnits().forEach(u => u.scheduleOrder(true));
     }
     executeOrders(tick: number) {
         // original code processes movement in reverse-oob order
-        // could be interesting to randomize, or allow a delay/no-op order to handle traffic
-        this.filter(u => u.tick == tick).reverse().forEach(u => u.tryOrder());
+        //TODO config to randomize order, or allow a delay/no-op order type to manage traffic?
+        this.activeUnits().forEach(u => u.recover())
+        this.activeUnits()
+            .filter(u => u.tick == tick)
+            .reverse()
+            .forEach(u => u.tryOrder());
     }
     zocAffects(player: PlayerKey, loc: MapPoint, omitSelf = false): boolean {
         return this.zocAffecting(player, loc, omitSelf, 2) >= 2;

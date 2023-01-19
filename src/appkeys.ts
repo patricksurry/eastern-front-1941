@@ -15,7 +15,7 @@ const keymap = {
         mode:   'mM',
         modes:  '1234',
     },
-    arrowmap: Record<string, DirectionKey> = {
+    arrowdirs: Record<string, DirectionKey> = {
         ArrowUp: DirectionKey.north,
         ArrowDown: DirectionKey.south,
         ArrowRight: DirectionKey.east,
@@ -68,8 +68,8 @@ function ordersHandler(key: string, ctrl: AppCtrl) {
         ctrl.editUnitMode(null);
     } else if (ctrl.app.mvmode && keymap.modes.includes(key)) {
         ctrl.editUnitMode(keymap.modes.indexOf(key));
-    } else if (key in arrowmap) {
-        ctrl.editOrders(arrowmap[key]);
+    } else if (key in arrowdirs) {
+        ctrl.editOrders(arrowdirs[key]);
     } else if (keymap.cancel.includes(key)) {
         ctrl.editOrders(null);
     } else if (key == 'Backspace') {

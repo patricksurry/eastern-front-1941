@@ -778,6 +778,8 @@ var ef1941 = (function (exports, node_crypto) {
         astarPathFinding: true,
         reduceInitialFogInContact: true,
         mapIncludesSevastopol: true,
+        disperseEliminatedUnits: true,
+        defenderFirstStrike: true,
         // hard-wired settings (these config options aren't referenced)
         mapIncludeSevastopol: true,
         germanReinforcementsMoveOnArrival: true,
@@ -1149,6 +1151,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
             this.immobile = 0;
             this.canAttack = 1;
             this.resolute = 0;
+            this.cadj = 0;
             _Unit_mode.set(this, void 0);
             this.orders = []; // WHORDRS, HMORDS
             this.tick = 255;
@@ -1361,9 +1364,26 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
                 return 255;
             return this.moveCost(dst.terrain, __classPrivateFieldGet(this, _Unit_game, "f").weather);
         }
-        scheduleOrder(reset = false) {
-            if (reset)
+        scheduleOrder(startTurn = false) {
+            if (startTurn) {
                 this.tick = 0;
+                if (this.mode == 2 /* UnitMode.march */ && this.orders.length && this.cstrng > 1) {
+                    // cstrng halved (min 1) before movement (cartridge.asm:4153)
+                    this.cstrng >>= 1;
+                }
+                if (this.kind == 2 /* UnitKindKey.air */ && this.mode == 1 /* UnitMode.assault */ && this.orders.length) {
+                    // add air strength to target cadj (cartridge.asm:4180)
+                    const dst = this.path.pop();
+                    if (dst.unitid != null && dst.gid != this.location.gid) {
+                        const u = __classPrivateFieldGet(this, _Unit_game, "f").oob.at(dst.unitid);
+                        if (u.player == this.player) {
+                            const halfDistance = Math.max(1, this.orders.length >> 1);
+                            u.cadj += Math.floor(this.cstrng / halfDistance);
+                        }
+                        u.resetOrders(); // clear orders: air mission flown
+                    }
+                }
+            }
             this.tick = this.orders.length
                 ? this.tick + this.orderCost(this.orders[0])
                 : 255;
@@ -1441,7 +1461,31 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
             this.moveTo(dst);
             this.scheduleOrder();
         }
-        eliminate() {
+        recover() {
+            // units recover a little each tick
+            if (this.type == 1 /* UnitTypeKey.militia */ && this.lon == 20 && this.lat == 0) {
+                // Sevastopol militia fully recovers each turn
+                this.cstrng = this.mstrng;
+            }
+            else if (this.mstrng - this.cstrng >= 2) {
+                // M.ASM:5070 recover one plus coin-flip combat strength
+                this.cstrng += 1 + __classPrivateFieldGet(this, _Unit_game, "f").rand.bit();
+            }
+        }
+        eliminate(disperse) {
+            if (disperse) {
+                // eliminated units disperse nearby (cartridge.asm:2509)
+                __classPrivateFieldGet(this, _Unit_game, "f").mapboard
+                    .neighborsOf(this.location)
+                    .forEach(loc => {
+                    if ((loc === null || loc === void 0 ? void 0 : loc.unitid) == null)
+                        return;
+                    const u = __classPrivateFieldGet(this, _Unit_game, "f").oob.at(loc.unitid);
+                    if (u.player == this.player) {
+                        u.mstrng = Math.min(255, u.mstrng + (this.mstrng >> 2));
+                    }
+                });
+            }
             this.mstrng = 0;
             this.cstrng = 0;
             this.arrive = 255;
@@ -1449,6 +1493,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
             this.resetOrders();
         }
         newTurn(initialize) {
+            var _a;
             if (!this.active)
                 return;
             const scenario = scenarios[__classPrivateFieldGet(this, _Unit_game, "f").scenario];
@@ -1467,23 +1512,17 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
                 const inSupply = scenario.skipsupply || this.traceSupply();
                 if (scenario.repl && inSupply) {
                     // possibly receive replacements
-                    this.mstrng = Math.max(255, this.mstrng + scenario.repl[this.player]);
+                    this.mstrng = Math.min(255, this.mstrng + scenario.repl[this.player]);
                 }
                 if (!this.active)
                     return; // quit if we were elimiated
-                if (this.type == 1 /* UnitTypeKey.militia */ && this.lon == 20 && this.lat == 0) {
-                    // Sevastopol militia fully recovers each turn
-                    this.cstrng = this.mstrng;
-                }
-                else if (this.mstrng - this.cstrng >= 2) {
-                    // M.ASM:5070 recover one plus coin-flip combat strength
-                    this.cstrng += 1 + __classPrivateFieldGet(this, _Unit_game, "f").rand.bit();
-                }
                 if (scenario.fog) {
                     const change = __classPrivateFieldGet(this, _Unit_game, "f").oob.zocAffects(this.player, this.location, true) ? -1 : 1;
                     this.fog = clamp(this.fog + change, 0, scenario.fog);
                 }
             }
+            // set up base cstrng adjustment
+            this.cadj = this.player == 0 /* PlayerKey.German */ ? ((_a = scenarios[__classPrivateFieldGet(this, _Unit_game, "f").scenario].cadj) !== null && _a !== void 0 ? _a : 0) : 0;
         }
         traceSupply() {
             // implement the supply check from C.ASM:3430
@@ -1562,34 +1601,39 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
         // returns 1 if target square becomes vacant
         if (!this.canAttack)
             return 0;
-        const scenario = scenarios[__classPrivateFieldGet(this, _Unit_game, "f").scenario], dst = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.locationOf(Grid.point(opp));
+        // Air suffers 75% loss and resetOrders if attack or defend, plus normal combat (cartridge.asm:1968)
+        [this, opp].forEach(u => {
+            if (u.kind == 2 /* UnitKindKey.air */) {
+                u.cstrng >>= 2;
+                u.resetOrders();
+            }
+        });
+        const scenario = scenarios[__classPrivateFieldGet(this, _Unit_game, "f").scenario];
         this.emit('attack');
         opp.emit('defend');
-        let modifier = terraintypes[dst.terrain].defence;
+        let modifier = terraintypes[opp.location.terrain].defence;
         // expert scenario defense bonus
         modifier += (_a = scenario.defmod) !== null && _a !== void 0 ? _a : 0;
         if (opp.orders.length)
             modifier--; // movement penalty
         if (opp.mode == 3 /* UnitMode.entrench */)
             modifier++; // entrench bonus
-        //TODO include opp.cadj after modifier
         // opponent attacks
-        let strength = multiplier(opp.cstrng, modifier);
-        //TODO APX doesn't skip attacker if break, but cart does
+        let strength = multiplier(opp.cstrng, modifier) + opp.cadj;
         if (strength >= __classPrivateFieldGet(this, _Unit_game, "f").rand.byte()) {
             // attacker in assault mode takes triple damage
-            const mult = __classPrivateFieldGet(this, _Unit_mode, "f") == 1 /* UnitMode.assault */ ? 3 : 1;
+            const mult = this.mode == 1 /* UnitMode.assault */ ? 3 : 1;
             __classPrivateFieldGet(this, _Unit_instances, "m", _Unit_takeDamage).call(this, mult * scenario.mdmg, mult * scenario.cdmg, true);
-            if (!this.orders)
+            // cartridge prevents attack if attacker breaks
+            if (!this.orders && options.defenderFirstStrike)
                 return 0;
         }
-        const t = dst.terrain;
-        modifier = terraintypes[t].offence;
-        strength = multiplier(this.cstrng, modifier);
-        //TODO add this.cadj
+        // modifier based on attacker's square (cartridge.asm:2035)
+        modifier = terraintypes[this.location.terrain].offence;
+        strength = multiplier(this.cstrng, modifier) + this.cadj;
         if (strength >= __classPrivateFieldGet(this, _Unit_game, "f").rand.byte()) {
             // defender takes double damange
-            const mult = __classPrivateFieldGet(this, _Unit_mode, "f") == 1 /* UnitMode.assault */ ? 2 : 1;
+            const mult = this.mode == 1 /* UnitMode.assault */ ? 2 : 1;
             return __classPrivateFieldGet(opp, _Unit_instances, "m", _Unit_takeDamage).call(opp, mult * scenario.mdmg, mult * scenario.cdmg, true, this.orders[0]);
         }
         else {
@@ -1597,12 +1641,13 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
         }
     }, _Unit_takeDamage = function _Unit_takeDamage(mdmg, cdmg, checkBreak = false, retreatDir) {
         // return 1 if this square is vacated, 0 otherwise
+        const scenario = scenarios[__classPrivateFieldGet(this, _Unit_game, "f").scenario];
         // apply mdmg/cdmg to unit
         this.mstrng -= mdmg;
         this.cstrng -= cdmg;
         // dead?
         if (this.cstrng <= 0) {
-            this.eliminate();
+            this.eliminate(options.disperseEliminatedUnits);
             this.moveTo(null);
             return 1;
         }
@@ -1610,7 +1655,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
         if (!checkBreak)
             return 0;
         let brkpt; // calculate the strength value to check for unit breaking point
-        if (scenarios[__classPrivateFieldGet(this, _Unit_game, "f").scenario].simplebreak) {
+        if (scenario.simplebreak) {
             // simplified break check at 25% strength
             brkpt = this.mstrng >> 2;
         }
@@ -1635,14 +1680,15 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
             }
         }
         if (this.cstrng < brkpt) {
-            __classPrivateFieldSet(this, _Unit_mode, this.kind == 2 /* UnitKindKey.air */ ? 2 /* UnitMode.march */ : 0 /* UnitMode.standard */, "f");
+            this.mode = this.kind == 2 /* UnitKindKey.air */ ? 2 /* UnitMode.march */ : 0 /* UnitMode.standard */;
             this.resetOrders();
             if (retreatDir != null) {
                 const homedir = players[this.player].homedir, nxtdir = __classPrivateFieldGet(this, _Unit_game, "f").rand.bit() ? 0 /* DirectionKey.north */ : 2 /* DirectionKey.south */, dirs = [retreatDir, homedir, nxtdir, (nxtdir + 2) % 4, (homedir + 2) % 4];
                 for (const dir of dirs) {
                     const src = this.location, dst = __classPrivateFieldGet(this, _Unit_game, "f").mapboard.neighborOf(src, dir);
                     if (!dst || dst.unitid != null || __classPrivateFieldGet(this, _Unit_game, "f").oob.zocBlocked(this.player, src, dst)) {
-                        if (__classPrivateFieldGet(this, _Unit_instances, "m", _Unit_takeDamage).call(this, 0, 5))
+                        // ZoC block deals only CSTR dmg (cartridge:2159)
+                        if (__classPrivateFieldGet(this, _Unit_instances, "m", _Unit_takeDamage).call(this, 0, scenario.cdmg))
                             return 1; // dead
                     }
                     else {
@@ -2303,12 +2349,16 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
         }
         scheduleOrders() {
             // M.asm:4950 movement execution
-            this.forEach(u => u.scheduleOrder(true));
+            this.activeUnits().forEach(u => u.scheduleOrder(true));
         }
         executeOrders(tick) {
             // original code processes movement in reverse-oob order
-            // could be interesting to randomize, or allow a delay/no-op order to handle traffic
-            this.filter(u => u.tick == tick).reverse().forEach(u => u.tryOrder());
+            //TODO config to randomize order, or allow a delay/no-op order type to manage traffic?
+            this.activeUnits().forEach(u => u.recover());
+            this.activeUnits()
+                .filter(u => u.tick == tick)
+                .reverse()
+                .forEach(u => u.tryOrder());
         }
         zocAffects(player, loc, omitSelf = false) {
             return this.zocAffecting(player, loc, omitSelf, 2) >= 2;
@@ -3476,7 +3526,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
         debug: 'gG',
         mode: 'mM',
         modes: '1234',
-    }, arrowmap = {
+    }, arrowdirs = {
         ArrowUp: 0 /* DirectionKey.north */,
         ArrowDown: 2 /* DirectionKey.south */,
         ArrowRight: 1 /* DirectionKey.east */,
@@ -3535,8 +3585,8 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
         else if (ctrl.app.mvmode && keymap.modes.includes(key)) {
             ctrl.editUnitMode(keymap.modes.indexOf(key));
         }
-        else if (key in arrowmap) {
-            ctrl.editOrders(arrowmap[key]);
+        else if (key in arrowdirs) {
+            ctrl.editOrders(arrowdirs[key]);
         }
         else if (keymap.cancel.includes(key)) {
             ctrl.editOrders(null);
@@ -6009,33 +6059,34 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
     var mithril = m;
 
     var _HelpModel_init;
-    const helpScrambleMillis = 2000, helpUrl = 'https://github.com/patricksurry/eastern-front-1941', helpText = ('\fh\x11' + '\x12'.repeat(40) + '\x05'
-        + '|\fl|'.repeat(22)
-        + '\x1a' + '\x12'.repeat(40) + '\x03'
-        + `\fH\f^
+    const helpScrambleMillis = 2000, helpUrl = 'https://github.com/patricksurry/eastern-front-1941', helpText = ('\fh\fb\x94' + ' '.repeat(42 * 12)
+        + '\fb\x1a' + ' '.repeat(42 * 12)
+        + `\fH\fb\x94\f^
 
-
-Welcome to Chris Crawford's
 Eastern Front  1941
-Reversed by Patrick Surry \fc\x94}\fC
+by Chris Crawford
 
-\f@\x04<
-Select: \f#Click\f-, \f#n\f-ext, \f#p\f-rev, \f#<\f-, \f#>\f-
 
-Orders: \f#\x1f\f- \f#\x1c\f- \f#\x1d\f- \f#\x1e\f-, \f#Bksp\f-, \f#Space\f-, \f#Esc\f-
+\fc\x08Redux\fc\x90}\fc\x08 by Patrick Surry\fC
 
-Modes: \f#1\f- \f#2\f- \f#3\f- ..., \f#m\f- toggles
 
-Submit: \f#End\f-, \f#Fn \x1f\f-
+\f^Press any key to start!
 
-Toggle: \f#z\f-oom, e\f#x\f-tras, debu\f#g\f-
 
-\f^
-\f#?\f- shows this help
-Press any key to play!`);
+\fb\x1a\fc\x94\f@\x04<
+Pick unit: \f#Click\f-, \f#<\f- \f#>\f- or \f#p\f-rev \f#n\f-ext
+
+Issue orders: \f#\x1c\f- \f#\x1f\f- \f#\x1d\f- \f#\x1e\f-, \f#Bksp\f-, \f#Esc\f-
+
+Resolve turn: \f#End\f- or \f#Fn \x1f\f-
+
+Expert: set move \f#m\f-ode or \f#1\f- \f#2\f- \f#3\f- \f#4\f-
+
+Toggle: \f#?\f- help, \f#z\f-oom, e\f#x\f-tras, debu\f#g\f-
+`);
     class HelpModel {
         constructor(clickHandler) {
-            this.window = new MappedDisplayLayer(42, 24, atasciiFont, { foregroundColor: 0x04, layerColor: 0x0E });
+            this.window = new MappedDisplayLayer(42, 24, atasciiFont);
             _HelpModel_init.set(this, false);
             this.clickHandler = clickHandler;
         }
@@ -8515,7 +8566,7 @@ d4a860 d8b46c dcb878 e0bc84 e4c490 e8c898 e8d49c ecd8a0
             game.on('game', (action) => {
                 switch (action) {
                     case 'end': {
-                        const advice = game.score(game.human) >= scenarios[game.scenario].win
+                        const advice = game.score(game.human) >= scenarios[game.scenario].scoring.win
                             ? 'ADVANCE TO NEXT LEVEL'
                             : 'TRY AGAIN';
                         this.app.infoWindow.puts(`\fz\x06\x00\fe\f^GAME OVER\n${advice}`);

@@ -1956,7 +1956,7 @@ SETCHXY:    stx CORPS                        ; aca8 86a1    X -> CORPS, CORPSX/Y
             sta CHUNKY                       ; acb2 85a8
 _SETCHXY_1: rts                              ; acb4 60
 
-COMBAT:     sta DEFNDR                       ; acb5 85ad
+COMBAT:     sta DEFNDR                       ; acb5 85ad    unit X attacking A @ LAT/LON
             lda #$00                         ; acb7 a900
             sta VICTRY                       ; acb9 85ee
             cpx #$1f                         ; acbb e01f    Finns can't attack
@@ -1965,7 +1965,7 @@ COMBAT:     sta DEFNDR                       ; acb5 85ad
             bne _COMBAT_2                    ; acc1 d001
 _COMBAT_1:  rts                              ; acc3 60
 
-_COMBAT_2:  jsr FLGRBRK                      ; acc4 2028ae  . Fliegerkorps break and suffer 75% loss
+_COMBAT_2:  jsr FLGRBRK                      ; acc4 2028ae  . Fliegerkorps attacker automatically suffer 75% loss and resetOrders
             ldx DEFNDR                       ; acc7 a6ad
             lda SWAP,x                       ; acc9 bd8331  . terrain code underneath unit
             pha                              ; accc 48
@@ -2118,7 +2118,7 @@ _RETRET_1:  jsr CHKZOC                       ; ae08 20a4b0
             cmp #$02                         ; ae0f c902
             bcs _RETRET_4                    ; ae11 b00f    blocked, take damage
             cpx #$2b                         ; ae13 e02b
-            bcc _RETRET_2                    ; ae15 9004
+            bcc _RETRET_2                    ; ae15 9004    reset MVMODE excl air
             cpx #$30                         ; ae17 e030
             bcc _RETRET_3                    ; ae19 9005
 _RETRET_2:  lda #$00                         ; ae1b a900
@@ -2401,10 +2401,10 @@ _SUPPLY_1:  cpx #$30                         ; b01d e030
             cmp SKREST / RANDOM              ; b032 cd0ad2  . W: Reset serial port status register / R: Random byte
             bcc _SUPPLY_8                    ; b035 904b
             lda #$10                         ; b037 a910
-_SUPPLY_2:  ldy #$01                         ; b039 a001    clear or Russian
+_SUPPLY_2:  ldy #$01                         ; b039 a001    clear or Russian; Y is direction
             cpx #$30                         ; b03b e030
             bcs _SUPPLY_3                    ; b03d b002    Russian?
-            ldy #$03                         ; b03f a003
+            ldy #$03                         ; b03f a003    German heads west
 _SUPPLY_3:  sty HOMEDR                       ; b041 84ef
             jsr SETLL                        ; b043 2074ab  . CORPSX/Y for X -> LAT, LON
             lda #$00                         ; b046 a900
@@ -2442,7 +2442,7 @@ _SUPPLY_8:  lsr CSTRNG,x                     ; b082 5e2b32  . combat strengths
 
 _SUPPLY_9:  lda SKREST / RANDOM              ; b08a ad0ad2  . W: Reset serial port status register / R: Random byte
             and #$02                         ; b08d 2902
-            tay                              ; b08f a8
+            tay                              ; b08f a8      try north or south
             bpl _SUPPLY_5                    ; b090 10c0
 _SUPPLY_10: ldy HOMEDR                       ; b092 a4ef
             lda LON                          ; b094 a5b2
@@ -3732,7 +3732,7 @@ _V_14:      dex                              ; baf1 ca
             bne _V_13                        ; baf2 d0e2
 BGNPLY:     lda #$00                         ; baf4 a900
             ldx #$90                         ; baf6 a290
-_BGNPLY_1:  sta TXTWDW-1,x                   ; baf8 9d1d3a
+_BGNPLY_1:  sta TXTWDW-1,x                   ; baf8 9d1d3a  clear 144 chars of text window (roughly 3.5 42 char lines)
             dex                              ; bafb ca
             bne _BGNPLY_1                    ; bafc d0fa
             jsr DEBOUNCE                     ; bafe 2030ac  . wait for button inactivity
@@ -4197,7 +4197,7 @@ __AC__:     stx ARMY                         ; bebc 86ab
             lda MSTRNG,x                     ; bebe bdff2c  . muster strengths
             ldy STARTDT                      ; bec1 a493    . Scenario start 1941/1942
             beq _AC_1                        ; bec3 f007
-            cpx #$6d                         ; bec5 e06d    1942 russian 7 militia @ sevastopol recovers fully each turn(!)
+            cpx #$6d                         ; bec5 e06d    1942 russian 7 militia @ sevastopol recovers fully each tick
             bne _AC_1                        ; bec7 d003
             sta CSTRNG,x                     ; bec9 9d2b32  . combat strengths
 _AC_1:      sec                              ; becc 38
@@ -4276,7 +4276,7 @@ _AC_9:      inc TICK                         ; bf63 e6ea
 
 _AC_10:     jmp NEWTRN                       ; bf6e 4ca7bb
 
-DELORDR:    lsr WHORDH,x                     ; bf71 5e2034  remove order for unit x
+DELORDR:    lsr WHORDH,x                     ; bf71 5e2034  remove order for unit x, zero set if no orders remain
             ror WHORDS,x                     ; bf74 7e7933  . what unit orders are (2 bits per order)
             lsr WHORDH,x                     ; bf77 5e2034  . unit orders (high bits)
             ror WHORDS,x                     ; bf7a 7e7933  . what unit orders are (2 bits per order)

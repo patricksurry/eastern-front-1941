@@ -177,6 +177,9 @@ slight differences between the APX map (pictured) and the cartridge version
 
 notes, fun discoveries
 
+  - bug in expert'42: finns seem often fail initial supply check - seems like TERRB reports an enemy unit in (at least) $24 $25 $26, $2f = lat: 36 - 38, lon: 47 when checking Zoc around the boundary square
+
+
 - random walk for supply check is a nice solution
 
 - why is Sevastpol listed as a scoring city in APX version but not represented on the map in either version?

@@ -121,6 +121,9 @@ test("Maelstrom doesn't throw", () => {
                     const mp = g.mapboard.locationOf(Grid.point(u));
                     if (mp.unitid != u.id)
                         throw new Error(`${u.describe()} not found at ${g.mapboard.describe(mp)}`);
+
+                    if(u.mstrng > 255 || u.cstrng > u.mstrng || u.cstrng < 0)
+                        throw new Error(`strength out of range for ${u.describe()}`)
                 });
             }
         }).not.toThrow();

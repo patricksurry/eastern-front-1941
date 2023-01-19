@@ -4,8 +4,10 @@
 const options = {
     colorPalette: 'WikiNTSC', // 'Atari800MacXnewStellaNTSC', 'Atari800MacXz26NTSC' are also playable
     astarPathFinding: true,
-    reduceInitialFogInContact: true,     // initial fog reduced for units in contact at scenario start
+    reduceInitialFogInContact: true,    // initial fog reduced for units in contact at scenario start
     mapIncludesSevastopol: true,        // in APX it looks like it initially scored 10pts but later removed
+    disperseEliminatedUnits: true,      // whether eliminated units disperse nearby (as in cartridge)
+    defenderFirstStrike: true,          // whether defender can break attacker and prevent attack
 
     // hard-wired settings (these config options aren't referenced)
     mapIncludeSevastopol: true,

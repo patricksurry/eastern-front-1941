@@ -55,7 +55,7 @@ class AppCtrl {
             switch (action) {
                 case 'end': {
                     const advice =
-                        game.score(game.human) >= scenarios[game.scenario].win
+                        game.score(game.human) >= scenarios[game.scenario].scoring.win
                         ? 'ADVANCE TO NEXT LEVEL'
                         : 'TRY AGAIN';
                     this.app.infoWindow.puts(`\fz\x06\x00\fe\f^GAME OVER\n${advice}`)
