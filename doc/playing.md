@@ -1,4 +1,4 @@
-<p align="center"><img src="apxlogo.png"></p>
+<p align="center"><img src="images/apxlogo.png"></p>
 
 
 INTRODUCTION
@@ -88,7 +88,7 @@ or cavalry units. Red units are Russian; white units are German or German
 allies. A map of the entire theater of operations is included at the end of
 this manual [below].
 
-<p align="center"><img src="apxmap.png"></p>
+<p align="center"><img src="images/apxmap.png"></p>
 
 
 INSPECTING UNITS
@@ -252,7 +252,7 @@ The motion of units is hampered by the existence of zones of control
 created by enemy units. Each unit exerts a zone of control into the squares
 around it as shown [n the following diagram:
 
-<p align="center"><img src="apxzoc1.png" width=192></p>
+<p align="center"><img src="images/apxzoc1.png" width=192></p>
 
 A square marked Z has a zone of control; a square marked 1/2 has a zone of
 control only if another nearby friendly unit casts at least a half zone of
@@ -266,7 +266,7 @@ from one enemy controlled square to another. For example, the movement shown
 on the left is legal, but the movement shown on the right would not be
 allowed.
 
-<p align="center"><img src="apxzoc2.png" width=512></p>
+<p align="center"><img src="images/apxzoc2.png" width=512></p>
 
 COMBAT
 ===
@@ -556,7 +556,7 @@ problem can be minimized with careful planning. For example, if you have a
 Russian un!t surrounded from two sides, It is quite possible to give orders
 that will work. The diagram illustrates the solution:
 
-<p align="center"><img src="apxtrjam.png" width=192></p>
+<p align="center"><img src="images/apxtrjam.png" width=192></p>
 
 Having addressed the most obvious of the game's flaws I now turn to the
 pleasant task of discussing the game's strong points. The graphics elements

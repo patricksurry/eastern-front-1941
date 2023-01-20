@@ -1,4 +1,4 @@
-<p align="center"><img src="apxlogo.png"></p>
+<p align="center"><img src="images/apxlogo.png"></p>
 
 <table><td>
 
@@ -103,7 +103,7 @@ closely before appropriating any memory. You should also refer to the
 appropriate source code listing. I repeat, there is very little available
 memory.
 
-<p align="center"><img width=512 src="memmap.jpg"></p>
+<p align="center"><img width=512 src="images/memmap.jpg"></p>
 
 ## DATA MODULE
 
@@ -134,11 +134,11 @@ For the cartridge version the magic numbers are 167 total units with 48 Germans 
 
 </td></table>
 
-<p align="center"><img width=512 src="oob-german.jpg"></p>
+<p align="center"><img width=512 src="images/oob-german.jpg"></p>
 
-<p align="center"><img width=512 src="oob-russian1.jpg"></p>
+<p align="center"><img width=512 src="images/oob-russian1.jpg"></p>
 
-<p align="center"><img width=512 src="oob-russian2.jpg"></p>
+<p align="center"><img width=512 src="images/oob-russian2.jpg"></p>
 
 The first two data tables are CORPSX and CORPSY ([lines 30-330][EFT18D-30-330]). These
 tables specify the initial map coordinates for the military units, corps for
@@ -403,7 +403,7 @@ to cities was updated.
 </td></table>
 
 <a name="mapgrid"></a>
-<p align="center"><img src="mapgrid.jpg"></p>
+<p align="center"><img src="images/mapgrid.jpg"></p>
 
 [Line 5410][EFT18D-5410] gives a table called STKTAB. This table is used in decoding
 joystick values. You may have noticed that I use tables rather heavily. In
@@ -424,7 +424,7 @@ for armor. Twenty entries for summer are followed by twenty for mud and
 twenty for snow. The SSNCOD table on [line 5430][EFT18D-5430] gives an index into TRNTAB
 as a function of month. The terrain table is on page 63 [below].
 
-<p align="center"><img width=512 src="terrain.jpg"></p>
+<p align="center"><img width=512 src="images/terrain.jpg"></p>
 
 The four following tables (BHX1 through BHY2---[lines 5500-5570][EFT18D-5500-5570]) specify
 blocked movement paths. One of the worst problems I encountered in
@@ -806,7 +806,7 @@ works.
 On page 59 [below] is a diagram depicting the sequence of changes made by the
 display list interrupts.
 
-<p align="center"><img width=512 src="displist.jpg"></p>
+<p align="center"><img width=512 src="images/displist.jpg"></p>
 
 ### FINAL SUBROUTINES AND TABLES
 
@@ -1392,7 +1392,7 @@ If the square is unoccupied, the surrounding squares are examined by a
 sneaky scheme. There is a table in memory called JSTP+16 that holds jump
 vectors for a walk around a square. The system works like this:
 
-<p align="center"><img width=128 src="spiral.png"></p>
+<p align="center"><img width=128 src="images/spiral.png"></p>
 
 Starting at X, and proceeding in sequence around X as indicated by the
 numbers, the sequence of steps is:
@@ -1499,11 +1499,11 @@ iterations. However, if the player presses the START button, the iterations
 stop and the ghost army becomes the destinations for the real army. In this
 way hypothesis is converted into plans.
 
-<p align="center"><img width=512 src="ai1.jpg"></p>
+<p align="center"><img width=512 src="imags/ai1.jpg"></p>
 
-<p align="center"><img width=512 src="ai2.jpg"></p>
+<p align="center"><img width=512 src="images/ai2.jpg"></p>
 
-<p align="center"><img width=600 src="ai3.jpg"></p>
+<p align="center"><img width=600 src="images/ai3.jpg"></p>
 
 ### OVERALL FORCE RATIO
 
@@ -1831,7 +1831,7 @@ construct a one-dimensional representation of its most important feature.
 This one-dimensional representation will answer the question, "How far
 forward is the enemy in each column?" A picture might help:
 
-<p align="center"><img width=512 src="lvarray.png"></p>
+<p align="center"><img width=512 src="images/lvarray.png"></p>
 
 If a particular column is not populated at all, the value in the
 corresponding LV entry is five.
@@ -1881,7 +1881,7 @@ This is undesirable. Subtract $20 points for each such case ([lines 4500-4730][E
 Our next concern is with penetrations. We do not want to create a line
 configuration which is easily flanked. A picture illustrates the problem.
 
-<p align="center"><img width=384 src="flanking.png"></p>
+<p align="center"><img width=384 src="images/flanking.png"></p>
 
 The right arrangement is bad because it allows the enemy to easily
 penetrate to the rear of the most forward units before engaging the line.
@@ -2028,7 +2028,7 @@ routine. This task in done in the remaining section of the module. The
 fundamental problem solved in the module is a very standard problem in
 computer graphics. It is depicted in the following diagram:
 
-<p align="center"><img width=512 src="straightpath.png"></p>
+<p align="center"><img width=512 src="images/straightpath.png"></p>
 
 Starting at square A, what is the straightest path to square B?
 Specifically, what sequence of single steps will take you from A to B in the
@@ -2232,7 +2232,7 @@ of the game. Note especially the importance I attached to human interface
 and graphics. This reflects my belief that computation is never a serious
 problem, but interface is always the primary problem.
 
-<p align="center"><img width=600 src="efspec.jpg"></p>
+<p align="center"><img width=600 src="images/efspec.jpg"></p>
 
 ### PLUNGING INTO THE MORASS
 
@@ -2533,11 +2533,11 @@ on the south. A 42 coastline would be similar with the land and sea on
 opposite sides.
 
 
-<p align="center"><img width=384 src="fontapx.png"></p>
+<p align="center"><img width=384 src="images/fontapx.png"></p>
 
-<p align="center"><img width=512 src="charset-north.jpg"></p>
+<p align="center"><img width=512 src="images/charset-north.jpg"></p>
 
-<p align="center"><img width=512 src="charset-south.jpg"></p>
+<p align="center"><img width=512 src="images/charset-south.jpg"></p>
 
 
 [cart-b930-b972]: https://github.com/patricksurry/eastern-front-1941/blob/main/reference/cartridge.asm#L3520-L3555

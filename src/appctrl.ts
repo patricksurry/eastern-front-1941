@@ -46,7 +46,7 @@ class AppCtrl {
 
         this.view.redraw();
 
-        //TODO kill old ones?
+        //TODO need to kill/stop old ones?
         this.#ai = Object.keys(players)
             .filter(player => +player != this.#game.human)
             .map(player => new Thinker(this.#game, +player));
