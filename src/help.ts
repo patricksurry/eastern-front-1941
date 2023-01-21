@@ -19,16 +19,16 @@ by Chris Crawford
 \f^Press any key to start!
 
 
-\fb\x1a\fc\x94\f@\x04<
+\fb\x1a\fc\x94\f@\x03<
 Pick unit: \f#Click\f-, \f#<\f- \f#>\f- or \f#p\f-rev \f#n\f-ext
 
-Give orders: \f#\x1c\f- \f#\x1f\f- \f#\x1d\f- \f#\x1e\f- \f#Bksp\f-, \f#Esc\f-, \f#Enter\
+Give orders: \f#\x1c\f- \f#\x1f\f- \f#\x1d\f- \f#\x1e\f- \f#Bksp\f-, \f#Esc\f-, \f#Enter\f-
 
 Execute move: \f#End\f- or \f#Fn \x1f\f-
 
-Expert: set move \f#m\f-ode or \f#1\f- \f#2\f- \f#3\f- \f#4\f-
+Expert: change move \f#m\f-ode or \f#1\f- \f#2\f- \f#3\f- \f#4\f-
 
-Toggle: \f#?\f- help, \f#z\f-oom, e\f#x\f-tras, debu\f#g\f-
+Toggle: help \f#?\f-, \f#z\f-oom, e\f#x\f-tras, debu\f#g\f-
 `);
 
 

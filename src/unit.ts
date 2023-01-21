@@ -649,17 +649,18 @@ class Unit {
         return v >> 8;
     }
     describe(debug = false) {
-        let s = `[${this.id}] ${this.cstrng} / ${this.mstrng}\n`;
-        s += `${this.label}\n`;
+        const {cstrng, mstrng} = this.foggyStrength(this.#game.human);
+        let s = `[${this.id}] ${cstrng} / ${mstrng}`;
+        if (debug && this.player != this.#game.human) s += ` (actual ${this.cstrng} / ${this.mstrng})`;
+        s += `\n${this.label}\n`;
 
         if (debug && this.ifr !== undefined && this.ifrdir !== undefined) {
-            if (this.orders) s += 'orders: ' + this.orders.map(d => directions[d].label).join('');
+            if (this.orders.length) {
+                s += 'orders: ' + this.orders.map(d => directions[d].label).join('') + '\n';
+            }
             s += `ifr: ${this.ifr}; `;
             s += Object.entries(directions)
                 .map(([i, d]) => `${d.label}: ${this.ifrdir[+i as DirectionKey]}`).join(' ') + '\n';
-            s += this.objective
-                ? `obj: lon ${this.objective.lon} lat ${this.objective.lat}\n`
-                : 'no objective\n'
         }
         return s;
     }

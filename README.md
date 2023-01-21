@@ -1,9 +1,20 @@
 # Eastern Front 1941
 
-This is a [playable][game] JavaScript port of [Chris Crawford][ccwiki]'s [Eastern Front 1941][efwiki] with a few extras.
-Here's an annotated copy of the original manual if you just want to get to [playing](doc/playing.md).
+This is a [playable][game] TypeScript port of [Chris Crawford][ccwiki]'s [Eastern Front 1941][efwiki].
+If you just want to start playing
+check out this annotated copy of the original [APX manual](doc/playing.md)
+or the [cartridge insert](doc/Eastern_Front_1941_Atari_Cartridge.pdf) then click [here][game].
 
 [![game](doc/images/preview.png)][game]
+
+The port was written from scratch in TypeScript
+referencing disassembled binaries
+of both the original Atari Program eXchange (APX) version
+as well as the later cartridge release, along with
+Crawford's [APX notes](doc/howitworks.md).
+The redux runs as a single page client-side app,
+with the current game state stored in the URL making
+it easy to save, resume, and share games.
 
 ## But why?!
 
@@ -43,6 +54,8 @@ so we can afford to be a little more verbose...
 
 <p align="center"><img src="doc/images/Ef1941-variants.png" width=800></p>
 
+keyboard vs joystick only
+playable and hackable
 
 The current version apx
 
@@ -66,7 +79,6 @@ plenty of interesting stuff in there
 
 
 full disassembly of the APX disk image(ref) including transcribed comments/labels from the original notes
-
 
 
 [game]: https://patricksurry.github.io/eastern-front-1941/
@@ -107,5 +119,3 @@ full disassembly of the APX disk image(ref) including transcribed comments/label
 [cartmanual]: refdoc/eastern_front_atari_cartridge.pdf
 [apxscreen]: refdoc/Ef1941scr.png
 [mapposter]: refdoc/Eastern_Front_1941_Atari_poster_text.pdf
-
-

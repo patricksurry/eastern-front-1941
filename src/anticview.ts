@@ -178,8 +178,6 @@ const BlockComponent: m.Component<GlyphAttr> = {
 
 // foreground masked block that draws the character within a block
 const GlyphComponent: m.Component<GlyphAttr> = {
-    oncreate: ({dom, attrs: {g: {animate}, f}}) => maybeAnimate(dom, animate, f),
-    onupdate: ({dom, attrs: {g: {animate}, f}}) => maybeAnimate(dom, animate, f),
     view: ({attrs: {g, f, defaults}}): m.Children => {
         if ((g.opacity ?? 1) == 0) {
             return;

@@ -154,7 +154,7 @@ class Mapboard {
     newTurn(initialize = false) {
         const mdata = monthdata[this.#game.month];
 
-        //TODO update the tree color in place in the terrain data :grimace:
+        //TODO ick: update the tree color in place in the terrain data :grimace:
         terraintypes[TerrainKey.mountain_forest].altcolor = mdata.trees;
 
         if (!initialize && mdata.water != null) this.#freezeThaw(mdata.water);
@@ -172,12 +172,12 @@ class Mapboard {
             [DirectionKey.east]: 0,
         }
     }
-    describe(loc: MapPoint) {
+    describe(loc: MapPoint, debug = false) {
         const city = loc.cityid != null ? this.cities[loc.cityid] : undefined,
             label = city
                 ? ` ${city.label} (${city.points ?? 0})`
                 : (terraintypes[loc.terrain].label + (loc.alt ? "-alt": "")),
-            unit = loc.unitid != null ? this.#game.oob.at(loc.unitid).describe(): "";
+            unit = loc.unitid != null ? this.#game.oob.at(loc.unitid).describe(debug): "";
         return `[${loc.gid}] ${label}\nlon ${loc.lon}, lat ${loc.lat}\n\n${unit}`.trim()
     }
     valid(pt: GridPoint) {

@@ -1,4 +1,4 @@
-import m from 'mithril';
+import m, { redraw } from 'mithril';
 import {DirectionKey, directions} from './defs';
 import {UnitMode} from './unit';
 import {AnticColor, DisplayLayer} from './anticmodel';
@@ -20,11 +20,12 @@ class AppView {
     }
 }
 
+document.body.style.backgroundColor = antic2rgb(0xD4)!;
+
 const Layout: m.Component<LayerAttrs> = {
     view: ({attrs: {help, app}}) => {
         return m('.layout', {
                 class: css`
-                    background-color: ${antic2rgb(0xD4)};
                     padding: 12px;
                     height: 100vh;
                     width: 100vw;
@@ -59,6 +60,7 @@ const HelpComponent: m.Component<{help: HelpModel}> = {
 }
 
 const GameComponent: m.Component<{app: AppModel}> = {
+    // called after a DOM element is updated,  guaranteed to run at the end of the render cycle
     onupdate: ({attrs: {app}}) => {
         Object.values(app)
             .filter(v => v instanceof DisplayLayer)
@@ -127,7 +129,7 @@ const GameComponent: m.Component<{app: AppModel}> = {
                         // layer with unit icons as sprites
                         m(DisplayComponent, {
                             display: app.unitLayer,
-                            glyphComponent: GlyphComponent,
+                            glyphComponent: UnitComponent,
                             class: [
                                 'units',
                                 css`
@@ -141,9 +143,8 @@ const GameComponent: m.Component<{app: AppModel}> = {
                                 `
                             ],
                         }),
-                        //TODO does flags conditional work with dirty indicator?
                         // conditionally show current order paths for all units
-                        app.extras ? m(UnitOverlayComponent, {
+                        app.extras ? m(OrdersOverlayComponent, {
                             display: app.unitLayer,
                         }) : null,
                         // conditionally show a semit-transparent mask to highlight unit reach
@@ -227,7 +228,81 @@ const LabelComponent: m.Component<GlyphAttr> = {
     }
 }
 
-const UnitOverlayComponent: m.Component<DisplayAttr> = {
+const modeIcons = {  // no icon for normal
+    // mdi icons, all with viewBox="0 0 24 24" and icon in [6,18] square
+    [UnitMode.assault]: "M5,5V19H8V5M10,5V19L21,12",            // mdi-step-forward
+    [UnitMode.march]: "M13,6V18L21.5,12M4,18L12.5,12L4,6V18Z",  // mdi-fast-forward
+    [UnitMode.entrench]: "M18,18H6V6H18V18Z",                   // mdi-stop
+};
+
+// extend Glyph component to conditionally overlay unit annotations
+const UnitComponent: m.Component<GlyphAttr> = {
+    view: ({attrs}): m.Children => {
+        const {g: {props}, f: {glyphSize: sz}} = attrs;
+
+        const cstrng = props?.cstrng as number|undefined,
+            mstrng = props?.mstrng as number|undefined,
+            mode = props?.mode as UnitMode|undefined,
+            oos = props?.oos as boolean|undefined,
+            enter = props?.enter as boolean|undefined,
+            ramp = [0x68, 0x38, 0x18, 0xc8].map(antic2rgb),
+            cutoff = [1/4, 1/2, 3/4];
+
+        let cfill = '';
+        if (cstrng != null && mstrng != null) {
+            let i=0;
+            while (i < cutoff.length && cstrng/mstrng > cutoff[i]) i++;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            cfill = ramp[i]!;
+        }
+
+        return [
+            m(GlyphComponent, attrs),
+            m('svg[version="1.1"][xmlns="http://www.w3.org/2000/svg"].unit-overlay',
+                {
+                    width: sz+3,
+                    height: sz+3,
+                    viewBox: `-1 -1 ${sz+3} ${sz+3}`,
+                    class: css`
+                        position: absolute;
+                        top: -1px;
+                        left: -1px;
+                        filter: drop-shadow(0 0 0.5px ${antic2rgb(0x02)});
+                    `
+                },
+                m('g',
+                    {
+                        transform: 'scale(8)',
+                    },
+                    [
+                        // movement mode symbol
+                        mode != null && mode != UnitMode.standard
+                            ? m('path', {
+                                transform: `translate(1, 0) scale(.04) translate(-15, -6)`,
+                                d: modeIcons[mode],
+                                fill: antic2rgb(0x96),
+                            })
+                            : null,
+                        // indicator dot for new entry or OoS
+                        oos || enter
+                            ? m('circle', {cx: 1/8, cy: 1/8, r: 1/8, fill: oos ? ramp[0]: ramp[3]})
+                            : null,
+                        // health bar
+                        cstrng != null && mstrng != null
+                            ? m('g', [
+                                m('rect', {x: 1/8, y: 7/8, height: 1/8, width: 7/8 * mstrng/255, rx: 1/16, opacity: 0.5, fill: cfill}),
+                                m('rect', {x: 1/8, y: 7/8, height: 1/8, width: 7/8 * cstrng/255, rx: 1/16, fill: cfill}),
+                            ])
+                            : null,
+                    ]
+                )
+            )
+        ]
+    }
+}
+
+
+const OrdersOverlayComponent: m.Component<DisplayAttr> = {
     onbeforeupdate({attrs: {display}}) {
         // false prevents diff for current element
         return display.dirty;
@@ -236,13 +311,7 @@ const UnitOverlayComponent: m.Component<DisplayAttr> = {
         const
             f = display.fontmap,
             sz = f.glyphSize,
-            sprites = display.spritelist().filter(g => g.opacity),
-            modeIcons = {
-                // no icon for normal
-                [UnitMode.assault]: '#mdi-step-forward',
-                [UnitMode.march]: '#mdi-fast-forward',
-                [UnitMode.entrench]: '#mdi-stop',
-            };
+            sprites = display.spritelist().filter(g => g.opacity);
 
         return m('svg[version="1.1"][xmlns="http://www.w3.org/2000/svg"].unit-overlay',
             {
@@ -250,72 +319,32 @@ const UnitOverlayComponent: m.Component<DisplayAttr> = {
                 height: sz * display.height,
                 class: css`
                     position: relative;
-                    background-color: ${antic2rgb(display.layerColor)};
                     pointer-events: ${display.layerColor != null ? 'auto': 'none'};
                     filter: drop-shadow(0 0 0.5px ${antic2rgb(0x02)});
                 `
             },
             [
-                m('defs', [
-                    // mdi icons, all with viewBox="0 0 24 24" and icon in [6,18] square
-                    m('path#mdi-stop', {d: "M18,18H6V6H18V18Z"}),
-                    m('path#mdi-step-forward', {d: "M5,5V19H8V5M10,5V19L21,12"}),
-                    m('path#mdi-fast-forward', {d: "M13,6V18L21.5,12M4,18L12.5,12L4,6V18Z"}),
-                ]),
                 m('g',
                     {
-                        transform: "scale(8)"
+                        transform: 'scale(8)',
+                        opacity: 0.5
                     },
-                    m('g.status',
-                        sprites.filter(g => g.props).map(g => {
-                            const cstrng = g.props?.cstrng as number|undefined,
-                                 mstrng = g.props?.mstrng as number|undefined,
-                                 mode = g.props?.mode as UnitMode|undefined,
-                                 oos = g.props?.oos as boolean|undefined,
-                                 enter = g.props?.enter as boolean|undefined,
-                                 ramp = [0x68, 0x38, 0x18, 0xc8].map(antic2rgb),
-                                 cutoff = [1/4, 1/2, 3/4];
-
-                            let cfill = '';
-                            if (cstrng != null && mstrng != null) {
-                                let i=0;
-                                while (i < cutoff.length && cstrng/mstrng > cutoff[i]) i++;
-                                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                                cfill = ramp[i]!;
-                            }
-
-                            return m('g', {transform: `translate(${g.x},${g.y})`}, [
-                                mode != null && mode != UnitMode.standard ? m('use', {
-                                    transform: `translate(1, 0) scale(.04) translate(-15, -6)`,
-                                    href: modeIcons[mode],
-                                    fill: antic2rgb(0x96),
-                                }) : null,
-                                oos || enter ? m('circle', {cx: 1/8, cy: 1/8, r: 1/8, fill: oos ? ramp[0]: ramp[3]}) : null,
-                                cstrng != null && mstrng != null ? m('g', [
-                                    m('rect', {x: 1/8, y: 7/8, height: 1/8, width: 7/8 * mstrng/255, rx: 1/16, opacity: 0.5, fill: cfill}),
-                                    m('rect', {x: 1/8, y: 7/8, height: 1/8, width: 7/8 * cstrng/255, rx: 1/16, fill: cfill}),
-                                ]) : null,
-                            ])
-                        })
-                    ),
-                    m('g.orders', {opacity: 0.5},
-                        sprites.filter(g => g.props?.orders).map(g => {
-                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                            const orders = g.props!.orders as DirectionKey[];
-                            return m('g',
-                                {
-                                    key: g.key,
-                                    // unit icon centers are 1 pixel offset, so adjust by 1/16
-                                    transform: `translate(${g.x + 0.5625},${g.y + 0.5625}) scale(-1)`,
-                                    class: css`
-                                        fill: ${antic2rgb(g.foregroundColor)};
-                                        stroke: ${antic2rgb(g.foregroundColor)};
-                                    `
-                                },
-                                m(UnitPathComponent, {orders})
-                            );
-                        })
-                    ),
+                    sprites.filter(g => g.props?.orders).map(g => {
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        const orders = g.props!.orders as DirectionKey[];
+                        return m('g',
+                            {
+                                key: g.key,
+                                // unit icon centers are 1 pixel offset, so adjust by 1/16
+                                transform: `translate(${g.x + 0.5625},${g.y + 0.5625}) scale(-1)`,
+                                class: css`
+                                    fill: ${antic2rgb(g.foregroundColor)};
+                                    stroke: ${antic2rgb(g.foregroundColor)};
+                                `
+                            },
+                            m(UnitPathComponent, {orders})
+                        );
+                    })
                 ),
             ]
         );

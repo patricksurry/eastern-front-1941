@@ -16,8 +16,9 @@ class AppModel {
     uimode = UIModeKey.setup;
 
     help = true;        // whether help is displayed
-    extras = true;      // whether to show extras
-    debug = false;      // whether to show debug info
+    // managed by setter/getter so we can repaint
+    #extras = true;      // whether to show extras
+    #debug = false;     // whether to show debug info
     zoom = true;        // zoom 2x or not?
 
     #game = new Game();
@@ -34,11 +35,11 @@ class AppModel {
     kreuzeLayer!: SpriteDisplayLayer;
     maskLayer!: MappedDisplayLayer;
 
-    setGame(game: Game) {
-        if (this.#game == game) return;
+    set game(g: Game) {
+        if (this.#game == g) return;
 
-        const font = fontMap(`static/fontmap-custom-${game.mapboard.font}.png`, 128 + 6),
-            {width, height} = game.mapboard.extent;
+        const font = fontMap(`static/fontmap-custom-${g.mapboard.font}.png`, 128 + 6),
+            {width, height} = g.mapboard.extent;
 
         this.mapLayer = new MappedDisplayLayer(width, height, font);
         this.labelLayer = new SpriteDisplayLayer(width, height, font, {foregroundColor: undefined});
@@ -46,10 +47,22 @@ class AppModel {
         this.kreuzeLayer = new SpriteDisplayLayer(width, height, font);
         this.maskLayer = new MappedDisplayLayer(width, height, font, {backgroundColor: 0x00});
 
-        this.#game = game;
+        this.#game = g;
 
         this.paintMap();
         this.paintCityLabels();
+        this.paintUnits();
+    }
+    // repaint units when extras or debug flags change to trigger redraw
+    get extras() { return this.#extras; }
+    set extras(on: boolean) {
+        this.#extras = on;
+        this.paintUnits();
+    }
+    get debug() { return this.#debug; }
+    set debug(on: boolean) {
+        this.#debug = on;
+        if (this.#debug) this.extras = true;  // extras layers required to see debug info
         this.paintUnits();
     }
     get mvmode(): boolean {
@@ -131,7 +144,7 @@ class AppModel {
                         if (city) this.infoWindow.puts(`\fz\x06\x00\fe\f^${city.label.toUpperCase()}`)
                     },
                     onmouseover: (e) => {
-                        (e.currentTarget as HTMLElement).title = g.mapboard.describe(loc);
+                        (e.currentTarget as HTMLElement).title = g.mapboard.describe(loc, this.debug);
                         (e as MithrilEvent).redraw = false;  // prevent mithril redraw
                     },
                 });
@@ -159,11 +172,10 @@ class AppModel {
         if (u === this.focussed()) {
             const f = u.foggyStrength(g.human);
             this.infoWindow.puts(`\fz\x06\x00\fe\f@\x06<${u.label}\n\feMUSTER: ${f.mstrng}  COMBAT: ${f.cstrng}`);
+            animation = GlyphAnimation.blink;
             if (u.player == g.human) {
                 if (scenarios[g.scenario].mvmode)
                     this.infoWindow.puts(`\fH\f>${unitModes[u.mode].label} \nMODE   `)
-
-                animation = GlyphAnimation.blink;
 
                 const props = {orders: u.orders};
                 this.kreuzeLayer.put('#', 0x80, ux, uy, {foregroundColor: 0x1A, props}),
@@ -185,7 +197,7 @@ class AppModel {
                 opacity: u.active ? 1: 0,
                 animate: animation,
                 onmouseover: (e) => {
-                    (e.currentTarget as HTMLElement).title = g.mapboard.describe(u.location);
+                    (e.currentTarget as HTMLElement).title = g.mapboard.describe(u.location, this.debug);
                     (e as MithrilEvent).redraw = false;  // prevent mithril redraw
                 },
                 onclick: () => {
@@ -194,14 +206,16 @@ class AppModel {
                     (this.uimode == UIModeKey.orders && this.focussed() !== u) ? this.focusOn(u) : this.focusOff()
                 }
             };
-        opts.props = u.foggyStrength(g.human);  // cstrng, mstrng
-        opts.props.oos = (u.flags & unitFlag.oos) ? true: false;
-        opts.props.enter = (u.flags & unitFlag.enter) && g.turn > 0 ? true: false;
-        if (u.player == g.human || this.debug) {
-            Object.assign(opts.props, {
-                orders: u.orders,
-                mode: u.mode,
-            })
+        if (this.extras) {
+            opts.props = u.foggyStrength(g.human);  // cstrng, mstrng
+            opts.props.oos = (u.flags & unitFlag.oos) ? true: false;
+            opts.props.enter = (u.flags & unitFlag.enter) && g.turn > 0 ? true: false;
+            if (u.player == g.human || this.debug) {
+                opts.props.orders = u.orders;
+                opts.props.mode = u.mode;
+            }
+        } else {
+            opts.props = {};
         }
         this.unitLayer.put(`${this.#game.scenario}:${u.id}`, unitkinds[u.kind].icon, ux, uy, opts)
     }

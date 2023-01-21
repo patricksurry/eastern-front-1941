@@ -1,4 +1,10 @@
 .DS_Store
+.vscode/settings.json
 node_modules/
 **/__pycache__/
-refdata/*.stats
+reference/*.stats
+palettes/
+extract/
+src/perf.log
+src/perf.txt
+rollup-profile.html

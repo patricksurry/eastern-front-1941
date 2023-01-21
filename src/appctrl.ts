@@ -28,7 +28,7 @@ class AppCtrl {
         const token = window.location.hash.slice(1) || undefined;
 
         if (token) {
-            this.setGame(new Game(token));
+            this.game = new Game(token);
             this.setMode(UIModeKey.orders);
             this.app.help = false;
         } else {
@@ -40,9 +40,9 @@ class AppCtrl {
 
         document.addEventListener('keydown', (e) => this.keyHandler(e));
     }
-    setGame(game: Game) {
-        this.#game = game;
-        this.app.setGame(game);
+    set game(g: Game) {
+        this.#game = g;
+        this.app.game = g;
 
         this.view.redraw();
 
@@ -51,11 +51,11 @@ class AppCtrl {
             .filter(player => +player != this.#game.human)
             .map(player => new Thinker(this.#game, +player));
 
-        game.on('game', (action) => {
+        g.on('game', (action) => {
             switch (action) {
                 case 'end': {
                     const advice =
-                        game.score(game.human) >= scenarios[game.scenario].scoring.win
+                        g.score(g.human) >= scenarios[g.scenario].scoring.win
                         ? 'ADVANCE TO NEXT LEVEL'
                         : 'TRY AGAIN';
                     this.app.infoWindow.puts(`\fz\x06\x00\fe\f^GAME OVER\n${advice}`)
@@ -91,7 +91,7 @@ class AppCtrl {
             if (action == 'orders') {
                 this.app.paintUnit(u);
                 // save game state
-                if (u.human) window.location.hash = game.token;
+                if (u.human) window.location.hash = g.token;
             } else if (action == 'exit' && this.app.extras) {
                 this.app.infoWindow.puts(`\fz\x06\x00\fe\f^${u.label}\nELIMINATED!`)
             }
@@ -150,7 +150,7 @@ class AppCtrl {
         if (scenario == null) {
             scenario = (this.#game.scenario + inc + n) % n;
         }
-        this.setGame(new Game(scenario));
+        this.game = new Game(scenario);
 
         const label = scenarios[this.#game.scenario].label.padEnd(8, ' ');
         this.app.errorWindow.puts(`\fh\f^\f#<\f- ${label} \f#>\f-    \f#ENTER\f- TO START`);
