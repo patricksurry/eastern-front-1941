@@ -18,6 +18,11 @@ Recent changes and fixes are collected here for future reference, including link
   - [x] fix cart scoring alg (cartridge.asm:3966 onward)
   - [x] non-expert levels end after winning score (cartridge.asm:4095)
   - [x] unit test for starting scores vs cart and apx
+  - [x] show score in error window (see cartemu screenshot)
+  - [x] game over erases final score :(
+  - [x] reloading a game-over state continues instead of repeating game over message
+  - [x] game over doesn't update token
+  - [x] incorrectly flagged as new arrivals on reload [example](http://localhost:3000/#EF41W0-5q2sZNnQthDyhjWNR1cWNoEK7qGC2R3VL)
 
 - zone of control
   - [x] zocBlocked is currently wrong since starting unit will negate initial ZoC
@@ -82,3 +87,12 @@ Recent changes and fixes are collected here for future reference, including link
   - [x] scr.errorWindow.cls() on key/click
   - [x] fogofwar option for enemy unit strength a la cartridge (level 2+)
   - [x] badge newly arrived units
+  - [x] Log token before each next turn in UX
+  - [x] increase tick speed tho move animation can still be longer
+  - [x] Move clears attack and defend flags (stop flashing)
+  - [x] blink should apply to overlay exc order path, svg overlay within unit div??
+  - [x] blink enemy units as well to see terrain underneath
+  - debug flag behavior
+    - [x] debug mode should show real strength values in hover
+    - [x] toggle x twice reveals debug
+    - [x] using flags inside display component won't play nice with dirty flag

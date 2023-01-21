@@ -2,26 +2,10 @@
 
 Tracks current outstanding issues, ideas for improvements, etc.
 
-## Open issues
-
-- scoring
-  - [x] show score in error window (see cartemu screenshot)
-  - [x] game over erases final score :(
-  - [x] reloading a game-over state continues instead of repeating game over message
-  - [x] game over doesn't update token
-  - [x] incorrectly flagged as new arrivals on reload [example](http://localhost:3000/#EF41W0-5q2sZNnQthDyhjWNR1cWNoEK7qGC2R3VL)
+## Current issues
 
 - UX
   - [ ] Unit describe human is dumb
-  - [x] Log token before each next turn in UX
-  - [x] increase tick speed tho move animation can still be longer
-  - [x] Move clears attack and defend flags (stop flashing)
-  - [x] blink should apply to overlay exc order path, svg overlay within unit div??
-  - [x] blink enemy units as well to see terrain underneath
-  - debug flag behavior
-    - [x] debug mode should show real strength values in hover
-    - [x] toggle x twice reveals debug
-    - [x] using flags inside display component won't play nice with dirty flag
 
 - engine
   - [ ] zoc: level 0/1 unit only exerts zoc in own square (cartridge.asm:2486)
