@@ -1,0 +1,7 @@
+  - `data.js` - prettified chunks of raw data that drive the game, e.g map, order-of-battle, colors, etc
+  - `display.js` - D3-based html/css display interface simulating an Atari-esque character-based display
+  - `map.js` - helpers for interacting with the map and its squares, wrapped as simple Location objects
+  - `unit.js` - helpers for managing the units in the order-of-battle (oob) as simple Unit objects
+  - `think.js` - re-implements the computer player algorithm
+  - `main.js` - manages user interaction, computer thinking, turn processing and so on
+  - `test.js` - simple unit-tests that run on startup to protect me from myself (see browser console)

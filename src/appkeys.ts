@@ -43,12 +43,11 @@ function globalHandler(key: string, ctrl: AppCtrl) {
     return true;
 }
 
-
 function setupHandler(key: string, ctrl: AppCtrl) {
     if (keymap.prev.includes(key) || key == 'ArrowLeft') {
-        ctrl.setScenario(null, -1);
+        ctrl.setScenario(undefined, -1);
     } else if (keymap.next.includes(key) || key == 'ArrowRight') {
-        ctrl.setScenario(null, +1);
+        ctrl.setScenario(undefined, +1);
     } else if (keymap.scenario.includes(key)) {
         ctrl.setScenario(parseInt(key));
     } else if (key == 'Enter') {
@@ -63,7 +62,8 @@ function ordersHandler(key: string, ctrl: AppCtrl) {
     if (keymap.prev.includes(key)) {
         ctrl.app.focusShift(-1);
     } else if (keymap.next.includes(key) || key == 'Enter') {
-        ctrl.app.focusShift(+1);
+        if (ctrl.game.over) ctrl.setMode(UIModeKey.setup);
+        else ctrl.app.focusShift(+1);
     } else if (ctrl.app.mvmode && keymap.mode.includes(key)) {
         ctrl.editUnitMode(null);
     } else if (ctrl.app.mvmode && keymap.modes.includes(key)) {

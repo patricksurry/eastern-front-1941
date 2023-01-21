@@ -14,11 +14,11 @@ const
     tokenVersion = 1,
     rlSigil = 6;  // highest 5-bit coded value, so values 0..3 (& 4,5) are unchanged by rlencode
 
-type GameEvent = 'turn' | 'tick' | 'end';
+type GameEvent = 'turn' | 'tick' | 'over';
 type MessageLevel = 'error'; // currently only error is defined
 
 class Game extends EventEmitter {
-    #scenario = ScenarioKey.apx;
+    scenario = ScenarioKey.apx;
     human = PlayerKey.German;
 
     turn = 0;       // 0-based turn index
@@ -35,13 +35,14 @@ class Game extends EventEmitter {
     oob: Oob;
     rand: Generator;
 
+    // create a game from a saved state token, a scenario key, or default
     constructor(token?: string | ScenarioKey) {
         super();    // init EventEmitter
         let memento: number[] | undefined = undefined,
             seed: number | undefined = undefined;
 
         if (typeof token == 'number') {
-            this.#scenario = token;
+            this.scenario = token;
         } else if (typeof token === 'string') {
             const payload = unwrap64(token, tokenPrefix);
 
@@ -52,7 +53,7 @@ class Game extends EventEmitter {
             const version = memento.shift()!;
             if (version != tokenVersion) throw new Error(`Game: unrecognized save version ${version}`);
 
-            this.#scenario = memento.shift()!;
+            this.scenario = memento.shift()!;
             this.human = memento.shift()!;
             this.turn = memento.shift()!;
 
@@ -91,26 +92,29 @@ class Game extends EventEmitter {
         );
         return wrap64(payload, tokenPrefix);
     }
-    get scenario() { return this.#scenario; }
-    #setDates() {
+    get over() {
+        const scenario = scenarios[this.scenario];
+
+        return (
+            this.turn >= scenario.endturn
+            || this.score(PlayerKey.German) >= scenario.scoring.win
+            // special end condition for learner mode
+            || (this.scenario == ScenarioKey.learner && this.mapboard.cities[0].owner == PlayerKey.German)
+        );
+    }
+    #newTurn(initialize = false) {
         const dt = new Date(scenarios[this.scenario].start)
+
         this.date = new Date(dt.setDate(dt.getDate() + 7 * this.turn));
         this.month = this.date.getMonth() as MonthKey;     // note JS getMonth is 0-indexed
         this.weather = monthdata[this.month].weather;
-    }
-    #newTurn(initialize = false) {
-        const scenario = scenarios[this.scenario]
-        if (this.turn >= scenario.endturn
-                || this.score(PlayerKey.German) >= scenario.scoring.win
-                // special end condition for learner mode
-                || (this.scenario == ScenarioKey.learner && this.mapboard.cities[0].owner == PlayerKey.German)) {
-            this.emit('game', 'end');
+
+        if (this.over) {
+            this.emit('game', 'over');
             return;
         }
 
         if (!initialize) this.turn++;
-
-        this.#setDates();
 
         this.mapboard.newTurn(initialize);
         this.oob.newTurn(initialize);

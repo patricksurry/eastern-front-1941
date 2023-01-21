@@ -306,7 +306,7 @@ class MappedDisplayLayer extends DisplayLayer {
                         //   \f>/dexter\ndroit/ => justify 'dexter' and 'droit' to right-hand edge
                         //   \f^(centrist) => center-align 'centrist'
                         //   \f@\x04>[indent\n\some\n\lines] => left-justify text @ indent 4
-                        case '@':  // follow with single byte tab stop value
+                        case '@':  // follow with single byte tab stop value and tab type
                         case '^':  // follow ^,>,< with delimited text block
                         case '>':
                         case '<':  {

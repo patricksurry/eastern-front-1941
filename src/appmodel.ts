@@ -82,7 +82,7 @@ class AppModel {
     focusOff() {
         const u = this.focussed();
         this.#active = false;
-        this.infoWindow.puts('\fz\x06\x00\fe');
+        this.infoWindow.cls();
         if (u) {
             this.paintUnit(u);           // repaint to clear blink etc
             this.maskLayer.cls();    // remove all mask glyphs
@@ -139,9 +139,9 @@ class AppModel {
                     foregroundColor: color,
                     onclick: () => {
                         if (this.uimode != UIModeKey.orders) return;
-                        this.errorWindow.cls();
+                        this.errorWindow.puts(`\fx\x06\fe`);
                         this.focusOff();
-                        if (city) this.infoWindow.puts(`\fz\x06\x00\fe\f^${city.label.toUpperCase()}`)
+                        if (city) this.infoWindow.puts(`\f^${city.label.toUpperCase()}`)
                     },
                     onmouseover: (e) => {
                         (e.currentTarget as HTMLElement).title = g.mapboard.describe(loc, this.debug);
@@ -171,17 +171,20 @@ class AppModel {
         let animation = undefined;
         if (u === this.focussed()) {
             const f = u.foggyStrength(g.human);
-            this.infoWindow.puts(`\fz\x06\x00\fe\f@\x06<${u.label}\n\feMUSTER: ${f.mstrng}  COMBAT: ${f.cstrng}`);
+            this.infoWindow.puts(`\fh\f@\x06<${u.label}\n\feMUSTER: ${f.mstrng}  COMBAT: ${f.cstrng}`);
             animation = GlyphAnimation.blink;
             if (u.player == g.human) {
                 if (scenarios[g.scenario].mvmode)
                     this.infoWindow.puts(`\fH\f>${unitModes[u.mode].label} \nMODE   `)
 
                 const props = {orders: u.orders};
-                this.kreuzeLayer.put('#', 0x80, ux, uy, {foregroundColor: 0x1A, props}),
-                Object.values(directions).forEach(
-                    d => this.kreuzeLayer.put(d.label, d.icon, ux, uy, {foregroundColor: 0xDC, props})
-                )
+                this.kreuzeLayer.cls();
+                this.kreuzeLayer.put('#', 0x80, ux, uy, {foregroundColor: 0x1A, props});
+                if (u.orders.length) {
+                    Object.values(directions).forEach(
+                        d => this.kreuzeLayer.put(d.label, d.icon, ux, uy, {foregroundColor: 0xDC, props})
+                    )
+                }
             }
         } else if (u.active) {
             if (u.flags & unitFlag.attack) {
@@ -202,7 +205,7 @@ class AppModel {
                 },
                 onclick: () => {
                     if (this.uimode != UIModeKey.orders || !u.active) return;
-                    this.errorWindow.cls();
+                    this.errorWindow.puts(`\fx\x06\fe`);
                     (this.uimode == UIModeKey.orders && this.focussed() !== u) ? this.focusOn(u) : this.focusOff()
                 }
             };

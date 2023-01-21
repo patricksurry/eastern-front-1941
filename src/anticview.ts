@@ -83,6 +83,13 @@ function maybeAnimate(elt: Element|undefined, animate: GlyphAnimation|undefined,
     if (!elt) return;
     if (animate == null) {
         elt.getAnimations().forEach(a => a.cancel());
+        // also deal with the class-based animation we're using as a workaround
+        const kids = elt.getElementsByClassName('glyph-foreground');
+        if (kids.length) {
+            const kid = kids[0] as HTMLElement,
+                animClass = kid.dataset.animClass;
+            if (animClass) kid.classList.remove(animClass);
+        }
         return;
     }
     switch (animate) {
@@ -102,7 +109,8 @@ function maybeAnimate(elt: Element|undefined, animate: GlyphAnimation|undefined,
             {
                 const kids = elt.getElementsByClassName('glyph-foreground');
                 if (!kids.length) break;
-                const dir = animate == GlyphAnimation.flash ? 'normal': 'reverse',
+                const kid = kids[0] as HTMLElement,
+                    dir = animate == GlyphAnimation.flash ? 'normal': 'reverse',
                     flashFrames = keyframes`
                         0% {
                             -webkit-mask-image: none;
@@ -115,7 +123,8 @@ function maybeAnimate(elt: Element|undefined, animate: GlyphAnimation|undefined,
                     `,
                     anim = css`animation: ${flashFrames} 250ms infinite ${dir};`;
 
-                kids[0].classList.add(anim);
+                kid.classList.add(anim);
+                kid.dataset.animClass = anim;
                 // Chrome bug: doesn't work in WAAPI, see https://stackoverflow.com/questions/74966631/how-do-i-use-chromes-webkit-mask-image-in-the-web-animations-api
                 /*
                 kids[0].animate(

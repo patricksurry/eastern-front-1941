@@ -1,121 +1,142 @@
 # Eastern Front 1941
 
 This is a [playable][game] TypeScript port of [Chris Crawford][ccwiki]'s [Eastern Front 1941][efwiki].
-If you just want to start playing
-check out this annotated copy of the original [APX manual](doc/playing.md)
-or the [cartridge insert](doc/Eastern_Front_1941_Atari_Cartridge.pdf) then click [here][game].
-
-[![game](doc/images/preview.png)][game]
-
-The port was written from scratch in TypeScript
-referencing disassembled binaries
-of both the original Atari Program eXchange (APX) version
-as well as the later cartridge release, along with
-Crawford's [APX notes](doc/howitworks.md).
-The redux runs as a single page client-side app,
-with the current game state stored in the URL making
-it easy to save, resume, and share games.
-
-## But why?!
-
-Some of my earliest video game memories are of hanging out after school
-with a friend who had an [Atari 400][atari400] (maybe 800?)
-not to mention an actual pong bar table :exploding_head:...
-We played games like Pitfall, Missile Command, Defender and a rogue-like adventure game whose name I forget.
-But Eastern Front was always my "can we play...?" go-to.
-It was a compelling game in itself, with a fascinating AI opponent,
-and one of my earliest introductions to wargaming.
-Oddly enough I still haven't played an emulated version of the game,
-though I have watched a few [playthrough videos][apxvideo].
-
-When I discovered that Chris Crawford had published much of his early [source code][ccsrc],
-including the [6502 assembler][6502] code for Eastern Front,
-I couldn't resist taking it apart and trying to create a more accessible port.
-My main goal was to understand [how it worked](doc/howitworks.md),
-reminisce about later learning 6502 assembly on an [Apple //e](apple2e),
-and perhaps encourage others to experiment further.
-Along the way I gained a new appreciation for Crawford's technical tour-de-force:
-implementing an interactive wargame with a credible AI in only 12,000 bytes
-*including* all game data and graphics. It shipped on a 16K cartridge with 4K to spare.
-
-This re-implementation tries to capture the spirit of the game -
-reusing the same raw data, font map and color scheme -
-without slavishly recreating the original.
-(Emulators are already good at that.)
-At the same time I wanted to make the data and logic more explicit
-to make it more approachable and easier to modify.
-For example data structures like the order-of-battle are still lists
-accessed by index, but I've wrapped elements as simple objects
-to attach meaningful names and methods to the content.
-Similarly most magic constants now have named enumerations like `Terrain.river`.
-Heck, my laptop has sixteen million times the memory
-and perhaps ten thousand times the CPU power
-so we can afford to be a little more verbose...
-
-<p align="center"><img src="doc/images/Ef1941-variants.png" width=800></p>
-
-keyboard vs joystick only
-playable and hackable
-
-The current version apx
-
-and perhaps encourage others to experiment with AI improvements,
-an AI for the Germans or even fully computer play environment.
-
-
-bugs are my own,  no real effort at performance efficiency
-
-hard to imagine debugging and tuning the AI in 6502 asm (tho mentions basic).  much more complexity than
-any assembler I've written.  respect
-
-hope it's a resource for others to learn, perhaps experiment with AI improvements
-
-fascinating simplicity of AI, no understanding of local tactics, ZoC etc
-
-also working on an annotated disassembly of the cartridge version to catalog differences
-and offer as options here. some minor things already incorporated.
-plenty of interesting stuff in there
-
-
-
-full disassembly of the APX disk image(ref) including transcribed comments/labels from the original notes
-
 
 [game]: https://patricksurry.github.io/eastern-front-1941/
 [ccwiki]: https://en.wikipedia.org/wiki/Chris_Crawford_(game_designer)
 [efwiki]: https://en.wikipedia.org/wiki/Eastern_Front_(1941)
+
+**TL;DR** Click [here][game], choose a level of difficulty, and issue orders to German units using the arrow keys.
+An AI player will command the Russian units.
+When you're ready press `End` (or `Fn`+&rarr; on Mac) to see how each turn plays out.
+For a more old-school experience, press `X` to disable eXtra bells and whistles.
+Hit `?` for more help and check out the original [APX manual](doc/playing.md)
+or [cartridge insert](doc/Eastern_Front_1941_Atari_Cartridge.pdf) instructions.
+Will you capture Moscow?
+
+[![game](doc/images/preview.png)][game]
+
+Eastern Front 1941 is a two player turn-based simultaneous movement simulation
+of the German invasion of Russia in 1941.
+It introduced many novel features including an AI opponent;
+several difficulty levels;
+terrain, weather, zone of control and supply effects;
+multiple unit types and movement modes including air support;
+fog of war; and an innovative combat system.
+The game was first released in 1981 and became a killer app for the Atari 8-bit computer family.
+
+This port was written from scratch in TypeScript referencing disassembled binaries
+of both the original Atari Program eXchange (APX) version as well as the later cartridge release,
+along with Crawford's [APX notes](doc/howitworks.md).
+The redux runs as a single-page, fully client-side app
+with game state stored in the URL making it easy to save, resume, and share games.
+For more details see the [implementation notes](doc/notes.md).
+
+The game's subject matter offers disturbing echoes and distorted reflections of Russia's recent unprovoked invasion of Ukraine which is being fought over significant areas of the same battlefield.  My own motivation for this project is explained below but Churchill (paraphrasing Santayana) said it best:
+
+> Those who fail to learn from history are condemned to repeat it.
+
+If you enjoy the game (or not!) please consider donating to an organization like
+[World Central Kitchen <img height=32 src="doc/images/WCK_Primary_Logo.png">][wck]
+to support those most impacted by the conflict in Ukraine and by other humanitarian crises worldwide.
+
+[wck]: https://wck.org/donate
+
+## But why?!
+
+First and foremost Eastern Front 1941 is a great game!
+When I discovered that Chris Crawford had published much of his early [source code][ccsrc],
+including the [6502 assembler][6502] code for Eastern Front,
+I couldn't resist taking it apart and trying to make a more accessible version.
+My main goals were to understand [how it worked](doc/howitworks.md),
+recreate the essence of the game in a streamlined form,
+and to make it more accessible for others to explore and extend.
+Eastern Front has a lot to teach us about early video game development, game design,
+and AI play, not to mention lessons from the history itself.
+Quoting Crawford from the [cartrige insert](doc/Eastern_Front_1941_Atari_Cartridge.pdf):
+
+> There was really no way to win this war.  The \[Expert\] point system ... reflects these brutal truths. ... In other words, you'll almost always lose.  Does that seem unfair to you?  Unjust?  Stupid?  Do you feel that nobody would ever want to play a game \[they\] cannot possibly win?  If so, then you have learned the ultimate lesson of war on the Eastern Front.
+
+Along the way I also learned a bunch of other things including
+[TypeScript][typescript], [Mithril][mithril] and [Jest][jest].
+But more than anything I gained a whole new appreciation
+for Crawford's technical tour-de-force:
+implementing an interactive wargame with a credible AI in only 12K bytes
+*including* all data and graphics.
+It shipped on a 16K cartridge with 4K to spare!
+
+<p align="center"><img src="doc/images/Ef1941-variants.png" width=800></p>
+
 [ccsrc]: http://www.erasmatazz.com/library/source-code/index.html
-[atari400]: https://en.wikipedia.org/wiki/Atari_8-bit_family
 [6502]: https://en.wikibooks.org/wiki/6502_Assembly
+[typescript]: https://www.typescriptlang.org/
+[mithril]: https://mithril.js.org/
+[jest]: https://jestjs.io/
+
+Some of my earliest video game memories involve hanging out after school
+with a friend who had an [Atari 400][atari400] (maybe 800?)
+not to mention an original [Pong][pong] pub table :exploding_head:...
+We played games like Pitfall, Missile Command, Defender and a rogue-like adventure game whose name I forget.
+But Eastern Front was always my "can we play...?" go-to.
+It was a compelling game in itself with a fascinating AI opponent,
+and was one of my earliest introductions to wargaming.
+I never had an Atari myself but spent many hours
+learning 6502 assembly on an [Apple //e][apple2e],
+so browsing disassembled Eastern Front code brought back happy memories.
+(Apparently I'm no better at keeping carry flag semantics straight.)
+
+[pong]: https://en.wikipedia.org/wiki/Pong
+[atari400]: https://en.wikipedia.org/wiki/Atari_8-bit_family
 [apple2e]: https://en.wikipedia.org/wiki/Apple_IIe
+
+This re-implementation tries to capture the spirit of the game -
+reusing the same raw data, fonts, display style and color scheme -
+without slavishly recreating the original.
+You can play the [original ROM](reference/cartridge.rom)
+on an emulator like [AtariMac](atarimac)
+but honestly the gameplay now feels painful.
+Crawford explicitly designed for play with only a joystick
+whereas I wanted a more efficient keyboard-driven experience.
+At the same time I wanted to make the game's data and logic
+more approachable and easier to modify.
+For example data structures like the order-of-battle are still lists
+accessed by index, but are now wrapped as simple objects
+to attach meaningful names and methods to the content.
+Similarly most magic constants have become named enumerations.
+Heck, my laptop has sixteen million times the memory of an Atari 400
+and perhaps ten thousand times the CPU power
+so we can afford to be a little more verbose...
+
+[atarimac]: https://www.atarimac.com/atari800macx.php
+
+I aimed to keep the game engine completely separate from the display layer
+so that it can run "headless".
+This is great for unit testing but also makes it
+easy to experiment with AI development and meta-learning of new strategies.
+The human player is also parameterized so German AI or AI vs AI play is a possibility.
+Check out the [implementation notes](doc/notes.md)
+for more details of how the new code is structured,
+changes I introduced from the original,
+and a collection of (imho) interesting discoveries.
+
+I've inevitably introduced errors and misinterpretations
+in the re-platforming process.
+Please share any feedback, suggestions and bug reports.
+The most useful bug reports will include the current game state
+(just copy and paste the game's current URL), and if possible prior states which
+you'll find logged in your browser's javascript console.
+
+Enjoy!
 
 ## What's what?
 
-- `README.md` - you are here
-- `index.html` - basic structure for the game display showing how the map layers stack within the scrolling container
-- `src/` - the javascript, style sheet and fontmap image sprite that implement the game
-  - `data.js` - prettified chunks of raw data that drive the game, e.g map, order-of-battle, colors, etc
-  - `display.js` - D3-based html/css display interface simulating an Atari-esque character-based display
-  - `map.js` - helpers for interacting with the map and its squares, wrapped as simple Location objects
-  - `unit.js` - helpers for managing the units in the order-of-battle (oob) as simple Unit objects
-  - `think.js` - re-implements the computer player algorithm
-  - `main.js` - manages user interaction, computer thinking, turn processing and so on
-  - `test.js` - simple unit-tests that run on startup to protect me from myself (see browser console)
-- `doc` - content referenced in the README
-- `scripts/` - various scripts to extract data from the original binary images
-- `refdata/` - binary images for the APX and cartridge versions of the game, disassembled source and extracted data blobs
-- `refdoc/` - various collected documents including a copy of the original annotated source code in `EFT*.ASM`
-    with Chris Crawford's (searchable) [source notes][ccrtfnotes] and a more extensive [scanned PDF][ccpdfnotes]
-    which includes additional diagrams and source dumps.
-    I also extracted and reordered a subset of pages about the [AI][ccainotes].
-    The original user manuals for both the [APX][apxmanual] and [cartridge][cartmanual] versions
-    are worth a look, along with the boxed [map poster][mapposter] and an opening [APX screenshot][apxscreen]
-    showing the initial score of 12.
+Here's a quick lay of of the land for navigating the repo:
 
-[ccrtfnotes]: refdoc/Eastern%20Front%201941%20Essays.rtf
-[ccpdfnotes]: refdoc/APX_Source_Code_for_Eastern_Front_1941_rev_2.pdf
-[ccainotes]: refdoc/APX_Source_AI_Extract.pdf
-[apxmanual]: refdoc/APX_Eastern_Front_1941.pdf
-[cartmanual]: refdoc/eastern_front_atari_cartridge.pdf
-[apxscreen]: refdoc/Ef1941scr.png
-[mapposter]: refdoc/Eastern_Front_1941_Atari_poster_text.pdf
+- `README.md` - you are here
+- `index.html` - the minimal HTML container for the game
+- [`doc/`](doc) - how to play, how it works, implementation notes, and other useful resources
+- [`reference/`](reference) - binaries and annotated disassembly for the original game
+- [`src/`](src) - the TypeScript source and unit tests that implement the game
+- [`scripts/`](scripts) - various scripts to extract data from the original binary images
+- [`static/`](static) - the bundled javascript implementing the game, along with the font map images
+- `package*json`, `tsconfig.json`, `rollup.config.js`, `jest.config.ts` - various build configuration files

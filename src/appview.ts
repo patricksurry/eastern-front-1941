@@ -1,4 +1,4 @@
-import m, { redraw } from 'mithril';
+import m from 'mithril';
 import {DirectionKey, directions} from './defs';
 import {UnitMode} from './unit';
 import {AnticColor, DisplayLayer} from './anticmodel';
@@ -20,7 +20,7 @@ class AppView {
     }
 }
 
-document.body.style.backgroundColor = antic2rgb(0xD4)!;
+document.body.style.backgroundColor = antic2rgb(0xD4) as string;
 
 const Layout: m.Component<LayerAttrs> = {
     view: ({attrs: {help, app}}) => {
@@ -352,10 +352,12 @@ const OrdersOverlayComponent: m.Component<DisplayAttr> = {
 }
 
 function kreuzeAnimation(elt: HTMLElement, g: Glyph) {
+    // animate the path arrows, and transform the kreuze itself to the unit position
+    // we cheat a bit with arrow and kreuze position so they align with the unit's 1px offest in the 8x8 square
     const orders = (g.props?.orders ?? []) as DirectionKey[],
         arrow = Object.values(directions).findIndex(d => d.icon == g.c) as DirectionKey|-1,
         steps = [{
-            transform: 'translate(0px, 0px)',
+            transform: 'translate(1px, 1px)',
             opacity: orders.length && orders[0] == arrow ? 1: 0
         }];
     let dx = 0, dy = 0;
@@ -364,12 +366,12 @@ function kreuzeAnimation(elt: HTMLElement, g: Glyph) {
         for (let i=0; i<2; i++) {
             // take two half steps so opacity transition is quicker
             dx -= dlon/2; dy -= dlat/2;
-            steps.push({transform: `translate(${dx*8}px, ${dy*8}px)`, opacity: d == arrow ? 1: 0});
+            steps.push({transform: `translate(${dx*8 + 1}px, ${dy*8 + 1}px)`, opacity: d == arrow ? 1: 0});
         }
     })
-    if (arrow == -1) {
+    if (arrow == -1) {  // the Kreuze
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        elt.style.transform = steps.pop()!.transform;
+        elt.style.transform = `translate(${dx*8+0.5}px, ${dy*8+0.5}px)`
     } else {
         elt.getAnimations().forEach(a => a.cancel());
         if (orders.length) {

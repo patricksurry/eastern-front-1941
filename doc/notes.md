@@ -1,5 +1,17 @@
 ## Code structure
 
+
+
+hard to imagine debugging and tuning the AI in 6502 asm (tho mentions basic).  much more complexity than
+any assembler I've written.  respect
+
+fascinating simplicity of AI, no understanding of local tactics, ZoC etc
+
+
+full disassembly of the APX disk image(ref) including transcribed comments/labels from the original notes
+
+
+
 ### Fonts
 
 The original game uses Atari's builtin [atascii][atascii] font for text,

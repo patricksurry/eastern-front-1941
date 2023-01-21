@@ -188,6 +188,10 @@ class Unit {
     }
     emit(event: UnitEvent) {
         this.flags |= unitFlag[event];
+        if (event == 'move') {
+            // clear attack and defend status after movement
+            this.flags &= ~(unitFlag.attack | unitFlag.defend);
+        }
         this.#game.emit('unit', event, this);
     }
     get mode() { return this.#mode; }
@@ -323,6 +327,7 @@ class Unit {
             }
             if (this.kind == UnitKindKey.air && this.mode == UnitMode.assault && this.orders.length) {
                 // add air strength to target cadj (cartridge.asm:4180)
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 const dst = this.path.pop()!;
                 if (dst.unitid != null && dst.gid != this.location.gid) {
                     const u = this.#game.oob.at(dst.unitid);
@@ -360,7 +365,7 @@ class Unit {
                 .map(id => Grid.byid(+id));
         }
     }
-    moveTo(dst: MapPoint|null) {
+    moveTo(dst: MapPoint|null, notify = true) {
         let action: UnitEvent = 'move';
 
         if (this.location.unitid) {
@@ -379,7 +384,7 @@ class Unit {
         } else {
             action = 'exit';
         }
-        this.emit(action);
+        if (notify) this.emit(action);
     }
     tryOrder() {
         // if we decided to try before this unit retreated (say), skip
@@ -563,7 +568,7 @@ class Unit {
         const scenario = scenarios[this.#game.scenario];
 
         if (initialize) {
-            this.moveTo(this.location);
+            this.moveTo(this.location, false);  // don't emit events for these
 
             if (this.#game.turn == 0 && scenario.fog) {
                 this.fog = scenario.fog;

@@ -2,21 +2,20 @@
 
 Tracks current outstanding issues, ideas for improvements, etc.
 
-## Triage
-
-- [ ] (possibly fixed; also now maelstrom sanity tests) 8th inf in the south accepted but stopped processing/following orders?  id=8. could it be blocked by a dead unit somehow?  sadly works on resume :(
-  [game](http://localhost:3000/#EF4123J7PPcdU5ls-txzsMVOjBM_-t-rshjVx_r6q1COOWLN3TdbSNBEyYL3cpfFnnClqfdQqm5BvbzoSm9ZBBuOSlCXn7iuWZ1J6cMD7OrnbLQIMDq0OWHDXXBon4viebb97fX07neHQLNr16YBvWZZOLCfbcuYXCrGBNcUo56orxB3JSi43dyd7kCy_erpvV_xrU-1Hm)
-
 ## Open issues
 
 - scoring
-  - [ ] show score in error window (see cartemu screenshot)
-  - [ ] game over erases final score :(
-  - [ ] reloading a game-over state continues instead of repeating game over message
+  - [x] show score in error window (see cartemu screenshot)
+  - [x] game over erases final score :(
+  - [x] reloading a game-over state continues instead of repeating game over message
+  - [x] game over doesn't update token
+  - [x] incorrectly flagged as new arrivals on reload [example](http://localhost:3000/#EF41W0-5q2sZNnQthDyhjWNR1cWNoEK7qGC2R3VL)
 
 - UX
-  - [ ] increase tick speed tho move animation can still be longer?
-  - [ ] when's the right time to clear unit flags for flash behavior?
+  - [ ] Unit describe human is dumb
+  - [x] Log token before each next turn in UX
+  - [x] increase tick speed tho move animation can still be longer
+  - [x] Move clears attack and defend flags (stop flashing)
   - [x] blink should apply to overlay exc order path, svg overlay within unit div??
   - [x] blink enemy units as well to see terrain underneath
   - debug flag behavior
@@ -28,11 +27,17 @@ Tracks current outstanding issues, ideas for improvements, etc.
   - [ ] zoc: level 0/1 unit only exerts zoc in own square (cartridge.asm:2486)
   - [ ] supply check happens before first turn (tho units should be in supply anyway, adjust initial oob?)
   - [ ] test newTurn(true) is idempotent on token
+  - [ ] test AI vs human game playthru doesn’t throw
 
 - Cartridge AI changes
   - [ ] code browse, diff to APX
   - [ ] mvmode choice
   - [ ] other changes?
+
+## Triage
+
+- [ ] (possibly fixed; also now maelstrom sanity tests) 8th inf in the south accepted but stopped processing/following orders?  id=8. could it be blocked by a dead unit somehow?  sadly works on resume :(
+  [game](http://localhost:3000/#EF4123J7PPcdU5ls-txzsMVOjBM_-t-rshjVx_r6q1COOWLN3TdbSNBEyYL3cpfFnnClqfdQqm5BvbzoSm9ZBBuOSlCXn7iuWZ1J6cMD7OrnbLQIMDq0OWHDXXBon4viebb97fX07neHQLNr16YBvWZZOLCfbcuYXCrGBNcUo56orxB3JSi43dyd7kCy_erpvV_xrU-1Hm)
 
 ## Future
 
@@ -44,6 +49,7 @@ Tracks current outstanding issues, ideas for improvements, etc.
   - [ ] don't update tree color in-place in terrain data
 
 - UX
+  - [ ] attack flash could also jitter toward target
   - [ ] display status window '*' indicator for movable reinforcements
   - [ ] optionally allow >8 orders via UI (supported elsewhere)
   - [ ] n/p vs </> could skip units that already have orders?
