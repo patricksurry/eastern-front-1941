@@ -7,4 +7,6 @@ palettes/
 extract/
 src/perf.log
 src/perf.txt
+dist/src/
+dist/examples/
 rollup-profile.html

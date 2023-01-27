@@ -1,12 +1,13 @@
-import {players, UnitKindKey, directions, DirectionKey} from './defs';
-import {UnitMode} from './unit';
+import {players, UnitKindKey, directions, DirectionKey} from '../engine/defs';
+import {ScenarioKey, scenarios} from '../engine/scenarios';
+import {UnitMode} from '../engine/unit';
+import {Game} from '../engine/game';
+import {Thinker} from '../engine/think';
+
 import {AppModel, UIModeKey} from './appmodel';
 import {globalHandler, modeHandlers} from './appkeys';
-import {ScenarioKey, scenarios} from './scenarios';
-import {Game} from './game';
-import {Thinker} from './think';
-import {HelpModel} from './help';
 import {AppView} from './appview';
+import {HelpModel} from './help';
 
 const errctr = '\fx\x06\fe\f@\x16^';  // fmt code to clear window from x=6, then center @ $16 = 22, see antic model
 
@@ -22,7 +23,7 @@ class AppCtrl {
     constructor() {
         this.app = new AppModel();
         this.help = new HelpModel(() => this.app.help = !this.app.help);
-        this.view = new AppView({app: this.app, help: this.help});
+        this.view = new AppView(this.app, this.help);
 
         const token = window.location.hash.slice(1) || undefined;
 
@@ -48,6 +49,11 @@ class AppCtrl {
             .filter(player => +player != this.#game.human)
             .map(player => new Thinker(this.#game, +player));
 
+        // scroll the map to the center of mass of the human player's
+        const p = this.game.oob.centerOfGravity(this.game.human),
+        {x, y} = this.game.mapboard.xy(p);
+        this.view.pinMapCenter(x + 0.5, y + 0.5);
+
         this.view.redraw();
 
         g.on('game', (action) => {
@@ -67,10 +73,16 @@ class AppCtrl {
                 }
             }
             this.view.redraw();
-        }).on('map', (action) => {
+        }).on('map', (action, loc) => {
             switch (action) {
                 case 'citycontrol':
-                    this.app.paintMap();
+                    if (this.app.extras) {
+                        const city = this.game.mapboard.cities[loc.cityid as number],
+                            playerName = players[city.owner].label.toUpperCase() + 'S',
+                            cityName = city.label.toUpperCase();
+                        this.app.infoWindow.puts(`\fh\f^${playerName} CAPTURE ${cityName}!`)
+                        this.app.paintMap();
+                    }
                     break;
                 default: {
                     const fail: never = action;
@@ -142,7 +154,7 @@ class AppCtrl {
                 this.app.infoWindow.cls()
                 this.app.errorWindow.puts(`${errctr}EXECUTING MOVE`);
                 console.log(`Executing turn ${this.#game.turn} from state ${this.#game.token}`);
-                this.#game.nextTurn(100);
+                this.#game.resolveTurn(100);
                 break;
             }
         }
@@ -155,7 +167,6 @@ class AppCtrl {
             scenario = (this.#game.scenario + inc + n) % n;
         }
         this.game = new Game(scenario);
-
         const label = scenarios[this.#game.scenario].label.padEnd(8, ' ');
         this.app.errorWindow.puts(`\fh\f^\f#<\f- ${label} \f#>\f-    \f#ENTER\f- TO START`);
     }

@@ -1,4 +1,4 @@
-import type {AnticColor} from './anticmodel';
+import type {AnticColor} from '../antic/anticmodel';
 
 type Flag = 0 | 1;
 interface Point {lon: number, lat: number}
@@ -122,7 +122,7 @@ const terraintypes: Record<TerrainKey, Terrain> = {
         offence: 0, defence: 0, movecost: [[20, 28, 24], [16, 30, 20]],
     },
     [TerrainKey.impassable]: {
-        label: 'impassable', color: 0x94, altcolor: 0x0C,  // sea + border
+        label: 'impassable', color: 0x94, altcolor: 0x0C,  // sea + border(alt)
         offence: 0, defence: 0, movecost: [[0, 0, 0], [0, 0, 0]]
     }
 } as const;

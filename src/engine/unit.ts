@@ -1,4 +1,4 @@
-import {options} from './config';
+import {options} from '../config';
 import {
     type Point, type Flag,
     players, PlayerKey,
@@ -166,8 +166,10 @@ class Unit {
         // game logic seems to be that Germans can move on arrival turn but Russians can't,
         // including initially placed units because of surprise attack.
         // allow initially placed Russians to move for post 6/22 scenarios
-        if (this.arrive == this.#game.turn && this.player == PlayerKey.Russian &&
-            (this.arrive > 0 || scenarios[this.#game.scenario].start == '1941/6/22')) return 0;
+        if ((this.arrive == this.#game.turn && this.player == PlayerKey.Russian)
+            || (this.#game.turn == 0 && this.player == scenarios[this.#game.scenario].surprised)) {
+                return 0;
+        }
         return 1;
     }
     get human() {
@@ -335,8 +337,8 @@ class Unit {
                         const halfDistance = Math.max(1, this.orders.length >> 1);
                         u.cadj += Math.floor(this.cstrng / halfDistance);
                     }
-                    u.resetOrders();   // clear orders: air mission flown
                 }
+                this.resetOrders();   // clear orders: air mission flown
             }
         }
 
@@ -369,6 +371,9 @@ class Unit {
         let action: UnitEvent = 'move';
 
         if (this.location.unitid) {
+            if (this.location.unitid != this.id) {
+                throw(`moveTo from square occupied by both:\n${this.describe()}\nand:\n${this.#game.oob.at(this.location.unitid).describe()}`)
+            }
             this.location.unitid = undefined;  // leave the current location
         } else {
             action = 'enter';
@@ -562,13 +567,13 @@ class Unit {
         this.flags = 0;
         this.resetOrders();
     }
-    newTurn(initialize: boolean) {
-        if (!this.active) return;
-
+    nextTurn(startOrResume: boolean) {
+        // called for active (or potentially active) units
         const scenario = scenarios[this.#game.scenario];
 
-        if (initialize) {
-            this.moveTo(this.location, false);  // don't emit events for these
+        if (startOrResume) {
+            // place units on map but don't emit events
+            this.moveTo(this.location, false);
 
             if (this.#game.turn == 0 && scenario.fog) {
                 this.fog = scenario.fog;
@@ -578,13 +583,21 @@ class Unit {
                 }
             }
         } else {
-            this.flags = 0;
+            // M.ASM:3720 delay reinforcements scheduled for an occuplied square
+            if (this.arrive == this.#game.turn) {
+                if (this.location.unitid != null) {
+                    this.arrive++;
+                    return;   // early return
+                }
+                this.moveTo(this.location);   // place unit on the map
+            }
+            // supply check includes any new arrivals
             const inSupply = scenario.skipsupply || this.traceSupply();
             if (scenario.repl && inSupply) {
                 // possibly receive replacements
                 this.mstrng = Math.min(255, this.mstrng + scenario.repl[this.player]);
             }
-            if (!this.active) return;  // quit if we were elimiated
+            if (!this.active) return;  // quit if eliminated OoS
 
             if (scenario.fog) {
                 const change = this.#game.oob.zocAffects(this.player, this.location, true) ? -1 : 1;
@@ -592,7 +605,7 @@ class Unit {
             }
         }
 
-        // set up base cstrng adjustment
+        this.flags = 0;
         this.cadj = this.player == PlayerKey.German ? (scenarios[this.#game.scenario].cadj ?? 0) : 0
     }
     traceSupply(): Flag {
@@ -617,11 +630,17 @@ class Unit {
                 return 1;
             }
 
-            const dst = mb.neighborOf(loc, dir);
+            let dst = mb.neighborOf(loc, dir);
+            if (dst == null && supply.sea) {
+                const adj = Grid.adjacent(loc, dir);
+                if (mb.valid(adj)) {
+                    const sea = mb.locationOf(adj);
+                    if (sea.terrain == TerrainKey.impassable && sea.alt == 0) dst = sea;
+                }
+            }
             let cost = 0;
 
-            if (dst == null || (
-                    dst.terrain == TerrainKey.impassable && (supply.sea == 0 || dst.alt == 1))) {
+            if (dst == null) {
                 cost = 1;
             } else if (this.#game.oob.zocAffects(this.player, dst)) {
                 cost = 2;
@@ -656,7 +675,9 @@ class Unit {
     describe(debug = false) {
         const {cstrng, mstrng} = this.foggyStrength(this.#game.human);
         let s = `[${this.id}] ${cstrng} / ${mstrng}`;
-        if (debug && this.player != this.#game.human) s += ` (actual ${this.cstrng} / ${this.mstrng})`;
+        if (debug && scenarios[this.#game.scenario].fog && this.player != this.#game.human) {
+            s += ` (actual ${this.cstrng} / ${this.mstrng}; fog ${this.fog})`;
+        }
         s += `\n${this.label}\n`;
 
         if (debug && this.ifr !== undefined && this.ifrdir !== undefined) {

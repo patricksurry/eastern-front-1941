@@ -3,13 +3,6 @@ import {ScenarioKey, scenarios} from './scenarios';
 import {Game} from './game';
 import {Grid} from './grid';
 
-let game: Game;
-
-beforeEach(() => {
-    game = new Game();
-    game.rand.state(9792904);
-})
-
 function addSimpleOrders(g: Game) {
     for (const k in players) {
         const p = +k as PlayerKey,
@@ -23,6 +16,8 @@ function addSimpleOrders(g: Game) {
 }
 
 test("Unit scores should be non-negative", () => {
+    const game = new Game(ScenarioKey.apx, 9792904);
+
     game.oob.forEach(u => expect(u.locScore()).toBeGreaterThanOrEqual(0));
 });
 
@@ -33,25 +28,27 @@ test("Initial score check", () => {
         [ScenarioKey.intermediate]: 0,
         [ScenarioKey.advanced]: 0,
         [ScenarioKey.expert41]: -128,
-        [ScenarioKey.expert42]: -130, //TODO should be -131 after initial supply check
+        [ScenarioKey.expert42]: -130, // cartridge shows -131 after initial supply check, due to bug with Finns
         [ScenarioKey.apx]: 12,
     };
 
     Object.entries(expected).forEach(([k, score]) => {
-        const g = new Game(+k as ScenarioKey);
+        const g = new Game(+k as ScenarioKey, 123456789);
         //console.log(`checking initial score for ${scenarios[+k as ScenarioKey].label}`)
         expect(g.score(PlayerKey.German)).toBe(score);
     })
 });
 
 test("Game turn", () => {
+    const game = new Game(ScenarioKey.apx, 9792904);
     addSimpleOrders(game);
-    expect(() => game.nextTurn()).not.toThrow();
+    expect(() => game.resolveTurn()).not.toThrow();
 })
 
 test("Game roundtrip", () => {
+    const game = new Game(ScenarioKey.apx, 9792904);
     addSimpleOrders(game);
-    game.nextTurn();
+    game.resolveTurn();
 
     const arr = game.memento,
         token = game.token;
@@ -66,21 +63,22 @@ test("Game roundtrip", () => {
 })
 
 test("Game turn roundtrip", () => {
-    const game2 = new Game(game.token);
+    const game = new Game(ScenarioKey.apx, 9792904),
+        game2 = new Game(game.token);
     addSimpleOrders(game);
-    game.nextTurn();
+    game.resolveTurn();
     addSimpleOrders(game2);
-    game2.nextTurn();
+    game2.resolveTurn();
     expect(game2.token).toEqual(game.token);
 })
 
 test("Play and recover all scenarios", () => {
-    const tokens: Partial<Record<ScenarioKey, string>> = {};
+    const tokens: {[key: number]: string} = {};
     for (const s in scenarios) {
         const k = +s as ScenarioKey,
-            g = new Game(k);
+            g = new Game(k, 123456789);
         addSimpleOrders(g);
-        g.nextTurn();
+        g.resolveTurn();
         tokens[k] = g.token;
     }
     for (const s in scenarios) {
@@ -90,12 +88,20 @@ test("Play and recover all scenarios", () => {
     }
 });
 
-test("Maelstrom doesn't throw", () => {
-    const moscow = Grid.point(game.mapboard.cities[0]);
+test("nextTurn is idempotent on resume", () => {
+    const g = new Game(ScenarioKey.expert42);
+    addSimpleOrders(g);
+    g.resolveTurn();
+    const tok = g.token;
+    g.nextTurn(true);
+    expect(g.token).toEqual(tok);
+});
 
+test("Maelstrom doesn't throw", () => {
     Object.keys(scenarios).forEach(v => {
         const k = +v as ScenarioKey,
-            g = new Game(k);
+            g = new Game(k, 123456789),
+            moscow = Grid.point(g.mapboard.cities[0]);
 
         expect(() => {
             let lastturn = -1;
@@ -107,9 +113,8 @@ test("Maelstrom doesn't throw", () => {
                         u.setOrders(orders);
                     }
                 });
-                g.nextTurn();
-
-                // integrity tests
+                g.resolveTurn();
+                // integrity test: only active units on the board
                 g.mapboard.locations.forEach(
                     row => row.filter(p => p.unitid).forEach(p => {
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -117,13 +122,21 @@ test("Maelstrom doesn't throw", () => {
                             throw new Error(`${g.mapboard.describe(p)} occupied by inactive unit`);
                     })
                 );
+                // integrity tests: strength not out of whack, and each active unit on unique square
+                const locmap = new Map<number, number>();
                 g.oob.activeUnits().forEach(u => {
-                    const mp = g.mapboard.locationOf(Grid.point(u));
-                    if (mp.unitid != u.id)
-                        throw new Error(`${u.describe()} not found at ${g.mapboard.describe(mp)}`);
-
-                    if(u.mstrng > 255 || u.cstrng > u.mstrng || u.cstrng < 0)
+                    const loc = u.location;
+                    if (locmap.has(loc.gid)) {
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        throw new Error(`scenario ${scenarios[k].label}, turn ${g.turn}: two active units occupy ${loc.gid}:\n${u.describe()}\nand\n${g.oob.at(locmap.get(loc.gid)!).describe()}`)
+                    }
+                    locmap.set(loc.gid, u.id);
+                    if (loc.unitid != u.id) {
+                        throw new Error(`scenario ${scenarios[k].label}, turn ${g.turn} ${u.describe()} not found at ${g.mapboard.describe(loc)} state ${g.token}`);
+                    }
+                    if(u.mstrng > 255 || u.cstrng > u.mstrng || u.cstrng < 0) {
                         throw new Error(`strength out of range for ${u.describe()}`)
+                    }
                 });
             }
         }).not.toThrow();

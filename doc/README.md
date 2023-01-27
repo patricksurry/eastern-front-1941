@@ -1,21 +1,23 @@
-- [Playing](playing.md): annotated APX user guide explaining how to play the game
+Documentation
+===
 
-- [How it works](howitworks.md): annotated APX implementation notes and reflections on the development process
+How to play
+---
 
+You can learn to play Eastern Front 1941 by reading
+the glossy [cartridge insert](Eastern_Front_1941_Atari_Cartridge.pdf)
+and checking out the illustrated [mapboard](Eastern_Front_1941_Atari_poster_text.pdf).
+There's more background on game mechanics and history in the original
+[APX user guide](playing.md) which I extracted with OCR and annotated
+from [this PDF](APX_Eastern_Front_1941.pdf).
 
-- `refdata/` - binary images for the APX and cartridge versions of the game, disassembled source and extracted data blobs
-- `refdoc/` - various collected documents including a copy of the original annotated source code in `EFT*.ASM`
-    with Chris Crawford's (searchable) [source notes][ccrtfnotes] and a more extensive [scanned PDF][ccpdfnotes]
-    which includes additional diagrams and source dumps.
-    I also extracted and reordered a subset of pages about the [AI][ccainotes].
-    The original user manuals for both the [APX][apxmanual] and [cartridge][cartmanual] versions
-    are worth a look, along with the boxed [map poster][mapposter] and an opening [APX screenshot][apxscreen]
-    showing the initial score of 12.
+How it works
+---
 
-[ccrtfnotes]: refdoc/Eastern%20Front%201941%20Essays.rtf
-[ccpdfnotes]: refdoc/APX_Source_Code_for_Eastern_Front_1941_rev_2.pdf
-[ccainotes]: refdoc/APX_Source_AI_Extract.pdf
-[apxmanual]: refdoc/APX_Eastern_Front_1941.pdf
-[cartmanual]: refdoc/eastern_front_atari_cartridge.pdf
-[apxscreen]: refdoc/Ef1941scr.png
-[mapposter]: refdoc/Eastern_Front_1941_Atari_poster_text.pdf
+Chris Crawford's annotated [APX implementation notes](howitworks.md)
+explain how the original game was built, along with his reflections on the development process.
+Again these were extracted and annotated from a [PDF original](APX_Source_Code_for_Eastern_Front_1941_rev_2.pdf)
+which also includes scanned source assembly listings.
+I transferred most of the source code notes into the machine-readable [APX disassembly](../reference/apxdump.asm).
+
+I've collected my own [notes](notes.md) as I made various discoveries and implementation decisions for the Typescript port.  Also see the source [README]](../src/README.md) for high-level organization of the new code.

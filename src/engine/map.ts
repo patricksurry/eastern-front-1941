@@ -9,12 +9,12 @@ import {
     clamp,
     memoize,
 } from './defs';
-import {Grid, GridPoint} from './grid';
+import {Grid, type GridPoint} from './grid';
 import {mapVariants, blocked} from './map-data';
 import {scenarios} from './scenarios';
 
 import type {Game} from './game';
-import {options} from './config';
+import {options} from '../config';
 
 type Path = {cost: number, orders: DirectionKey[]};
 
@@ -151,13 +151,13 @@ class Mapboard {
         }
         return ([] as number[]).concat([this.#icelat],control);
     }
-    newTurn(initialize = false) {
+    nextTurn(startOrResume = false) {
         const mdata = monthdata[this.#game.month];
 
-        //TODO ick: update the tree color in place in the terrain data :grimace:
+        //TODO :grimace: update the tree color in place in the terrain data
         terraintypes[TerrainKey.mountain_forest].altcolor = mdata.trees;
 
-        if (!initialize && mdata.water != null) this.#freezeThaw(mdata.water);
+        if (!startOrResume && mdata.water != null) this.#freezeThaw(mdata.water);
     }
     get extent() {
         // map dimension including impassable boundary
@@ -171,6 +171,10 @@ class Mapboard {
             [DirectionKey.west]: this.#maxlon-1,
             [DirectionKey.east]: 0,
         }
+    }
+    xy({lon, lat}: Point) {
+        // return an x, y indexed from top, left rather than lon, lat indexed from bottom, right
+        return {x: this.#maxlon - lon, y: this.#maxlat - lat}
     }
     describe(loc: MapPoint, debug = false) {
         const city = loc.cityid != null ? this.cities[loc.cityid] : undefined,
@@ -202,7 +206,7 @@ class Mapboard {
         const pt = this.#validlocs.get(gid);
         if (pt == null) return [undefined, undefined, undefined, undefined];
 
-        return Grid.neighbors(pt).map((q, i) => {
+        return Grid.adjacencies(pt).map((q, i) => {
             const nbr = this.#validlocs.get(q.gid),
                 dir = +i as DirectionKey;
             if (nbr == null) return undefined;
@@ -261,7 +265,7 @@ class Mapboard {
             const c = this.cities[loc.cityid];
             if (c.owner != player) {
                 c.owner = player;
-                this.#game.emit('map', 'citycontrol');
+                this.#game.emit('map', 'citycontrol', loc);
             }
         }
     }
@@ -392,4 +396,4 @@ class Mapboard {
     }
 }
 
-export {MapPoint, GridPoint, Mapboard, Path, type MapEvent};
+export {MapPoint, Mapboard, Path, type MapEvent};

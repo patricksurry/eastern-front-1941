@@ -1,33 +1,12 @@
-import {oobVariants} from './oob-data';
-import {Grid} from './grid';
-
 import {Game} from './game';
-import { DirectionKey, PlayerKey } from './defs';
-import { ScenarioKey, scenarios } from './scenarios';
-import { unitFlag } from './unit';
-
-let game: Game;
-
-beforeEach(() => {
-    game = new Game();
-    game.rand.state(9792904);
-})
-
-// the second last column of raw data is CORPT for both apx and cart,
-// and indexes the main unit name.  the high bit of low nibble is unused
-test("CORPT bit 4 is unused", () => {
-    Object.values(oobVariants).forEach(
-        data => data.forEach(xs => expect(xs[xs.length - 2] & 0x08).toBe(0))
-    );
-})
-
-test("Unit counts", () => {
-    const counts = [0, 0];
-    game.oob.forEach(u => counts[u.player]++);
-    expect(counts).toEqual([55, 104])
-});
+import {Grid} from './grid';
+import {DirectionKey, PlayerKey, UnitKindKey} from './defs';
+import {ScenarioKey, scenarios} from './scenarios';
+import {unitFlag, UnitMode} from './unit';
 
 test("No fog is a no-op", () => {
+    const game = new Game(ScenarioKey.apx, 9792904);
+
     game.oob.activeUnits().forEach(u => {
         const {mstrng, cstrng} = u;
         expect(u.foggyStrength(1-u.player)).toEqual({mstrng, cstrng})
@@ -38,7 +17,7 @@ test("Fog is bounded", () => {
     const k = ScenarioKey.expert42,
         scenario = scenarios[k],
         fog = scenario.fog ?? 0,
-        g = new Game(k);
+        g = new Game(k, 123456789);
     let diff = 0;
     expect(fog).toBeGreaterThan(0);
     g.oob.activeUnits().forEach(u => {
@@ -59,7 +38,7 @@ test("Fog is bounded", () => {
 })
 
 test("Fog is asymmetrical", () => {
-    const g = new Game(ScenarioKey.expert41);
+    const g = new Game(ScenarioKey.expert41, 123456789);
     g.oob.activeUnits().forEach(u => {
         const {mstrng, cstrng} = u,
             {mstrng: mfog, cstrng: cfog} = u.foggyStrength(u.player);
@@ -71,30 +50,30 @@ test("Fog is asymmetrical", () => {
 })
 
 test("Fog is repeatable", () => {
-    const g = new Game(ScenarioKey.advanced);
+    const g = new Game(ScenarioKey.advanced, 123456789);
     const ms  = g.oob.activeUnits().map(u => u.foggyStrength(1-u.player).mstrng),
         m2s = g.oob.activeUnits().map(u => u.foggyStrength(1-u.player).mstrng);
     expect(ms).toEqual(m2s);
 })
 
 test("Fog strength changes each turn", () => {
-    const g = new Game(ScenarioKey.advanced);
+    const g = new Game(ScenarioKey.advanced, 123456789);
     const ms  = g.oob.activeUnits().map(u => u.foggyStrength(1-u.player).mstrng);
-    g.nextTurn();
+    g.resolveTurn();
     const m2s = g.oob.activeUnits().map(u => u.foggyStrength(1-u.player).mstrng);
     expect(ms).not.toEqual(m2s);
 })
 
 test("Fog values update each turn", () => {
-    const g = new Game(ScenarioKey.advanced),
+    const g = new Game(ScenarioKey.advanced, 123456789),
         fs = g.oob.activeUnits().map(u => u.fog);
-    g.nextTurn();
+    g.resolveTurn();
     const f2s = g.oob.activeUnits().map(u => u.fog);
     expect(fs).not.toEqual(f2s);
 })
 
 test("Simple supply", () => {
-    const g = new Game(ScenarioKey.learner);
+    const g = new Game(ScenarioKey.learner, 123456789);
     g.oob.activeUnits().forEach(u => {
         expect(u.traceSupply()).toBe(1);
         expect(u.flags & unitFlag.oos).toBeFalsy();
@@ -102,7 +81,7 @@ test("Simple supply", () => {
 });
 
 test("Supply blocked", () => {
-    const g = new Game(ScenarioKey.learner);
+    const g = new Game(ScenarioKey.learner, 1234567899);
     const u0 = g.oob.activeUnits(PlayerKey.Russian)[0],
         u1 = g.oob.activeUnits(PlayerKey.German)[0];
 
@@ -114,7 +93,7 @@ test("Supply blocked", () => {
 })
 
 test("Supply thru gaps", () => {
-    const g = new Game(ScenarioKey.learner);
+    const g = new Game(ScenarioKey.learner, 123456789);
     const u0 = g.oob.activeUnits(PlayerKey.Russian)[0],
         u1 = g.oob.activeUnits(PlayerKey.German)[0];
 
@@ -125,9 +104,26 @@ test("Supply thru gaps", () => {
     expect(u0.flags & unitFlag.oos).toBeFalsy();
 })
 
+test("Finns in supply", () => {
+    const g = new Game(ScenarioKey.expert41, 123456789);
+    const finns = g.oob.activeUnits(PlayerKey.German).filter(u => u.lat > 35);
+    expect(finns.length).toBe(2);
+    finns.forEach(u => expect(u.traceSupply()).toBe(1));
+})
+
+test("Air doesn't move in assault mode", () => {
+    const g = new Game(ScenarioKey.expert41, 123456789);
+    const flieger = g.oob.activeUnits(PlayerKey.German).filter(u => u.kind == UnitKindKey.air);
+    flieger.forEach(u => expect(u.mode).toBe(UnitMode.assault));
+    const start = flieger.map(u => u.location.gid);
+    flieger.forEach(u => u.addOrder(DirectionKey.east));
+    g.resolveTurn();
+    flieger.forEach((u, i) => expect(u.location.gid).toBe(start[i]));
+})
+
 test("ZoC blocked", () => {
     // blocked scenario from doc/apxzoc1.png
-    const g = new Game(ScenarioKey.learner);
+    const g = new Game(ScenarioKey.learner, 123456789);
     const p0 = g.oob.findIndex(u => u.active && u.player == PlayerKey.German),
         p1 = g.oob.findIndex(u => u.active && u.player == PlayerKey.Russian),
         u = g.oob.at(p0),
@@ -138,13 +134,13 @@ test("ZoC blocked", () => {
 
     u.moveTo(start);
     for (let i=0; i<4; i++) u.addOrder(DirectionKey.east);
-    g.nextTurn();
+    g.resolveTurn();
     expect(u).toMatchObject({lon: 13, lat: 25});
 })
 
 test("ZoC not blocked", () => {
     // unblocked scenario from doc/apxzoc1.png
-    const g = new Game(ScenarioKey.learner);
+    const g = new Game(ScenarioKey.learner, 123456789);
     const p0 = g.oob.findIndex(u => u.active && u.player == PlayerKey.German),
         p1 = g.oob.findIndex(u => u.active && u.player == PlayerKey.Russian),
         u = g.oob.at(p0),
@@ -155,7 +151,7 @@ test("ZoC not blocked", () => {
 
     u.moveTo(start);
     for (let i=0; i<4; i++) u.addOrder(DirectionKey.east);
-    g.nextTurn();
+    g.resolveTurn();
     expect(u).toMatchObject({lon: 10, lat: 25});
 })
 
@@ -171,7 +167,8 @@ test("ZoC is calculated correctly", () => {
     in spiral ordering that's []. O . X . X X . .] => [5 0 2 5 4 7 6 3 0]
     */
 
-    const locs = Grid.squareSpiral(Grid.lonlat(20, 20), 1)
+    const game = new Game(ScenarioKey.apx, 9792904),
+        locs = Grid.squareSpiral(Grid.lonlat(20, 20), 1)
             .map(p => game.mapboard.locationOf(p)),
         p0 = game.oob.findIndex(u => u.player == PlayerKey.German),
         p1 = game.oob.findIndex(u => u.player == PlayerKey.Russian),

@@ -71,7 +71,7 @@ class Thinker {
                 if (v) u.objective = {lon: v.lon, lat: v.lat};
             } else if (firstpass && (u.cstrng <= (u.mstrng >> 1) || u.ifrdir[pinfo.homedir] >= 16)) {
                 // run home if hurting or outnumbered in the rear
-                // for Russian the whole eastern edge is valid, but generalize to support German AI
+                // for Russian the whole eastern edge is valid, but generalize to support German AI or variant maps
                 const bbox = this.#game.mapboard.bbox,
                     lon = bbox[pinfo.homedir],
                     south = bbox[DirectionKey.south],
@@ -84,7 +84,7 @@ class Thinker {
                 u.objective = {lon, lat};
             } else {
                 // find nearest best square
-                const start = this.#game.mapboard.locationOf(Grid.point(u.objective!));
+                const start = this.#game.mapboard.locationOf(Grid.point(u.objective as Point));
                 let bestval = this.#evalLocation(u, start, friends, foes);
                 this.#game.mapboard.neighborsOf(start).forEach(loc => {
                     if (!loc) return;
@@ -129,7 +129,7 @@ class Thinker {
         if (u.ifr >= 16 && nbval == 0) return 0;
 
         friends.filter(v => v.id != u.id)
-            .forEach(v => { ghosts[Grid.point(v.objective!).gid] = v.id; });
+            .forEach(v => { ghosts[Grid.point(v.objective as Point).gid] = v.id; });
 
         const isOccupied = (pt: GridPoint) => !!ghosts[pt.gid];
         let dibs = false;
@@ -166,7 +166,8 @@ function calcForceRatios(oob: Oob, player: PlayerKey) {
         nearby.forEach(v => {
             const inc = v.cstrng >> 4;
             if (v.player == u.player) friend += inc;
-            else u.ifrdir[Grid.directionFrom(p, Grid.point(v))!] += inc;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            else u.ifrdir[Grid.directionFrom(p, Grid.point(v))!] += inc;  // enemy can't be in same square
         })
         // individual and overall ifr max 255
         const ifr = Math.floor((sum(u.ifrdir) << 4) / friend);

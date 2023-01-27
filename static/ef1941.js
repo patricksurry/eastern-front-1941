@@ -155,36 +155,36 @@ var ef1941 = (function (exports, node_crypto) {
             //TODO fix me
             ncity: 18, mdmg: 1, cdmg: 5, cadj: 0, nunit: [0x37, 0x9f], endturn: 44,
             scoring: { win: 255, location: true },
-            repl: [0, 2]
+            surprised: 1 /* PlayerKey.Russian */, repl: [0, 2]
         },
         [1 /* ScenarioKey.learner */]: {
             label: 'LEARNER', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, start: '1941/6/22',
             ncity: 1, mdmg: 4, cdmg: 12, cadj: 255, nunit: [0x2, 0x31], endturn: 14,
             scoring: { win: 5, strength: [null, 'losses'] },
-            skipsupply: true, simplebreak: true
+            surprised: 1 /* PlayerKey.Russian */, skipsupply: true, simplebreak: true
         },
         [2 /* ScenarioKey.beginner */]: {
             label: 'BEGINNER', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, start: '1941/6/22',
             ncity: 1, mdmg: 4, cdmg: 12, cadj: 150, nunit: [0x12, 0x50], endturn: 14,
             scoring: { win: 25, strength: [null, 'losses'] },
-            skipsupply: true, simplebreak: true
+            surprised: 1 /* PlayerKey.Russian */, skipsupply: true, simplebreak: true
         },
         [3 /* ScenarioKey.intermediate */]: {
             label: 'INTERMED', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, start: '1941/6/22',
             ncity: 3, mdmg: 2, cdmg: 8, cadj: 75, nunit: [0x1f, 0x72], endturn: 40,
-            scoring: { win: 40, strength: ['losses', 'losses'] },
+            surprised: 1 /* PlayerKey.Russian */, scoring: { win: 40, strength: ['losses', 'losses'] },
         },
         [4 /* ScenarioKey.advanced */]: {
             label: 'ADVANCED', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, start: '1941/6/22',
             ncity: 18, mdmg: 1, cdmg: 5, cadj: 25, nunit: [0x2b, 0x90], endturn: 40,
             scoring: { win: 80, strength: ['losses', 'losses'] },
-            fog: 6,
+            surprised: 1 /* PlayerKey.Russian */, fog: 6,
         },
         [5 /* ScenarioKey.expert41 */]: {
             label: 'EXPERT41', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, start: '1941/6/22',
             ncity: 18, mdmg: 1, cdmg: 4, cadj: 0, nunit: [0x30, 0xa8], endturn: 44,
             scoring: { win: 255, strength: ['losses', 'current'] },
-            mvmode: true, fog: 7, defmod: 1,
+            surprised: 1 /* PlayerKey.Russian */, mvmode: true, fog: 7, defmod: 1,
         },
         [6 /* ScenarioKey.expert42 */]: {
             //TODO arrival turns for '42 scenario seem to be calculated in cartridge.asm:3709
@@ -508,12 +508,12 @@ var ef1941 = (function (exports, node_crypto) {
         return { lon, lat, gid };
     }
     const byid = memoize$1(byid_);
-    function nbrsbyid_(gid) {
+    function adjsbyid_(gid) {
         const { lon, lat } = Grid.byid(gid);
         return Object.values(directions)
             .map(({ dlon, dlat }) => Grid.lonlat(lon + dlon, lat + dlat).gid);
     }
-    const nbrsbyid = memoize$1(nbrsbyid_);
+    const adjsbyid = memoize$1(adjsbyid_);
     function directionsFrom(p, q) {
         // project all directions from p to q and rank them, ensuring tie breaking has no bias
         // returned pairs are like [ (q - p) . dir, key ], ordered by projection magnitude
@@ -580,8 +580,8 @@ var ef1941 = (function (exports, node_crypto) {
         byid: byid,
         lonlat: (lon, lat) => byid(toid(lon, lat)),
         point: ({ lon, lat }) => byid(toid(lon, lat)),
-        neighbors: ({ gid }) => nbrsbyid(gid).map(Grid.byid),
-        adjacent: ({ gid }, d) => Grid.byid(nbrsbyid(gid)[d]),
+        adjacencies: ({ gid }) => adjsbyid(gid).map(Grid.byid),
+        adjacent: ({ gid }, d) => Grid.byid(adjsbyid(gid)[d]),
         // calculate the taxicab metric between two locations
         manhattanDistance: (p, q) => Math.abs(p.lat - q.lat) + Math.abs(p.lon - q.lon),
         directionsFrom: directionsFrom,
@@ -870,11 +870,11 @@ var ef1941 = (function (exports, node_crypto) {
             const scenario = scenarios[__classPrivateFieldGet(this, _Mapboard_game, "f").scenario]; mapVariants[scenario.map]; const control = this.cities.map(c => c.owner);
             return [].concat([__classPrivateFieldGet(this, _Mapboard_icelat, "f")], control);
         }
-        newTurn(initialize = false) {
+        nextTurn(startOrResume = false) {
             const mdata = monthdata[__classPrivateFieldGet(this, _Mapboard_game, "f").month];
-            //TODO ick: update the tree color in place in the terrain data :grimace:
+            //TODO :grimace: update the tree color in place in the terrain data
             terraintypes[1 /* TerrainKey.mountain_forest */].altcolor = mdata.trees;
-            if (!initialize && mdata.water != null)
+            if (!startOrResume && mdata.water != null)
                 __classPrivateFieldGet(this, _Mapboard_instances, "m", _Mapboard_freezeThaw).call(this, mdata.water);
         }
         get extent() {
@@ -889,6 +889,10 @@ var ef1941 = (function (exports, node_crypto) {
                 [3 /* DirectionKey.west */]: __classPrivateFieldGet(this, _Mapboard_maxlon, "f") - 1,
                 [1 /* DirectionKey.east */]: 0,
             };
+        }
+        xy({ lon, lat }) {
+            // return an x, y indexed from top, left rather than lon, lat indexed from bottom, right
+            return { x: __classPrivateFieldGet(this, _Mapboard_maxlon, "f") - lon, y: __classPrivateFieldGet(this, _Mapboard_maxlat, "f") - lat };
         }
         describe(loc, debug = false) {
             var _a;
@@ -928,7 +932,7 @@ var ef1941 = (function (exports, node_crypto) {
                 const c = this.cities[loc.cityid];
                 if (c.owner != player) {
                     c.owner = player;
-                    __classPrivateFieldGet(this, _Mapboard_game, "f").emit('map', 'citycontrol');
+                    __classPrivateFieldGet(this, _Mapboard_game, "f").emit('map', 'citycontrol', loc);
                 }
             }
         }
@@ -1051,7 +1055,7 @@ var ef1941 = (function (exports, node_crypto) {
         const pt = __classPrivateFieldGet(this, _Mapboard_validlocs, "f").get(gid);
         if (pt == null)
             return [undefined, undefined, undefined, undefined];
-        return Grid.neighbors(pt).map((q, i) => {
+        return Grid.adjacencies(pt).map((q, i) => {
             const nbr = __classPrivateFieldGet(this, _Mapboard_validlocs, "f").get(q.gid), dir = +i;
             if (nbr == null)
                 return undefined;
@@ -1212,9 +1216,10 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
             // game logic seems to be that Germans can move on arrival turn but Russians can't,
             // including initially placed units because of surprise attack.
             // allow initially placed Russians to move for post 6/22 scenarios
-            if (this.arrive == __classPrivateFieldGet(this, _Unit_game, "f").turn && this.player == 1 /* PlayerKey.Russian */ &&
-                (this.arrive > 0 || scenarios[__classPrivateFieldGet(this, _Unit_game, "f").scenario].start == '1941/6/22'))
+            if ((this.arrive == __classPrivateFieldGet(this, _Unit_game, "f").turn && this.player == 1 /* PlayerKey.Russian */)
+                || (__classPrivateFieldGet(this, _Unit_game, "f").turn == 0 && this.player == scenarios[__classPrivateFieldGet(this, _Unit_game, "f").scenario].surprised)) {
                 return 0;
+            }
             return 1;
         }
         get human() {
@@ -1385,8 +1390,8 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
                             const halfDistance = Math.max(1, this.orders.length >> 1);
                             u.cadj += Math.floor(this.cstrng / halfDistance);
                         }
-                        u.resetOrders(); // clear orders: air mission flown
                     }
+                    this.resetOrders(); // clear orders: air mission flown
                 }
             }
             this.tick = this.orders.length
@@ -1416,6 +1421,9 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
         moveTo(dst, notify = true) {
             let action = 'move';
             if (this.location.unitid) {
+                if (this.location.unitid != this.id) {
+                    throw (`moveTo from square occupied by both:\n${this.describe()}\nand:\n${__classPrivateFieldGet(this, _Unit_game, "f").oob.at(this.location.unitid).describe()}`);
+                }
                 this.location.unitid = undefined; // leave the current location
             }
             else {
@@ -1498,13 +1506,13 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
             this.flags = 0;
             this.resetOrders();
         }
-        newTurn(initialize) {
+        nextTurn(startOrResume) {
             var _a;
-            if (!this.active)
-                return;
+            // called for active (or potentially active) units
             const scenario = scenarios[__classPrivateFieldGet(this, _Unit_game, "f").scenario];
-            if (initialize) {
-                this.moveTo(this.location, false); // don't emit events for these
+            if (startOrResume) {
+                // place units on map but don't emit events
+                this.moveTo(this.location, false);
                 if (__classPrivateFieldGet(this, _Unit_game, "f").turn == 0 && scenario.fog) {
                     this.fog = scenario.fog;
                     {
@@ -1514,20 +1522,28 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
                 }
             }
             else {
-                this.flags = 0;
+                // M.ASM:3720 delay reinforcements scheduled for an occuplied square
+                if (this.arrive == __classPrivateFieldGet(this, _Unit_game, "f").turn) {
+                    if (this.location.unitid != null) {
+                        this.arrive++;
+                        return; // early return
+                    }
+                    this.moveTo(this.location); // place unit on the map
+                }
+                // supply check includes any new arrivals
                 const inSupply = scenario.skipsupply || this.traceSupply();
                 if (scenario.repl && inSupply) {
                     // possibly receive replacements
                     this.mstrng = Math.min(255, this.mstrng + scenario.repl[this.player]);
                 }
                 if (!this.active)
-                    return; // quit if we were elimiated
+                    return; // quit if eliminated OoS
                 if (scenario.fog) {
                     const change = __classPrivateFieldGet(this, _Unit_game, "f").oob.zocAffects(this.player, this.location, true) ? -1 : 1;
                     this.fog = clamp(this.fog + change, 0, scenario.fog);
                 }
             }
-            // set up base cstrng adjustment
+            this.flags = 0;
             this.cadj = this.player == 0 /* PlayerKey.German */ ? ((_a = scenarios[__classPrivateFieldGet(this, _Unit_game, "f").scenario].cadj) !== null && _a !== void 0 ? _a : 0) : 0;
         }
         traceSupply() {
@@ -1546,9 +1562,17 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
                     // hit an impassable boundary on our home boundary?
                     return 1;
                 }
-                const dst = mb.neighborOf(loc, dir);
+                let dst = mb.neighborOf(loc, dir);
+                if (dst == null && supply.sea) {
+                    const adj = Grid.adjacent(loc, dir);
+                    if (mb.valid(adj)) {
+                        const sea = mb.locationOf(adj);
+                        if (sea.terrain == 9 /* TerrainKey.impassable */ && sea.alt == 0)
+                            dst = sea;
+                    }
+                }
                 let cost = 0;
-                if (dst == null || (dst.terrain == 9 /* TerrainKey.impassable */ && (supply.sea == 0 || dst.alt == 1))) {
+                if (dst == null) {
                     cost = 1;
                 }
                 else if (__classPrivateFieldGet(this, _Unit_game, "f").oob.zocAffects(this.player, dst)) {
@@ -1589,8 +1613,9 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
         describe(debug = false) {
             const { cstrng, mstrng } = this.foggyStrength(__classPrivateFieldGet(this, _Unit_game, "f").human);
             let s = `[${this.id}] ${cstrng} / ${mstrng}`;
-            if (debug && this.player != __classPrivateFieldGet(this, _Unit_game, "f").human)
-                s += ` (actual ${this.cstrng} / ${this.mstrng})`;
+            if (debug && scenarios[__classPrivateFieldGet(this, _Unit_game, "f").scenario].fog && this.player != __classPrivateFieldGet(this, _Unit_game, "f").human) {
+                s += ` (actual ${this.cstrng} / ${this.mstrng}; fog ${this.fog})`;
+            }
             s += `\n${this.label}\n`;
             if (debug && this.ifr !== undefined && this.ifrdir !== undefined) {
                 if (this.orders.length) {
@@ -2325,7 +2350,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
             });
             return status.concat(zigzag(dlats), zigzag(dlons), zigzag(dmstrs), cdmgs, dfogs, modes, nords, ords);
         }
-        strngScore(player) {
+        scoreStrengths(player) {
             var _a;
             const scenario = __classPrivateFieldGet(this, _Oob_game, "f").scenario, scoring = scenarios[scenario].scoring, current = Object.keys(players).map(p => sum(__classPrivateFieldGet(this, _Oob_units, "f").filter(u => (u.player == +p)).map(u => u.cstrng)) >> 7), losses = Object.keys(players).map(p => (this.startmstrng[+p] >> 7) - current[+p]);
             let score = 0;
@@ -2335,24 +2360,16 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
             });
             return (player == 0 /* PlayerKey.German */ ? 1 : -1) * score;
         }
-        newTurn(initialize) {
-            this.activeUnits().forEach(u => u.newTurn(initialize));
-            if (!initialize) {
-                // M.ASM:3720 delay reinforcements scheduled for an occuplied square
-                this.filter(u => u.arrive == __classPrivateFieldGet(this, _Oob_game, "f").turn)
-                    .forEach(u => {
-                    const loc = u.location;
-                    if (loc.unitid != null) {
-                        u.arrive++;
-                    }
-                    else {
-                        u.moveTo(loc); // reveal unit and link to the map square
-                    }
-                });
-            }
+        nextTurn(startOrResume) {
+            this.activeUnits().forEach(u => u.nextTurn(startOrResume));
         }
         activeUnits(player) {
             return this.filter((u) => u.active && (player == null || u.player == player));
+        }
+        centerOfGravity(player) {
+            const units = this.activeUnits(player), { lat, lon } = units.reduce(({ lat, lon }, u) => ({ lat: lat + u.lat, lon: lon + u.lon }), { lat: 0, lon: 0 });
+            // note this usually returns fractional lat/lon which is ok for scroll management
+            return { lat: lat / units.length, lon: lon / units.length };
         }
         scheduleOrders() {
             // M.asm:4950 movement execution
@@ -2915,24 +2932,22 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
       return ret;
     }
 
-    var _Game_instances, _Game_newTurn;
+    /* eslint-disable @typescript-eslint/no-non-null-assertion */
     const tokenPrefix = 'EF41', tokenVersion = 1, rlSigil = 6; // highest 5-bit coded value, so values 0..3 (& 4,5) are unchanged by rlencode
     class Game extends EventEmitter {
-        // create a game from a saved state token, a scenario key, or default
-        constructor(token) {
+        constructor(tokenOrScenario, seed) {
             super(); // init EventEmitter
-            _Game_instances.add(this);
-            this.scenario = 0 /* ScenarioKey.apx */;
+            this.scenario = 1 /* ScenarioKey.learner */;
             this.human = 0 /* PlayerKey.German */;
             this.turn = 0; // 0-based turn index
             // flags
             this.handicap = 0; // whether the game is handicapped
-            let memento = undefined, seed = undefined;
-            if (typeof token == 'number') {
-                this.scenario = token;
+            let memento;
+            if (typeof tokenOrScenario === 'number') {
+                this.scenario = tokenOrScenario;
             }
-            else if (typeof token === 'string') {
-                const payload = unwrap64(token, tokenPrefix);
+            else if (typeof tokenOrScenario === 'string') {
+                const payload = unwrap64(tokenOrScenario, tokenPrefix);
                 seed = bitsdecode(payload, 24);
                 memento = rldecode(fibdecode(payload), rlSigil);
                 if (memento.length < 7)
@@ -2952,7 +2967,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
             if (memento && memento.length != 0) {
                 throw new Error("Game: unexpected save data overflow");
             }
-            __classPrivateFieldGet(this, _Game_instances, "m", _Game_newTurn).call(this, true);
+            this.nextTurn(true);
         }
         get memento() {
             // return a list of uint representing the state of the game
@@ -2975,17 +2990,18 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
                 // special end condition for learner mode
                 || (this.scenario == 1 /* ScenarioKey.learner */ && this.mapboard.cities[0].owner == 0 /* PlayerKey.German */));
         }
-        nextTurn(delay) {
-            // process the orders for this turn, if delay we tick asynchrnously,
+        resolveTurn(delay) {
+            // external entry for nextTurn to process orders for this turn
+            // and advance to next
+            // if delay is provided we tick asynchrnously,
             // otherwise we resolve synchronously
-            // either way we proceed to subsequent startTurn or game end
             let tick = 0;
             this.oob.scheduleOrders();
             // Set up for a sync or async loop
             const tickTock = () => {
                 this.oob.executeOrders(tick);
                 this.emit('game', 'tick');
-                const next = tick++ < 32 ? tickTock : () => __classPrivateFieldGet(this, _Game_instances, "m", _Game_newTurn).call(this);
+                const next = tick++ < 32 ? tickTock : () => this.nextTurn();
                 if (delay)
                     setTimeout(next, delay);
                 else
@@ -2993,11 +3009,24 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
             };
             tickTock();
         }
+        nextTurn(startOrResume = false) {
+            const dt = new Date(scenarios[this.scenario].start), ongoing = !this.over;
+            if (!startOrResume && ongoing)
+                this.turn++;
+            this.date = new Date(dt.setDate(dt.getDate() + 7 * this.turn));
+            this.month = this.date.getMonth(); // note JS getMonth is 0-indexed
+            this.weather = monthdata[this.month].weather;
+            if (startOrResume || ongoing) {
+                this.mapboard.nextTurn(startOrResume);
+                this.oob.nextTurn(startOrResume);
+            }
+            this.emit('game', ongoing ? 'turn' : 'over');
+        }
         score(player) {
             var _a;
             // M.asm:4050
             const scoring = scenarios[this.scenario].scoring;
-            const eastwest = sum(this.oob.map(u => u.locScore() * (u.player == player ? 1 : -1))), strng = this.oob.strngScore(player), cities = sum(this.mapboard.cities.filter(c => c.owner == player).map(c => c.points));
+            const eastwest = sum(this.oob.map(u => u.locScore() * (u.player == player ? 1 : -1))), strng = this.oob.scoreStrengths(player), cities = sum(this.mapboard.cities.filter(c => c.owner == player).map(c => c.points));
             let score = cities + (scoring.location ? Math.max(0, eastwest) : 0) + strng + ((_a = scoring.adjust) !== null && _a !== void 0 ? _a : 0);
             if (this.handicap)
                 score >>= 1;
@@ -3012,21 +3041,201 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
             return super.on(event, listener);
         }
     }
-    _Game_instances = new WeakSet(), _Game_newTurn = function _Game_newTurn(initialize = false) {
-        const dt = new Date(scenarios[this.scenario].start);
-        this.date = new Date(dt.setDate(dt.getDate() + 7 * this.turn));
-        this.month = this.date.getMonth(); // note JS getMonth is 0-indexed
-        this.weather = monthdata[this.month].weather;
-        if (this.over) {
-            this.emit('game', 'over');
+
+    var _Thinker_instances, _Thinker_game, _Thinker_player, _Thinker_trainOfThought, _Thinker_depth, _Thinker_delay, _Thinker_recur, _Thinker_findBeleaguered, _Thinker_evalLocation;
+    class Thinker {
+        constructor(game, player) {
+            _Thinker_instances.add(this);
+            _Thinker_game.set(this, void 0);
+            _Thinker_player.set(this, void 0);
+            _Thinker_trainOfThought.set(this, 0);
+            _Thinker_depth.set(this, 0);
+            _Thinker_delay.set(this, 0);
+            this.finalized = true;
+            __classPrivateFieldSet(this, _Thinker_game, game, "f");
+            __classPrivateFieldSet(this, _Thinker_player, player, "f");
+        }
+        thinkRecurring(delay) {
+            __classPrivateFieldSet(this, _Thinker_delay, (delay == null) ? 250 : delay, "f");
+            this.finalized = false;
+            __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_recur).call(this, __classPrivateFieldGet(this, _Thinker_trainOfThought, "f"));
+        }
+        finalize() {
+            var _a;
+            console.debug("Finalizing...");
+            __classPrivateFieldSet(this, _Thinker_trainOfThought, (_a = __classPrivateFieldGet(this, _Thinker_trainOfThought, "f"), _a++, _a), "f");
+            __classPrivateFieldSet(this, _Thinker_depth, 0, "f");
+            this.finalized = true;
+            __classPrivateFieldGet(this, _Thinker_game, "f").oob.activeUnits(__classPrivateFieldGet(this, _Thinker_player, "f")).forEach(u => u.setOrders(u.orders.slice(0, 8)));
+        }
+        think() {
+            const firstpass = __classPrivateFieldGet(this, _Thinker_depth, "f") == 0, pinfo = players[__classPrivateFieldGet(this, _Thinker_player, "f")], friends = __classPrivateFieldGet(this, _Thinker_game, "f").oob.activeUnits(__classPrivateFieldGet(this, _Thinker_player, "f")), foes = __classPrivateFieldGet(this, _Thinker_game, "f").oob.activeUnits(1 - __classPrivateFieldGet(this, _Thinker_player, "f"));
+            // set up the ghost army
+            let ofr = 0; // only used in first pass
+            if (firstpass) {
+                ofr = calcForceRatios(__classPrivateFieldGet(this, _Thinker_game, "f").oob, __classPrivateFieldGet(this, _Thinker_player, "f")).ofr;
+                friends.forEach(u => { u.objective = { lon: u.lon, lat: u.lat }; });
+            }
+            friends.filter(u => u.movable).forEach(u => {
+                var _a;
+                //TODO these first two checks don't seem to depend on ghost army so are fixed on first pass?
+                if (firstpass && u.ifr == (ofr >> 1)) {
+                    // head to reinforce if no local threat since (Local + OFR) / 2 = OFR / 2
+                    //TODO this tends to send most units to same beleagured square
+                    const v = __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_findBeleaguered).call(this, u, friends);
+                    if (v)
+                        u.objective = { lon: v.lon, lat: v.lat };
+                }
+                else if (firstpass && (u.cstrng <= (u.mstrng >> 1) || u.ifrdir[pinfo.homedir] >= 16)) {
+                    // run home if hurting or outnumbered in the rear
+                    // for Russian the whole eastern edge is valid, but generalize to support German AI or variant maps
+                    const bbox = __classPrivateFieldGet(this, _Thinker_game, "f").mapboard.bbox, lon = bbox[pinfo.homedir], south = bbox[2 /* DirectionKey.south */], north = bbox[0 /* DirectionKey.north */], lat = (_a = [...Array(north - south + 1).keys()]
+                        .map(k => k + south)
+                        .sort((a, b) => (Math.abs(a - u.lat) - Math.abs(b - u.lat)) || a - b)
+                        .find(lat => __classPrivateFieldGet(this, _Thinker_game, "f").mapboard.locationOf(Grid.lonlat(lon, lat)).terrain != 9 /* TerrainKey.impassable */)) !== null && _a !== void 0 ? _a : u.lat;
+                    u.objective = { lon, lat };
+                }
+                else {
+                    // find nearest best square
+                    const start = __classPrivateFieldGet(this, _Thinker_game, "f").mapboard.locationOf(Grid.point(u.objective));
+                    let bestval = __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_evalLocation).call(this, u, start, friends, foes);
+                    __classPrivateFieldGet(this, _Thinker_game, "f").mapboard.neighborsOf(start).forEach(loc => {
+                        if (!loc)
+                            return;
+                        const sqval = __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_evalLocation).call(this, u, loc, friends, foes);
+                        if (sqval > bestval) {
+                            bestval = sqval;
+                            u.objective = { lon: loc.lon, lat: loc.lat };
+                        }
+                    });
+                }
+                if (!u.objective)
+                    return;
+                const result = u.pathTo(u.objective);
+                if (!result)
+                    return;
+                u.setOrders(result.orders); // We'll prune to 8 later
+            });
+            return friends.filter(u => u.objective);
+        }
+    }
+    _Thinker_game = new WeakMap(), _Thinker_player = new WeakMap(), _Thinker_trainOfThought = new WeakMap(), _Thinker_depth = new WeakMap(), _Thinker_delay = new WeakMap(), _Thinker_instances = new WeakSet(), _Thinker_recur = function _Thinker_recur(train) {
+        var _a;
+        if (train != __classPrivateFieldGet(this, _Thinker_trainOfThought, "f")) {
+            // skip pre-scheduled old train of thought
+            console.debug(`Skipped passing thought, train ${train}`);
             return;
         }
-        if (!initialize)
-            this.turn++;
-        this.mapboard.newTurn(initialize);
-        this.oob.newTurn(initialize);
-        this.emit('game', 'turn');
+        const t0 = performance.now();
+        this.think();
+        const dt = performance.now() - t0;
+        __classPrivateFieldSet(this, _Thinker_delay, __classPrivateFieldGet(this, _Thinker_delay, "f") * 1.1, "f"); // gradually back off thinking rate
+        console.debug(`Think.#recur ${train}-${__classPrivateFieldGet(this, _Thinker_depth, "f")} took ${Math.round(dt)}ms; waiting ${Math.round(__classPrivateFieldGet(this, _Thinker_delay, "f"))}ms`);
+        __classPrivateFieldSet(this, _Thinker_depth, (_a = __classPrivateFieldGet(this, _Thinker_depth, "f"), _a++, _a), "f");
+        setTimeout(() => __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_recur).call(this, train), __classPrivateFieldGet(this, _Thinker_delay, "f"));
+    }, _Thinker_findBeleaguered = function _Thinker_findBeleaguered(u, friends) {
+        let best = null, score = 0;
+        friends.filter(v => v.ifr > u.ifr).forEach(v => {
+            const d = Grid.manhattanDistance(u, v);
+            if (d <= 8)
+                return; // APX code does weird bit 3 check
+            const s = v.ifr - (d >> 3);
+            if (s > score) {
+                score = s;
+                best = v;
+            }
+        });
+        return best;
+    }, _Thinker_evalLocation = function _Thinker_evalLocation(u, loc, friends, foes) {
+        const ghosts = {}, range = Grid.manhattanDistance(u, loc);
+        // too far, early exit
+        if (range >= 8)
+            return 0;
+        const nbval = Math.min(...foes.map(v => Grid.manhattanDistance(loc, v)));
+        // on the defensive and square is occupied by an enemy
+        if (u.ifr >= 16 && nbval == 0)
+            return 0;
+        friends.filter(v => v.id != u.id)
+            .forEach(v => { ghosts[Grid.point(v.objective).gid] = v.id; });
+        const isOccupied = (pt) => !!ghosts[pt.gid];
+        let dibs = false;
+        if (isOccupied(loc))
+            dibs = true; // someone else have dibs already?
+        else
+            ghosts[loc.gid] = u.id;
+        const square = Grid.squareSpiral(loc, 2), linepts = Object.keys(directions).map(d => linePoints(sortSquareFacing(loc, 5, +d, square), 5, isOccupied)), tadj = terraintypes[loc.terrain].defence + 2; // our 0 adj is equiv to his 2
+        let sqval = sum(linepts.map((scr, i) => scr * u.ifrdir[i])) >> 8;
+        sqval += u.ifr >= 16 ? u.ifr * (nbval + tadj) : 2 * (15 - u.ifr) * (9 - nbval + tadj);
+        if (dibs)
+            sqval -= 32;
+        sqval -= 1 << range;
+        return sqval < 0 ? 0 : sqval;
     };
+    function calcForceRatios(oob, player) {
+        const active = oob.activeUnits(), friend = sum(active.filter(u => u.player == player).map(u => u.cstrng)), foe = sum(active.filter(u => u.player != player).map(u => u.cstrng)), ofr = Math.floor((foe << 4) / friend), ofropp = Math.floor((friend << 4) / foe);
+        active.forEach(u => {
+            const nearby = active.filter(v => Grid.manhattanDistance(u, v) <= 8), p = Grid.point(u);
+            let friend = 0;
+            u.ifrdir = [0, 0, 0, 0];
+            nearby.forEach(v => {
+                const inc = v.cstrng >> 4;
+                if (v.player == u.player)
+                    friend += inc;
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                else
+                    u.ifrdir[Grid.directionFrom(p, Grid.point(v))] += inc; // enemy can't be in same square
+            });
+            // individual and overall ifr max 255
+            const ifr = Math.floor((sum(u.ifrdir) << 4) / friend);
+            // we actually work with average of IFR + OFR
+            u.ifr = (ifr + (u.player == player ? ofr : ofropp)) >> 1;
+        });
+        return { ofr, friend, foe };
+    }
+    function sortSquareFacing(center, diameter, dir, locs) {
+        if (diameter % 2 != 1)
+            throw (`sortSquareFacing: diameter should be odd, got ${diameter}`);
+        if (!locs || locs.length != diameter * diameter)
+            throw (`sortSquareFacing: diameter : size mismatch ${locs.length} != ${diameter}^2`);
+        const r = (diameter - 1) / 2, minor = directions[(dir + 1) % 4], major = directions[(dir + 2) % 4], out = new Array(locs.length);
+        locs.forEach(loc => {
+            const dlat = loc.lat - center.lat, dlon = loc.lon - center.lon, idx = (r + dlat * major.dlat + dlon * major.dlon
+                + diameter * (r + dlat * minor.dlat + dlon * minor.dlon));
+            out[idx] = loc;
+        });
+        return out;
+    }
+    function linePoints(locs, diameter, occupied) {
+        // curious that this doesn't consider terrain, e.g. a line ending at the coast will get penalized heavily?
+        const r = (diameter - 1) / 2, frontline = Array(diameter).fill(diameter), counts = Array(diameter).fill(0);
+        let row = -1, col = -1, score = 0;
+        locs.forEach(loc => {
+            row = (row + 1) % diameter;
+            if (row == 0)
+                col++;
+            if (occupied(loc)) {
+                counts[col] += 1;
+                if (frontline[col] == diameter)
+                    frontline[col] = row;
+            }
+        });
+        frontline.forEach((row, col) => {
+            if (row < diameter)
+                score += 40;
+            if (row < diameter - 1 && occupied(locs[row + 1 + diameter * col]))
+                score -= 32;
+        });
+        if (frontline[r] == r && counts[r] == 1)
+            score += 48;
+        // also curious that we look at all pairs not just adjacent ones?
+        for (let i = 1; i < diameter; i++)
+            for (let j = 0; j < i; j++) {
+                const delta = Math.abs(frontline[i] - frontline[j]);
+                if (delta)
+                    score -= 1 << delta;
+            }
+        return score;
+    }
 
     const atascii = (c) => c.charCodeAt(0) & 0x7f, atasciiFont = fontMap('static/fontmap-atascii.png', 128);
     function fontMap(maskImage, numGlyphs, glyphSize = 8, glyphsPerRow = 16) {
@@ -3368,7 +3577,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
             _AppModel_extras.set(this, true); // whether to show extras
             _AppModel_debug.set(this, false); // whether to show debug info
             this.zoom = true; // zoom 2x or not?
-            _AppModel_game.set(this, new Game());
+            _AppModel_game.set(this, new Game(1 /* ScenarioKey.learner */));
             _AppModel_id.set(this, -1); // most-recently focused unit
             _AppModel_active.set(this, false); // focus currently active?
             this.dateWindow = new MappedDisplayLayer(21, 2, atasciiFont, { foregroundColor: 0x6A, layerColor: 0xB0 });
@@ -3427,7 +3636,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
             }
         }
         focusShift(offset) {
-            const g = __classPrivateFieldGet(this, _AppModel_game, "f"), locid = (u) => g.mapboard.locationOf(Grid.point(u)).gid, humanUnits = g.oob.activeUnits(g.human).sort((a, b) => locid(b) - locid(a)), n = humanUnits.length;
+            const g = __classPrivateFieldGet(this, _AppModel_game, "f"), locid = (u) => u.location.gid, humanUnits = g.oob.activeUnits(g.human).sort((a, b) => locid(b) - locid(a)), n = humanUnits.length;
             let i;
             if (__classPrivateFieldGet(this, _AppModel_id, "f") >= 0) {
                 i = humanUnits.findIndex(u => u.id == __classPrivateFieldGet(this, _AppModel_id, "f"));
@@ -3445,9 +3654,9 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
         }
         paintCityLabels() {
             // these are static so never need redrawn, color changes via paintMap
-            const { lon: left, lat: top } = __classPrivateFieldGet(this, _AppModel_game, "f").mapboard.locations[0][0];
             __classPrivateFieldGet(this, _AppModel_game, "f").mapboard.cities.forEach((c, i) => {
-                this.labelLayer.put(i.toString(), 32, left - c.lon, top - c.lat, {
+                const { x, y } = __classPrivateFieldGet(this, _AppModel_game, "f").mapboard.xy(c);
+                this.labelLayer.put(i.toString(), 32, x, y, {
                     props: { label: c.label, points: c.points }
                 });
             });
@@ -3470,7 +3679,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
                             this.infoWindow.puts(`\f^${city.label.toUpperCase()}`);
                     },
                     onmouseover: (e) => {
-                        e.currentTarget.title = g.mapboard.describe(loc, this.debug);
+                        e.currentTarget.title = g.mapboard.describe(loc);
                         e.redraw = false; // prevent mithril redraw
                     },
                 });
@@ -3480,12 +3689,11 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
             __classPrivateFieldGet(this, _AppModel_game, "f").oob.forEach(u => this.paintUnit(u));
         }
         paintReach(u) {
-            const { lon: left, lat: top } = __classPrivateFieldGet(this, _AppModel_game, "f").mapboard.locations[0][0], pts = u.reach();
             this.maskLayer.cls(0); // mask everything with block char, then clear reach squares
-            pts.forEach(({ lon, lat }) => this.maskLayer.putc(undefined, { x: left - lon, y: top - lat }));
+            u.reach().forEach(pt => this.maskLayer.putc(undefined, __classPrivateFieldGet(this, _AppModel_game, "f").mapboard.xy(pt)));
         }
         paintUnit(u) {
-            const g = __classPrivateFieldGet(this, _AppModel_game, "f"), { earth } = weatherdata[g.weather], { lon: left, lat: top } = g.mapboard.locations[0][0], ux = left - u.lon, uy = top - u.lat;
+            const g = __classPrivateFieldGet(this, _AppModel_game, "f"), { earth } = weatherdata[g.weather], { x, y } = g.mapboard.xy(u);
             let animation = undefined;
             if (u === this.focussed()) {
                 const f = u.foggyStrength(g.human);
@@ -3496,9 +3704,9 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
                         this.infoWindow.puts(`\fH\f>${unitModes[u.mode].label} \nMODE   `);
                     const props = { orders: u.orders };
                     this.kreuzeLayer.cls();
-                    this.kreuzeLayer.put('#', 0x80, ux, uy, { foregroundColor: 0x1A, props });
+                    this.kreuzeLayer.put('#', 0x80, x, y, { foregroundColor: 0x1A, props });
                     if (u.orders.length) {
-                        Object.values(directions).forEach(d => this.kreuzeLayer.put(d.label, d.icon, ux, uy, { foregroundColor: 0xDC, props }));
+                        Object.values(directions).forEach(d => this.kreuzeLayer.put(d.label, d.icon, x, y, { foregroundColor: 0xDC, props }));
                     }
                 }
             }
@@ -3516,7 +3724,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
                 opacity: u.active ? 1 : 0,
                 animate: animation,
                 onmouseover: (e) => {
-                    e.currentTarget.title = g.mapboard.describe(u.location, this.debug);
+                    e.currentTarget.title = g.mapboard.describe(u.location, u.player == g.human || this.debug);
                     e.redraw = false; // prevent mithril redraw
                 },
                 onclick: () => {
@@ -3538,7 +3746,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
             else {
                 opts.props = {};
             }
-            this.unitLayer.put(`${__classPrivateFieldGet(this, _AppModel_game, "f").scenario}:${u.id}`, unitkinds[u.kind].icon, ux, uy, opts);
+            this.unitLayer.put(`${__classPrivateFieldGet(this, _AppModel_game, "f").scenario}:${u.id}`, unitkinds[u.kind].icon, x, y, opts);
         }
     }
     _AppModel_extras = new WeakMap(), _AppModel_debug = new WeakMap(), _AppModel_game = new WeakMap(), _AppModel_id = new WeakMap(), _AppModel_active = new WeakMap();
@@ -3569,6 +3777,7 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
             ctrl.app.help = !ctrl.app.help;
         }
         else if (keymap.zoom.includes(key)) {
+            ctrl.view.pinMapCenter();
             ctrl.app.zoom = !ctrl.app.zoom;
         }
         else if (keymap.extras.includes(key)) {
@@ -3644,200 +3853,6 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
             return false;
         }
         return true;
-    }
-
-    var _Thinker_instances, _Thinker_game, _Thinker_player, _Thinker_trainOfThought, _Thinker_depth, _Thinker_delay, _Thinker_recur, _Thinker_findBeleaguered, _Thinker_evalLocation;
-    class Thinker {
-        constructor(game, player) {
-            _Thinker_instances.add(this);
-            _Thinker_game.set(this, void 0);
-            _Thinker_player.set(this, void 0);
-            _Thinker_trainOfThought.set(this, 0);
-            _Thinker_depth.set(this, 0);
-            _Thinker_delay.set(this, 0);
-            this.finalized = true;
-            __classPrivateFieldSet(this, _Thinker_game, game, "f");
-            __classPrivateFieldSet(this, _Thinker_player, player, "f");
-        }
-        thinkRecurring(delay) {
-            __classPrivateFieldSet(this, _Thinker_delay, (delay == null) ? 250 : delay, "f");
-            this.finalized = false;
-            __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_recur).call(this, __classPrivateFieldGet(this, _Thinker_trainOfThought, "f"));
-        }
-        finalize() {
-            var _a;
-            console.debug("Finalizing...");
-            __classPrivateFieldSet(this, _Thinker_trainOfThought, (_a = __classPrivateFieldGet(this, _Thinker_trainOfThought, "f"), _a++, _a), "f");
-            __classPrivateFieldSet(this, _Thinker_depth, 0, "f");
-            this.finalized = true;
-            __classPrivateFieldGet(this, _Thinker_game, "f").oob.activeUnits(__classPrivateFieldGet(this, _Thinker_player, "f")).forEach(u => u.setOrders(u.orders.slice(0, 8)));
-        }
-        think() {
-            const firstpass = __classPrivateFieldGet(this, _Thinker_depth, "f") == 0, pinfo = players[__classPrivateFieldGet(this, _Thinker_player, "f")], friends = __classPrivateFieldGet(this, _Thinker_game, "f").oob.activeUnits(__classPrivateFieldGet(this, _Thinker_player, "f")), foes = __classPrivateFieldGet(this, _Thinker_game, "f").oob.activeUnits(1 - __classPrivateFieldGet(this, _Thinker_player, "f"));
-            // set up the ghost army
-            let ofr = 0; // only used in first pass
-            if (firstpass) {
-                ofr = calcForceRatios(__classPrivateFieldGet(this, _Thinker_game, "f").oob, __classPrivateFieldGet(this, _Thinker_player, "f")).ofr;
-                friends.forEach(u => { u.objective = { lon: u.lon, lat: u.lat }; });
-            }
-            friends.filter(u => u.movable).forEach(u => {
-                var _a;
-                //TODO these first two checks don't seem to depend on ghost army so are fixed on first pass?
-                if (firstpass && u.ifr == (ofr >> 1)) {
-                    // head to reinforce if no local threat since (Local + OFR) / 2 = OFR / 2
-                    //TODO this tends to send most units to same beleagured square
-                    const v = __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_findBeleaguered).call(this, u, friends);
-                    if (v)
-                        u.objective = { lon: v.lon, lat: v.lat };
-                }
-                else if (firstpass && (u.cstrng <= (u.mstrng >> 1) || u.ifrdir[pinfo.homedir] >= 16)) {
-                    // run home if hurting or outnumbered in the rear
-                    // for Russian the whole eastern edge is valid, but generalize to support German AI
-                    const bbox = __classPrivateFieldGet(this, _Thinker_game, "f").mapboard.bbox, lon = bbox[pinfo.homedir], south = bbox[2 /* DirectionKey.south */], north = bbox[0 /* DirectionKey.north */], lat = (_a = [...Array(north - south + 1).keys()]
-                        .map(k => k + south)
-                        .sort((a, b) => (Math.abs(a - u.lat) - Math.abs(b - u.lat)) || a - b)
-                        .find(lat => __classPrivateFieldGet(this, _Thinker_game, "f").mapboard.locationOf(Grid.lonlat(lon, lat)).terrain != 9 /* TerrainKey.impassable */)) !== null && _a !== void 0 ? _a : u.lat;
-                    u.objective = { lon, lat };
-                }
-                else {
-                    // find nearest best square
-                    const start = __classPrivateFieldGet(this, _Thinker_game, "f").mapboard.locationOf(Grid.point(u.objective));
-                    let bestval = __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_evalLocation).call(this, u, start, friends, foes);
-                    __classPrivateFieldGet(this, _Thinker_game, "f").mapboard.neighborsOf(start).forEach(loc => {
-                        if (!loc)
-                            return;
-                        const sqval = __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_evalLocation).call(this, u, loc, friends, foes);
-                        if (sqval > bestval) {
-                            bestval = sqval;
-                            u.objective = { lon: loc.lon, lat: loc.lat };
-                        }
-                    });
-                }
-                if (!u.objective)
-                    return;
-                const result = u.pathTo(u.objective);
-                if (!result)
-                    return;
-                u.setOrders(result.orders); // We'll prune to 8 later
-            });
-            return friends.filter(u => u.objective);
-        }
-    }
-    _Thinker_game = new WeakMap(), _Thinker_player = new WeakMap(), _Thinker_trainOfThought = new WeakMap(), _Thinker_depth = new WeakMap(), _Thinker_delay = new WeakMap(), _Thinker_instances = new WeakSet(), _Thinker_recur = function _Thinker_recur(train) {
-        var _a;
-        if (train != __classPrivateFieldGet(this, _Thinker_trainOfThought, "f")) {
-            // skip pre-scheduled old train of thought
-            console.debug(`Skipped passing thought, train ${train}`);
-            return;
-        }
-        const t0 = performance.now();
-        this.think();
-        const dt = performance.now() - t0;
-        __classPrivateFieldSet(this, _Thinker_delay, __classPrivateFieldGet(this, _Thinker_delay, "f") * 1.1, "f"); // gradually back off thinking rate
-        console.debug(`Think.#recur ${train}-${__classPrivateFieldGet(this, _Thinker_depth, "f")} took ${Math.round(dt)}ms; waiting ${Math.round(__classPrivateFieldGet(this, _Thinker_delay, "f"))}ms`);
-        __classPrivateFieldSet(this, _Thinker_depth, (_a = __classPrivateFieldGet(this, _Thinker_depth, "f"), _a++, _a), "f");
-        setTimeout(() => __classPrivateFieldGet(this, _Thinker_instances, "m", _Thinker_recur).call(this, train), __classPrivateFieldGet(this, _Thinker_delay, "f"));
-    }, _Thinker_findBeleaguered = function _Thinker_findBeleaguered(u, friends) {
-        let best = null, score = 0;
-        friends.filter(v => v.ifr > u.ifr).forEach(v => {
-            const d = Grid.manhattanDistance(u, v);
-            if (d <= 8)
-                return; // APX code does weird bit 3 check
-            const s = v.ifr - (d >> 3);
-            if (s > score) {
-                score = s;
-                best = v;
-            }
-        });
-        return best;
-    }, _Thinker_evalLocation = function _Thinker_evalLocation(u, loc, friends, foes) {
-        const ghosts = {}, range = Grid.manhattanDistance(u, loc);
-        // too far, early exit
-        if (range >= 8)
-            return 0;
-        const nbval = Math.min(...foes.map(v => Grid.manhattanDistance(loc, v)));
-        // on the defensive and square is occupied by an enemy
-        if (u.ifr >= 16 && nbval == 0)
-            return 0;
-        friends.filter(v => v.id != u.id)
-            .forEach(v => { ghosts[Grid.point(v.objective).gid] = v.id; });
-        const isOccupied = (pt) => !!ghosts[pt.gid];
-        let dibs = false;
-        if (isOccupied(loc))
-            dibs = true; // someone else have dibs already?
-        else
-            ghosts[loc.gid] = u.id;
-        const square = Grid.squareSpiral(loc, 2), linepts = Object.keys(directions).map(d => linePoints(sortSquareFacing(loc, 5, +d, square), 5, isOccupied)), tadj = terraintypes[loc.terrain].defence + 2; // our 0 adj is equiv to his 2
-        let sqval = sum(linepts.map((scr, i) => scr * u.ifrdir[i])) >> 8;
-        sqval += u.ifr >= 16 ? u.ifr * (nbval + tadj) : 2 * (15 - u.ifr) * (9 - nbval + tadj);
-        if (dibs)
-            sqval -= 32;
-        sqval -= 1 << range;
-        return sqval < 0 ? 0 : sqval;
-    };
-    function calcForceRatios(oob, player) {
-        const active = oob.activeUnits(), friend = sum(active.filter(u => u.player == player).map(u => u.cstrng)), foe = sum(active.filter(u => u.player != player).map(u => u.cstrng)), ofr = Math.floor((foe << 4) / friend), ofropp = Math.floor((friend << 4) / foe);
-        active.forEach(u => {
-            const nearby = active.filter(v => Grid.manhattanDistance(u, v) <= 8), p = Grid.point(u);
-            let friend = 0;
-            u.ifrdir = [0, 0, 0, 0];
-            nearby.forEach(v => {
-                const inc = v.cstrng >> 4;
-                if (v.player == u.player)
-                    friend += inc;
-                else
-                    u.ifrdir[Grid.directionFrom(p, Grid.point(v))] += inc;
-            });
-            // individual and overall ifr max 255
-            const ifr = Math.floor((sum(u.ifrdir) << 4) / friend);
-            // we actually work with average of IFR + OFR
-            u.ifr = (ifr + (u.player == player ? ofr : ofropp)) >> 1;
-        });
-        return { ofr, friend, foe };
-    }
-    function sortSquareFacing(center, diameter, dir, locs) {
-        if (diameter % 2 != 1)
-            throw (`sortSquareFacing: diameter should be odd, got ${diameter}`);
-        if (!locs || locs.length != diameter * diameter)
-            throw (`sortSquareFacing: diameter : size mismatch ${locs.length} != ${diameter}^2`);
-        const r = (diameter - 1) / 2, minor = directions[(dir + 1) % 4], major = directions[(dir + 2) % 4], out = new Array(locs.length);
-        locs.forEach(loc => {
-            const dlat = loc.lat - center.lat, dlon = loc.lon - center.lon, idx = (r + dlat * major.dlat + dlon * major.dlon
-                + diameter * (r + dlat * minor.dlat + dlon * minor.dlon));
-            out[idx] = loc;
-        });
-        return out;
-    }
-    function linePoints(locs, diameter, occupied) {
-        // curious that this doesn't consider terrain, e.g. a line ending at the coast will get penalized heavily?
-        const r = (diameter - 1) / 2, frontline = Array(diameter).fill(diameter), counts = Array(diameter).fill(0);
-        let row = -1, col = -1, score = 0;
-        locs.forEach(loc => {
-            row = (row + 1) % diameter;
-            if (row == 0)
-                col++;
-            if (occupied(loc)) {
-                counts[col] += 1;
-                if (frontline[col] == diameter)
-                    frontline[col] = row;
-            }
-        });
-        frontline.forEach((row, col) => {
-            if (row < diameter)
-                score += 40;
-            if (row < diameter - 1 && occupied(locs[row + 1 + diameter * col]))
-                score -= 32;
-        });
-        if (frontline[r] == r && counts[r] == 1)
-            score += 48;
-        // also curious that we look at all pairs not just adjacent ones?
-        for (let i = 1; i < diameter; i++)
-            for (let j = 0; j < i; j++) {
-                const delta = Math.abs(frontline[i] - frontline[j]);
-                if (delta)
-                    score -= 1 << delta;
-            }
-        return score;
     }
 
     var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
@@ -6080,73 +6095,6 @@ aa ad d7 cd aa 70 ef 5c 0d 9f 12 84 ca b9 36 fa 72 26 f9 ae 6d af af cf 57 4c cc
 
     var mithril = m;
 
-    var _HelpModel_init;
-    const helpScrambleMillis = 2000, helpUrl = 'https://github.com/patricksurry/eastern-front-1941', helpText = ('\fh\fb\x94' + ' '.repeat(42 * 12)
-        + '\fb\x1a' + ' '.repeat(42 * 12)
-        + `\fH\fb\x94\f^
-
-Eastern Front  1941
-by Chris Crawford
-
-
-\fc\x08Redux\fc\x90}\fc\x08 by Patrick Surry\fC
-
-
-\f^Press any key to start!
-
-
-\fb\x1a\fc\x94\f@\x03<
-Pick unit: \f#Click\f-, \f#<\f- \f#>\f- or \f#p\f-rev \f#n\f-ext
-
-Give orders: \f#\x1c\f- \f#\x1f\f- \f#\x1d\f- \f#\x1e\f- \f#Bksp\f-, \f#Esc\f-, \f#Enter\f-
-
-Execute move: \f#End\f- or \f#Fn \x1f\f-
-
-Expert: change move \f#m\f-ode or \f#1\f- \f#2\f- \f#3\f- \f#4\f-
-
-Toggle: help \f#?\f-, \f#z\f-oom, e\f#x\f-tras, debu\f#g\f-
-`);
-    class HelpModel {
-        constructor(clickHandler) {
-            this.window = new MappedDisplayLayer(42, 24, atasciiFont);
-            _HelpModel_init.set(this, false);
-            this.clickHandler = clickHandler;
-        }
-        paint(p, scramble) {
-            if (!__classPrivateFieldGet(this, _HelpModel_init, "f")) {
-                __classPrivateFieldSet(this, _HelpModel_init, true, "f");
-                const t0 = +new Date();
-                p = 0;
-                scramble = this.window.glyphs.map(row => row.map(() => Math.random()));
-                const paintScrambled = setInterval(() => {
-                    const pp = (+new Date() - t0) / helpScrambleMillis;
-                    this.paint(pp, scramble);
-                    mithril.redraw();
-                    if (pp >= 1)
-                        clearInterval(paintScrambled);
-                }, 250);
-            }
-            this.window.cls();
-            this.window.puts(helpText, { onclick: this.clickHandler });
-            this.window.glyphs.forEach(line => line.forEach(g => {
-                if (g === null || g === void 0 ? void 0 : g.foregroundColor)
-                    g.onclick = () => window.open(helpUrl);
-            }));
-            if (p != null && scramble != null) {
-                scramble.forEach((line, y) => line.forEach((v, x) => {
-                    if (p < v) {
-                        this.window.putc(Math.floor(Math.random() * 128), {
-                            x, y,
-                            foregroundColor: Math.floor(Math.random() * 256),
-                            backgroundColor: Math.floor(Math.random() * 256),
-                        });
-                    }
-                }));
-            }
-        }
-    }
-    _HelpModel_init = new WeakMap();
-
     var global$1 = (typeof global !== "undefined" ? global :
       typeof self !== "undefined" ? self :
       typeof window !== "undefined" ? window : {});
@@ -8222,17 +8170,47 @@ d4a860 d8b46c dcb878 e0bc84 e4c490 e8c898 e8d49c ecd8a0
         }
     };
 
+    var _AppView_pinmap;
+    const screenWidth = 42, screenHeight = 24, mapHeight = 18;
     class AppView {
-        constructor(attrs) {
-            mithril.mount(document.body, { view: () => mithril(Layout, attrs) });
+        constructor(app, help) {
+            _AppView_pinmap.set(this, void 0); // the glyph coordinate to pin at map center
+            this.app = app;
+            this.help = help;
+            mithril.mount(document.body, { view: () => mithril(Layout, { view: this }) });
         }
         redraw() {
             mithril.redraw();
         }
+        scrollForMapCenter() {
+            if (!__classPrivateFieldGet(this, _AppView_pinmap, "f"))
+                return;
+            const { x, y } = __classPrivateFieldGet(this, _AppView_pinmap, "f"), z = this.app.zoom ? 2 : 1, sz = z * this.app.mapLayer.fontmap.glyphSize, xc = screenWidth / 2 / z, yc = mapHeight / 2 / z;
+            return { left: (x - xc) * sz, top: (y - yc) * sz };
+        }
+        unpinMap() {
+            __classPrivateFieldSet(this, _AppView_pinmap, undefined, "f");
+        }
+        pinMapCenter(x, y) {
+            if (x != null && y != null) {
+                __classPrivateFieldSet(this, _AppView_pinmap, { x, y }, "f");
+                return;
+            }
+            const z = (this.app.zoom ? 2 : 1), sz = z * this.app.mapLayer.fontmap.glyphSize, xc = screenWidth / 2 / z, yc = mapHeight / 2 / z;
+            const elts = document.getElementsByClassName('map-scroller');
+            if (elts.length == 0)
+                return;
+            const elt = elts[0];
+            __classPrivateFieldSet(this, _AppView_pinmap, {
+                x: elt.scrollLeft / sz + xc,
+                y: elt.scrollTop / sz + yc,
+            }, "f");
+        }
     }
+    _AppView_pinmap = new WeakMap();
     document.body.style.backgroundColor = antic2rgb(0xD4);
     const Layout = {
-        view: ({ attrs: { help, app } }) => {
+        view: ({ attrs: { view } }) => {
             return mithril('.layout', {
                 class: css `
                     padding: 12px;
@@ -8241,14 +8219,14 @@ d4a860 d8b46c dcb878 e0bc84 e4c490 e8c898 e8d49c ecd8a0
                 `
             }, mithril('.screen', {
                 class: css `
-                        width: 336px;        /* 42x24 8px characters */
-                        height: 192px;
+                        width: ${screenWidth * 8}px;
+                        height: ${screenHeight * 8}px;
                         transform: scale(4);
                         transform-origin: top center;
                         margin: 0 auto;
                         position: relative;
                     `,
-            }, app.help ? mithril(HelpComponent, { help }) : mithril(GameComponent, { app })));
+            }, view.app.help ? mithril(HelpComponent, { help: view.help }) : mithril(GameComponent, { view })));
         }
     };
     const HelpComponent = {
@@ -8263,119 +8241,131 @@ d4a860 d8b46c dcb878 e0bc84 e4c490 e8c898 e8d49c ecd8a0
         },
     };
     const GameComponent = {
-        // called after a DOM element is updated,  guaranteed to run at the end of the render cycle
-        onupdate: ({ attrs: { app } }) => {
+        // called after DOM element is updated,  guaranteed to run at the end of the render cycle
+        onupdate: ({ attrs: { view: { app } } }) => {
             Object.values(app)
                 .filter(v => v instanceof DisplayLayer)
                 .forEach(layer => layer.dirty = false);
         },
-        view: ({ attrs: { app } }) => {
+        view: ({ attrs: { view } }) => {
             return [
                 // double-width date-window at the top
                 mithril(DisplayComponent, {
-                    display: app.dateWindow,
+                    display: view.app.dateWindow,
                     class: ['game', css `
                     transform-origin: top left;
                     transform: scale(2, 1);
                 `],
                 }),
                 mithril(DividerComponent, { color: 0x1A }),
-                // central fixed-size window containing the scrollable map
-                mithril('.map-scroller', {
-                    class: css `
-                        height: 144px;
-                        overflow: scroll;
-                    `,
-                }, 
-                // the full-sized map
-                mithril('.map-panel', {
-                    class: css `
-                            /* 48 x 41  8px sq cells */
-                            width: 384px;
-                            height: 328px;
-                            overflow: hidden;
-                            position: relative;
-                            transform-origin: top left;
-
-                            /* stack the layers */
-                            .display-layer {
-                                position: absolute;
-                                top: 0;
-                            }
-                        `,
-                    style: { transform: app.zoom ? 'scale(2)' : null },
-                }, [
-                    // bottom layer showing terrain
-                    mithril(DisplayComponent, {
-                        display: app.mapLayer,
-                        class: [
-                            'terrain',
-                            css `
-                                    .display-layer, .glyph-foreground {
-                                        transition: background-color 1s linear;
-                                    }
-                                `
-                        ],
-                    }),
-                    // conditionally show text labels near cities
-                    app.extras ? mithril(DisplayComponent, {
-                        display: app.labelLayer,
-                        glyphComponent: LabelComponent,
-                        class: [
-                            'labels',
-                            css `
-                                    pointer-events: none;
-                                `
-                        ],
-                    }) : null,
-                    // layer with unit icons as sprites
-                    mithril(DisplayComponent, {
-                        display: app.unitLayer,
-                        glyphComponent: UnitComponent,
-                        class: [
-                            'units',
-                            css `
-                                    .glyph {
-                                        transition: transform 250ms linear;
-                                        transition: opacity 500ms linear;
-                                    }
-                                    .glyph-background, .glyph-foreground {
-                                        transition: background-color 1s linear;
-                                    }
-                                `
-                        ],
-                    }),
-                    // conditionally show current order paths for all units
-                    app.extras ? mithril(OrdersOverlayComponent, {
-                        display: app.unitLayer,
-                    }) : null,
-                    // conditionally show a semit-transparent mask to highlight unit reach
-                    app.extras ? mithril(DisplayComponent, {
-                        display: app.maskLayer,
-                        glyphComponent: BlockComponent,
-                        class: [
-                            'mask',
-                            css `
-                                    opacity: 0.33;
-                                    .glyph {
-                                        pointer-events: none;
-                                    }
-                                `
-                        ]
-                    }) : null,
-                    // show animated orders for focussed unit
-                    mithril(DisplayComponent, {
-                        display: app.kreuzeLayer,
-                        glyphComponent: KreuzeComponent,
-                        class: ['kreuze'],
-                    }),
-                ])),
+                mithril(MapComponent, { view }),
                 mithril(DividerComponent, { color: 0x02 }),
-                mithril(DisplayComponent, { display: app.infoWindow }),
+                mithril(DisplayComponent, { display: view.app.infoWindow }),
                 mithril(DividerComponent, { color: 0x8A }),
-                mithril(DisplayComponent, { display: app.errorWindow }),
+                mithril(DisplayComponent, { display: view.app.errorWindow }),
                 mithril(DividerComponent, { color: 0x8A }),
             ];
+        }
+    };
+    const MapComponent = {
+        onupdate: ({ attrs: { view }, dom: elt }) => {
+            // possibly center the map on a target x,y square
+            const pin = view.scrollForMapCenter();
+            if (!pin)
+                return;
+            elt.scrollTo(pin.left, pin.top);
+            view.unpinMap();
+        },
+        view: ({ attrs: { view: { app } } }) => {
+            // central fixed-size window containing the scrollable map
+            return mithril('.map-scroller', {
+                class: css `
+                    height: ${mapHeight * 8}px;
+                    overflow: scroll;
+                `,
+            }, 
+            // the full-sized map
+            mithril('.map-panel', {
+                class: css `
+                        width: ${app.mapLayer.width * 8}px;
+                        height: ${app.mapLayer.height * 8}px;
+                        overflow: hidden;
+                        position: relative;
+                        transform-origin: top left;
+
+                        /* stack the layers */
+                        .display-layer {
+                            position: absolute;
+                            top: 0;
+                        }
+                    `,
+                style: { transform: app.zoom ? 'scale(2)' : null },
+            }, [
+                // bottom layer showing terrain
+                mithril(DisplayComponent, {
+                    display: app.mapLayer,
+                    class: [
+                        'terrain',
+                        css `
+                                .display-layer, .glyph-foreground {
+                                    transition: background-color 1s linear;
+                                }
+                            `
+                    ],
+                }),
+                // conditionally show text labels near cities
+                app.extras ? mithril(DisplayComponent, {
+                    display: app.labelLayer,
+                    glyphComponent: LabelComponent,
+                    class: [
+                        'labels',
+                        css `
+                                pointer-events: none;
+                            `
+                    ],
+                }) : null,
+                // layer with unit icons as sprites
+                mithril(DisplayComponent, {
+                    display: app.unitLayer,
+                    glyphComponent: UnitComponent,
+                    class: [
+                        'units',
+                        css `
+                                .glyph {
+                                    transition: transform 250ms linear;
+                                    transition: opacity 500ms linear;
+                                }
+                                .glyph-background, .glyph-foreground {
+                                    transition: background-color 1s linear;
+                                }
+                            `
+                    ],
+                }),
+                // conditionally show current order paths for all units
+                app.extras ? mithril(OrdersOverlayComponent, {
+                    display: app.unitLayer,
+                }) : null,
+                // conditionally show a semit-transparent mask to highlight unit reach
+                app.extras ? mithril(DisplayComponent, {
+                    display: app.maskLayer,
+                    glyphComponent: BlockComponent,
+                    class: [
+                        'mask',
+                        css `
+                                opacity: 0.33;
+                                .glyph {
+                                    pointer-events: none;
+                                }
+                            `
+                    ]
+                }) : null,
+                // show animated orders for focussed unit
+                mithril(DisplayComponent, {
+                    display: app.kreuzeLayer,
+                    glyphComponent: KreuzeComponent,
+                    class: ['kreuze'],
+                }),
+            ]));
         }
     };
     const DividerComponent = {
@@ -8584,6 +8574,73 @@ d4a860 d8b46c dcb878 e0bc84 e4c490 e8c898 e8d49c ecd8a0
         }
     };
 
+    var _HelpModel_init;
+    const helpScrambleMillis = 2000, helpUrl = 'https://github.com/patricksurry/eastern-front-1941', helpText = ('\fh\fb\x94' + ' '.repeat(42 * 12)
+        + '\fb\x1a' + ' '.repeat(42 * 12)
+        + `\fH\fb\x94\f^
+
+Eastern Front  1941
+by Chris Crawford
+
+
+\fc\x08Redux\fc\x90}\fc\x08 by Patrick Surry\fC
+
+
+\f^Press any key to start!
+
+
+\fb\x1a\fc\x94\f@\x03<
+Pick unit: \f#Click\f-, \f#<\f- \f#>\f- or \f#p\f-rev \f#n\f-ext
+
+Give orders: \f#\x1c\f- \f#\x1f\f- \f#\x1d\f- \f#\x1e\f- \f#Bksp\f-, \f#Esc\f-, \f#Enter\f-
+
+Execute move: \f#End\f- or \f#Fn \x1f\f-
+
+Expert: change move \f#m\f-ode or \f#1\f- \f#2\f- \f#3\f- \f#4\f-
+
+Toggle: help \f#?\f-, \f#z\f-oom, e\f#x\f-tras, debu\f#g\f-
+`);
+    class HelpModel {
+        constructor(clickHandler) {
+            this.window = new MappedDisplayLayer(42, 24, atasciiFont);
+            _HelpModel_init.set(this, false);
+            this.clickHandler = clickHandler;
+        }
+        paint(p, scramble) {
+            if (!__classPrivateFieldGet(this, _HelpModel_init, "f")) {
+                __classPrivateFieldSet(this, _HelpModel_init, true, "f");
+                const t0 = +new Date();
+                p = 0;
+                scramble = this.window.glyphs.map(row => row.map(() => Math.random()));
+                const paintScrambled = setInterval(() => {
+                    const pp = (+new Date() - t0) / helpScrambleMillis;
+                    this.paint(pp, scramble);
+                    mithril.redraw();
+                    if (pp >= 1)
+                        clearInterval(paintScrambled);
+                }, 250);
+            }
+            this.window.cls();
+            this.window.puts(helpText, { onclick: this.clickHandler });
+            this.window.glyphs.forEach(line => line.forEach(g => {
+                if (g === null || g === void 0 ? void 0 : g.foregroundColor)
+                    g.onclick = () => window.open(helpUrl);
+            }));
+            if (p != null && scramble != null) {
+                scramble.forEach((line, y) => line.forEach((v, x) => {
+                    if (p < v) {
+                        this.window.putc(Math.floor(Math.random() * 128), {
+                            x, y,
+                            foregroundColor: Math.floor(Math.random() * 256),
+                            backgroundColor: Math.floor(Math.random() * 256),
+                        });
+                    }
+                }));
+            }
+        }
+    }
+    _HelpModel_init = new WeakMap();
+
     var _AppCtrl_game, _AppCtrl_ai;
     const errctr = '\fx\x06\fe\f@\x16^'; // fmt code to clear window from x=6, then center @ $16 = 22, see antic model
     class AppCtrl {
@@ -8593,7 +8650,7 @@ d4a860 d8b46c dcb878 e0bc84 e4c490 e8c898 e8d49c ecd8a0
             _AppCtrl_ai.set(this, void 0);
             this.app = new AppModel();
             this.help = new HelpModel(() => this.app.help = !this.app.help);
-            this.view = new AppView({ app: this.app, help: this.help });
+            this.view = new AppView(this.app, this.help);
             const token = window.location.hash.slice(1) || undefined;
             if (token) {
                 this.game = new Game(token);
@@ -8614,6 +8671,9 @@ d4a860 d8b46c dcb878 e0bc84 e4c490 e8c898 e8d49c ecd8a0
             __classPrivateFieldSet(this, _AppCtrl_ai, Object.keys(players)
                 .filter(player => +player != __classPrivateFieldGet(this, _AppCtrl_game, "f").human)
                 .map(player => new Thinker(__classPrivateFieldGet(this, _AppCtrl_game, "f"), +player)), "f");
+            // scroll the map to the center of mass of the human player's
+            const p = this.game.oob.centerOfGravity(this.game.human), { x, y } = this.game.mapboard.xy(p);
+            this.view.pinMapCenter(x + 0.5, y + 0.5);
             this.view.redraw();
             g.on('game', (action) => {
                 switch (action) {
@@ -8633,10 +8693,14 @@ d4a860 d8b46c dcb878 e0bc84 e4c490 e8c898 e8d49c ecd8a0
                     }
                 }
                 this.view.redraw();
-            }).on('map', (action) => {
+            }).on('map', (action, loc) => {
                 switch (action) {
                     case 'citycontrol':
-                        this.app.paintMap();
+                        if (this.app.extras) {
+                            const city = this.game.mapboard.cities[loc.cityid], playerName = players[city.owner].label.toUpperCase() + 'S', cityName = city.label.toUpperCase();
+                            this.app.infoWindow.puts(`\fh\f^${playerName} CAPTURE ${cityName}!`);
+                            this.app.paintMap();
+                        }
                         break;
                     default: {
                         const fail = action;
@@ -8708,7 +8772,7 @@ d4a860 d8b46c dcb878 e0bc84 e4c490 e8c898 e8d49c ecd8a0
                     this.app.infoWindow.cls();
                     this.app.errorWindow.puts(`${errctr}EXECUTING MOVE`);
                     console.log(`Executing turn ${__classPrivateFieldGet(this, _AppCtrl_game, "f").turn} from state ${__classPrivateFieldGet(this, _AppCtrl_game, "f").token}`);
-                    __classPrivateFieldGet(this, _AppCtrl_game, "f").nextTurn(100);
+                    __classPrivateFieldGet(this, _AppCtrl_game, "f").resolveTurn(100);
                     break;
                 }
             }

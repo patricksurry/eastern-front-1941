@@ -3,7 +3,7 @@ import type {AnticColor, Glyph, Sprite, DisplayLayer, FontMap, LayerOpts} from '
 import {GlyphAnimation} from './anticmodel';
 import {css, cx, keyframes} from '@emotion/css';
 import {colorPalettes} from './palettes';
-import {options} from './config';
+import {options} from '../config';
 
 const palette = colorPalettes[options.colorPalette];
 

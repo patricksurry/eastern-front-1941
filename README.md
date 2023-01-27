@@ -9,7 +9,7 @@ This is a [playable][game] TypeScript port of [Chris Crawford][ccwiki]'s [Easter
 **TL;DR** Click [here][game], choose a level of difficulty, and issue orders to German units using the arrow keys.
 An AI player will command the Russian units.
 When you're ready press `End` (or `Fn`+&rarr; on Mac) to see how each turn plays out.
-For a more old-school experience, press `X` to disable eXtra bells and whistles.
+For a more old-school experience, press `X` to disable extras.
 Hit `?` for more help and check out the original [APX manual](doc/playing.md)
 or [cartridge insert](doc/Eastern_Front_1941_Atari_Cartridge.pdf) instructions.
 Will you capture Moscow?
@@ -19,7 +19,7 @@ Will you capture Moscow?
 Eastern Front 1941 is a two player turn-based simultaneous movement simulation
 of the German invasion of Russia in 1941.
 It introduced many novel features including an AI opponent;
-several difficulty levels;
+multiple difficulty levels;
 terrain, weather, zone of control and supply effects;
 multiple unit types and movement modes including air support;
 fog of war; and an innovative combat system.
@@ -32,9 +32,9 @@ The redux runs as a single-page, fully client-side app
 with game state stored in the URL making it easy to save, resume, and share games.
 For more details see the [implementation notes](doc/notes.md).
 
-The game's subject matter offers disturbing echoes and distorted reflections of Russia's recent unprovoked invasion of Ukraine which is being fought over significant areas of the same battlefield.  My own motivation for this project is explained below but Churchill (paraphrasing Santayana) said it best:
+The game's subject matter offers disturbing echoes and distorted reflections of Russia's recent unprovoked invasion of Ukraine which is being fought over significant areas of the same battlefield.  More on my motivation below but Churchill (paraphrasing Santayana) said it best:
 
-> Those who fail to learn from history are condemned to repeat it.
+> "Those who fail to learn from history are condemned to repeat it."
 
 If you enjoy the game (or not!) please consider donating to an organization like
 [World Central Kitchen <img height=32 src="doc/images/WCK_Primary_Logo.png">][wck]
@@ -45,25 +45,43 @@ to support those most impacted by the conflict in Ukraine and by other humanitar
 ## But why?!
 
 First and foremost Eastern Front 1941 is a great game!
-When I discovered that Chris Crawford had published much of his early [source code][ccsrc],
-including the [6502 assembler][6502] code for Eastern Front,
-I couldn't resist taking it apart and trying to make a more accessible version.
-My main goals were to understand [how it worked](doc/howitworks.md),
+This project started as a pandemic diversion
+when I discovered that Chris Crawford had published much of his early [source code][ccsrc],
+including the [6502 assembler][6502] code for Eastern Front.
+The game had fascinated me as a kid: I remember hanging out after school
+with a friend who had an [Atari 400][atari400] (or maybe 800?)
+to say nothing of an original [Pong][pong] pub table :exploding_head:...
+We played games like Pitfall, Missile Command, Defender and a rogue-like adventure game whose name I forget.
+But Eastern Front was always my "Can we play...?" go-to.
+It was a compelling game in itself with a mysterious AI opponent,
+and was probably my first introduction to wargaming.
+So of course I couldn't resist taking it apart!
+My goals were to understand [how it worked](doc/howitworks.md),
 recreate the essence of the game in a streamlined form,
-and to make it more accessible for others to explore and extend.
-Eastern Front has a lot to teach us about early video game development, game design,
-and AI play, not to mention lessons from the history itself.
-Quoting Crawford from the [cartrige insert](doc/Eastern_Front_1941_Atari_Cartridge.pdf):
+and make it more accessible for others to explore and extend.
 
-> There was really no way to win this war.  The \[Expert\] point system ... reflects these brutal truths. ... In other words, you'll almost always lose.  Does that seem unfair to you?  Unjust?  Stupid?  Do you feel that nobody would ever want to play a game \[they\] cannot possibly win?  If so, then you have learned the ultimate lesson of war on the Eastern Front.
+[pong]: https://en.wikipedia.org/wiki/Pong
+[atari400]: https://en.wikipedia.org/wiki/Atari_8-bit_family
 
-Along the way I also learned a bunch of other things including
+Along the way I had fun unravelling Crawford's code,
+with happy memories of hacking 6502 assembly on an [Apple //e][apple2e]
+back in the day.
+(Apparently I'm no better at keeping carry flag semantics straight.)
+I also learned a bunch of other things including
 [TypeScript][typescript], [Mithril][mithril] and [Jest][jest].
 But more than anything I gained a whole new appreciation
 for Crawford's technical tour-de-force:
 implementing an interactive wargame with a credible AI in only 12K bytes
 *including* all data and graphics.
 It shipped on a 16K cartridge with 4K to spare!
+
+[apple2e]: https://en.wikipedia.org/wiki/Apple_IIe
+
+Eastern Front still has a lot to teach us about early video game development, game design,
+and AI play, and of course lessons from the history itself.
+Quoting Crawford from the [cartrige insert](doc/Eastern_Front_1941_Atari_Cartridge.pdf):
+
+> "There was really no way to win this war.  The \[Expert\] point system ... reflects these brutal truths. ... In other words, you'll almost always lose.  Does that seem unfair to you?  Unjust?  Stupid?  Do you feel that nobody would ever want to play a game \[they\] cannot possibly win?  If so, then you have learned the ultimate lesson of war on the Eastern Front."
 
 <p align="center"><img src="doc/images/Ef1941-variants.png" width=800></p>
 
@@ -72,22 +90,6 @@ It shipped on a 16K cartridge with 4K to spare!
 [typescript]: https://www.typescriptlang.org/
 [mithril]: https://mithril.js.org/
 [jest]: https://jestjs.io/
-
-Some of my earliest video game memories involve hanging out after school
-with a friend who had an [Atari 400][atari400] (maybe 800?)
-not to mention an original [Pong][pong] pub table :exploding_head:...
-We played games like Pitfall, Missile Command, Defender and a rogue-like adventure game whose name I forget.
-But Eastern Front was always my "can we play...?" go-to.
-It was a compelling game in itself with a fascinating AI opponent,
-and was one of my earliest introductions to wargaming.
-I never had an Atari myself but spent many hours
-learning 6502 assembly on an [Apple //e][apple2e],
-so browsing disassembled Eastern Front code brought back happy memories.
-(Apparently I'm no better at keeping carry flag semantics straight.)
-
-[pong]: https://en.wikipedia.org/wiki/Pong
-[atari400]: https://en.wikipedia.org/wiki/Atari_8-bit_family
-[apple2e]: https://en.wikipedia.org/wiki/Apple_IIe
 
 This re-implementation tries to capture the spirit of the game -
 reusing the same raw data, fonts, display style and color scheme -
@@ -113,7 +115,10 @@ I aimed to keep the game engine completely separate from the display layer
 so that it can run "headless".
 This is great for unit testing but also makes it
 easy to experiment with AI development and meta-learning of new strategies.
-The human player is also parameterized so German AI or AI vs AI play is a possibility.
+The human player is also parameterized
+so AI vs AI play or playing as the Russians is possible,
+although the current AI does not play the Germans well
+(see [`examples/`](examples)).
 Check out the [implementation notes](doc/notes.md)
 for more details of how the new code is structured,
 changes I introduced from the original,
@@ -135,6 +140,8 @@ Here's a quick lay of of the land for navigating the repo:
 - `README.md` - you are here
 - `index.html` - the minimal HTML container for the game
 - [`doc/`](doc) - how to play, how it works, implementation notes, and other useful resources
+- [`dist/`](dist) - a bundled node module for headless game play
+- [`examples/`](examples) - examples of headless game play like AI v AI
 - [`reference/`](reference) - binaries and annotated disassembly for the original game
 - [`src/`](src) - the TypeScript source and unit tests that implement the game
 - [`scripts/`](scripts) - various scripts to extract data from the original binary images

@@ -82,6 +82,9 @@ Recent changes and fixes are collected here for future reference, including link
     - [x] can't add new orders
 
 - UX
+  - [x] zoom to center of mass on start/reload
+  - [x] zoom option pins center point
+  - [x] Message for city capture (extras)
   - [x] shadow on the color bar
   - [x] antic color ramp on abs cstrng
   - [x] scr.errorWindow.cls() on key/click

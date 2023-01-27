@@ -1,12 +1,11 @@
-import {players, unitkinds, terraintypes, weatherdata, directions} from './defs';
-import {scenarios} from './scenarios';
-import {Game} from './game';
-import {Grid} from './grid';
-import {Unit, unitFlag, unitModes} from './unit';
+import {players, unitkinds, terraintypes, weatherdata, directions} from '../engine/defs';
+import {ScenarioKey, scenarios} from '../engine/scenarios';
+import {Game} from '../engine/game';
+import {Unit, unitFlag, unitModes} from '../engine/unit';
 import {
     type SpriteOpts, atasciiFont, fontMap,
     MappedDisplayLayer, SpriteDisplayLayer, GlyphAnimation
-} from './anticmodel';
+} from '../antic/anticmodel';
 
 interface MithrilEvent extends Event {redraw: boolean}
 
@@ -21,7 +20,7 @@ class AppModel {
     #debug = false;     // whether to show debug info
     zoom = true;        // zoom 2x or not?
 
-    #game = new Game();
+    #game = new Game(ScenarioKey.learner);
     #id = -1;         // most-recently focused unit
     #active = false;  // focus currently active?
 
@@ -92,7 +91,7 @@ class AppModel {
     focusShift(offset: number) {
         const
             g = this.#game,
-            locid = (u: Unit) => g.mapboard.locationOf(Grid.point(u)).gid,
+            locid = (u: Unit) => u.location.gid,
             humanUnits = g.oob.activeUnits(g.human).sort((a, b) => locid(b) - locid(a)),
             n = humanUnits.length;
         let i;
@@ -111,11 +110,10 @@ class AppModel {
     }
     paintCityLabels() {
         // these are static so never need redrawn, color changes via paintMap
-        const {lon: left, lat: top} = this.#game.mapboard.locations[0][0];
-
         this.#game.mapboard.cities.forEach((c, i) => {
+            const {x, y} = this.#game.mapboard.xy(c);
             this.labelLayer.put(
-                i.toString(), 32, left - c.lon, top - c.lat, {
+                i.toString(), 32, x, y, {
                     props: {label: c.label, points: c.points}
                 }
             )
@@ -144,7 +142,7 @@ class AppModel {
                         if (city) this.infoWindow.puts(`\f^${city.label.toUpperCase()}`)
                     },
                     onmouseover: (e) => {
-                        (e.currentTarget as HTMLElement).title = g.mapboard.describe(loc, this.debug);
+                        (e.currentTarget as HTMLElement).title = g.mapboard.describe(loc);
                         (e as MithrilEvent).redraw = false;  // prevent mithril redraw
                     },
                 });
@@ -155,18 +153,14 @@ class AppModel {
         this.#game.oob.forEach(u => this.paintUnit(u));
     }
     paintReach(u: Unit) {
-        const {lon: left, lat: top} = this.#game.mapboard.locations[0][0],
-            pts = u.reach();
-
         this.maskLayer.cls(0);  // mask everything with block char, then clear reach squares
-        pts.forEach(({lon, lat}) => this.maskLayer.putc(undefined, {x: left - lon, y: top - lat}));
+        u.reach().forEach(pt => this.maskLayer.putc(undefined, this.#game.mapboard.xy(pt)));
     }
     paintUnit(u: Unit) {
         const
             g = this.#game,
             {earth} = weatherdata[g.weather],
-            {lon: left, lat: top} = g.mapboard.locations[0][0],
-            ux = left - u.lon, uy = top - u.lat;
+            {x, y} = g.mapboard.xy(u);
 
         let animation = undefined;
         if (u === this.focussed()) {
@@ -179,10 +173,10 @@ class AppModel {
 
                 const props = {orders: u.orders};
                 this.kreuzeLayer.cls();
-                this.kreuzeLayer.put('#', 0x80, ux, uy, {foregroundColor: 0x1A, props});
+                this.kreuzeLayer.put('#', 0x80, x, y, {foregroundColor: 0x1A, props});
                 if (u.orders.length) {
                     Object.values(directions).forEach(
-                        d => this.kreuzeLayer.put(d.label, d.icon, ux, uy, {foregroundColor: 0xDC, props})
+                        d => this.kreuzeLayer.put(d.label, d.icon, x, y, {foregroundColor: 0xDC, props})
                     )
                 }
             }
@@ -200,7 +194,7 @@ class AppModel {
                 opacity: u.active ? 1: 0,
                 animate: animation,
                 onmouseover: (e) => {
-                    (e.currentTarget as HTMLElement).title = g.mapboard.describe(u.location, this.debug);
+                    (e.currentTarget as HTMLElement).title = g.mapboard.describe(u.location, u.player == g.human || this.debug);
                     (e as MithrilEvent).redraw = false;  // prevent mithril redraw
                 },
                 onclick: () => {
@@ -220,7 +214,7 @@ class AppModel {
         } else {
             opts.props = {};
         }
-        this.unitLayer.put(`${this.#game.scenario}:${u.id}`, unitkinds[u.kind].icon, ux, uy, opts)
+        this.unitLayer.put(`${this.#game.scenario}:${u.id}`, unitkinds[u.kind].icon, x, y, opts)
     }
 }
 

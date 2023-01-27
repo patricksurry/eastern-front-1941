@@ -4,14 +4,25 @@ Tracks current outstanding issues, ideas for improvements, etc.
 
 ## Current issues
 
+- docs
+  - [ ] scripts/README
+  - [ ] docs/notes
+  - [x] docs/README
+
 - UX
-  - [ ] Unit describe human is dumb
+  - [ ] unit defending at last tick flash not cleared?
+  - [ ] show +cadj in hover text
 
 - engine
   - [ ] zoc: level 0/1 unit only exerts zoc in own square (cartridge.asm:2486)
   - [ ] supply check happens before first turn (tho units should be in supply anyway, adjust initial oob?)
-  - [ ] test newTurn(true) is idempotent on token
-  - [ ] test AI vs human game playthru doesn’t throw
+  - [x] headless bundle with examples
+  - [x] test AI vs AI game playthru doesn’t throw
+  - [x] date set before inc turn
+  - [x] Flieger moves in assault mode??
+  - [x] both Finns OoS in expert41 - supply by sea not working?
+  - [x] why newTurn and nextTurn?
+  - [x] test nextTurn(startOrResume) is idempotent on token
 
 - Cartridge AI changes
   - [ ] code browse, diff to APX
@@ -39,7 +50,6 @@ Tracks current outstanding issues, ideas for improvements, etc.
   - [ ] n/p vs </> could skip units that already have orders?
   - [ ] animate scroll of unit status report eg. elimination, in info window
   - [ ] option to show friendly/enemy ZoC like reach?
-  - [ ] zoom option preserves point ([old](https://github.com/patricksurry/eastern-front-1941/blob/71be93479b3885cb239c00b41a6002de8249914c/src/display.ts#L357))
   - [ ] toggle key for handicap - increase muster strength of all your units by 50% but halve score,
   self-modifies VBI to change color of text window.  replaced by cartridge difficulty level
   - [ ] add battle sound, e.g. [machine gun](https://archive.org/details/MachineGunSoundEffects/Machine%2BGun%2B4.mp3)

@@ -2,7 +2,7 @@
 import {wrap64, unwrap64, fibencode, fibdecode, rlencode, rldecode, bitsencode, bitsdecode} from './codec';
 import {sum, PlayerKey, monthdata, MonthKey, WeatherKey} from './defs';
 import {scenarios, ScenarioKey} from './scenarios';
-import {Mapboard, type MapEvent} from './map';
+import {Mapboard, type MapEvent, type MapPoint} from './map';
 import {Oob} from './oob';
 import type {Unit, UnitEvent} from './unit';
 import {lfsr24, type Generator} from './rng';
@@ -18,7 +18,7 @@ type GameEvent = 'turn' | 'tick' | 'over';
 type MessageLevel = 'error'; // currently only error is defined
 
 class Game extends EventEmitter {
-    scenario = ScenarioKey.apx;
+    scenario = ScenarioKey.learner;
     human = PlayerKey.German;
 
     turn = 0;       // 0-based turn index
@@ -36,15 +36,16 @@ class Game extends EventEmitter {
     rand: Generator;
 
     // create a game from a saved state token, a scenario key, or default
-    constructor(token?: string | ScenarioKey) {
+    constructor(token: string)
+    constructor(scenario: ScenarioKey, seed?: number)
+    constructor(tokenOrScenario: string | ScenarioKey, seed?: number) {
         super();    // init EventEmitter
-        let memento: number[] | undefined = undefined,
-            seed: number | undefined = undefined;
+        let memento: number[] | undefined;
 
-        if (typeof token == 'number') {
-            this.scenario = token;
-        } else if (typeof token === 'string') {
-            const payload = unwrap64(token, tokenPrefix);
+        if (typeof tokenOrScenario === 'number') {
+            this.scenario = tokenOrScenario;
+        } else if (typeof tokenOrScenario === 'string') {
+            const payload = unwrap64(tokenOrScenario, tokenPrefix);
 
             seed = bitsdecode(payload, 24);
             memento = rldecode(fibdecode(payload), rlSigil);
@@ -68,7 +69,7 @@ class Game extends EventEmitter {
             throw new Error("Game: unexpected save data overflow");
         }
 
-        this.#newTurn(true);
+        this.nextTurn(true);
     }
     get memento() {
         // return a list of uint representing the state of the game
@@ -102,29 +103,11 @@ class Game extends EventEmitter {
             || (this.scenario == ScenarioKey.learner && this.mapboard.cities[0].owner == PlayerKey.German)
         );
     }
-    #newTurn(initialize = false) {
-        const dt = new Date(scenarios[this.scenario].start)
-
-        this.date = new Date(dt.setDate(dt.getDate() + 7 * this.turn));
-        this.month = this.date.getMonth() as MonthKey;     // note JS getMonth is 0-indexed
-        this.weather = monthdata[this.month].weather;
-
-        if (this.over) {
-            this.emit('game', 'over');
-            return;
-        }
-
-        if (!initialize) this.turn++;
-
-        this.mapboard.newTurn(initialize);
-        this.oob.newTurn(initialize);
-
-        this.emit('game', 'turn');
-    }
-    nextTurn(delay?: number) {
-        // process the orders for this turn, if delay we tick asynchrnously,
+    resolveTurn(delay?: number) {
+        // external entry for nextTurn to process orders for this turn
+        // and advance to next
+        // if delay is provided we tick asynchrnously,
         // otherwise we resolve synchronously
-        // either way we proceed to subsequent startTurn or game end
         let tick = 0;
 
         this.oob.scheduleOrders();
@@ -133,17 +116,34 @@ class Game extends EventEmitter {
         const tickTock = () => {
             this.oob.executeOrders(tick);
             this.emit('game', 'tick');
-            const next = tick++ < 32 ? tickTock : () => this.#newTurn();
+            const next = tick++ < 32 ? tickTock : () => this.nextTurn();
             if (delay) setTimeout(next, delay);
             else next();
         }
         tickTock();
     }
+    nextTurn(startOrResume = false) {
+        const dt = new Date(scenarios[this.scenario].start),
+            ongoing = !this.over;
+
+        if (!startOrResume && ongoing) this.turn++;
+
+        this.date = new Date(dt.setDate(dt.getDate() + 7 * this.turn));
+        this.month = this.date.getMonth() as MonthKey;     // note JS getMonth is 0-indexed
+        this.weather = monthdata[this.month].weather;
+
+        if (startOrResume || ongoing) {
+            this.mapboard.nextTurn(startOrResume);
+            this.oob.nextTurn(startOrResume);
+        }
+
+        this.emit('game', ongoing ? 'turn': 'over');
+    }
     score(player: PlayerKey): number {
         // M.asm:4050
         const scoring = scenarios[this.scenario].scoring;
         const eastwest = sum(this.oob.map(u => u.locScore() * (u.player == player ? 1: -1))),
-            strng = this.oob.strngScore(player),
+            strng = this.oob.scoreStrengths(player),
             cities = sum(this.mapboard.cities.filter(c => c.owner == player).map(c => c.points));
         let score = cities + (scoring.location ? Math.max(0, eastwest) : 0) + strng + (scoring.adjust ?? 0);
         if (this.handicap) score >>= 1;
@@ -151,7 +151,7 @@ class Game extends EventEmitter {
     }
     // declare legal event signatures
     emit(event: 'game', action: GameEvent): boolean;
-    emit(event: 'map', action: MapEvent): boolean;
+    emit(event: 'map', action: MapEvent, loc: MapPoint): boolean;
     emit(event: 'unit', action: UnitEvent, u: Unit): boolean;
     emit(event: 'message', level: MessageLevel, message: string): boolean;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -159,7 +159,7 @@ class Game extends EventEmitter {
         return super.emit(event, ...args)
     }
     on(event: 'game', listener: (action: GameEvent) => void): this;
-    on(event: 'map', listener: (action: MapEvent) => void): this;
+    on(event: 'map', listener: (action: MapEvent, loc: MapPoint) => void): this;
     on(event: 'unit', listener: (action: UnitEvent, u: Unit) => void): this;
     on(event: 'message', listener: (level: MessageLevel, message: string) => void): this;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

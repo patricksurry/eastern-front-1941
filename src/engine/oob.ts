@@ -2,7 +2,7 @@ import {zigzag, zagzig} from './codec';
 import {scenarios} from './scenarios';
 import {Unit} from './unit';
 import {oobVariants} from './oob-data';
-import {sum, PlayerKey, players} from './defs';
+import {sum, PlayerKey, players, type Point} from './defs';
 import {Game} from './game';
 import {Grid} from './grid';
 import {type MapPoint} from './map';
@@ -128,7 +128,7 @@ class Oob {
 
         return (status as number[]).concat(zigzag(dlats), zigzag(dlons), zigzag(dmstrs), cdmgs, dfogs, modes, nords, ords);
     }
-    strngScore(player: PlayerKey): number {
+    scoreStrengths(player: PlayerKey): number {
         const
             scenario = this.#game.scenario,
             scoring = scenarios[scenario].scoring,
@@ -145,23 +145,20 @@ class Oob {
         })
         return (player == PlayerKey.German ? 1: -1) * score;
     }
-    newTurn(initialize: boolean) {
-        this.activeUnits().forEach(u => u.newTurn(initialize));
-        if (!initialize) {
-            // M.ASM:3720 delay reinforcements scheduled for an occuplied square
-            this.filter(u => u.arrive == this.#game.turn)
-                .forEach(u => {
-                    const loc = u.location;
-                    if (loc.unitid != null) {
-                        u.arrive++;
-                    } else {
-                        u.moveTo(loc);   // reveal unit and link to the map square
-                    }
-                });
-        }
+    nextTurn(startOrResume: boolean) {
+        this.activeUnits().forEach(u => u.nextTurn(startOrResume));
     }
-    activeUnits(player?: number): Unit[] {
+    activeUnits(player?: PlayerKey): Unit[] {
         return this.filter((u: Unit) => u.active && (player == null || u.player == player));
+    }
+    centerOfGravity(player?: PlayerKey): Point {
+        const units = this.activeUnits(player),
+            {lat, lon} = units.reduce(
+                ({lat, lon}, u) => ({lat: lat + u.lat, lon: lon + u.lon}),
+                {lat: 0, lon: 0}
+            );
+        // note this usually returns fractional lat/lon which is ok for scroll management
+        return {lat: lat/units.length, lon: lon/units.length};
     }
     scheduleOrders() {
         // M.asm:4950 movement execution

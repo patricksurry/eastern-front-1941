@@ -1,0 +1,830 @@
+Statistical profiling result from perf.log, (716 ticks, 5 unaccounted, 0 excluded).
+
+ [Shared libraries]:
+   ticks  total  nonlib   name
+     14    2.0%          /usr/lib/system/libsystem_kernel.dylib
+     12    1.7%          /usr/lib/system/libsystem_pthread.dylib
+     10    1.4%          /usr/lib/libc++.1.dylib
+      4    0.6%          /usr/lib/system/libsystem_malloc.dylib
+      4    0.6%          /usr/lib/system/libsystem_c.dylib
+      1    0.1%          /usr/lib/libc++abi.dylib
+
+ [JavaScript]:
+   ticks  total  nonlib   name
+    136   19.0%   20.3%  LazyCompile: *zocAffects file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2414:15
+     36    5.0%    5.4%  LazyCompile: *__classPrivateFieldGet file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:739:32
+     13    1.8%    1.9%  LazyCompile: *cached file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:12:29
+      9    1.3%    1.3%  LazyCompile: *get location file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1765:17
+      8    1.1%    1.2%  LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      8    1.1%    1.2%  LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2431:52
+      7    1.0%    1.0%  LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      6    0.8%    0.9%  LazyCompile: *executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      5    0.7%    0.7%  LazyCompile: *at file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2344:7
+      4    0.6%    0.6%  LazyCompile: *directPath file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:966:15
+      3    0.4%    0.4%  LazyCompile: *toid file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:454:14
+      2    0.3%    0.3%  LazyCompile: *activeUnits file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2393:16
+      2    0.3%    0.3%  LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2410:21
+      2    0.3%    0.3%  LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2408:36
+      2    0.3%    0.3%  LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1085:37
+      2    0.3%    0.3%  Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2431:52
+      1    0.1%    0.1%  LazyCompile: *valid file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:931:10
+      1    0.1%    0.1%  LazyCompile: *squareSpiral file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:540:19
+      1    0.1%    0.1%  LazyCompile: *orderCost file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1905:14
+      1    0.1%    0.1%  LazyCompile: *neighborOf file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:953:15
+      1    0.1%    0.1%  LazyCompile: *moveTo file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1958:11
+      1    0.1%    0.1%  LazyCompile: *get mode file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1787:13
+      1    0.1%    0.1%  LazyCompile: *emit file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1779:9
+      1    0.1%    0.1%  LazyCompile: *adjacent file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:535:15
+      1    0.1%    0.1%  LazyCompile: *_Unit_takeDamage file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2211:48
+      1    0.1%    0.1%  LazyCompile: *_Unit_resolveCombat file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2168:140
+      1    0.1%    0.1%  LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:856:58
+      1    0.1%    0.1%  Function: ^scoreStrengths file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2380:19
+      1    0.1%    0.1%  Function: ^neighborOf file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:953:15
+      1    0.1%    0.1%  Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:951:18
+
+ [C++]:
+   ticks  total  nonlib   name
+    355   49.6%   52.9%  T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+     19    2.7%    2.8%  T node::builtins::BuiltinLoader::CompileFunction(v8::FunctionCallbackInfo<v8::Value> const&)
+     12    1.7%    1.8%  T _semaphore_destroy
+      5    0.7%    0.7%  T node::loader::ModuleWrap::New(v8::FunctionCallbackInfo<v8::Value> const&)
+      3    0.4%    0.4%  t __os_once_gate_broadcast
+      3    0.4%    0.4%  T _mach_port_type
+      2    0.3%    0.3%  t std::__1::ostreambuf_iterator<char, std::__1::char_traits<char> > std::__1::__pad_and_output<char, std::__1::char_traits<char> >(std::__1::ostreambuf_iterator<char, std::__1::char_traits<char> >, char const*, char const*, char const*, std::__1::ios_base&, char)
+      2    0.3%    0.3%  t std::__1::basic_ostream<char, std::__1::char_traits<char> >& std::__1::__put_character_sequence<char, std::__1::char_traits<char> >(std::__1::basic_ostream<char, std::__1::char_traits<char> >&, char const*, unsigned long)
+      2    0.3%    0.3%  T _mig_dealloc_reply_port
+      2    0.3%    0.3%  T _OSAtomicDecrement32
+      1    0.1%    0.1%  T _posix_spawnattr_setmacpolicyinfo_np
+      1    0.1%    0.1%  T _mach_get_times
+
+ [Summary]:
+   ticks  total  nonlib   name
+    259   36.2%   38.6%  JavaScript
+    407   56.8%   60.7%  C++
+     14    2.0%    2.1%  GC
+     45    6.3%          Shared libraries
+      5    0.7%          Unaccounted
+
+ [C++ entry points]:
+   ticks    cpp   total   name
+    374   91.0%   52.2%  T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+     19    4.6%    2.7%  T node::builtins::BuiltinLoader::CompileFunction(v8::FunctionCallbackInfo<v8::Value> const&)
+      6    1.5%    0.8%  T _semaphore_destroy
+      5    1.2%    0.7%  T node::loader::ModuleWrap::New(v8::FunctionCallbackInfo<v8::Value> const&)
+      2    0.5%    0.3%  t std::__1::ostreambuf_iterator<char, std::__1::char_traits<char> > std::__1::__pad_and_output<char, std::__1::char_traits<char> >(std::__1::ostreambuf_iterator<char, std::__1::char_traits<char> >, char const*, char const*, char const*, std::__1::ios_base&, char)
+      2    0.5%    0.3%  t std::__1::basic_ostream<char, std::__1::char_traits<char> >& std::__1::__put_character_sequence<char, std::__1::char_traits<char> >(std::__1::basic_ostream<char, std::__1::char_traits<char> >&, char const*, unsigned long)
+      2    0.5%    0.3%  T _mig_dealloc_reply_port
+      1    0.2%    0.1%  T _OSAtomicDecrement32
+
+ [Bottom up (heavy) profile]:
+  Note: percentage shows a share of a particular caller in the total
+  amount of its parent calls.
+  Callers occupying less than 1.0% are not shown.
+
+   ticks parent  name
+    355   49.6%  T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+     69   19.4%    LazyCompile: *cached file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:12:29
+     51   73.9%      LazyCompile: *zocAffects file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2414:15
+     37   72.5%        LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+     25   67.6%          LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+     19   76.0%            LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      6   24.0%            Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+     12   32.4%          Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      6   50.0%            LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      6   50.0%            Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      6   11.8%        Function: ^traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      6  100.0%          Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      6  100.0%            Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      4    7.8%        LazyCompile: *zocBlocked file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2444:15
+      4  100.0%          LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      2   50.0%            LazyCompile: *executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      2   50.0%            LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      4    7.8%        LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      4  100.0%          LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      4  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+     10   14.5%      LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      7   70.0%        LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      5   71.4%          LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      5  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      2   28.6%          Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      2  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      3   30.0%        Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      3  100.0%          Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      3  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      2    2.9%      T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      2  100.0%        Function: ^squareSpiral file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:540:19
+      2  100.0%          Function: ^zocAffecting file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2417:17
+      2  100.0%            Function: ^zocAffects file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2414:15
+      1    1.4%      LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      1  100.0%        LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      1  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%            Function: ^executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      1    1.4%      LazyCompile: *orderCost file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1905:14
+      1  100.0%        Function: ^scheduleOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1913:18
+      1  100.0%          Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2403:36
+      1  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1    1.4%      LazyCompile: *neighborOf file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:953:15
+      1  100.0%        Function: ^traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      1  100.0%          Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      1  100.0%            Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1    1.4%      LazyCompile: *adjacencies file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:534:18
+      1  100.0%        Function: ^_Mapboard_neighborids_ file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1081:304
+      1  100.0%          LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:830:49
+      1  100.0%            LazyCompile: *cached file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:12:29
+      1    1.4%      Function: ^ravel2 file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:404:16
+      1  100.0%        Function: ^toid file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:454:14
+      1  100.0%          Function: ^lonlat file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:532:13
+      1  100.0%            Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:465:14
+      1    1.4%      Function: ^lonlat file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:532:13
+      1  100.0%        Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:465:14
+      1  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%            Function: ^adjsbyid_ file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:462:19
+     37   10.4%    LazyCompile: *zocAffects file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2414:15
+     28   75.7%      LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+     21   75.0%        LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+     17   81.0%          LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+     17  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      4   19.0%          Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      4  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      7   25.0%        Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      5   71.4%          LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      5  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      2   28.6%          Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      2  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      3    8.1%      LazyCompile: *zocBlocked file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2444:15
+      3  100.0%        LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      2   66.7%          LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      2  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1   33.3%          LazyCompile: *executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      1  100.0%            LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      3    8.1%      Function: ^traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      3  100.0%        Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      3  100.0%          Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      3  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      2    5.4%      Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      1   50.0%        LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%            Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+      1   50.0%        Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%            Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+      1    2.7%      Function: ^zocBlocked file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2444:15
+      1  100.0%        LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      1  100.0%          Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      1  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+     31    8.7%    LazyCompile: *__classPrivateFieldGet file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:739:32
+     30   96.8%      LazyCompile: *zocAffects file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2414:15
+     23   76.7%        LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+     18   78.3%          LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+     17   94.4%            LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1    5.6%            Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      5   21.7%          Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      4   80.0%            Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1   20.0%            LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      3   10.0%        LazyCompile: *zocBlocked file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2444:15
+      2   66.7%          Function: ^_Unit_takeDamage file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2211:48
+      2  100.0%            LazyCompile: *_Unit_resolveCombat file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2168:140
+      1   33.3%          LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      1  100.0%            LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      3   10.0%        LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      3  100.0%          LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      3  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1    3.3%        Function: ^traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      1  100.0%          Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      1  100.0%            Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1    3.2%      LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      1  100.0%        LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      1  100.0%          LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+     29    8.2%    LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+     21   72.4%      LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+     16   76.2%        LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+     16  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+     16  100.0%            Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+      5   23.8%        Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      5  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      5  100.0%            Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+      8   27.6%      Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      7   87.5%        Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      7  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      7  100.0%            Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+      1   12.5%        LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%            Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+     22    6.2%    T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+     10   45.5%      LazyCompile: *at file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2344:7
+     10  100.0%        LazyCompile: *zocAffects file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2414:15
+      5   50.0%          LazyCompile: *zocBlocked file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2444:15
+      5  100.0%            LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      2   20.0%          LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      2  100.0%            LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      2   20.0%          Function: ^zocBlocked file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2444:15
+      2  100.0%            LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      1   10.0%          LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      1  100.0%            LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      3   13.6%      LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:856:58
+      3  100.0%        T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      3  100.0%          Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:856:38
+      3  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1    4.5%      LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      1  100.0%        LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      1  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%            Function: ^executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      1    4.5%      LazyCompile: *executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      1  100.0%        LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1  100.0%          LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1  100.0%            LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1    4.5%      LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/examples/maelstrom.js:40:38
+      1  100.0%        T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%          Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/examples/maelstrom.js:24:32
+      1  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1    4.5%      Function: ^zocAffecting file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2417:17
+      1  100.0%        Function: ^zocAffects file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2414:15
+      1  100.0%          Function: ^traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      1  100.0%            Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      1    4.5%      Function: ^filter file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2352:11
+      1  100.0%        Function: ^activeUnits file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2393:16
+      1  100.0%          Function: ^executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      1  100.0%            Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1    4.5%      Function: ^executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      1  100.0%        Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1  100.0%          Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2704:13
+      1  100.0%            Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/examples/maelstrom.js:24:32
+      1    4.5%      Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/examples/maelstrom.js:24:32
+      1  100.0%        T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%          Script: ~<anonymous> file:///Users/psurry/personal/EasternFront1941/examples/maelstrom.js:1:1
+      1  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1    4.5%      Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2382:155
+      1  100.0%        T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%          Function: ^scoreStrengths file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2380:19
+      1  100.0%            Function: ^score file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2736:10
+      1    4.5%      Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1085:37
+      1  100.0%        T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%          Function: ^_Mapboard_neighborids_ file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1081:304
+      1  100.0%            Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:830:49
+     20    5.6%    LazyCompile: *toid file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:454:14
+     19   95.0%      LazyCompile: *get location file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1765:17
+     13   68.4%        LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      7   53.8%          LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      7  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      5   38.5%          LazyCompile: *executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      4   80.0%            LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1   20.0%            Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1    7.7%          Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      1  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      2   10.5%        LazyCompile: *moveTo file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1958:11
+      2  100.0%          LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      1   50.0%            LazyCompile: *executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      1   50.0%            LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      2   10.5%        LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/examples/maelstrom.js:44:37
+      2  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      2  100.0%            Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/examples/maelstrom.js:24:32
+      1    5.3%        LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      1  100.0%          LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      1  100.0%            LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1    5.3%        Function: ^moveTo file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1958:11
+      1  100.0%          LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      1  100.0%            Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      1    5.0%      LazyCompile: *orderCost file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1905:14
+      1  100.0%        Function: ^scheduleOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1913:18
+      1  100.0%          Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2403:36
+      1  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+     12    3.4%    LazyCompile: *get location file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1765:17
+      6   50.0%      LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      6  100.0%        LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      6  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      6  100.0%            Function: ^executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      2   16.7%      LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      2  100.0%        LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      1   50.0%          LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1   50.0%          Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      2   16.7%      LazyCompile: *moveTo file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1958:11
+      2  100.0%        LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      1   50.0%          LazyCompile: *executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      1  100.0%            LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1   50.0%          LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      1  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1    8.3%      LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/examples/maelstrom.js:44:37
+      1  100.0%        T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%          Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/examples/maelstrom.js:24:32
+      1  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1    8.3%      Function: ^moveTo file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1958:11
+      1  100.0%        LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      1  100.0%          LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      1  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+     12    3.4%    LazyCompile: *activeUnits file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2393:16
+     12  100.0%      Function: ^executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      7   58.3%        Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      7  100.0%          Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      7  100.0%            Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      5   41.7%        LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      4   80.0%          LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      4  100.0%            LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1   20.0%          Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2704:13
+      1  100.0%            Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/examples/maelstrom.js:24:32
+     10    2.8%    LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      6   60.0%      LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      6  100.0%        T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      6  100.0%          Function: ^executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      4   66.7%            Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      2   33.3%            LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      3   30.0%      LazyCompile: *executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      2   66.7%        LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      2  100.0%          LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      2  100.0%            LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1   33.3%        Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1  100.0%          Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1  100.0%            Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1   10.0%      Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      1  100.0%        T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%          Function: ^executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      1  100.0%            LazyCompile: ~tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      8    2.3%    Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      8  100.0%      Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      8  100.0%        T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      6   75.0%          Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+      6  100.0%            Function: ^_nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2723:14
+      2   25.0%          LazyCompile: ~nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+      2  100.0%            LazyCompile: ~_nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2723:14
+      8    2.3%    Function: ^executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      7   87.5%      Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      7  100.0%        Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      7  100.0%          Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      7  100.0%            Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1   12.5%      LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1  100.0%        LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1  100.0%          LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1  100.0%            LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      7    2.0%    LazyCompile: *executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      7  100.0%      LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      7  100.0%        LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      7  100.0%          LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      7  100.0%            LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      6    1.7%    LazyCompile: *orderCost file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1905:14
+      5   83.3%      LazyCompile: *scheduleOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1913:18
+      3   60.0%        Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2403:36
+      3  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      3  100.0%            Function: ^scheduleOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2401:19
+      1   20.0%        LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      1  100.0%          LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      1  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1   20.0%        LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2403:36
+      1  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%            Function: ^scheduleOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2401:19
+      1   16.7%      Function: ^scheduleOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1913:18
+      1  100.0%        Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2403:36
+      1  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%            Function: ^scheduleOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2401:19
+      6    1.7%    LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      4   66.7%      LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      4  100.0%        T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      4  100.0%          Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+      4  100.0%            Function: ^_nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2723:14
+      2   33.3%      Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      2  100.0%        T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      2  100.0%          Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+      2  100.0%            Function: ^_nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2723:14
+      5    1.4%    LazyCompile: *at file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2344:7
+      5  100.0%      LazyCompile: *zocAffects file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2414:15
+      2   40.0%        LazyCompile: *zocBlocked file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2444:15
+      2  100.0%          LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      2  100.0%            LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      2   40.0%        Function: ^zocBlocked file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2444:15
+      2  100.0%          LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      1   50.0%            LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      1   50.0%            Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      1   20.0%        LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      1  100.0%          LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      1  100.0%            LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      5    1.4%    Function: ^filter file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2352:11
+      5  100.0%      Function: ^activeUnits file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2393:16
+      4   80.0%        Function: ^executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      4  100.0%          Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      4  100.0%            Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1   20.0%        Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/examples/maelstrom.js:24:32
+      1  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%            Script: ~<anonymous> file:///Users/psurry/personal/EasternFront1941/examples/maelstrom.js:1:1
+      4    1.1%    LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2431:52
+      2   50.0%      T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      2  100.0%        Function: ^zocAffecting file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2417:17
+      2  100.0%          Function: ^zocAffects file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2414:15
+      2  100.0%            Function: ^traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      2   50.0%      LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      2  100.0%        Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      2  100.0%          Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      2  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+
+    136   19.0%  LazyCompile: *zocAffects file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2414:15
+    102   75.0%    LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+     75   73.5%      LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+     60   80.0%        LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+     60  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+     60  100.0%            Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+     15   20.0%        Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+     15  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+     15  100.0%            Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+     27   26.5%      Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+     16   59.3%        Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+     16  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+     16  100.0%            Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+     11   40.7%        LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+     11  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+     11  100.0%            Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+     16   11.8%    LazyCompile: *zocBlocked file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2444:15
+     16  100.0%      LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+     14   87.5%        LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+     14  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+     14  100.0%            Function: ^executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      2   12.5%        LazyCompile: *executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      1   50.0%          LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1  100.0%            LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1   50.0%          Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1  100.0%            Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      7    5.1%    Function: ^traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      7  100.0%      Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      7  100.0%        Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      7  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      7  100.0%            Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+      6    4.4%    LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      6  100.0%      LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      6  100.0%        T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      6  100.0%          Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+      6  100.0%            Function: ^_nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2723:14
+      3    2.2%    Function: ^zocBlocked file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2444:15
+      3  100.0%      LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      2   66.7%        Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      2  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      2  100.0%            Function: ^executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      1   33.3%        LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      1  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%            Function: ^executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      2    1.5%    Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      2  100.0%      LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      2  100.0%        T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      2  100.0%          Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+      2  100.0%            Function: ^_nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2723:14
+
+     36    5.0%  LazyCompile: *__classPrivateFieldGet file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:739:32
+     31   86.1%    LazyCompile: *zocAffects file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2414:15
+     29   93.5%      LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+     17   58.6%        LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+     12   70.6%          LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+     12  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      5   29.4%          Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      5  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+     12   41.4%        Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      7   58.3%          Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      7  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      5   41.7%          LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      5  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      2    6.5%      LazyCompile: *zocBlocked file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2444:15
+      2  100.0%        LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      2  100.0%          LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      2  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      3    8.3%    LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      2   66.7%      LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      2  100.0%        LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      2  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      2  100.0%            Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+      1   33.3%      Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      1  100.0%        Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%            Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+      1    2.8%    Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      1  100.0%      LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1  100.0%        T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%          Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+      1  100.0%            Function: ^_nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2723:14
+      1    2.8%    Function: ^filter file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2352:11
+      1  100.0%      Function: ^activeUnits file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2393:16
+      1  100.0%        Function: ^executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      1  100.0%          Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1  100.0%            Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+
+     19    2.7%  T node::builtins::BuiltinLoader::CompileFunction(v8::FunctionCallbackInfo<v8::Value> const&)
+     17   89.5%    Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      4   23.5%      Function: ~<anonymous> node:internal/modules/esm/loader:1:1
+      4  100.0%        Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      4  100.0%          Function: ~<anonymous> node:internal/process/esm_loader:1:1
+      4  100.0%            Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      2   11.8%      Function: ~<anonymous> node:internal/modules/esm/fetch_module:1:1
+      2  100.0%        Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      2  100.0%          Function: ~<anonymous> node:internal/modules/esm/get_format:1:1
+      2  100.0%            Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      2   11.8%      Function: ~<anonymous> node:internal/fs/promises:1:1
+      2  100.0%        Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      2  100.0%          Function: ~<anonymous> node:internal/modules/esm/load:1:1
+      2  100.0%            Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      1    5.9%      LazyCompile: ~initializeCJSLoader node:internal/process/pre_execution:535:29
+      1  100.0%        LazyCompile: ~prepareMainThreadExecution node:internal/process/pre_execution:36:36
+      1  100.0%          Function: ~<anonymous> node:internal/main/run_main_module:1:1
+      1    5.9%      LazyCompile: ~get BlockList node:net:1980:16
+      1  100.0%        Function: ~<anonymous> node:internal/modules/esm/fetch_module:1:1
+      1  100.0%          Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      1  100.0%            Function: ~<anonymous> node:internal/modules/esm/get_format:1:1
+      1    5.9%      Function: ~<anonymous> node:internal/source_map/source_map_cache:1:1
+      1  100.0%        Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      1  100.0%          LazyCompile: ~initializeSourceMapsHandlers node:internal/process/pre_execution:574:38
+      1  100.0%            LazyCompile: ~prepareMainThreadExecution node:internal/process/pre_execution:36:36
+      1    5.9%      Function: ~<anonymous> node:internal/readline/interface:1:1
+      1  100.0%        Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      1  100.0%          Function: ~<anonymous> node:internal/fs/promises:1:1
+      1  100.0%            Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      1    5.9%      Function: ~<anonymous> node:internal/process/esm_loader:1:1
+      1  100.0%        Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      1  100.0%          Function: ~<anonymous> node:internal/modules/cjs/loader:1:1
+      1  100.0%            Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      1    5.9%      Function: ~<anonymous> node:internal/modules/esm/load:1:1
+      1  100.0%        Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      1  100.0%          Function: ~<anonymous> node:internal/modules/esm/loader:1:1
+      1  100.0%            Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      1    5.9%      Function: ~<anonymous> node:internal/modules/esm/get_format:1:1
+      1  100.0%        Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      1  100.0%          Function: ~<anonymous> node:internal/modules/esm/resolve:1:1
+      1  100.0%            Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      1    5.9%      Function: ~<anonymous> node:internal/modules/cjs/loader:1:1
+      1  100.0%        Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      1  100.0%          LazyCompile: ~initializeCJSLoader node:internal/process/pre_execution:535:29
+      1  100.0%            LazyCompile: ~prepareMainThreadExecution node:internal/process/pre_execution:36:36
+      1    5.9%      Function: ~<anonymous> node:internal/dns/utils:1:1
+      1  100.0%        Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      1  100.0%          LazyCompile: ~prepareMainThreadExecution node:internal/process/pre_execution:36:36
+      1  100.0%            Function: ~<anonymous> node:internal/main/run_main_module:1:1
+      1    5.3%    Function: ~<anonymous> node:internal/main/run_main_module:1:1
+      1    5.3%    Function: ^compileForInternalLoader node:internal/bootstrap/loaders:316:27
+      1  100.0%      Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      1  100.0%        LazyCompile: ~lazyWebCrypto node:crypto:125:23
+      1  100.0%          LazyCompile: ~get node:crypto:369:8
+      1  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+
+     14    2.0%  /usr/lib/system/libsystem_kernel.dylib
+      4   28.6%    T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      2   50.0%      LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      2  100.0%        LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      2  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      2  100.0%            Function: ^executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      1   25.0%      LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/examples/maelstrom.js:40:38
+      1  100.0%        T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%          Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/examples/maelstrom.js:24:32
+      1  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1   25.0%      Function: ^locationOf file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:934:15
+      1  100.0%        Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2431:52
+      1  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%            Function: ^zocAffecting file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2417:17
+      1    7.1%    LazyCompile: ~patchProcessObject node:internal/process/pre_execution:112:28
+      1  100.0%      LazyCompile: ~prepareMainThreadExecution node:internal/process/pre_execution:36:36
+      1  100.0%        Function: ~<anonymous> node:internal/main/run_main_module:1:1
+      1    7.1%    LazyCompile: ~get node:internal/console/constructor:219:14
+      1  100.0%      LazyCompile: ~value node:internal/console/constructor:346:20
+      1  100.0%        LazyCompile: ~warn node:internal/console/constructor:381:7
+      1  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%            LazyCompile: ~writeOut node:internal/process/warning:56:18
+      1    7.1%    LazyCompile: ~emitWarning node:internal/process/warning:129:21
+      1  100.0%      LazyCompile: ~ESMLoader node:internal/modules/esm/loader:237:14
+      1  100.0%        Function: ~<anonymous> node:internal/process/esm_loader:1:1
+      1  100.0%          Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      1  100.0%            Function: ~<anonymous> node:internal/modules/cjs/loader:1:1
+      1    7.1%    LazyCompile: ~createWritableStdioStream node:internal/bootstrap/switches/is_main_thread:45:35
+      1  100.0%      LazyCompile: ~getStderr node:internal/bootstrap/switches/is_main_thread:168:19
+      1  100.0%        LazyCompile: ~get node:internal/console/constructor:219:14
+      1  100.0%          LazyCompile: ~value node:internal/console/constructor:346:20
+      1  100.0%            LazyCompile: ~warn node:internal/console/constructor:381:7
+      1    7.1%    LazyCompile: ~ReadableState node:internal/streams/readable:83:23
+      1  100.0%      LazyCompile: ~Readable node:internal/streams/readable:186:18
+      1  100.0%        LazyCompile: ~Duplex node:internal/streams/duplex:54:16
+      1  100.0%          LazyCompile: ~Socket node:net:329:16
+      1  100.0%            LazyCompile: ~WriteStream node:tty:84:21
+      1    7.1%    LazyCompile: ~Duplex node:internal/streams/duplex:54:16
+      1  100.0%      LazyCompile: ~Socket node:net:329:16
+      1  100.0%        LazyCompile: ~WriteStream node:tty:84:21
+      1  100.0%          LazyCompile: ~createWritableStdioStream node:internal/bootstrap/switches/is_main_thread:45:35
+      1  100.0%            LazyCompile: ~getStderr node:internal/bootstrap/switches/is_main_thread:168:19
+      1    7.1%    LazyCompile: *cached file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:12:29
+      1  100.0%      LazyCompile: *zocAffects file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2414:15
+      1  100.0%        LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      1  100.0%          LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      1  100.0%            LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1    7.1%    LazyCompile: *at file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2344:7
+      1  100.0%      LazyCompile: *zocAffects file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2414:15
+      1  100.0%        LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      1  100.0%          LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      1  100.0%            Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1    7.1%    Function: ^emit file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1779:9
+      1  100.0%      Function: ^resetOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1856:16
+      1  100.0%        Function: ^set mode file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1788:13
+      1  100.0%          Function: ^_Unit_takeDamage file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2211:48
+      1  100.0%            Function: ^_Unit_resolveCombat file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2168:140
+
+     13    1.8%  LazyCompile: *cached file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:12:29
+      8   61.5%    LazyCompile: *zocAffects file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2414:15
+      8  100.0%      LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      5   62.5%        LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      4   80.0%          LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      4  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1   20.0%          Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      3   37.5%        Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      2   66.7%          Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      2  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1   33.3%          LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      2   15.4%    LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      2  100.0%      LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      1   50.0%        LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%            Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+      1   50.0%        Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%            Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+      1    7.7%    LazyCompile: *squareSpiral file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:540:19
+      1  100.0%      LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      1  100.0%        Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      1  100.0%          Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1    7.7%    LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      1  100.0%      LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1  100.0%        T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%          Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+      1  100.0%            Function: ^_nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2723:14
+      1    7.7%    LazyCompile: *neighborOf file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:953:15
+      1  100.0%      Function: ^orderCost file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1905:14
+      1  100.0%        Function: ^scheduleOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1913:18
+      1  100.0%          Function: ^tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      1  100.0%            Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+
+     12    1.7%  T _semaphore_destroy
+      3   25.0%    T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1   33.3%      LazyCompile: ~scoreStrengths file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2380:19
+      1  100.0%        LazyCompile: ~score file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2736:10
+      1  100.0%          LazyCompile: ~get over file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2697:13
+      1  100.0%            LazyCompile: ~_nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2723:14
+      1   33.3%      LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2394:28
+      1  100.0%        T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%          Function: ^filter file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2352:11
+      1  100.0%            Function: ^activeUnits file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2393:16
+      1   33.3%      Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1085:37
+      1  100.0%        T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%          Function: ^_Mapboard_neighborids_ file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1081:304
+      1  100.0%            Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:830:49
+      1    8.3%    T node::loader::ModuleWrap::Evaluate(v8::FunctionCallbackInfo<v8::Value> const&)
+      1  100.0%      LazyCompile: ~getESMFacade node:internal/bootstrap/loaders:281:15
+      1  100.0%        LazyCompile: ~compileForPublicLoader node:internal/bootstrap/loaders:263:25
+      1  100.0%          LazyCompile: ~loadBuiltinModule node:internal/modules/cjs/helpers:45:27
+      1  100.0%            LazyCompile: ~builtinStrategy node:internal/modules/esm/translators:253:58
+      1    8.3%    LazyCompile: ~<anonymous> node:internal/fs/promises:356:5
+      1    8.3%    LazyCompile: *__classPrivateFieldGet file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:739:32
+      1  100.0%      LazyCompile: *zocAffects file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2414:15
+      1  100.0%        LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      1  100.0%          LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      1  100.0%            LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+
+     12    1.7%  /usr/lib/system/libsystem_pthread.dylib
+      2   16.7%    T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1   50.0%      LazyCompile: *get location file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1765:17
+      1  100.0%        LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      1  100.0%          LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      1  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1   50.0%      LazyCompile: *__classPrivateFieldGet file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:739:32
+      1  100.0%        LazyCompile: *zocAffects file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2414:15
+      1  100.0%          LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      1  100.0%            LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      2   16.7%    LazyCompile: ~patchProcessObject node:internal/process/pre_execution:112:28
+      2  100.0%      LazyCompile: ~prepareMainThreadExecution node:internal/process/pre_execution:36:36
+      2  100.0%        Function: ~<anonymous> node:internal/main/run_main_module:1:1
+      1    8.3%    LazyCompile: ~value node:internal/console/constructor:272:20
+      1  100.0%      LazyCompile: ~warn node:internal/console/constructor:381:7
+      1  100.0%        T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%          LazyCompile: ~writeOut node:internal/process/warning:56:18
+      1  100.0%            LazyCompile: ~onWarning node:internal/process/warning:92:19
+      1    8.3%    LazyCompile: ~toRealPath node:internal/modules/cjs/loader:440:20
+      1  100.0%      LazyCompile: ~Module._findPath node:internal/modules/cjs/loader:541:28
+      1  100.0%        LazyCompile: ~resolveMainPath node:internal/modules/run_main:15:25
+      1  100.0%          LazyCompile: ~executeUserEntryPoint node:internal/modules/run_main:74:31
+      1  100.0%            Function: ~<anonymous> node:internal/main/run_main_module:1:1
+      1    8.3%    LazyCompile: ~setupFetch node:internal/process/pre_execution:198:20
+      1  100.0%      LazyCompile: ~prepareMainThreadExecution node:internal/process/pre_execution:36:36
+      1  100.0%        Function: ~<anonymous> node:internal/main/run_main_module:1:1
+      1    8.3%    LazyCompile: ~pathToFileURL node:internal/url:1523:23
+      1  100.0%      LazyCompile: ~<anonymous> node:internal/modules/run_main:55:29
+      1  100.0%        LazyCompile: ~loadESM node:internal/process/esm_loader:88:41
+      1  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1    8.3%    LazyCompile: ~getRandomValues node:internal/crypto/webcrypto:766:25
+      1  100.0%      LazyCompile: ~lfsr24 file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:417:16
+      1  100.0%        LazyCompile: ~Game file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2649:16
+      1  100.0%          LazyCompile: ~<anonymous> file:///Users/psurry/personal/EasternFront1941/examples/maelstrom.js:24:32
+      1  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1    8.3%    LazyCompile: ~createWarningObject node:internal/process/warning:173:29
+      1  100.0%      LazyCompile: ~emitWarning node:internal/process/warning:129:21
+      1  100.0%        LazyCompile: ~ESMLoader node:internal/modules/esm/loader:237:14
+      1  100.0%          Function: ~<anonymous> node:internal/process/esm_loader:1:1
+      1  100.0%            Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      1    8.3%    Function: ~<anonymous> node:internal/fs/promises:1:1
+      1  100.0%      Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      1  100.0%        Function: ~<anonymous> node:internal/modules/esm/load:1:1
+      1  100.0%          Function: ^nativeModuleRequire node:internal/bootstrap/loaders:353:29
+      1  100.0%            Function: ~<anonymous> node:internal/modules/esm/loader:1:1
+
+     10    1.4%  /usr/lib/libc++.1.dylib
+      2   20.0%    LazyCompile: *cached file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:12:29
+      1   50.0%      LazyCompile: *zocAffects file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2414:15
+      1  100.0%        Function: ^traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      1  100.0%          Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      1  100.0%            Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1   50.0%      Function: ^point file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:533:12
+      1  100.0%        Function: ^orderCost file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1905:14
+      1  100.0%          Function: ^scheduleOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1913:18
+      1  100.0%            Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2403:36
+      1   10.0%    T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%      LazyCompile: *activeUnits file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2393:16
+      1  100.0%        Function: ^executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      1  100.0%          LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1  100.0%            LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1   10.0%    LazyCompile: ~value node:internal/console/constructor:346:20
+      1  100.0%      LazyCompile: ~warn node:internal/console/constructor:381:7
+      1  100.0%        T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%          LazyCompile: ~writeOut node:internal/process/warning:56:18
+      1  100.0%            LazyCompile: ~onWarning node:internal/process/warning:92:19
+      1   10.0%    LazyCompile: ~squareSpira11_ file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:503:24
+      1  100.0%      LazyCompile: *cached file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:12:29
+      1  100.0%        LazyCompile: ~squareSpiral file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:540:19
+      1  100.0%          LazyCompile: ~zocAffecting file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2417:17
+      1  100.0%            LazyCompile: ~zocAffects file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2414:15
+      1   10.0%    LazyCompile: ~setupPerfHooks node:internal/process/pre_execution:367:24
+      1  100.0%      LazyCompile: ~prepareMainThreadExecution node:internal/process/pre_execution:36:36
+      1  100.0%        Function: ~<anonymous> node:internal/main/run_main_module:1:1
+      1   10.0%    LazyCompile: ~realpathSync node:fs:2474:22
+      1  100.0%      LazyCompile: ~toRealPath node:internal/modules/cjs/loader:440:20
+      1  100.0%        LazyCompile: ~Module._findPath node:internal/modules/cjs/loader:541:28
+      1  100.0%          LazyCompile: ~resolveMainPath node:internal/modules/run_main:15:25
+      1  100.0%            LazyCompile: ~executeUserEntryPoint node:internal/modules/run_main:74:31
+      1   10.0%    LazyCompile: ~afterWriteDispatched node:internal/stream_base_commons:155:30
+      1  100.0%      LazyCompile: ~writeGeneric node:internal/stream_base_commons:147:22
+      1  100.0%        LazyCompile: ~Socket._writeGeneric node:net:891:42
+      1  100.0%          LazyCompile: ~Socket._write node:net:928:35
+      1  100.0%            LazyCompile: ~writeOrBuffer node:internal/streams/writable:368:23
+      1   10.0%    LazyCompile: *__classPrivateFieldGet file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:739:32
+      1  100.0%      Function: ^moveTo file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1958:11
+      1  100.0%        Function: ^tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      1  100.0%          Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      1  100.0%            T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+
+      9    1.3%  LazyCompile: *get location file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1765:17
+      6   66.7%    LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      4   66.7%      LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      4  100.0%        T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      4  100.0%          Function: ^executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      3   75.0%            Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1   25.0%            LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1   16.7%      LazyCompile: *executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      1  100.0%        LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1  100.0%          LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1  100.0%            LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1   16.7%      Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      1  100.0%        T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%          Function: ^executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      1  100.0%            LazyCompile: ~tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      2   22.2%    LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      1   50.0%      LazyCompile: *nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      1  100.0%        LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%            Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+      1   50.0%      Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      1  100.0%        LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      1  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%            Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+      1   11.1%    LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/examples/maelstrom.js:44:37
+      1  100.0%      T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%        Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/examples/maelstrom.js:24:32
+      1  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%            Script: ~<anonymous> file:///Users/psurry/personal/EasternFront1941/examples/maelstrom.js:1:1
+
+      8    1.1%  LazyCompile: *tryOrder file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:1984:13
+      6   75.0%    LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2412:22
+      6  100.0%      T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      6  100.0%        Function: ^executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      5   83.3%          Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      5  100.0%            Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1   16.7%          LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1  100.0%            LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1   12.5%    T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      1  100.0%      Function: ^executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      1  100.0%        Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1  100.0%          Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1  100.0%            Function: ^tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1   12.5%    LazyCompile: *executeOrders file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2405:18
+      1  100.0%      LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1  100.0%        LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1  100.0%          LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+      1  100.0%            LazyCompile: *tickTock file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2712:26
+
+      8    1.1%  LazyCompile: *<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2431:52
+      8  100.0%    LazyCompile: *traceSupply file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2086:16
+      8  100.0%      Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2046:13
+      8  100.0%        Function: ^<anonymous> file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2391:36
+      8  100.0%          T node::contextify::CompiledFnEntry::~CompiledFnEntry()
+      5   62.5%            Function: ^nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+      3   37.5%            LazyCompile: ~nextTurn file:///Users/psurry/personal/EasternFront1941/dist/ef1941.mjs:2390:13
+

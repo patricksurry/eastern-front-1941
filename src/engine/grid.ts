@@ -20,12 +20,12 @@ function byid_(gid: number): GridPoint {
 }
 const byid = memoize(byid_);
 
-function nbrsbyid_(gid: number): number[] {
+function adjsbyid_(gid: number): number[] {
     const {lon, lat} = Grid.byid(gid);
     return Object.values(directions)
         .map(({dlon, dlat}) => Grid.lonlat(lon + dlon, lat + dlat).gid);
 }
-const nbrsbyid = memoize(nbrsbyid_);
+const adjsbyid = memoize(adjsbyid_);
 
 function directionsFrom(p: Point, q: Point): [number, DirectionKey][] {
     // project all directions from p to q and rank them, ensuring tie breaking has no bias
@@ -106,8 +106,8 @@ const Grid = {
     lonlat: (lon: number, lat: number): GridPoint => byid(toid(lon, lat)),
     point: ({lon, lat}: Point): GridPoint => byid(toid(lon, lat)),
 
-    neighbors: ({gid}: GridPoint): GridPoint[] => nbrsbyid(gid).map(Grid.byid),
-    adjacent: ({gid}: GridPoint, d: DirectionKey): GridPoint => Grid.byid(nbrsbyid(gid)[d]),
+    adjacencies: ({gid}: GridPoint): GridPoint[] => adjsbyid(gid).map(Grid.byid),
+    adjacent: ({gid}: GridPoint, d: DirectionKey): GridPoint => Grid.byid(adjsbyid(gid)[d]),
 
     // calculate the taxicab metric between two locations
     manhattanDistance: (p: Point, q: Point): number => Math.abs(p.lat - q.lat) + Math.abs(p.lon - q.lon),
@@ -119,4 +119,4 @@ const Grid = {
     diamondSpiral: diamondSpiral,
 };
 
-export {GridPoint, Grid};
+export {type GridPoint, Grid};

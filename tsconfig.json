@@ -1,9 +1,12 @@
 {
     "compilerOptions": {
         "strict": true,
+        "outDir": "dist",
         "moduleResolution": "node",
         "target": "ES6",
         "allowSyntheticDefaultImports": true,
         "noUnusedLocals": true,
-    }
+        "esModuleInterop": true
+    },
+    "exclude": ["node_modules", "dist", "jest.config.ts", "**/*.test.ts"]
 }

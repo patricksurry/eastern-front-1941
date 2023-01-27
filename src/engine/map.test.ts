@@ -2,9 +2,10 @@ import {DirectionKey, WeatherKey} from './defs';
 import {Grid} from './grid';
 import {Mapboard} from './map';
 import {Game} from './game';
+import { ScenarioKey } from './scenarios';
 
 const
-    game = new Game(),
+    game = new Game(ScenarioKey.apx),
     mapboard = new Mapboard(game),
     loc34 = mapboard.locationOf(Grid.lonlat(3, 4));
 

@@ -6,6 +6,7 @@ hard to imagine debugging and tuning the AI in 6502 asm (tho mentions basic).  m
 any assembler I've written.  respect
 
 fascinating simplicity of AI, no understanding of local tactics, ZoC etc
+terrible at playing Germans
 
 
 full disassembly of the APX disk image(ref) including transcribed comments/labels from the original notes
@@ -43,9 +44,9 @@ and setting an appropriate `mask-position`.
 ### The map
 
 The [original map][apxmapdata] is stored as 8-bit binary data with one byte per map square.
-The lower six bits index into one the custom north or south font based on the square's latitude,
+The lower six bits index into either the custom north or south font based on the square's latitude,
 with the two upper bits choosing the color channel.
-(The cartridge goes an extra step with a custom run-length coding but unpacks to essentially the same thing.)
+(The cartridge goes an extra step to save some space with a custom run-length coding but unpacks to essentially the same thing.)
 Including the raw map data as a base64'd binary blob or whatever seemed like a cop out,
 so I took a detour to re-encode using a custom base65 mapping
 where each terrain type maps to a group of related printable characters:
@@ -143,13 +144,12 @@ high nibble low 3 bits gives first word, high bit gives player (0=german, 1=russ
 
 
 - cartridge changes
+    - more extensive than i'd assumed, hard to just line up APX code.  division took me a while...
     - refactoring w subroutines
     - difficulty level, start date
     - flieger units, difficulty levels (vs handicap)
     - fogofwar using code as seed
     - attack even if defender wins first?
-
-
 
 
 anatomy of a bug

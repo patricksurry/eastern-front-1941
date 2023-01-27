@@ -1,29 +1,75 @@
 import m from 'mithril';
-import {DirectionKey, directions} from './defs';
-import {UnitMode} from './unit';
-import {AnticColor, DisplayLayer} from './anticmodel';
-import {BlockComponent, DisplayAttr, GlyphAttr, type Glyph} from './anticview';
-import {antic2rgb, DisplayComponent, GlyphComponent} from './anticview';
 import {css} from '@emotion/css';
+
+import {DirectionKey, directions} from '../engine/defs';
+import {UnitMode} from '../engine/unit';
+
+import {AnticColor, DisplayLayer} from '../antic/anticmodel';
+import {
+    antic2rgb, DisplayComponent, GlyphComponent,
+    BlockComponent, DisplayAttr, GlyphAttr, type Glyph
+} from '../antic/anticview';
 
 import type {AppModel} from './appmodel';
 import type {HelpModel} from './help';
 
-interface LayerAttrs {app: AppModel, help: HelpModel}
+const screenWidth = 42,
+    screenHeight = 24,
+    mapHeight = 18;
 
 class AppView {
-    constructor(attrs: LayerAttrs) {
-        m.mount(document.body, {view: () => m(Layout, attrs)});
+    app: AppModel;
+    help: HelpModel;
+    #pinmap?: {x: number, y: number}; // the glyph coordinate to pin at map center
+
+    constructor(app: AppModel, help: HelpModel) {
+        this.app = app;
+        this.help = help;
+        m.mount(document.body, {view: () => m(Layout, {view: this})})
     }
     redraw() {
         m.redraw()
+    }
+    scrollForMapCenter(): {top: number, left: number} | undefined {
+        if (!this.#pinmap) return;
+        const
+            {x, y} = this.#pinmap,
+            z = this.app.zoom ? 2: 1,
+            sz = z * this.app.mapLayer.fontmap.glyphSize,
+            xc = screenWidth / 2 / z,
+            yc = mapHeight / 2 / z;
+        return {left: (x - xc) * sz, top: (y - yc) * sz}
+    }
+    unpinMap() {
+        this.#pinmap = undefined;
+    }
+    pinMapCenter(): void;
+    pinMapCenter(x: number, y: number): void;
+    pinMapCenter(x?: number, y?: number): void {
+        if (x != null && y != null) {
+            this.#pinmap = {x, y};
+            return;
+        }
+        const
+            z = (this.app.zoom ? 2: 1),
+            sz = z * this.app.mapLayer.fontmap.glyphSize,
+            xc = screenWidth / 2 / z,
+            yc = mapHeight / 2 / z;
+
+        const elts = document.getElementsByClassName('map-scroller');
+        if (elts.length == 0) return;
+        const elt = elts[0] as HTMLElement;
+        this.#pinmap = {
+            x: elt.scrollLeft / sz + xc,
+            y: elt.scrollTop / sz + yc,
+        }
     }
 }
 
 document.body.style.backgroundColor = antic2rgb(0xD4) as string;
 
-const Layout: m.Component<LayerAttrs> = {
-    view: ({attrs: {help, app}}) => {
+const Layout: m.Component<{view: AppView}> = {
+    view: ({attrs: {view}}) => {
         return m('.layout', {
                 class: css`
                     padding: 12px;
@@ -33,15 +79,15 @@ const Layout: m.Component<LayerAttrs> = {
             },
             m('.screen', {
                     class: css`
-                        width: 336px;        /* 42x24 8px characters */
-                        height: 192px;
+                        width: ${screenWidth * 8}px;
+                        height: ${screenHeight * 8}px;
                         transform: scale(4);
                         transform-origin: top center;
                         margin: 0 auto;
                         position: relative;
                     `,
                 },
-                app.help ? m(HelpComponent, {help}) : m(GameComponent, {app})
+                view.app.help ? m(HelpComponent, {help: view.help}) : m(GameComponent, {view})
             )
         )
     }
@@ -59,125 +105,137 @@ const HelpComponent: m.Component<{help: HelpModel}> = {
     },
 }
 
-const GameComponent: m.Component<{app: AppModel}> = {
-    // called after a DOM element is updated,  guaranteed to run at the end of the render cycle
-    onupdate: ({attrs: {app}}) => {
+const GameComponent: m.Component<{view: AppView}> = {
+    // called after DOM element is updated,  guaranteed to run at the end of the render cycle
+    onupdate: ({attrs: {view: {app}}}) => {
         Object.values(app)
             .filter(v => v instanceof DisplayLayer)
             .forEach(layer => layer.dirty = false);
     },
-    view: ({attrs: {app}}) => {
+    view: ({attrs: {view}}) => {
         return [
             // double-width date-window at the top
             m(DisplayComponent, {
-                display: app.dateWindow,
+                display: view.app.dateWindow,
                 class: ['game', css`
                     transform-origin: top left;
                     transform: scale(2, 1);
                 `],
             }),
             m(DividerComponent, {color: 0x1A}),
-            // central fixed-size window containing the scrollable map
-            m('.map-scroller', {
-                    class: css`
-                        height: 144px;
-                        overflow: scroll;
-                    `,
-                },
-                // the full-sized map
-                m('.map-panel', {
-                        class: css`
-                            /* 48 x 41  8px sq cells */
-                            width: 384px;
-                            height: 328px;
-                            overflow: hidden;
-                            position: relative;
-                            transform-origin: top left;
-
-                            /* stack the layers */
-                            .display-layer {
-                                position: absolute;
-                                top: 0;
-                            }
-                        `,
-                        style: {transform: app.zoom ? 'scale(2)': null},
-                    },
-                    [
-                        // bottom layer showing terrain
-                        m(DisplayComponent, {
-                            display: app.mapLayer,
-                            class: [
-                                'terrain',
-                                css`
-                                    .display-layer, .glyph-foreground {
-                                        transition: background-color 1s linear;
-                                    }
-                                `
-                            ],
-                        }),
-                        // conditionally show text labels near cities
-                        app.extras ? m(DisplayComponent, {
-                            display: app.labelLayer,
-                            glyphComponent: LabelComponent,
-                            class: [
-                                'labels',
-                                css`
-                                    pointer-events: none;
-                                `
-                            ],
-                        }) : null,
-                        // layer with unit icons as sprites
-                        m(DisplayComponent, {
-                            display: app.unitLayer,
-                            glyphComponent: UnitComponent,
-                            class: [
-                                'units',
-                                css`
-                                    .glyph {
-                                        transition: transform 250ms linear;
-                                        transition: opacity 500ms linear;
-                                    }
-                                    .glyph-background, .glyph-foreground {
-                                        transition: background-color 1s linear;
-                                    }
-                                `
-                            ],
-                        }),
-                        // conditionally show current order paths for all units
-                        app.extras ? m(OrdersOverlayComponent, {
-                            display: app.unitLayer,
-                        }) : null,
-                        // conditionally show a semit-transparent mask to highlight unit reach
-                        app.extras ? m(DisplayComponent, {
-                            display: app.maskLayer,
-                            glyphComponent: BlockComponent,
-                            class: [
-                                'mask',
-                                css`
-                                    opacity: 0.33;
-                                    .glyph {
-                                        pointer-events: none;
-                                    }
-                                `
-                            ]
-                        }) : null,
-                        // show animated orders for focussed unit
-                        m(DisplayComponent, {
-                            display: app.kreuzeLayer,
-                            glyphComponent: KreuzeComponent,
-                            class: ['kreuze'],
-                        }),
-                    ]
-                ),
-            ),
+            m(MapComponent, {view}),
             m(DividerComponent, {color: 0x02}), // same as map
-            m(DisplayComponent, {display: app.infoWindow}),
+            m(DisplayComponent, {display: view.app.infoWindow}),
             m(DividerComponent, {color: 0x8A}),
-            m(DisplayComponent, {display: app.errorWindow}),
+            m(DisplayComponent, {display: view.app.errorWindow}),
             m(DividerComponent, {color: 0x8A}),
         ]
     }
 };
+
+const MapComponent: m.Component<{view: AppView}> = {
+    onupdate: ({attrs: {view}, dom: elt}) => {
+        // possibly center the map on a target x,y square
+        const pin = view.scrollForMapCenter();
+        if (!pin) return;
+        elt.scrollTo(pin.left, pin.top);
+        view.unpinMap();
+    },
+    view: ({attrs: {view: {app}}}) => {
+        // central fixed-size window containing the scrollable map
+        return m('.map-scroller', {
+                class: css`
+                    height: ${mapHeight * 8}px;
+                    overflow: scroll;
+                `,
+            },
+            // the full-sized map
+            m('.map-panel', {
+                    class: css`
+                        width: ${app.mapLayer.width * 8}px;
+                        height: ${app.mapLayer.height * 8}px;
+                        overflow: hidden;
+                        position: relative;
+                        transform-origin: top left;
+
+                        /* stack the layers */
+                        .display-layer {
+                            position: absolute;
+                            top: 0;
+                        }
+                    `,
+                    style: {transform: app.zoom ? 'scale(2)': null},
+                },
+                [
+                    // bottom layer showing terrain
+                    m(DisplayComponent, {
+                        display: app.mapLayer,
+                        class: [
+                            'terrain',
+                            css`
+                                .display-layer, .glyph-foreground {
+                                    transition: background-color 1s linear;
+                                }
+                            `
+                        ],
+                    }),
+                    // conditionally show text labels near cities
+                    app.extras ? m(DisplayComponent, {
+                        display: app.labelLayer,
+                        glyphComponent: LabelComponent,
+                        class: [
+                            'labels',
+                            css`
+                                pointer-events: none;
+                            `
+                        ],
+                    }) : null,
+                    // layer with unit icons as sprites
+                    m(DisplayComponent, {
+                        display: app.unitLayer,
+                        glyphComponent: UnitComponent,
+                        class: [
+                            'units',
+                            css`
+                                .glyph {
+                                    transition: transform 250ms linear;
+                                    transition: opacity 500ms linear;
+                                }
+                                .glyph-background, .glyph-foreground {
+                                    transition: background-color 1s linear;
+                                }
+                            `
+                        ],
+                    }),
+                    // conditionally show current order paths for all units
+                    app.extras ? m(OrdersOverlayComponent, {
+                        display: app.unitLayer,
+                    }) : null,
+                    // conditionally show a semit-transparent mask to highlight unit reach
+                    app.extras ? m(DisplayComponent, {
+                        display: app.maskLayer,
+                        glyphComponent: BlockComponent,
+                        class: [
+                            'mask',
+                            css`
+                                opacity: 0.33;
+                                .glyph {
+                                    pointer-events: none;
+                                }
+                            `
+                        ]
+                    }) : null,
+                    // show animated orders for focussed unit
+                    m(DisplayComponent, {
+                        display: app.kreuzeLayer,
+                        glyphComponent: KreuzeComponent,
+                        class: ['kreuze'],
+                    }),
+                ]
+            ),
+        );
+    }
+}
 
 interface DividerAttr {
     color: AnticColor

@@ -1,5 +1,6 @@
-import {atasciiFont, MappedDisplayLayer} from './anticmodel';
 import m from 'mithril';
+
+import {atasciiFont, MappedDisplayLayer} from '../antic/anticmodel';
 
 const
     helpScrambleMillis = 2000,

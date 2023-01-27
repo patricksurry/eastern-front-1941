@@ -1,16 +1,9 @@
-import {directions, PlayerKey} from './defs';
+import {directions, players, PlayerKey} from './defs';
 import {type GridPoint, Grid} from './grid';
 import {Game} from './game';
 import {Thinker, privateExports} from './think';
-import { ScenarioKey } from './scenarios';
+import {ScenarioKey} from './scenarios';
 
-
-let game: Game;
-
-beforeEach(() => {
-    game = new Game();
-    game.rand.state(9792904);
-})
 
 test("Expected linePoints() values", () => {
     // set up the linepts position from the PDF diagram, and test from all directions
@@ -27,11 +20,11 @@ test("Expected linePoints() values", () => {
 });
 
 test("Flee home", () => {
-    const g = new Game(ScenarioKey.learner),
+    const g = new Game(ScenarioKey.learner, 123456789),
         ai = new Thinker(g, PlayerKey.Russian),
         ug = g.oob.at(1),
         ur = g.oob.at(48);
-    g.nextTurn();
+    g.resolveTurn();
     ur.immobile = 0
     expect(ug.active).toBeTruthy();
     expect(ur.active).toBeTruthy();
@@ -49,7 +42,8 @@ function hexvals(s: string): number[] {
 }
 
 test("AI metrics equal APX results", () => {
-    const {ofr, friend, foe} = privateExports.calcForceRatios(game.oob, PlayerKey.Russian);
+    const game = new Game(ScenarioKey.apx, 9792904),
+        {ofr, friend, foe} = privateExports.calcForceRatios(game.oob, PlayerKey.Russian);
     expect(friend).toBe(3533);          // $0d04 => 3332  actual 3533
     expect(foe).toBe(4705 - 205);       // $1261 => 4705  actual is 4500  but 205 gets double-counted
     // apx calculates ($12 << 3) / ($d >> 1) == 144 / 6 == 24 == $18
@@ -106,10 +100,26 @@ test("AI metrics equal APX results", () => {
 
 
 test("AI metrics on resume", () => {
-    game.nextTurn();
+    const game = new Game(ScenarioKey.apx, 9792904);
+    game.resolveTurn();
     const ratios = privateExports.calcForceRatios(game.oob, PlayerKey.Russian),
         game2 = new Game(game.token),
         ratios2 = privateExports.calcForceRatios(game2.oob, PlayerKey.Russian);
 
     expect(ratios).toEqual(ratios2);
+})
+
+test("AI vs AI doesn't throw", () => {
+    const game = new Game(ScenarioKey.expert41, 12345678),
+        ais = Object.keys(players).map(p => new Thinker(game, +p));
+    expect(() => {
+        while (!game.over) {
+            ais.forEach(ai => ai.think());
+            const us = game.oob.activeUnits().filter(u => u.movable);
+            if (us.length && !us.some(u => u.orders.length))
+                throw new Error(`No units had orders, ${us.length} movable`);
+            game.resolveTurn();
+            //console.log(`AI v AI: turn ${game.turn} state ${game.token}`)
+        }
+    }).not.toThrow();
 })

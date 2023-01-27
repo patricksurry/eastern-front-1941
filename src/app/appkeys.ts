@@ -1,5 +1,6 @@
-import {DirectionKey} from './defs';
-import {scenarios} from './scenarios';
+import {DirectionKey} from '../engine/defs';
+import {scenarios} from '../engine/scenarios';
+
 import type {AppCtrl} from './appctrl';
 import {UIModeKey} from './appmodel';
 
@@ -32,6 +33,7 @@ function globalHandler(key: string, ctrl: AppCtrl) {
     if (ctrl.app.help || keymap.help.includes(key)) {
         ctrl.app.help = !ctrl.app.help;
     } else if (keymap.zoom.includes(key)) {
+        ctrl.view.pinMapCenter();
         ctrl.app.zoom = !ctrl.app.zoom;
     } else if (keymap.extras.includes(key)) {
         ctrl.app.extras = !ctrl.app.extras;

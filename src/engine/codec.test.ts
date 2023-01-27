@@ -29,7 +29,6 @@ test("ravel2 is bijective", () => {
 test("zigzag+ravel2 is reversible", () => {
     const vs = [-7, 11],
         zs = zigzag(vs) as [number, number];
-    console.log(vs, zs)
     expect(zagzig(unravel2(ravel2(...zs)))).toEqual(vs);
 });
 

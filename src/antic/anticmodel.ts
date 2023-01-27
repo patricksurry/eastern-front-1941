@@ -1,4 +1,4 @@
-import {clamp} from './defs';
+import {clamp} from '../engine/defs';
 
 type AnticColor = number;  // a hex value like 0x23, see anticview.ts
 
