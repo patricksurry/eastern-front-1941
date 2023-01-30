@@ -2,21 +2,26 @@
 
 import json
 from typing import List, Dict, Any
-from fonts import writefontpng, showascii, asciimapposter
-from diskimage import extractfile
 import re
+
+from fonts import writefontpng
+from diskimage import extractfile
+
+refdir = '../reference'
+outdir = '../extract'
+palettedir = '../palettes'
 
 
 def readcartridge() -> Dict[str, bytes]:
-    data = open('cartridge.rom', 'rb').read()
-    symtab = json.load(open('cartridge.map.json'))
+    data = open(f'{refdir}/cartridge.rom', 'rb').read()
+    symtab = json.load(open(f'{refdir}/cartridge.map.json'))
     print('Reading cartridge.rom with cartridge.map.json')
     return readchunks(data, symtab)
 
 
 def readapxdisk() -> Dict[str, bytes]:
-    data = extractfile('APX20050.ATR', 'apxdump.dat')
-    symtab = json.load(open('apxdump.map.json'))
+    data = extractfile(f'{refdir}/APX20050.ATR', f'{refdir}/apxdump.dat')
+    symtab = json.load(open(f'{refdir}/apxdump.map.json'))
     print('Reading APX20050.ATR disk image with with apxdump.map.json')
     return readchunks(data, symtab)
 
@@ -41,7 +46,7 @@ def _chunk(bytes, base, addr, n):
 
 def buildcolormap(src='colormap.src', dst='colormap.dat'):
     """convert a list of hex colors from wikipedia in low/hi-nibble order to a CSV of byte => hex"""
-    colors = open(src).read().splitlines()[1:]
+    colors = open(f'{palettedir}/{src}').read().splitlines()[1:]
     cmap = {}
     i = 0
     for c in colors:
@@ -49,7 +54,7 @@ def buildcolormap(src='colormap.src', dst='colormap.dat'):
         i += 16
         if i > 255:
             i = (i % 256)+2
-    with open('colormap.dat', 'w') as out:
+    with open(f'{outdir}/colormap.dat', 'w') as out:
         for k, v in sorted(cmap.items()):
             out.write(f'clr{k}: {v}\n')
 
@@ -61,12 +66,12 @@ def buildfontmap(chunks, outbase):
         specials += chunks['DIAMOND']
     specials += bytes([0] * (16*8 - len(specials)))
 
-    atascii = open('atascii.dat', 'rb').read()
-    writefontpng(atascii, 'fontmap-atascii.png')
+    atascii = open(f'{refdir}/atascii.dat', 'rb').read()
+    writefontpng(atascii, f'{outdir}/fontmap-atascii.png')
 
     fontmap = fontdata + specials
-    open(outbase + '.dat', 'wb').write(fontmap)
-    writefontpng(fontmap, outbase + '.png')
+    open(f'{outdir}/{outbase}.dat', 'wb').write(fontmap)
+    writefontpng(fontmap, f'{outdir}/{outbase}.png')
 
     # chrs = showascii(fonts)
     # asciimapposter(chrs, mapdata, rows, cols, row_mid, 'poster.txt')
@@ -93,7 +98,7 @@ def buildasciimap(mapdata, outbase, flieger=False):
 
     assert len(mapdata) == rows*cols + 1, f"Expected {len(mapdata)} == {rows * cols + 1} == rows x cols + 1"
 
-    open(outbase + '.hex', 'w').write(
+    open(f'{outdir}/{outbase}.hex', 'w').write(
         '\n'.join(
             ''.join('{:2x}'.format(mapdata[i+j]) for j in range(cols))
             for i in range(0, rows * cols, cols)
@@ -143,7 +148,7 @@ def buildasciimap(mapdata, outbase, flieger=False):
     assert '?' not in asciimap
     assert '|' not in asciimap
 
-    open(outbase + '.asc', 'w').write(f"""
+    open(f'{outdir}/{outbase}.asc', 'w').write(f"""
 {{
     encoding: {{
         json.dumps(map64, indent=True)
@@ -192,7 +197,7 @@ def buildoob(chunks, outbase, scenario='', includeSwap=False):
     assert len({len(chunks[k]) for k in keys}) == 1  # all equal
 
     oob = [tuple(int(chunks[k][i]) for k in keys) for i in range(num_units)]
-    with open(outbase + '.json', 'w') as f:
+    with open(f'{outdir}/{outbase}.json', 'w') as f:
         f.write(f'// {json.dumps(keys)}\n')
         f.write('[\n')
         for u in oob:
@@ -211,7 +216,7 @@ def buildwords(chunks, outbase, fmts):
         else:
             ws = data.split(fmt)
         words[k] = ws
-    json.dump(words, open(outbase + '.json', 'w'), indent=4)
+    json.dump(words, open(f'{outdir}/{outbase}.json', 'w'), indent=4)
 
 
 def buildterrain(data, outbase):
@@ -228,7 +233,7 @@ def buildterrain(data, outbase):
         "border",
     ]
     # terrain movement chart; indexed as terrain type + 10*armor[0/1] + 20*season[0/1/2]
-    with open(outbase + '.json', 'w') as f:
+    with open(f'{outdir}/{outbase}.json', 'w') as f:
         f.write('[\n')
         for ttyp, key in enumerate(ttypes):
             s = json.dumps(dict(

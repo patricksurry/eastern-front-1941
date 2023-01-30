@@ -1,18 +1,22 @@
 # Eastern Front 1941
 
+<!-- markdownlint-disable MD033 -->
+
 This is a [playable][game] TypeScript port of [Chris Crawford][ccwiki]'s [Eastern Front 1941][efwiki].
+How quickly can you capture Moscow?  More importantly, how long can you hold it?
 
 [game]: https://patricksurry.github.io/eastern-front-1941/
 [ccwiki]: https://en.wikipedia.org/wiki/Chris_Crawford_(game_designer)
 [efwiki]: https://en.wikipedia.org/wiki/Eastern_Front_(1941)
 
-**TL;DR** Click [here][game], choose a level of difficulty, and issue orders to German units using the arrow keys.
+**TL;DR:** Click [here][game], choose a level of difficulty,
+then issue orders to German units using the arrow keys.
 An AI player will command the Russian units.
-When you're ready press `End` (or `Fn`+&rarr; on Mac) to see how each turn plays out.
+When you're ready press `End` (`Fn`+<code>&rarr;</code> on Mac) to see how each turn plays out.
 For a more old-school experience, press `X` to disable extras.
-Hit `?` for more help and check out the original [APX manual](doc/playing.md)
-or [cartridge insert](doc/Eastern_Front_1941_Atari_Cartridge.pdf) instructions.
-Will you capture Moscow?
+Tap `?` for help and check out the original [APX manual](doc/playing.md)
+and [cartridge insert](doc/Eastern_Front_1941_Atari_Cartridge.pdf)
+for more detailed instructions.
 
 [![game](doc/images/preview.png)][game]
 
@@ -23,7 +27,13 @@ multiple difficulty levels;
 terrain, weather, zone of control and supply effects;
 multiple unit types and movement modes including air support;
 fog of war; and an innovative combat system.
-The game was first released in 1981 and became a killer app for the Atari 8-bit computer family.
+The game was first released in 1981 on the [Atari Program Exchange][apx].
+It became a killer app for the Atari 8-bit computer family
+when it was widely released on cartridge in 1982, 41 years
+after the events of 1941 that it simulates.
+A further 41 years on, 2023 seems fitting for a redux.
+
+[apx]: https://en.wikipedia.org/wiki/Atari_Program_Exchange
 
 This port was written from scratch in TypeScript referencing disassembled binaries
 of both the original Atari Program eXchange (APX) version as well as the later cartridge release,
@@ -32,7 +42,7 @@ The redux runs as a single-page, fully client-side app
 with game state stored in the URL making it easy to save, resume, and share games.
 For more details see the [implementation notes](doc/notes.md).
 
-The game's subject matter offers disturbing echoes and distorted reflections of Russia's recent unprovoked invasion of Ukraine which is being fought over significant areas of the same battlefield.  More on my motivation below but Churchill (paraphrasing Santayana) said it best:
+The game's subject matter offers disturbing echoes and distorted reflections of Putin's recent unprovoked invasion of Ukraine which is being fought over significant areas of the same battlefield.  So why revisit it? As Churchill (paraphrasing Santayana) said:
 
 > "Those who fail to learn from history are condemned to repeat it."
 
@@ -42,11 +52,14 @@ to support those most impacted by the conflict in Ukraine and by other humanitar
 
 [wck]: https://wck.org/donate
 
+<!-- markdownlint-disable-next-line MD026 -->
 ## But why?!
 
 First and foremost Eastern Front 1941 is a great game!
 This project started as a pandemic diversion
-when I discovered that Chris Crawford had published much of his early [source code][ccsrc],
+after chancing on an article about Atari's 50th anniversary.
+I tumbled into a memory rabbit hole
+and discovered that Chris Crawford had published much of his early [source code][ccsrc],
 including the [6502 assembler][6502] code for Eastern Front.
 The game had fascinated me as a kid: I remember hanging out after school
 with a friend who had an [Atari 400][atari400] (or maybe 800?)
@@ -79,11 +92,13 @@ It shipped on a 16K cartridge with 4K to spare!
 
 Eastern Front still has a lot to teach us about early video game development, game design,
 and AI play, and of course lessons from the history itself.
-Quoting Crawford from the [cartrige insert](doc/Eastern_Front_1941_Atari_Cartridge.pdf):
+As Crawford says in his preface to the [APX source notes](docs/howitworks.md):
+
+> "My hope is that people will study these materials to become better programmers [...]"
+
+And later in the [cartrige insert](doc/Eastern_Front_1941_Atari_Cartridge.pdf):
 
 > "There was really no way to win this war.  The \[Expert\] point system ... reflects these brutal truths. ... In other words, you'll almost always lose.  Does that seem unfair to you?  Unjust?  Stupid?  Do you feel that nobody would ever want to play a game \[they\] cannot possibly win?  If so, then you have learned the ultimate lesson of war on the Eastern Front."
-
-<p align="center"><img src="doc/images/Ef1941-variants.png" width=800></p>
 
 [ccsrc]: http://www.erasmatazz.com/library/source-code/index.html
 [6502]: https://en.wikibooks.org/wiki/6502_Assembly
@@ -91,11 +106,10 @@ Quoting Crawford from the [cartrige insert](doc/Eastern_Front_1941_Atari_Cartrid
 [mithril]: https://mithril.js.org/
 [jest]: https://jestjs.io/
 
-This re-implementation tries to capture the spirit of the game -
-reusing the same raw data, fonts, display style and color scheme -
-without slavishly recreating the original.
-You can play the [original ROM](reference/cartridge.rom)
-on an emulator like [AtariMac](atarimac)
+So in that spirit, this re-implementation tries to capture the essence of the
+game&mdash;reusing the same raw data, fonts, display style and color scheme&mdash;without
+slavishly recreating every pixel of the original.
+You can play the [original ROM](reference/cartridge.rom) on an emulator like [AtariMac][atarimac]
 but honestly the gameplay now feels painful.
 Crawford explicitly designed for play with only a joystick
 whereas I wanted a more efficient keyboard-driven experience.

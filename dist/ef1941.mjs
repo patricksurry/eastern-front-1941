@@ -2713,10 +2713,10 @@ class Game extends EventEmitter {
             this.oob.executeOrders(tick);
             this.emit('game', 'tick');
             const next = tick++ < 32 ? tickTock : () => this.nextTurn();
-            if (delay)
-                setTimeout(next, delay);
-            else
+            if (!delay)
                 next();
+            else
+                setTimeout(next, delay);
         };
         tickTock();
     }

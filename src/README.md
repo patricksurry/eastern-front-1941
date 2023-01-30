@@ -2,13 +2,18 @@ Source code
 ===
 
 This folder contains the new Typescript implementation of Eastern Front 1941.
-Source is in `*.ts` and Jest unit tests are in `*.test.ts`.
+Source files are in `*.ts` and [Jest][jest] unit tests are in `*.test.ts`.
 `README.md` is this file.
 [`CHANGES.md`](CHANGES.md) captures a history of many of the cartridge-specific features
-that were implemented after I had the base APX code working.  It might have useful context
-as to how and why I made particular design choices.
+that were implemented after I had the base APX code mostly working.
+It might have useful context as to how and why I made particular design choices.
 [`TODO.md`](TODO.md) tracks a running list of future tasks which might or might not get implemented.
-Various static configuration choices are parameterized in `config.ts`.  The app is split into three components, described in more detail below:
+Various static configuration choices are parameterized in `config.ts`.
+Also see the [implementation notes](../doc/notes.md) with more background on the design.
+
+[jest]: https://jestjs.io/
+
+The app is split into three components, described in more detail below:
 
 - `engine/` - the headless game engine
 - `antic/` - a generic Atari-like character-based display window

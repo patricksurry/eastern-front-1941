@@ -389,18 +389,22 @@ const OrdersOverlayComponent: m.Component<DisplayAttr> = {
                     },
                     sprites.filter(g => g.props?.orders).map(g => {
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                        const orders = g.props!.orders as DirectionKey[];
+                        const {orders, contrast, fly}
+                                = g.props as {orders: DirectionKey[], contrast: AnticColor, fly: boolean},
+                            fg = antic2rgb(contrast ?? g.foregroundColor);
                         return m('g',
                             {
                                 key: g.key,
                                 // unit icon centers are 1 pixel offset, so adjust by 1/16
                                 transform: `translate(${g.x + 0.5625},${g.y + 0.5625}) scale(-1)`,
                                 class: css`
-                                    fill: ${antic2rgb(g.foregroundColor)};
-                                    stroke: ${antic2rgb(g.foregroundColor)};
+                                    fill: ${fg};
+                                    stroke: ${fg};
+                                    stroke-linecap: round;
+                                    stroke-width: 1px;
                                 `
                             },
-                            m(UnitPathComponent, {orders})
+                            m(UnitPathComponent, {orders, fly})
                         );
                     })
                 ),
@@ -444,8 +448,8 @@ const KreuzeComponent: m.Component<GlyphAttr> = {
     view: GlyphComponent.view,
 }
 
-const UnitPathComponent: m.Component<{orders: DirectionKey[]}> = {
-    view: ({attrs: {orders}}) => {
+const UnitPathComponent: m.Component<{orders: DirectionKey[], fly: boolean}> = {
+    view: ({attrs: {orders, fly}}) => {
         // form the path element from the list of orders
         const r = 0.25;
         let x = 0,
@@ -476,16 +480,21 @@ const UnitPathComponent: m.Component<{orders: DirectionKey[]}> = {
         if (orders.length) s += ` L${x},${y}`;
 
         return [
-            m('path', {d: s, class: css`
-                fill: none;
-                stroke-linecap: round;
-                stroke-width: 1px;
-                vector-effect: non-scaling-stroke;
-            `}),
+            m('path', {
+                d: s,
+                class: css`
+                    fill: none;
+                    stroke-dasharray: ${fly ? '1 2': null};
+                    vector-effect: non-scaling-stroke;
+                `
+            }),
             orders.length
-                ? m('circle', {r, cx: x, cy: y, class: css`
-                    stroke: none;
-                `})
+                ? m('circle', {
+                    r, cx: x, cy: y,
+                    class: css`
+                        stroke: none;
+                    `
+                })
                 : undefined
         ];
     }

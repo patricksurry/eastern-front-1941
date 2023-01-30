@@ -1,7 +1,7 @@
-import {players, unitkinds, terraintypes, weatherdata, directions} from '../engine/defs';
+import {players, unitkinds, terraintypes, weatherdata, directions, PlayerKey, UnitKindKey} from '../engine/defs';
 import {ScenarioKey, scenarios} from '../engine/scenarios';
 import {Game} from '../engine/game';
-import {Unit, unitFlag, unitModes} from '../engine/unit';
+import {Unit, unitFlag, UnitMode, unitModes} from '../engine/unit';
 import {
     type SpriteOpts, atasciiFont, fontMap,
     MappedDisplayLayer, SpriteDisplayLayer, GlyphAnimation
@@ -159,7 +159,7 @@ class AppModel {
     paintUnit(u: Unit) {
         const
             g = this.#game,
-            {earth} = weatherdata[g.weather],
+            {earth, contrast} = weatherdata[g.weather],
             {x, y} = g.mapboard.xy(u);
 
         let animation = undefined;
@@ -209,7 +209,11 @@ class AppModel {
             opts.props.enter = (u.flags & unitFlag.enter) && g.turn > 0 ? true: false;
             if (u.player == g.human || this.debug) {
                 opts.props.orders = u.orders;
+                opts.props.fly = u.kind == UnitKindKey.air && u.mode == UnitMode.assault;
                 opts.props.mode = u.mode;
+            }
+            if (u.player == PlayerKey.German) {
+                opts.props.contrast = contrast;
             }
         } else {
             opts.props = {};

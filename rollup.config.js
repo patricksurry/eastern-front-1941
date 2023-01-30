@@ -30,7 +30,7 @@ export default [
             typescript(),
             nodePolyfills(), // support for events etc, https://github.com/FredKSchott/rollup-plugin-polyfill-node
             production && terser(),
-            visualizer({filename: "rollup-profile.html"}),
+            visualizer({filename: "static/rollup-profile.html"}),
         ],
     },
     {

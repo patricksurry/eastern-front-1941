@@ -2,6 +2,10 @@
 
 Recent changes and fixes are collected here for future reference, including links to the disassemblies in reference/.
 
+- engine
+  - [x] headless bundle with examples
+  - [x] test AI vs AI game playthru doesn’t throw
+
 - combat
   - [x] zoc damage is cstrng only (even at higher levels, cartridge:2159)
   - [x] attack adjust should be based on attacker's square (cartridge.asm:2035)

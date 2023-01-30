@@ -2,11 +2,12 @@
 .vscode/settings.json
 node_modules/
 **/__pycache__/
-reference/*.stats
 palettes/
 extract/
-src/perf.log
-src/perf.txt
+reference/*.stats
+examples/*.js
+examples/perf.*
 dist/src/
 dist/examples/
-rollup-profile.html
+static/rollup-profile.html
+scripts/apxsrc.map
