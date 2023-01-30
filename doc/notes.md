@@ -75,7 +75,7 @@ approach with a clever [29-byte division routine][divide].
 [cartbinary]: http://www.atarimania.com/game-atari-400-800-xl-xe-eastern-front-1941_5986.html
 [divide]: https://github.com/patricksurry/eastern-front-1941/blob/main/reference/cartridge.asm#L1863
 
-<p align="center"><img src="doc/images/Ef1941-variants.png" width=800></p>
+<p align="center"><img src="images/Ef1941-variants.png" width=800></p>
 
 Other changes included extensive refactoring with more subroutines;
 multiple difficulty levels (replacing the simple handicap) and choice of start dates;
@@ -188,7 +188,7 @@ Even the map (below) is just a stack of oversized (and scrollable)
 terminal windows displaying different layers of information including terrain,
 (optional) city labels, units, selection masking and so on.
 
-I'm still a little confused about the [Atari color scheme][ataripalette]).
+I'm still a little confused about the [Atari color scheme][ataripalette].
 There seem to be many alternative palettes floating around but only a couple
 seem playable.  You can experiment by changing `config.ts:options.colorPalette`
 to point at any of the palettes defined in `src/antic/palettes.ts`.
@@ -257,9 +257,9 @@ best orders to get each unit where to where it wants to be.
 This would have been a significant extra compute overhead on a 6502 AI.
 The original code used a version of [Bresenham's][bresenham] algorithm
 which is much cheaper to compute but results longer transit times
-and (in some cases) leads to units getting stuck.
+and (in some cases) to units getting stuck.
 
-[astar]: https://en.wikipedia.org/wiki/A*_search_algorithm
+[astar]: https://www.redblobgames.com/pathfinding/a-star/introduction.html
 [bresenham]: https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
 
 I also added the current game state to the browser URL,

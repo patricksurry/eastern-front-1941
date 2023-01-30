@@ -46,6 +46,7 @@ The game's subject matter offers disturbing echoes and distorted reflections of 
 
 > "Those who fail to learn from history are condemned to repeat it."
 
+This work is offereed as a learning resource in the same spirit as Crawford's original APX release.
 If you enjoy the game (or not!) please consider donating to an organization like
 [World Central Kitchen <img height=32 src="doc/images/WCK_Primary_Logo.png">][wck]
 to support those most impacted by the conflict in Ukraine and by other humanitarian crises worldwide.
@@ -73,6 +74,8 @@ My goals were to understand [how it worked](doc/howitworks.md),
 recreate the essence of the game in a streamlined form,
 and make it more accessible for others to explore and extend.
 
+[ccsrc]: http://www.erasmatazz.com/library/source-code/index.html
+[6502]: https://en.wikibooks.org/wiki/6502_Assembly
 [pong]: https://en.wikipedia.org/wiki/Pong
 [atari400]: https://en.wikipedia.org/wiki/Atari_8-bit_family
 
@@ -89,22 +92,21 @@ implementing an interactive wargame with a credible AI in only 12K bytes
 It shipped on a 16K cartridge with 4K to spare!
 
 [apple2e]: https://en.wikipedia.org/wiki/Apple_IIe
+[typescript]: https://www.typescriptlang.org/
+[mithril]: https://mithril.js.org/
+[jest]: https://jestjs.io/
 
 Eastern Front still has a lot to teach us about early video game development, game design,
 and AI play, and of course lessons from the history itself.
-As Crawford says in his preface to the [APX source notes](docs/howitworks.md):
+Crawford's own [narrative history](doc/howitworks.md#narrative-history)
+of the game's development is well worth a read.
+As he says in his preface to the [APX source notes](docs/howitworks.md):
 
 > "My hope is that people will study these materials to become better programmers [...]"
 
 And later in the [cartrige insert](doc/Eastern_Front_1941_Atari_Cartridge.pdf):
 
 > "There was really no way to win this war.  The \[Expert\] point system ... reflects these brutal truths. ... In other words, you'll almost always lose.  Does that seem unfair to you?  Unjust?  Stupid?  Do you feel that nobody would ever want to play a game \[they\] cannot possibly win?  If so, then you have learned the ultimate lesson of war on the Eastern Front."
-
-[ccsrc]: http://www.erasmatazz.com/library/source-code/index.html
-[6502]: https://en.wikibooks.org/wiki/6502_Assembly
-[typescript]: https://www.typescriptlang.org/
-[mithril]: https://mithril.js.org/
-[jest]: https://jestjs.io/
 
 So in that spirit, this re-implementation tries to capture the essence of the
 game&mdash;reusing the same raw data, fonts, display style and color scheme&mdash;without
@@ -136,10 +138,9 @@ although the current AI does not play the Germans well
 Check out the [implementation notes](doc/notes.md)
 for more details of how the new code is structured,
 changes I introduced from the original,
-and a collection of (imho) interesting discoveries.
+and a collection of (IMHO) interesting discoveries.
 
-I've inevitably introduced errors and misinterpretations
-in the re-platforming process.
+I've inevitably introduced errors and misinterpretations during the re-platforming.
 Please share any feedback, suggestions and bug reports.
 The most useful bug reports will include the current game state
 (just copy and paste the game's current URL), and if possible prior states which
