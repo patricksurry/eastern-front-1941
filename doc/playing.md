@@ -40,7 +40,7 @@ which is very similar to the original APX map.
 
 [game]: https://patricksurry.github.io/eastern-front-1941/
 [apxmanual]: ./APX_Eastern_Front_1941.pdf
-[cartmanual]: ./eastern_front_atari_cartridge.pdf
+[cartmanual]: ./Eastern_Front_1941_Atari_Cartridge.pdf
 [ef1941poster]: ./Eastern_Front_1941_Atari_poster_text.pdf
 
 </td></table>

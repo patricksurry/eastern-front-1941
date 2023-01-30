@@ -12,7 +12,7 @@ I escaped only after rebuilding a browser-based redux of the game.
 [cca]: https://en.wikipedia.org/wiki/Colossal_Cave_Adventure
 
 The basic mechanism of the AI is surprisingly simple
-and well explained in Crawford's [source code notes](howitworkds.md),
+and well explained in Crawford's [source code notes](howitworks.md),
 though it's still hard to imagine debugging and tuning it in 6502 assembler.
 He does mention prototyping in BASIC but still...
 There's definitely much more complexity than any assembler I've written: respect!
@@ -180,7 +180,7 @@ and setting an appropriate `mask-position`.
 I started building the display layer using [D3][d3js] but later switched to [Mithril][mithril]
 whose declarative style is much cleaner to manage in an MVC model.
 That led to abstracting an VT-like terminal window in
-[`src/antic`](src/antic) including very simple formatting escape codes for
+`src/antic` including very simple formatting escape codes for
 setting text layout, colors and so on.
 The game display is then composed of several such terminal windows which are
 managed independently by the app controller.
@@ -219,8 +219,8 @@ That makes the [javascript map data][jsmapdata] much more accessible and (if we'
 
 [atascii]: https://en.wikipedia.org/wiki/ATASCII
 [maltakreuze]: https://en.wikipedia.org/wiki/Maltese_cross
-[apxmapdata]: https://github.com/patricksurry/eastern-front-1941/blob/main/refdata/apxdump.asm#L1527
-[jsmapdata]: https://github.com/patricksurry/eastern-front-1941/blob/main/static/data.js#L202
+[apxmapdata]: https://github.com/patricksurry/eastern-front-1941/blob/main/reference/apxdump.asm#L1527
+[jsmapdata]: https://github.com/patricksurry/eastern-front-1941/blob/main/src/engine/map-data.ts
 
 Extras
 ---

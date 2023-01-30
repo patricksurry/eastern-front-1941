@@ -100,7 +100,7 @@ Eastern Front still has a lot to teach us about early video game development, ga
 and AI play, and of course lessons from the history itself.
 Crawford's own [narrative history](doc/howitworks.md#narrative-history)
 of the game's development is well worth a read.
-As he says in his preface to the [APX source notes](docs/howitworks.md):
+As he says in his preface to the [APX source notes](doc/howitworks.md):
 
 > "My hope is that people will study these materials to become better programmers [...]"
 

@@ -1499,7 +1499,7 @@ iterations. However, if the player presses the START button, the iterations
 stop and the ghost army becomes the destinations for the real army. In this
 way hypothesis is converted into plans.
 
-<p align="center"><img width=512 src="imags/ai1.jpg"></p>
+<p align="center"><img width=512 src="images/ai1.jpg"></p>
 
 <p align="center"><img width=512 src="images/ai2.jpg"></p>
 
