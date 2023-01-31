@@ -1,5 +1,5 @@
+<!-- markdownlint-disable MD024 MD033 MD041 -->
 <p align="center"><img src="images/apxlogo.png"></p>
-
 
 INTRODUCTION
 ===
@@ -89,7 +89,6 @@ allies. A map of the entire theater of operations is included at the end of
 this manual [below].
 
 <p align="center"><img src="images/apxmap.png"></p>
-
 
 INSPECTING UNITS
 ===
@@ -604,4 +603,3 @@ This final version of EASTERN FRONT 1941 is the 317th version of the
 program. It took me eight months to complete. I am glad it's finished.
 
 I AM TOO! — HIS WIFE
-

@@ -61,3 +61,5 @@ Run OCR on each page with [tesseract][tesseract] like:
 Pad cover image for GH aspect ratio:
 
     convert preview.png -gravity center -background black -extent 1536x768 preview-padded.png
+
+Check broken markdown links with [markdown-link-check](https://github.com/tcort/markdown-link-check)

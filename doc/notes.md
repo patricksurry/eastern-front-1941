@@ -334,6 +334,7 @@ Here are a few clues that might reward further study:
                 jsr SETSWTCH                     ; be35 2081bf  . SETCHYX and SWITCH
     _NXTTRN_2:  ldx #$a6                         ; be38 a2a6
 ```
+
 - there's an APX bug that's later fixed in the cartridge where the defender's strength
   is indexed incorrectly.  It starts in the APX code as:
 
@@ -358,7 +359,6 @@ DOBATL:     cmp  RANDOM     ; 4f44 cd0ad2  evaluate defender's strike
 ```
 
 and later becomes the cartridge code:
-
 
 ```asm
             ldx DEFNDR       ; ad02 a6ad
