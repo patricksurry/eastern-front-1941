@@ -1526,7 +1526,6 @@ and German units respectively, tracking a running two-byte total with TEMPR as t
 and TOTRS/GS as the high byte.  TEMPR doesn't get reset to zero when we switch from Russian
 to German units, so TOTGS includes the remainder of Russian strength.  This adds a little
 upward bias to OFR, making the Russians a little more conservative than intended.
-byte  running total as
 
 The variable precision division used here is very elegant, though replaced by a 30 byte
 [binary long-division routine][cart-ac04-ac21]

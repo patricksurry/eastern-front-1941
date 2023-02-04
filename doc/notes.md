@@ -68,7 +68,7 @@ and correlating back to the routines and symbols in the APX code
 became a project in itself.
 One trivial example: I hesitate to admit how long it took
 to realize that the cartridge had replaced the APX's "divide by repeated subtraction"
-approach with a clever [29-byte division routine][divide].
+approach with a clever [30-byte division routine][divide].
 
 [variants]: https://www.digitpress.com/eastereggs/a48easternfront.htm
 [apxbinary]: http://www.atarimania.com/game-atari-400-800-xl-xe-eastern-front-1941_1791.html
@@ -221,6 +221,33 @@ That makes the [javascript map data][jsmapdata] much more accessible and (if we'
 [maltakreuze]: https://en.wikipedia.org/wiki/Maltese_cross
 [apxmapdata]: https://github.com/patricksurry/eastern-front-1941/blob/main/reference/apxdump.asm#L1527
 [jsmapdata]: https://github.com/patricksurry/eastern-front-1941/blob/main/src/engine/map-data.ts
+
+AI
+---
+
+My initial goal was to understand the Russian computer player,
+so I wanted to keep my code as close to the original as possible.
+Crawford's [extensive notes](howitworks.md) made it
+much easier to untangle the actual computations.
+There were some key nuances that I call out alongside his notes
+and I made some small generalizations so the AI could play either side
+but overall I'm confident the new implementation preservers the original
+mechanics.
+The other challenge was how to orchestrate the AI thinking.
+The Atari code made clever use of the TV's vertical blank interrupt
+to snatch spare cycles and iteratively plan each Russian unit's move.
+The longer the human player took to enter their own orders,
+the more refined the AI move became.
+(In fact early versions had a bug where you could start the next
+turn before the computer was allowed time to think.)
+Crawford notes it take about 10 passes over all units before the plan stabilises.
+At 60Hz with 60 units to plan for, that means about 10 seconds would elapse.
+Since our machines are much more powerful today,
+I artificially limit the speed of the AI using a timer.
+It's currently set to start a planning pass every 250ms,
+slowing by 10% each time, meaning about 4 seconds to complete 10 passes.
+You can watch it plan by toggling debug mode with the `g` key.
+(Yes that's cheating!)
 
 Extras
 ---

@@ -239,6 +239,7 @@ declare type Scenario = {
     surprised?: PlayerKey;
     skipsupply?: boolean;
     simplebreak?: boolean;
+    nozoc?: boolean;
     defmod?: number;
     fog?: number;
     mvmode?: boolean;
@@ -325,7 +326,7 @@ declare class Unit {
     flags: number;
     constructor(game: Game, id: number, ...args: number[]);
     get active(): boolean;
-    get movable(): 0 | 1;
+    get movable(): 1 | 0;
     get human(): boolean;
     get location(): MapPoint;
     get path(): MapPoint[];

@@ -3,10 +3,11 @@ import {ScenarioKey, scenarios} from './scenarios';
 import {Game} from './game';
 import {Grid} from './grid';
 
-function addSimpleOrders(g: Game) {
+function addSimpleOrders(g: Game, player?: PlayerKey) {
     for (const k in players) {
         const p = +k as PlayerKey,
             d = (players[p].homedir + 2) % 4;
+        if (player != null && p != player) continue;
         g.oob.activeUnits(p).forEach(u => {
             for (let i=0; i<2; i++) {
                 if (u.orderCost(d) < 255) u.addOrder(d);
@@ -43,6 +44,34 @@ test("Game turn", () => {
     const game = new Game(ScenarioKey.apx, 9792904);
     addSimpleOrders(game);
     expect(() => game.resolveTurn()).not.toThrow();
+})
+
+test("Russians surprised in '41", () => {
+    const game = new Game(ScenarioKey.expert41, 9792904),
+        locs = game.oob.activeUnits(PlayerKey.Russian).map(u => ({id: u.id, lon: u.lon, lat: u.lat}));
+
+    expect(game.oob.activeUnits(PlayerKey.Russian).every(u => !u.movable)).toBeTruthy();
+    addSimpleOrders(game, PlayerKey.Russian);
+    expect(game.oob.activeUnits(PlayerKey.Russian).every(u => u.orders.length==0)).toBeTruthy();
+    game.resolveTurn();
+    expect(locs.every(({id, lat, lon}) => {
+        const u = game.oob.at(id);
+        return u.lon == lon && u.lat == lat
+    })).toBeTruthy();
+})
+
+test("Russians not surprised in '42", () => {
+    const game = new Game(ScenarioKey.expert42, 9792904),
+        locs = game.oob.activeUnits(PlayerKey.Russian).map(u => ({id: u.id, lon: u.lon, lat: u.lat}));
+
+    expect(game.oob.activeUnits(PlayerKey.Russian).some(u => u.movable)).toBeTruthy();
+    addSimpleOrders(game, PlayerKey.Russian);
+    expect(game.oob.activeUnits(PlayerKey.Russian).some(u => u.orders.length)).toBeTruthy();
+    game.resolveTurn();
+    expect(locs.some(({id, lat, lon}) => {
+        const u = game.oob.at(id);
+        return u.lon != lon || u.lat != lat
+    })).toBeTruthy();
 })
 
 test("Game roundtrip", () => {

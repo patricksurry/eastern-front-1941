@@ -26,6 +26,7 @@ type Scenario = {
     surprised?: PlayerKey,  // which player, if any, doesn't move the first turn
     skipsupply?: boolean,   // whether to skip supply check
     simplebreak?: boolean,  // whether to use simplied break after combat check
+    nozoc?: boolean,        // whether to ignore ZoC
     defmod?: number,      // additional shift modifier for defender strength
     // original game stored fog as mask, e.g. 0xC0 is 1100 0000 so fog = 6, 0x80 => 7
     fog?: number,           // number of randomized lsbits for far-off enemy strength
@@ -46,13 +47,13 @@ const scenarios: Record<ScenarioKey, Scenario> = {
         label: 'LEARNER', map: MapVariantKey.cart, oob: OobVariantKey.cart41, start: '1941/6/22',
         ncity: 1, mdmg: 4, cdmg: 12, cadj: 255, nunit: [0x2,  0x31], endturn: 14,
         scoring: {win: 5, strength: [null, 'losses']},
-        surprised: PlayerKey.Russian, skipsupply: true, simplebreak: true
+        surprised: PlayerKey.Russian, skipsupply: true, nozoc: true, simplebreak: true
     },
     [ScenarioKey.beginner]: {
         label: 'BEGINNER', map: MapVariantKey.cart, oob: OobVariantKey.cart41, start: '1941/6/22',
         ncity: 1, mdmg: 4, cdmg: 12, cadj: 150, nunit: [0x12, 0x50], endturn: 14,
         scoring: {win: 25, strength: [null, 'losses']},
-        surprised: PlayerKey.Russian, skipsupply: true, simplebreak: true
+        surprised: PlayerKey.Russian, skipsupply: true, nozoc: true, simplebreak: true
     },
     [ScenarioKey.intermediate]: {
         label: 'INTERMED', map: MapVariantKey.cart, oob: OobVariantKey.cart41, start: '1941/6/22',

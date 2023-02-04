@@ -29,6 +29,7 @@ Recent changes and fixes are collected here for future reference, including link
   - [x] incorrectly flagged as new arrivals on reload [example](http://localhost:3000/#EF41W0-5q2sZNnQthDyhjWNR1cWNoEK7qGC2R3VL)
 
 - zone of control
+  - [x] zoc: level 0/1 unit only exerts zoc in own square (cartridge.asm:2486)
   - [x] zocBlocked is currently wrong since starting unit will negate initial ZoC
   - [x] different central unit treatment for supply check vs move (ignore or not)
   - [x] add zocBlocked unit test
@@ -86,6 +87,7 @@ Recent changes and fixes are collected here for future reference, including link
     - [x] can't add new orders
 
 - UX
+  - [x] dotted line for air support orders
   - [x] zoom to center of mass on start/reload
   - [x] zoom option pins center point
   - [x] Message for city capture (extras)

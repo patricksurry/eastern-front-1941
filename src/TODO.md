@@ -4,14 +4,7 @@ Tracks current outstanding issues, ideas for improvements, etc.
 
 ## Current issues
 
-- docs
-  - [ ] docs/notes
-
-- UX
-  - [x] dotted line for air support orders
-
 - engine
-  - [ ] zoc: level 0/1 unit only exerts zoc in own square (cartridge.asm:2486)
   - [ ] initial turn supply check (tho units should be in supply anyway, or adjust initial oob?)
 
 - Cartridge AI changes
@@ -22,13 +15,13 @@ Tracks current outstanding issues, ideas for improvements, etc.
 ## Triage
 
 - [ ] ? unit defending at last tick flash not cleared?
-
 - [ ] (possibly fixed; also now maelstrom sanity tests) 8th inf in the south accepted but stopped processing/following orders?  id=8. could it be blocked by a dead unit somehow?  sadly works on resume :(
   [game](http://localhost:3000/#EF4123J7PPcdU5ls-txzsMVOjBM_-t-rshjVx_r6q1COOWLN3TdbSNBEyYL3cpfFnnClqfdQqm5BvbzoSm9ZBBuOSlCXn7iuWZ1J6cMD7OrnbLQIMDq0OWHDXXBon4viebb97fX07neHQLNr16YBvWZZOLCfbcuYXCrGBNcUo56orxB3JSi43dyd7kCy_erpvV_xrU-1Hm)
 
 ## Future
 
 - config
+  - [ ] AI thinking interval
   - [ ] wire up more of the hard-coded options
   - [ ] option for auto-entrench if no orders?
 

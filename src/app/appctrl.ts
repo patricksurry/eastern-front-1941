@@ -5,7 +5,7 @@ import {Game} from '../engine/game';
 import {Thinker} from '../engine/think';
 
 import {AppModel, UIModeKey} from './appmodel';
-import {globalHandler, modeHandlers} from './appkeys';
+import {globalHandler, keyModifiers, modeHandlers} from './appkeys';
 import {AppView} from './appview';
 import {HelpModel} from './help';
 
@@ -103,9 +103,10 @@ class AppCtrl {
         })
     }
     keyHandler(event: KeyboardEvent) {
-        let handled = globalHandler(event.key, this);
+        const modifiers = keyModifiers(event);
+        let handled = globalHandler(event.key, modifiers, this);
         if (!handled) {
-            handled = modeHandlers[this.app.uimode](event.key, this);
+            handled = modeHandlers[this.app.uimode](event.key, modifiers, this);
         }
         if (handled) {
             if (this.app.uimode == UIModeKey.orders && !this.app.errorWindow.dirty) {

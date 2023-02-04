@@ -761,13 +761,13 @@ const scenarios = {
         label: 'LEARNER', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, start: '1941/6/22',
         ncity: 1, mdmg: 4, cdmg: 12, cadj: 255, nunit: [0x2, 0x31], endturn: 14,
         scoring: { win: 5, strength: [null, 'losses'] },
-        surprised: 1 /* PlayerKey.Russian */, skipsupply: true, simplebreak: true
+        surprised: 1 /* PlayerKey.Russian */, skipsupply: true, nozoc: true, simplebreak: true
     },
     [2 /* ScenarioKey.beginner */]: {
         label: 'BEGINNER', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, start: '1941/6/22',
         ncity: 1, mdmg: 4, cdmg: 12, cadj: 150, nunit: [0x12, 0x50], endturn: 14,
         scoring: { win: 25, strength: [null, 'losses'] },
-        surprised: 1 /* PlayerKey.Russian */, skipsupply: true, simplebreak: true
+        surprised: 1 /* PlayerKey.Russian */, skipsupply: true, nozoc: true, simplebreak: true
     },
     [3 /* ScenarioKey.intermediate */]: {
         label: 'INTERMED', map: 1 /* MapVariantKey.cart */, oob: 1 /* OobVariantKey.cart41 */, start: '1941/6/22',
@@ -1750,11 +1750,12 @@ class Unit {
     get movable() {
         if (this.immobile)
             return 0;
-        // game logic seems to be that Germans can move on arrival turn but Russians can't,
+        // game logic seems to be that German reinforcements can move on arrival turn but Russians can't,
         // including initially placed units because of surprise attack.
         // allow initially placed Russians to move for post 6/22 scenarios
-        if ((this.arrive == __classPrivateFieldGet(this, _Unit_game, "f").turn && this.player == 1 /* PlayerKey.Russian */)
-            || (__classPrivateFieldGet(this, _Unit_game, "f").turn == 0 && this.player == scenarios[__classPrivateFieldGet(this, _Unit_game, "f").scenario].surprised)) {
+        const start = __classPrivateFieldGet(this, _Unit_game, "f").turn == 0, green = this.arrive == __classPrivateFieldGet(this, _Unit_game, "f").turn && !start;
+        if ((green && 1 /* PlayerKey.Russian */)
+            || (start && this.player == scenarios[__classPrivateFieldGet(this, _Unit_game, "f").scenario].surprised)) {
             return 0;
         }
         return 1;
@@ -2425,8 +2426,12 @@ class Oob {
             }
             else {
                 zoc += 4;
+                if (threshold && zoc >= threshold)
+                    return zoc;
             }
         }
+        if (scenarios[__classPrivateFieldGet(this, _Oob_game, "f").scenario].nozoc)
+            return zoc;
         // look at square spiral excluding center, so even squares are adj, odd are corners
         Grid.squareSpiral(loc, 1).slice(1).forEach((p, i) => {
             if (!__classPrivateFieldGet(this, _Oob_game, "f").mapboard.valid(p))

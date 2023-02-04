@@ -163,11 +163,15 @@ class Unit {
     }
     get movable() {
         if (this.immobile) return 0;
-        // game logic seems to be that Germans can move on arrival turn but Russians can't,
+        // game logic seems to be that German reinforcements can move on arrival turn but Russians can't,
         // including initially placed units because of surprise attack.
         // allow initially placed Russians to move for post 6/22 scenarios
-        if ((this.arrive == this.#game.turn && this.player == PlayerKey.Russian)
-            || (this.#game.turn == 0 && this.player == scenarios[this.#game.scenario].surprised)) {
+        const start = this.#game.turn == 0,
+            green = this.arrive == this.#game.turn && !start;
+        if (
+            (green && PlayerKey.Russian)
+            || (start && this.player == scenarios[this.#game.scenario].surprised)
+        ) {
                 return 0;
         }
         return 1;

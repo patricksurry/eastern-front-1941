@@ -25,7 +25,8 @@ class AppView {
     constructor(app: AppModel, help: HelpModel) {
         this.app = app;
         this.help = help;
-        m.mount(document.body, {view: () => m(Layout, {view: this})})
+        m.mount(document.body, {view: () => m(Layout, {view: this})});
+        window.addEventListener('resize', () => this.redraw());
     }
     redraw() {
         m.redraw()
@@ -70,6 +71,8 @@ document.body.style.backgroundColor = antic2rgb(0xD4) as string;
 
 const Layout: m.Component<{view: AppView}> = {
     view: ({attrs: {view}}) => {
+        // find the max integer scaling we can use based on (screenWidth x screenHeight) 8 pix chars
+        const scale = Math.floor(Math.min(window.innerWidth/screenWidth, window.innerHeight/screenHeight)/8) || 1;
         return m('.layout', {
                 class: css`
                     padding: 12px;
@@ -81,10 +84,10 @@ const Layout: m.Component<{view: AppView}> = {
                     class: css`
                         width: ${screenWidth * 8}px;
                         height: ${screenHeight * 8}px;
-                        transform: scale(4);
-                        transform-origin: top center;
-                        margin: 0 auto;
-                        position: relative;
+                        transform: translate(-50%, -50%) scale(${scale});
+                        position: fixed;
+                        top: 50%;
+                        left: 50%;
                     `,
                 },
                 view.app.help ? m(HelpComponent, {help: view.help}) : m(GameComponent, {view})
@@ -180,7 +183,7 @@ const MapComponent: m.Component<{view: AppView}> = {
                         ],
                     }),
                     // conditionally show text labels near cities
-                    app.extras ? m(DisplayComponent, {
+                    app.extras && m(DisplayComponent, {
                         display: app.labelLayer,
                         glyphComponent: LabelComponent,
                         class: [
@@ -189,7 +192,7 @@ const MapComponent: m.Component<{view: AppView}> = {
                                 pointer-events: none;
                             `
                         ],
-                    }) : null,
+                    }),
                     // layer with unit icons as sprites
                     m(DisplayComponent, {
                         display: app.unitLayer,
@@ -208,11 +211,11 @@ const MapComponent: m.Component<{view: AppView}> = {
                         ],
                     }),
                     // conditionally show current order paths for all units
-                    app.extras ? m(OrdersOverlayComponent, {
+                    app.extras && m(OrdersOverlayComponent, {
                         display: app.unitLayer,
-                    }) : null,
+                    }),
                     // conditionally show a semit-transparent mask to highlight unit reach
-                    app.extras ? m(DisplayComponent, {
+                    app.extras && m(DisplayComponent, {
                         display: app.maskLayer,
                         glyphComponent: BlockComponent,
                         class: [
@@ -224,7 +227,7 @@ const MapComponent: m.Component<{view: AppView}> = {
                                 }
                             `
                         ]
-                    }) : null,
+                    }),
                     // show animated orders for focussed unit
                     m(DisplayComponent, {
                         display: app.kreuzeLayer,
@@ -254,7 +257,8 @@ const LabelComponent: m.Component<GlyphAttr> = {
     view: ({attrs: {g: {props}, defaults: {foregroundColor}}}) => {
         const label = props?.label as string,
             points = props?.points as number;
-        return m('.' + css`
+        return m(
+            '.' + css`
                 transform: translate(4px, 0);
                 font-family: verdana;
                 width: 0;
@@ -265,22 +269,24 @@ const LabelComponent: m.Component<GlyphAttr> = {
                 }
             `,
             [
-                m('.' + css`
+                m(
+                    '.' + css`
                         transform: translate(0, -4px);
                         font-size: 2pt;
                         color: ${antic2rgb(foregroundColor)};
                     `,
-                        label
-                    ),
-                points ? m('.' + css`
+                    label
+                ),
+                (points || null) && m(
+                    '.' + css`
                         transform: translate(0, -2.5px);
                         text-shadow: 0 0 0.5px ${antic2rgb(0x02)};
                         font-weight: bold;
                         font-size: 5px;
                         color: ${antic2rgb(0x96)}
                     `,
-                        points
-                    ) : null,
+                    points
+                ),
             ]
         );
     }
@@ -334,24 +340,21 @@ const UnitComponent: m.Component<GlyphAttr> = {
                     },
                     [
                         // movement mode symbol
-                        mode != null && mode != UnitMode.standard
-                            ? m('path', {
+                        (mode != null && mode != UnitMode.standard) &&
+                            m('path', {
                                 transform: `translate(1, 0) scale(.04) translate(-15, -6)`,
                                 d: modeIcons[mode],
                                 fill: antic2rgb(0x96),
-                            })
-                            : null,
+                            }),
                         // indicator dot for new entry or OoS
-                        oos || enter
-                            ? m('circle', {cx: 1/8, cy: 1/8, r: 1/8, fill: oos ? ramp[0]: ramp[3]})
-                            : null,
+                        (oos || enter) &&
+                            m('circle', {cx: 1/8, cy: 1/8, r: 1/8, fill: oos ? ramp[0]: ramp[3]}),
                         // health bar
-                        cstrng != null && mstrng != null
-                            ? m('g', [
+                        (cstrng != null && mstrng != null) &&
+                            m('g', [
                                 m('rect', {x: 1/8, y: 7/8, height: 1/8, width: 7/8 * mstrng/255, rx: 1/16, opacity: 0.5, fill: cfill}),
                                 m('rect', {x: 1/8, y: 7/8, height: 1/8, width: 7/8 * cstrng/255, rx: 1/16, fill: cfill}),
-                            ])
-                            : null,
+                            ]),
                     ]
                 )
             )

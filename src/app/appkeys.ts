@@ -29,7 +29,23 @@ const keymap = {
     }
 ;
 
-function globalHandler(key: string, ctrl: AppCtrl) {
+const modifier = {
+    shift:  1 << 0,
+    ctrl:   1 << 1,
+    alt:    1 << 2,
+    meta:   1 << 3,
+};
+
+function keyModifiers(event: KeyboardEvent): number {
+    return (
+          (event.shiftKey ? modifier.shift: 0)
+        | (event.ctrlKey ? modifier.ctrl: 0)
+        | (event.altKey ? modifier.alt: 0)
+        | (event.metaKey ? modifier.meta: 0)
+    )
+}
+
+function globalHandler(key: string, modifiers: number, ctrl: AppCtrl) {
     if (ctrl.app.help || keymap.help.includes(key)) {
         ctrl.app.help = !ctrl.app.help;
     } else if (keymap.zoom.includes(key)) {
@@ -45,7 +61,7 @@ function globalHandler(key: string, ctrl: AppCtrl) {
     return true;
 }
 
-function setupHandler(key: string, ctrl: AppCtrl) {
+function setupHandler(key: string, modifiers: number, ctrl: AppCtrl) {
     if (keymap.prev.includes(key) || key == 'ArrowLeft') {
         ctrl.setScenario(undefined, -1);
     } else if (keymap.next.includes(key) || key == 'ArrowRight') {
@@ -60,10 +76,10 @@ function setupHandler(key: string, ctrl: AppCtrl) {
     return true;
 }
 
-function ordersHandler(key: string, ctrl: AppCtrl) {
+function ordersHandler(key: string, modifiers: number, ctrl: AppCtrl) {
     if (keymap.prev.includes(key)) {
         ctrl.app.focusShift(-1);
-    } else if (keymap.next.includes(key) || key == 'Enter') {
+    } else if (keymap.next.includes(key) || (key == 'Enter' && !modifiers)) {
         if (ctrl.game.over) ctrl.setMode(UIModeKey.setup);
         else ctrl.app.focusShift(+1);
     } else if (ctrl.app.mvmode && keymap.mode.includes(key)) {
@@ -76,7 +92,7 @@ function ordersHandler(key: string, ctrl: AppCtrl) {
         ctrl.editOrders(null);
     } else if (key == 'Backspace') {
         ctrl.editOrders(-1);
-    } else if (key == 'End') {
+    } else if (key == 'End' || (key == 'Enter' && (modifiers & (modifier.ctrl | modifier.shift)))) {
         ctrl.setMode(UIModeKey.resolve);
     } else {
         return false;
@@ -84,7 +100,7 @@ function ordersHandler(key: string, ctrl: AppCtrl) {
     return true;
 }
 
-function resolveHandler(key: string, ctrl: AppCtrl) {
+function resolveHandler(key: string, modifiers: number, ctrl: AppCtrl) {
     if (keymap.prev.includes(key)) {
         ctrl.app.focusShift(-1);
     } else if (keymap.next.includes(key) || key == 'Enter') {
@@ -95,4 +111,4 @@ function resolveHandler(key: string, ctrl: AppCtrl) {
     return true;
 }
 
-export {globalHandler, modeHandlers};
+export {globalHandler, modeHandlers, keyModifiers};

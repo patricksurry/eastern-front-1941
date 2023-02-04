@@ -185,8 +185,11 @@ class Oob {
                 if (!omitSelf) return 0;
             } else {
                 zoc += 4;
+                if (threshold && zoc >= threshold) return zoc;
             }
         }
+        if (scenarios[this.#game.scenario].nozoc) return zoc;
+
         // look at square spiral excluding center, so even squares are adj, odd are corners
         Grid.squareSpiral(loc, 1).slice(1).forEach((p, i) => {
             if (!this.#game.mapboard.valid(p)) return;
