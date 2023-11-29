@@ -20,4 +20,4 @@ Again these were extracted and annotated from a [PDF original](APX_Source_Code_f
 which also includes scanned source assembly listings.
 I transferred most of the source code notes into the machine-readable [APX disassembly](../reference/apxdump.asm).
 
-I've collected my own [notes](notes.md) as I made various discoveries and implementation decisions for the Typescript port.  Also see the source [README]](../src/README.md) for high-level organization of the new code.
+I've collected my own [notes](notes.md) as I made various discoveries and implementation decisions for the Typescript port.  Also see the source [README](../src/README.md) for high-level organization of the new code.
